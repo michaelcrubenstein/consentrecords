@@ -6421,6 +6421,10 @@ class User(RootInstance, dbmodels.Model):
     firstName = dbmodels.CharField(max_length=255, db_index=True, null=True)
     lastName = dbmodels.CharField(max_length=255, db_index=True, null=True)
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    
+    def __init__(self, *args, **kwargs):
+        super(User, self).__init__(self, *args, **kwargs)
+        self._authUser = None
 
     def description(self, language=None):
         qs = self.emails.order_by('position')
@@ -6481,14 +6485,16 @@ class User(RootInstance, dbmodels.Model):
 
         return data
     
-    def __getattr__(self, name):
-        if name == 'authUser':
-            qs = AuthUser.objects.filter(email=self.emails.all()[0].text)
-            x = qs[0] if len(qs) else AnonymousUser()
-            self.__setattr__(name, x)
-        else:
-            return super(User, self).__getattr__(name)
-        return x
+    @property
+    def authUser(self):
+        if not self._authUser:
+            emails = self.emails.all()
+            print(emails)
+            if not emails.count():
+                return AnonymousUser()
+            qs = AuthUser.objects.filter(email=emails[0].text)
+            self._authUser = qs[0] if len(qs) else AnonymousUser()
+        return self._authUser
         
     @property
     def is_administrator(self):
@@ -6764,8 +6770,7 @@ class Context:
         self.user = user
         self._transaction = None
         if user:
-            qs = AuthUser.objects.filter(email=user.emails.all()[0].text)
-            self.authUser = qs[0] if len(qs) else AnonymousUser()
+            self.authUser = user.authUser
         else:
             self.authUser = AnonymousUser()
         self._privileges = {}
