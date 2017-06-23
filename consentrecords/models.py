@@ -6548,9 +6548,11 @@ class User(RootInstance, dbmodels.Model):
             newIDs[data['clientID']] = newItem.id.hex
         
         if 'grant target' in data:
+            if 'primary administrator' not in data['grant target']:
+                data['grant target']['primary administrator'] = 'user/%s' % newItem.id.hex
             GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
         else:
-            GrantTarget.create(newItem.id, {}, context, newIDs)
+            GrantTarget.create(newItem.id, {'primary administrator': 'user/%s' % newItem.id.hex}, context, newIDs)
         
         newItem.createChildren(data, 'emails', context, UserEmail, newIDs)
         if not context.user:
