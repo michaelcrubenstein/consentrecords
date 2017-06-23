@@ -3472,7 +3472,7 @@ class CommentPromptTextHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class DisqualifyingTag(ChildInstance, dbmodels.Model):
+class DisqualifyingTag(ServiceLinkInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdDisqualifyingTags')
     lastTransaction = lastTransactionField('changedDisqualifyingTags')
