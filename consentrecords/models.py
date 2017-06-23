@@ -6423,7 +6423,7 @@ class User(RootInstance, dbmodels.Model):
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
     
     def __init__(self, *args, **kwargs):
-        super(User, self).__init__(self, *args, **kwargs)
+        super(User, self).__init__(*args, **kwargs)
         self._authUser = None
 
     def description(self, language=None):
