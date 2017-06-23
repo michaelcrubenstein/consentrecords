@@ -400,267 +400,271 @@ if __name__ == "__main__":
     check = '-check' in sys.argv
     
     try:
-        users = Instance.objects.filter(typeID=terms.user)
-        for u in users:
-            firstName = getUniqueDatum(u, 'first name')
-            lastName = getUniqueDatum(u, 'last name')
-            birthday = getUniqueDatum(u, 'birthday')
-            publicAccess = getUniqueReference(u, 'public access')
+        with transaction.atomic():
+            users = Instance.objects.filter(typeID=terms.user)
+            for u in users:
+                firstName = getUniqueDatum(u, 'first name')
+                lastName = getUniqueDatum(u, 'last name')
+                birthday = getUniqueDatum(u, 'birthday')
+                publicAccess = getUniqueReference(u, 'public access')
             
-            print(u.id, transaction, deleteTransaction, firstName, lastName, 
-                  birthday, publicAccess)
-            newUser, created = User.objects.get_or_create(id=u.id,
-               defaults={'transaction': u.transaction,
-                         'deleteTransaction': u.deleteTransaction,
-                         'firstName': getUniqueDatum(u, 'first name'),
-                         'lastName': getUniqueDatum(u, 'last name'),
-                         'birthday': getUniqueDatum(u, 'birthday')})
+                print(u.id, u.transaction, u.deleteTransaction, firstName, lastName, 
+                      birthday, publicAccess)
+                if not u.transaction_id:
+                    raise RuntimeError('transaction_id is None')
+                if not User.objects.filter(id=u.id).exists():
+                    User.objects.create(id=u.id, 
+                                        transaction=u.transaction,
+                                        deleteTransaction=u.deleteTransaction,
+                                        firstName=firstName,
+                                        lastName=lastName,
+                                        birthday=birthday)
         
-        # Create the user history
-        uniqueTerms = {terms['first name']: {'dbField': 'firstName', 'f': lambda v: v.stringValue},
-                       terms['last name']: {'dbField': 'lastName', 'f': lambda v: v.stringValue},
-                       terms['birthday']: {'dbField': 'birthday', 'f': lambda v: v.stringValue},
-                      }
-        buildHistory(users, User, UserHistory, uniqueTerms)
+            # Create the user history
+            uniqueTerms = {terms['first name']: {'dbField': 'firstName', 'f': lambda v: v.stringValue},
+                           terms['last name']: {'dbField': 'lastName', 'f': lambda v: v.stringValue},
+                           terms['birthday']: {'dbField': 'birthday', 'f': lambda v: v.stringValue},
+                          }
+            buildHistory(users, User, UserHistory, uniqueTerms)
         
-        uniqueTerms = {terms['email']: StringValueTranslator('text')}
-        buildPositionedElements(users, User, UserEmail, UserEmailHistory, uniqueTerms)
+            uniqueTerms = {terms['email']: StringValueTranslator('text')}
+            buildPositionedElements(users, User, UserEmail, UserEmailHistory, uniqueTerms)
         
-        # Create the user access source records
-        uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
-                       terms['primary administrator']: 
-                           {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
-                      }
-        buildRootInstances(users, GrantTarget, GrantTargetHistory, uniqueTerms)
+            # Create the user access source records
+            uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
+                           terms['primary administrator']: 
+                               {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
+                          }
+            buildRootInstances(users, GrantTarget, GrantTargetHistory, uniqueTerms)
         
-        orgs = Instance.objects.filter(typeID=terms['Organization'])
-        buildOrganizations(orgs, Organization)
+            orgs = Instance.objects.filter(typeID=terms['Organization'])
+            buildOrganizations(orgs, Organization)
         
-        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(orgs, Organization, OrganizationName, OrganizationNameHistory, uniqueTerms)
+            uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(orgs, Organization, OrganizationName, OrganizationNameHistory, uniqueTerms)
         
-        # Create the user access source records
-        uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
-                       terms['primary administrator']: 
-                           {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
-                      }
-        buildRootInstances(orgs, GrantTarget, GrantTargetHistory, uniqueTerms)
+            # Create the user access source records
+            uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
+                           terms['primary administrator']: 
+                               {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
+                          }
+            buildRootInstances(orgs, GrantTarget, GrantTargetHistory, uniqueTerms)
         
-        groups = Instance.objects.filter(typeID=terms['group'], parent__typeID=terms['Organization'])
-        buildGroups(groups, Organization, Group)
+            groups = Instance.objects.filter(typeID=terms['group'], parent__typeID=terms['Organization'])
+            buildGroups(groups, Organization, Group)
         
-        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(groups, Group, GroupName, GroupNameHistory, uniqueTerms)
+            uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(groups, Group, GroupName, GroupNameHistory, uniqueTerms)
         
-        buildSubReferences(groups, 
-                           lambda u: Group.objects.get(pk=u.id), 
-                           GroupMember, terms['user'], 'user', User)
+            buildSubReferences(groups, 
+                               lambda u: Group.objects.get(pk=u.id), 
+                               GroupMember, terms['user'], 'user', User)
         
-        buildInquiryAccessGroups(orgs, Organization)
+            buildInquiryAccessGroups(orgs, Organization)
         
-        uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
-                       terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
-                       terms['Inquiry Access Group']: {'dbField': 'inquiryAccessGroup', 
-                                                       'f': lambda v: Group.objects.get(pk=v.referenceValue.id)},
-                      }
-        buildHistory(orgs, Organization, OrganizationHistory, uniqueTerms)
+            uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
+                           terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
+                           terms['Inquiry Access Group']: {'dbField': 'inquiryAccessGroup', 
+                                                           'f': lambda v: Group.objects.get(pk=v.referenceValue.id)},
+                          }
+            buildHistory(orgs, Organization, OrganizationHistory, uniqueTerms)
         
-        buildGrants(users)
+            buildGrants(users)
         
-        buildGrants(orgs)
+            buildGrants(orgs)
         
-        buildGrantRequests(users, User, UserUserGrantRequest)
+            buildGrantRequests(users, User, UserUserGrantRequest)
         
-        # Services
-        uniqueTerms = {terms['Stage']: {'dbField': 'stage', 'f': lambda v: str(v.referenceValue)}}
-        services = Instance.objects.filter(typeID=terms['Service'])
-        buildRootInstances(services, Service, ServiceHistory, uniqueTerms)
+            # Services
+            uniqueTerms = {terms['Stage']: {'dbField': 'stage', 'f': lambda v: str(v.referenceValue)}}
+            services = Instance.objects.filter(typeID=terms['Service'])
+            buildRootInstances(services, Service, ServiceHistory, uniqueTerms)
         
-        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(services, Service, ServiceName, ServiceNameHistory, uniqueTerms)
+            uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(services, Service, ServiceName, ServiceNameHistory, uniqueTerms)
         
-        uniqueTerms = {terms['Organization Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(services, Service, ServiceOrganizationLabel, ServiceOrganizationLabelHistory, uniqueTerms)
+            uniqueTerms = {terms['Organization Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(services, Service, ServiceOrganizationLabel, ServiceOrganizationLabelHistory, uniqueTerms)
         
-        uniqueTerms = {terms['Site Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(services, Service, ServiceSiteLabel, ServiceSiteLabelHistory, uniqueTerms)
+            uniqueTerms = {terms['Site Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(services, Service, ServiceSiteLabel, ServiceSiteLabelHistory, uniqueTerms)
         
-        uniqueTerms = {terms['Offering Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(services, Service, ServiceOfferingLabel, ServiceOfferingLabelHistory, uniqueTerms)
+            uniqueTerms = {terms['Offering Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(services, Service, ServiceOfferingLabel, ServiceOfferingLabelHistory, uniqueTerms)
         
-        buildSubReferences(services, 
-                           lambda u: Service.objects.get(pk=u.id), 
-                           ServiceImplication, terms['Service'], 'impliedService', Service)
+            buildSubReferences(services, 
+                               lambda u: Service.objects.get(pk=u.id), 
+                               ServiceImplication, terms['Service'], 'impliedService', Service)
         
-        sites = Instance.objects.filter(typeID=terms['Site'])
-        uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
-                      }
-        buildChildren(sites, Organization, Site, SiteHistory, uniqueTerms,
-                      lambda i: i.parent.parent.id)
+            sites = Instance.objects.filter(typeID=terms['Site'])
+            uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
+                          }
+            buildChildren(sites, Organization, Site, SiteHistory, uniqueTerms,
+                          lambda i: i.parent.parent.id)
         
-        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(sites, Site, SiteName, SiteNameHistory, uniqueTerms)
+            uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(sites, Site, SiteName, SiteNameHistory, uniqueTerms)
         
-        addresses = Instance.objects.filter(typeID=terms['Address'])
-        uniqueTerms = {terms['City']: {'dbField': 'city', 'f': lambda v: v.stringValue},
-                       terms['State']: {'dbField': 'state', 'f': lambda v: str(v.referenceValue)},
-                       terms['Zip Code']: {'dbField': 'zipCode', 'f': lambda v: v.stringValue},
-                      }
-        buildChildren(addresses, Site, Address, AddressHistory, uniqueTerms,
-                      lambda i: i.parent.id)
+            addresses = Instance.objects.filter(typeID=terms['Address'])
+            uniqueTerms = {terms['City']: {'dbField': 'city', 'f': lambda v: v.stringValue},
+                           terms['State']: {'dbField': 'state', 'f': lambda v: str(v.referenceValue)},
+                           terms['Zip Code']: {'dbField': 'zipCode', 'f': lambda v: v.stringValue},
+                          }
+            buildChildren(addresses, Site, Address, AddressHistory, uniqueTerms,
+                          lambda i: i.parent.id)
         
-        uniqueTerms = {terms['Street']: StringValueTranslator('text')}
-        buildPositionedElements(addresses, Address, Street, StreetHistory, uniqueTerms)
+            uniqueTerms = {terms['Street']: StringValueTranslator('text')}
+            buildPositionedElements(addresses, Address, Street, StreetHistory, uniqueTerms)
         
-        offerings = Instance.objects.filter(typeID=terms['Offering'], parent__parent__typeID=terms['Site'])
-        uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
-                       terms['Minimum Age']: {'dbField': 'minimumAge', 'f': lambda v: v.stringValue},
-                       terms['Maximum Age']: {'dbField': 'maximumAge', 'f': lambda v: v.stringValue},
-                       terms['Minimum Grade']: {'dbField': 'minimumGrade', 'f': lambda v: v.stringValue},
-                       terms['Maximum Grade']: {'dbField': 'maximumGrade', 'f': lambda v: v.stringValue},
-                      }
+            offerings = Instance.objects.filter(typeID=terms['Offering'], parent__parent__typeID=terms['Site'])
+            uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
+                           terms['Minimum Age']: {'dbField': 'minimumAge', 'f': lambda v: v.stringValue},
+                           terms['Maximum Age']: {'dbField': 'maximumAge', 'f': lambda v: v.stringValue},
+                           terms['Minimum Grade']: {'dbField': 'minimumGrade', 'f': lambda v: v.stringValue},
+                           terms['Maximum Grade']: {'dbField': 'maximumGrade', 'f': lambda v: v.stringValue},
+                          }
         
-        buildChildren(offerings, Site, Offering, OfferingHistory, uniqueTerms,
-                      lambda i: i.parent.parent.id)
+            buildChildren(offerings, Site, Offering, OfferingHistory, uniqueTerms,
+                          lambda i: i.parent.parent.id)
         
-        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(offerings, Offering, OfferingName, OfferingNameHistory, uniqueTerms)
+            uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(offerings, Offering, OfferingName, OfferingNameHistory, uniqueTerms)
         
-        # ExperienceServices
-        uniqueTerms = {terms['Service']: ForeignKeyTranslator('service', Service)}
-        buildPositionedElements(offerings, Offering, OfferingService, OfferingServiceHistory, uniqueTerms)
+            # ExperienceServices
+            uniqueTerms = {terms['Service']: ForeignKeyTranslator('service', Service)}
+            buildPositionedElements(offerings, Offering, OfferingService, OfferingServiceHistory, uniqueTerms)
         
-        sessions = Instance.objects.filter(typeID=terms['Session'], parent__parent__id__in=offerings)
-        uniqueTerms = {terms['Registration Deadline']: {'dbField': 'registrationDeadline', 'f': lambda v: v.stringValue},
-                       terms['Start']: {'dbField': 'start', 'f': lambda v: v.stringValue},
-                       terms['End']: {'dbField': 'end', 'f': lambda v: v.stringValue},
-                      }
+            sessions = Instance.objects.filter(typeID=terms['Session'], parent__parent__id__in=offerings)
+            uniqueTerms = {terms['Registration Deadline']: {'dbField': 'registrationDeadline', 'f': lambda v: v.stringValue},
+                           terms['Start']: {'dbField': 'start', 'f': lambda v: v.stringValue},
+                           terms['End']: {'dbField': 'end', 'f': lambda v: v.stringValue},
+                          }
         
-        buildChildren(sessions, Offering, Session, SessionHistory, uniqueTerms,
-                      lambda i: i.parent.parent.id)
-        buildSessionCanRegister(sessions, Session)
+            buildChildren(sessions, Offering, Session, SessionHistory, uniqueTerms,
+                          lambda i: i.parent.parent.id)
+            buildSessionCanRegister(sessions, Session)
         
-        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(sessions, Session, SessionName, SessionNameHistory, uniqueTerms)
+            uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(sessions, Session, SessionName, SessionNameHistory, uniqueTerms)
         
-        inquiries = Instance.objects.filter(typeID=terms['Inquiries'])
-        buildSubReferences(inquiries, lambda u: Session.objects.get(pk=u.parent.id), 
-                       Inquiry, terms['user'], 'user', User)
+            inquiries = Instance.objects.filter(typeID=terms['Inquiries'])
+            buildSubReferences(inquiries, lambda u: Session.objects.get(pk=u.parent.id), 
+                           Inquiry, terms['user'], 'user', User)
         
-        enrollments = Instance.objects.filter(typeID=terms['Enrollment'])
-        buildSubReferences(enrollments, lambda u: Session.objects.get(pk=u.parent.parent.id), 
-                       Enrollment, terms['user'], 'user', User)
+            enrollments = Instance.objects.filter(typeID=terms['Enrollment'])
+            buildSubReferences(enrollments, lambda u: Session.objects.get(pk=u.parent.parent.id), 
+                           Enrollment, terms['user'], 'user', User)
         
-        engagements = Instance.objects.filter(typeID=terms['Experience'])
-        uniqueTerms = {terms['Start']: {'dbField': 'start', 'f': lambda v: v.stringValue},
-                       terms['End']: {'dbField': 'end', 'f': lambda v: v.stringValue},
-                       terms['user']: {'dbField': 'user', 
-                                       'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
-                      }
-        buildChildren(engagements, Session, Engagement, EngagementHistory, uniqueTerms,
-                      lambda i: i.parent.parent.id)
+            engagements = Instance.objects.filter(typeID=terms['Experience'])
+            uniqueTerms = {terms['Start']: {'dbField': 'start', 'f': lambda v: v.stringValue},
+                           terms['End']: {'dbField': 'end', 'f': lambda v: v.stringValue},
+                           terms['user']: {'dbField': 'user', 
+                                           'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
+                          }
+            buildChildren(engagements, Session, Engagement, EngagementHistory, uniqueTerms,
+                          lambda i: i.parent.parent.id)
         
-        periods = Instance.objects.filter(typeID=terms['Period'], parent__parent__parent__parent__parent__typeID=terms['Site'])
-        uniqueTerms = {terms['Weekday']: {'dbField': 'start', 'f': lambda v: str(v.referenceValue)},
-                       terms['End Time']: {'dbField': 'end', 'f': lambda v: v.stringValue},
-                       terms['Start Time']: {'dbField': 'user', 'f': lambda v: v.stringValue},
-                      }
-        buildChildren(periods, Session, Period, PeriodHistory, uniqueTerms,
-                      lambda i: i.parent.id)
+            periods = Instance.objects.filter(typeID=terms['Period'], parent__parent__parent__parent__parent__typeID=terms['Site'])
+            uniqueTerms = {terms['Weekday']: {'dbField': 'start', 'f': lambda v: str(v.referenceValue)},
+                           terms['End Time']: {'dbField': 'end', 'f': lambda v: v.stringValue},
+                           terms['Start Time']: {'dbField': 'user', 'f': lambda v: v.stringValue},
+                          }
+            buildChildren(periods, Session, Period, PeriodHistory, uniqueTerms,
+                          lambda i: i.parent.id)
         
-        experiencePrompts = Instance.objects.filter(typeID=terms['Experience Prompt'])
-        def findDomainService(v):
-            if v.referenceValue.typeID == terms['Domain']:
-                return Service.objects.get(names__text=str(v.referenceValue))
-            else:
-                return Service.objects.get(pk=v.referenceValue.id)
-        uniqueTerms = {terms['name']: {'dbField': 'name', 'f': lambda v: v.stringValue},
-                       terms['Organization']: {'dbField': 'organization', 
-                                       'f': lambda v: Organization.objects.get(pk=v.referenceValue.id)},
-                       terms['Site']: {'dbField': 'site', 
-                                       'f': lambda v: Site.objects.get(pk=v.referenceValue.id)},
-                       terms['Offering']: {'dbField': 'offering', 
-                                       'f': lambda v: Offering.objects.get(pk=v.referenceValue.id)},
-                       terms['Domain']: {'dbField': 'domain', 
-                                       'f': findDomainService},
-                       terms['Stage']: {'dbField': 'stage', 
-                                       'f': lambda v: str(v.referenceValue)},
-                       terms['Timeframe']: {'dbField': 'timeframe', 
-                                       'f': lambda v: str(v.referenceValue)},
-                      }
-        buildRootInstances(experiencePrompts, ExperiencePrompt, ExperiencePromptHistory, uniqueTerms)
+            experiencePrompts = Instance.objects.filter(typeID=terms['Experience Prompt'])
+            def findDomainService(v):
+                if v.referenceValue.typeID == terms['Domain']:
+                    return Service.objects.get(names__text=str(v.referenceValue))
+                else:
+                    return Service.objects.get(pk=v.referenceValue.id)
+            uniqueTerms = {terms['name']: {'dbField': 'name', 'f': lambda v: v.stringValue},
+                           terms['Organization']: {'dbField': 'organization', 
+                                           'f': lambda v: Organization.objects.get(pk=v.referenceValue.id)},
+                           terms['Site']: {'dbField': 'site', 
+                                           'f': lambda v: Site.objects.get(pk=v.referenceValue.id)},
+                           terms['Offering']: {'dbField': 'offering', 
+                                           'f': lambda v: Offering.objects.get(pk=v.referenceValue.id)},
+                           terms['Domain']: {'dbField': 'domain', 
+                                           'f': findDomainService},
+                           terms['Stage']: {'dbField': 'stage', 
+                                           'f': lambda v: str(v.referenceValue)},
+                           terms['Timeframe']: {'dbField': 'timeframe', 
+                                           'f': lambda v: str(v.referenceValue)},
+                          }
+            buildRootInstances(experiencePrompts, ExperiencePrompt, ExperiencePromptHistory, uniqueTerms)
         
-        buildSubReferences(experiencePrompts,
-                           lambda u: ExperiencePrompt.objects.get(pk=u.id), 
-                           DisqualifyingTag, terms['Disqualifying Tag'], 'service', Service)
-        buildSubReferences(experiencePrompts,
-                           lambda u: ExperiencePrompt.objects.get(pk=u.id), 
-                           ExperiencePromptService, terms['Service'], 'service', Service)
+            buildSubReferences(experiencePrompts,
+                               lambda u: ExperiencePrompt.objects.get(pk=u.id), 
+                               DisqualifyingTag, terms['Disqualifying Tag'], 'service', Service)
+            buildSubReferences(experiencePrompts,
+                               lambda u: ExperiencePrompt.objects.get(pk=u.id), 
+                               ExperiencePromptService, terms['Service'], 'service', Service)
         
-        uniqueTerms = {terms['text']: StringValueTranslator('text')}
-        buildNameElements(experiencePrompts, ExperiencePrompt, ExperiencePromptText, ExperiencePromptTextHistory, uniqueTerms)
+            uniqueTerms = {terms['text']: StringValueTranslator('text')}
+            buildNameElements(experiencePrompts, ExperiencePrompt, ExperiencePromptText, ExperiencePromptTextHistory, uniqueTerms)
         
-        commentPrompts = Instance.objects.filter(typeID=terms['Comment Prompt'])
-        uniqueTerms = {}
-        buildRootInstances(commentPrompts, CommentPrompt, CommentPromptHistory, uniqueTerms)
+            commentPrompts = Instance.objects.filter(typeID=terms['Comment Prompt'])
+            uniqueTerms = {}
+            buildRootInstances(commentPrompts, CommentPrompt, CommentPromptHistory, uniqueTerms)
         
-        uniqueTerms = {terms['text']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(commentPrompts, CommentPrompt, CommentPromptText, CommentPromptTextHistory, uniqueTerms)
+            uniqueTerms = {terms['text']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+            buildNameElements(commentPrompts, CommentPrompt, CommentPromptText, CommentPromptTextHistory, uniqueTerms)
         
-        notifications = Instance.objects.filter(typeID=terms['Notification'])
-        uniqueTerms = {terms['name']: StringValueTranslator('name'),
-                       terms['is fresh']: EnumerationTranslator('isFresh'),
-                      }
-        buildChildren(notifications, User, Notification, NotificationHistory, uniqueTerms,
-                      lambda i: i.parent.id)
+            notifications = Instance.objects.filter(typeID=terms['Notification'])
+            uniqueTerms = {terms['name']: StringValueTranslator('name'),
+                           terms['is fresh']: EnumerationTranslator('isFresh'),
+                          }
+            buildChildren(notifications, User, Notification, NotificationHistory, uniqueTerms,
+                          lambda i: i.parent.id)
         
-        # Notification Arguments
-        uniqueTerms = {terms['argument']: IDTranslator('argument')}
-        buildPositionedElements(notifications, Notification, NotificationArgument, NotificationArgumentHistory, uniqueTerms)
+            # Notification Arguments
+            uniqueTerms = {terms['argument']: IDTranslator('argument')}
+            buildPositionedElements(notifications, Notification, NotificationArgument, NotificationArgumentHistory, uniqueTerms)
         
-        paths = Instance.objects.filter(typeID=terms['Path'])
-        uniqueTerms = {terms['Birthday']: StringValueTranslator('birthday'),
-                       terms['name']: StringValueTranslator('name'),
-                       terms['special access']: EnumerationTranslator('specialAccess'),
-                       terms['can be asked about experience']: EnumerationTranslator('canAnswerExperience'),
-                      }
-        buildChildren(paths, User, Path, PathHistory, uniqueTerms, lambda i: i.parent.id)
+            paths = Instance.objects.filter(typeID=terms['Path'])
+            uniqueTerms = {terms['Birthday']: StringValueTranslator('birthday'),
+                           terms['name']: StringValueTranslator('name'),
+                           terms['special access']: EnumerationTranslator('specialAccess'),
+                           terms['can be asked about experience']: EnumerationTranslator('canAnswerExperience'),
+                          }
+            buildChildren(paths, User, Path, PathHistory, uniqueTerms, lambda i: i.parent.id)
         
-        # Create the user access source records
-        uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
-                       terms['primary administrator']: 
-                           {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
-                      }
-        buildRootInstances(paths, GrantTarget, GrantTargetHistory, uniqueTerms)
+            # Create the user access source records
+            uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
+                           terms['primary administrator']: 
+                               {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
+                          }
+            buildRootInstances(paths, GrantTarget, GrantTargetHistory, uniqueTerms)
         
-        newPaths = Path.objects.all()
-        for p in newPaths:
-            p.grantTarget = GrantTarget.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
-            p.save()
+            newPaths = Path.objects.all()
+            for p in newPaths:
+                p.grantTarget = GrantTarget.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
+                p.save()
         
-        buildGrants(paths)
+            buildGrants(paths)
         
-        experiences = Instance.objects.filter(typeID=terms['More Experience'])
-        uniqueTerms = {terms['Organization']: ForeignKeyTranslator('organization', Organization),
-                       terms['User Entered Organization']: StringValueTranslator('customOrganization'),
-                       terms['Site']: ForeignKeyTranslator('site', Site),
-                       terms['User Entered Site']: StringValueTranslator('customSite'),
-                       terms['Offering']: ForeignKeyTranslator('offering', Offering),
-                       terms['User Entered Offering']: StringValueTranslator('customOffering'),
-                       terms['Start']: StringValueTranslator('start'),
-                       terms['End']: StringValueTranslator('end'),
-                       terms['Timeframe']: EnumerationTranslator('timeframe'),
-                      }
-        buildChildren(experiences, Path, Experience, ExperienceHistory, uniqueTerms, lambda i: i.parent.id)
+            experiences = Instance.objects.filter(typeID=terms['More Experience'])
+            uniqueTerms = {terms['Organization']: ForeignKeyTranslator('organization', Organization),
+                           terms['User Entered Organization']: StringValueTranslator('customOrganization'),
+                           terms['Site']: ForeignKeyTranslator('site', Site),
+                           terms['User Entered Site']: StringValueTranslator('customSite'),
+                           terms['Offering']: ForeignKeyTranslator('offering', Offering),
+                           terms['User Entered Offering']: StringValueTranslator('customOffering'),
+                           terms['Start']: StringValueTranslator('start'),
+                           terms['End']: StringValueTranslator('end'),
+                           terms['Timeframe']: EnumerationTranslator('timeframe'),
+                          }
+            buildChildren(experiences, Path, Experience, ExperienceHistory, uniqueTerms, lambda i: i.parent.id)
         
-        # ExperienceServices
-        uniqueTerms = {terms['Service']: ForeignKeyTranslator('service', Service)}
-        buildPositionedElements(experiences, Experience, ExperienceService, ExperienceServiceHistory, uniqueTerms)
+            # ExperienceServices
+            uniqueTerms = {terms['Service']: ForeignKeyTranslator('service', Service)}
+            buildPositionedElements(experiences, Experience, ExperienceService, ExperienceServiceHistory, uniqueTerms)
         
-        # ExperienceCustomServices
-        uniqueTerms = {terms['User Entered Service']: StringValueTranslator('name')}
-        buildPositionedElements(experiences, Experience, ExperienceCustomService, ExperienceCustomServiceHistory, uniqueTerms)
+            # ExperienceCustomServices
+            uniqueTerms = {terms['User Entered Service']: StringValueTranslator('name')}
+            buildPositionedElements(experiences, Experience, ExperienceCustomService, ExperienceCustomServiceHistory, uniqueTerms)
         
-        buildComments(experiences, Experience, Comment)
+            buildComments(experiences, Experience, Comment)
     except Exception as e:
         print("%s" % traceback.format_exc())
