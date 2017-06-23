@@ -517,7 +517,7 @@ class TranslationInstance(ChildInstance):
         if not value or value in validValues:
             return
         else:
-            raise 'the value "%s" is not a valid language. Valid langues are are: %s' % (value, validValues)
+            raise ValueError('the value "%s" is not a valid language. Valid langues are are: %s' % (value, validValues))
     
     def ValueCheckText(self, value):
         return
