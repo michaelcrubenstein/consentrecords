@@ -16,7 +16,7 @@ def headData(path, context, resultClass):
     return [i.headData(context) for i in resultClass.select_head_related(qs2)]
     
 def getData(path, context, resultClass, fields=[]):
-    print("### %s, context" % path)
+    print("### %s, %s, %s" % (path, context, resultClass))
     tokens = cssparser.tokenizeHTML(path)
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
