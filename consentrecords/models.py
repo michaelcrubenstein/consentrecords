@@ -6624,6 +6624,9 @@ class UserEmail(ChildInstance, dbmodels.Model):
     def description(self, languageCode=None):
         return self.text
     
+    def __str__(self):
+        return self.description()
+    
     def select_head_related(querySet):
         return querySet
         
