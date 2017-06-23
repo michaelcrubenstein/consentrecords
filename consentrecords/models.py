@@ -6488,8 +6488,7 @@ class User(RootInstance, dbmodels.Model):
     @property
     def authUser(self):
         if not self._authUser:
-            emails = self.emails.all()
-            print(emails)
+            emails = self.emails.filter(deleteTransaction__isnull=True).order_by('position')
             if not emails.count():
                 return AnonymousUser()
             qs = AuthUser.objects.filter(email=emails[0].text)
