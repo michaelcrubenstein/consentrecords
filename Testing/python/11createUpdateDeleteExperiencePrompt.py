@@ -1,6 +1,7 @@
 import django; django.setup()
 from django.db import transaction
-import profile
+import traceback
+import logging
 from uuid import UUID
 from consentrecords.models import *
 from parse.cssparser import parser as cssparser
@@ -50,34 +51,38 @@ with transaction.atomic():
         context = Context('en', mr)
         newItem = ExperiencePrompt.create(d, context, newIDs=newIDs)
         print(str(newItem), newIDs)
-        
-with transaction.atomic():
-    data = {'name': 'Foo Experience Prompt',
-            'stage': '',
-			'timeframe': 'Current',
-			'organization': 'organization[name>text=theBase]',
-			'site': '',
-			'domain': 'service[name>text=Job]',
-			'translations': [{'id': newIDs['1'], 
-							  'text': 'Foo prompt English?',
-							  'languageCode': 'en',
-							 },
-							 {'id': newIDs['2'], 
-							  'delete': 'delete',
-							 },
-							 {'clientID': '3.1',
-							  'text': '¿Dónde es el foo?',
-                              'languageCode': 'sp',
-							 }],
-			'services': [{'id': newIDs['3'],
-						  'service': 'service[name>text=Job]',
-						 }],
-           }
-    newIDs2 = {}
-    context = Context('en', mr)
-    i = ExperiencePrompt.objects.filter(pk=newIDs['0'])[0]
-    i.update(data, context, newIDs2)
-    print(i)
+
+try:        
+    with transaction.atomic():
+        data = {'name': 'Foo Experience Prompt',
+                'stage': '',
+                'timeframe': 'Current',
+                'organization': 'organization[name>text=theBase]',
+                'site': '',
+                'domain': 'service[name>text=Job]',
+                'translations': [{'id': newIDs['1'], 
+                                  'text': 'Foo prompt English?',
+                                  'languageCode': 'en',
+                                 },
+                                 {'id': newIDs['2'], 
+                                  'delete': 'delete',
+                                 },
+                                 {'clientID': '3.1',
+                                  'text': '¿Dónde es el foo?',
+                                  'languageCode': 'sp',
+                                 }],
+                'services': [{'id': newIDs['3'],
+                              'service': 'service[name>text=Job]',
+                             }],
+               }
+        newIDs2 = {}
+        context = Context('en', mr)
+        i = ExperiencePrompt.objects.filter(pk=newIDs['0'])[0]
+        i.update(data, context, newIDs2)
+        print(i)
+except Exception as e:
+    logger = logging.getLogger(__name__)
+    logger.error("%s" % traceback.format_exc())
 
 with transaction.atomic():
     context = Context('en', mr)
@@ -86,3 +91,4 @@ with transaction.atomic():
 
     newItem = ExperiencePrompt.objects.filter(pk=newIDs['4'])[0]
     newItem.markDeleted(context)
+    print("Experience Prompts Deleted")
