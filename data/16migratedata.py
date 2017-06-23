@@ -100,6 +100,7 @@ def getValueTransactions(instance, vs):
 ### uniqueTerms is a dictionary whose keys are terms and whose values are dictionaries with
 ### a dbField (database field name) and f (function to extract from the value to assign to the dbField).
 def buildHistory(instances, sourceType, historyType, uniqueTerms):
+    print("buildHistory", sourceType, historyType)
     for u in instances:
         vs = u.value_set.filter(field__in=uniqueTerms.keys())
         tList = getValueTransactions(u, vs)
@@ -122,6 +123,7 @@ def buildHistory(instances, sourceType, historyType, uniqueTerms):
                 defaults=defaults)
 
 def buildPositionedElements(instances, parentType, sourceType, historyType, uniqueTerms):
+    print("buildPositionedElements", parentType, sourceType, historyType)
     for u in instances:
         parent = parentType.objects.get(pk=u.id)
         d = defaultdict(list)
@@ -139,7 +141,6 @@ def buildPositionedElements(instances, parentType, sourceType, historyType, uniq
             defaults['lastTransaction'] = lastValue.transaction
             defaults['deleteTransaction'] = lastValue.deleteTransaction
             
-            print(sourceType, parent, position, defaults)
             newItem, created = sourceType.objects.get_or_create(parent=parent, position=position,
                 defaults=defaults)
             
@@ -161,6 +162,7 @@ def buildPositionedElements(instances, parentType, sourceType, historyType, uniq
                         defaults=defaults)
 
 def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerms):
+    print("buildNameElements", parentType, sourceType, historyType)
     for u in instances:
         parent = parentType.objects.get(pk=u.id)
         d = defaultdict(list)
@@ -198,11 +200,11 @@ def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerm
                             defaults[termData['dbField']] = termData['f'](vs[0])
                             defaults['id'] = vs[0].id
                 
-                    print (newItem.text, t, languageCode, defaults)
                     historyType.objects.get_or_create(instance=newItem, transaction=t, languageCode=languageCode,
                         defaults=defaults)
 
 def buildRootInstances(instances, sourceType, historyType, uniqueTerms):
+    print("buildRootInstances", sourceType, historyType)
     for u in instances:
         vs = u.value_set.filter(field__in=uniqueTerms.keys())
         tList = getValueTransactions(u, vs)
@@ -212,9 +214,7 @@ def buildRootInstances(instances, sourceType, historyType, uniqueTerms):
         for field in uniqueTerms.keys():
             termData = uniqueTerms[field]
             v = getUniqueValue(u, field)
-            print(termData['dbField'], v)
             defaults[termData['dbField']] = v and termData['f'](v)
-        print(u.id, defaults)
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
            
@@ -231,33 +231,31 @@ def buildRootInstances(instances, sourceType, historyType, uniqueTerms):
                     defaults[termData['dbField']] = termData['f'](vs[0])
                     defaults['id'] = vs[0].id
             
-            print (str(u), t, defaults)
             historyType.objects.get_or_create(instance=newItem, transaction=t,
                 defaults=defaults)
 
 def buildOrganizations(instances, sourceType):
+    print("buildOrganizations")
     for u in instances:
         defaults={'transaction': u.transaction,
                   'deleteTransaction': u.deleteTransaction,
-                  'webSite': getUniqueDatum(u, 'Web Site'),
-                  'publicAccess': getUniqueReferenceDescription(u, 'public access')}
-        print(u.id, defaults)
+                  'webSite': getUniqueDatum(u, 'Web Site')}
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
 
 def buildGroups(instances, parentType, sourceType):
+    print("buildGroups")
     for u in instances:
         defaults={'transaction': u.transaction,
                   'deleteTransaction': u.deleteTransaction,
                   'parent': parentType.objects.get(pk=u.parent.id)}
-        print(u.id, defaults)
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
 
 ### uniqueTerms should contain those items that are unique for objects of sourceType.           
 def buildChildren(instances, parentType, sourceType, historyType, uniqueTerms, parentIDF):
+    print("buildChildren", parentType, sourceType, historyType)
     for u in instances:
-        print (u, u.parent)
         vs = u.value_set.filter(field__in=uniqueTerms.keys())
         tList = getValueTransactions(u, vs)
         try:
@@ -273,7 +271,6 @@ def buildChildren(instances, parentType, sourceType, historyType, uniqueTerms, p
             termData = uniqueTerms[field]
             v = getUniqueValue(u, field)
             defaults[termData['dbField']] = v and termData['f'](getUniqueValue(u, field))
-        print(u.id, defaults)
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
         
@@ -290,27 +287,26 @@ def buildChildren(instances, parentType, sourceType, historyType, uniqueTerms, p
                     defaults[termData['dbField']] = termData['f'](vs[0])
                     defaults['id'] = vs[0].id
             
-            print (str(u), t, defaults)
             historyType.objects.get_or_create(instance=newItem, transaction=t,
                 defaults=defaults)
 
 def buildInquiryAccessGroups(instances, targetType):
+    print("buildInquiryAccessGroups", targetType)
     for u in instances:
         newItem = targetType.objects.get(pk=u.id)
         oldReference = getUniqueReference(u, 'Inquiry Access Group')
         if oldReference:
-            print(newItem, oldReference)
             newItem.inquiryAccessGroup = Group.objects.get(pk=oldReference.pk)
             newItem.save()
 
 def buildSessionCanRegister(sessions, targetType):
+    print("buildSessionCanRegister", targetType)
     for u in sessions:
         newItem = targetType.objects.get(pk=u.id)
         oldReference = getUniqueReference(u, 'Inquiries')
         if oldReference:
             oldPAReference = getUniqueReference(oldReference, 'public access')
             canRegister = 'yes' if oldPAReference and str(oldPAReference) == 'register' else 'no'
-            print(newItem, canRegister)
             newItem.canRegister = canRegister
             newItem.save()
 
@@ -353,7 +349,7 @@ def buildGrantRequests(instances, parentType, userSourceType):
                           'lastTransaction': i.transaction,
                           'deleteTransaction': i.deleteTransaction,
                           'parent': parent,
-                          'accessee': us[0]})
+                          'grantee': us[0]})
 
 ### Build items like ServiceImplications.
 ### Parent is a function that returns the migrated parent of an instance.
@@ -401,6 +397,7 @@ if __name__ == "__main__":
     
     try:
         with transaction.atomic():
+            print("build users")
             users = Instance.objects.filter(typeID=terms.user)
             for u in users:
                 firstName = getUniqueDatum(u, 'first name')
@@ -408,18 +405,16 @@ if __name__ == "__main__":
                 birthday = getUniqueDatum(u, 'birthday')
                 publicAccess = getUniqueReference(u, 'public access')
             
-                print(u.id, u.transaction, u.deleteTransaction, firstName, lastName, 
-                      birthday, publicAccess)
                 if not u.transaction_id:
                     raise RuntimeError('transaction_id is None')
-                if not User.objects.filter(id=u.id).exists():
-                    User.objects.create(id=u.id, 
-                                        transaction=u.transaction,
-                                        deleteTransaction=u.deleteTransaction,
-                                        firstName=firstName,
-                                        lastName=lastName,
-                                        birthday=birthday)
-        
+                defaults = {'transaction': u.transaction,
+                            'deleteTransaction': u.deleteTransaction,
+                            'firstName': firstName,
+                            'lastName': lastName,
+                            'birthday': birthday}
+                newUser, created = User.objects.get_or_create(pk=u.id,
+                   defaults=defaults)
+                
             # Create the user history
             uniqueTerms = {terms['first name']: {'dbField': 'firstName', 'f': lambda v: v.stringValue},
                            terms['last name']: {'dbField': 'lastName', 'f': lambda v: v.stringValue},
@@ -463,7 +458,6 @@ if __name__ == "__main__":
             buildInquiryAccessGroups(orgs, Organization)
         
             uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
-                           terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
                            terms['Inquiry Access Group']: {'dbField': 'inquiryAccessGroup', 
                                                            'f': lambda v: Group.objects.get(pk=v.referenceValue.id)},
                           }
@@ -597,9 +591,10 @@ if __name__ == "__main__":
             buildSubReferences(experiencePrompts,
                                lambda u: ExperiencePrompt.objects.get(pk=u.id), 
                                DisqualifyingTag, terms['Disqualifying Tag'], 'service', Service)
-            buildSubReferences(experiencePrompts,
-                               lambda u: ExperiencePrompt.objects.get(pk=u.id), 
-                               ExperiencePromptService, terms['Service'], 'service', Service)
+
+            # Experience Prompt Services
+            uniqueTerms = {terms['Service']: ForeignKeyTranslator('service', Service)}
+            buildPositionedElements(experiencePrompts, ExperiencePrompt, ExperiencePromptService, ExperiencePromptServiceHistory, uniqueTerms)
         
             uniqueTerms = {terms['text']: StringValueTranslator('text')}
             buildNameElements(experiencePrompts, ExperiencePrompt, ExperiencePromptText, ExperiencePromptTextHistory, uniqueTerms)
