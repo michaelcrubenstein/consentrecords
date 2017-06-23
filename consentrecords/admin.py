@@ -1376,7 +1376,7 @@ class GrantTargetAdmin(ModelAdmin):
         (None, {'fields': ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
     )
     readonly_fields = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'publicAccess', 'primaryAdministrator', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    search_fields = ('id', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     inlines = [GrantTargetHistoryInline, UserGrantInline, GroupGrantInline]
         
