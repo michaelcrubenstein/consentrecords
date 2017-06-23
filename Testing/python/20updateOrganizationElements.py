@@ -1,6 +1,7 @@
 import django; django.setup()
 from django.db import transaction
-import profile
+import traceback
+import logging
 from uuid import UUID
 from consentrecords.models import *
 from parse.cssparser import parser as cssparser
@@ -62,48 +63,83 @@ with transaction.atomic():
     newItem = Organization.create(data, context, newIDs=newIDs)
     print(str(newItem), newIDs)
 
-with transaction.atomic():
-    context = Context('en', mr)
-    data = {'registration deadline': '2018-01-01',
-            'start': '2018-01-02',
-            'end': '',
-            'can register': 'no',
-            'names': [{'id': newIDs['8.2'], 'text': 'Bar Session'},
-                      {'clientID': '8.2', 'text': 'Biff Session', 'languageCode': 'sp'}],
-            'enrollments': [{'id': newIDs['8.6'], 'delete': 'delete'}, {'clientID': '8.6', 'user': 'user[email>text=testUser28@pathadvisor.com]'}],
-            'engagements': [{'id': newIDs['8.7'], 'delete': 'delete'}, {'clientID': '8.7', 'user': 'user[email>text=testUser28@pathadvisor.com]'}],
-            'inquiries': [{'id': newIDs['8.4'], 'user': 'user[email>text=testUser28@pathadvisor.com]'}, {'id': newIDs['8.5'], 'delete': 'delete'}],
-            'periods': [{'id': newIDs['8.3'], 'weekday': '5', 'start time': '11:00', 'end time': '14:00'}],
-           }
-    newIDs2 = {}
-    context = Context('en', mr)
-    i = Session.objects.filter(pk=newIDs['8.1'])[0]
-    i.update(data, context, newIDs2)
-    print(i)
+try:
+    with transaction.atomic():
+        data = {'web site': 'www.barorganization.org', 
+                'names': [{'id':newIDs['1'], 'text': 'Bar Organization'}]
+                }
+        context = Context('en', mr)
+        newItem.update(data, context)
         
-with transaction.atomic():
-    context = Context('en', mr)
-    data = {'minimum age': '7', 'maximum age': '12', 'minimum grade': '2', 'maximum grade': '6',
-            'web site': 'www.foo.com',
-            'names': [{'id':newIDs['7'], 'text': 'Foo Name'}],
-            'services': [{'id': newIDs['8'], 'service': 'service[name>text=Exercise]'},
-                         {'clientID': '2', 'service': 'service[name>text=Soccer]'}],
-            }
-    newIDs3 = {}
-    i = Offering.objects.filter(pk=newIDs['6'])[0]
-    i.update(data, context, newIDs3)
-    print(i)
+    with transaction.atomic():
+        newIDsSite = {}
+        context = Context('en', mr)
+        i = Site.objects.get(pk=newIDs['2'])
 
-with transaction.atomic():
-    context = Context('en', mr)
-    data = {'names': [{'id':newIDs['10'], 'text': 'Bar Group'}],
-            'members': [{'id': newIDs['11'], 'user': 'user[email>text=testUser28@pathadvisor.com]'},
-                        {'id': newIDs['12'], 'delete': 'delete'}],
-            }
-    newIDs4 = {}
-    i = Group.objects.filter(pk=newIDs['9'])[0]
-    i.update(data, context, newIDs4)
-    print(i)
+        data = {'names': [{'id':newIDs['3'], 'text': 'Bar Name'}],
+                'addresses': [{'id': newIDs['4'], 'city': 'Bar City', 'state': 'FL', 'zip code': '44444',
+                               'streets': [{'id': newIDs['5'], 'text': '543 Oak Street'},
+                                           {'clientID': '2', 'text': 'Suite 666'}]
+                              }
+                             ],
+                }
+
+        i.update(data, context, newIDsSite)
+        print("Site update:", i)
+        
+    with transaction.atomic():
+        context = Context('en', mr)
+        i = Address.objects.get(pk=newIDs['4'])
+        data = {'streets': [{'id': newIDsSite['2'], 'delete': 'delete'}]}
+        i.update(data, context)
+        print("Address>Street delete update:", i)
+        
+    with transaction.atomic():
+        context = Context('en', mr)
+        data = {'registration deadline': '2018-01-01',
+                'start': '2018-01-02',
+                'end': '',
+                'can register': 'no',
+                'names': [{'id': newIDs['8.2'], 'text': 'Bar Session'},
+                          {'clientID': '8.2', 'text': 'Biff Session', 'languageCode': 'sp'}],
+                'enrollments': [{'id': newIDs['8.6'], 'delete': 'delete'}, {'clientID': '8.6', 'user': 'user[email>text=testUser28@pathadvisor.com]'}],
+                'engagements': [{'id': newIDs['8.7'], 'delete': 'delete'}, {'clientID': '8.7', 'user': 'user[email>text=testUser28@pathadvisor.com]'}],
+                'inquiries': [{'id': newIDs['8.4'], 'user': 'user[email>text=testUser28@pathadvisor.com]'}, {'id': newIDs['8.5'], 'delete': 'delete'}],
+                'periods': [{'id': newIDs['8.3'], 'weekday': '5', 'start time': '11:00', 'end time': '14:00'}],
+               }
+        newIDs2 = {}
+        context = Context('en', mr)
+        i = Session.objects.filter(pk=newIDs['8.1'])[0]
+        i.update(data, context, newIDs2)
+        print("Session update: ", i)
+        
+    with transaction.atomic():
+        context = Context('en', mr)
+        data = {'minimum age': '7', 'maximum age': '12', 'minimum grade': '2', 'maximum grade': '6',
+                'web site': 'www.foo.com',
+                'names': [{'id':newIDs['7'], 'text': 'Foo Name'}],
+                'services': [{'id': newIDs['8'], 'service': 'service[name>text=Exercise]'},
+                             {'clientID': '2', 'service': 'service[name>text=Soccer]'}],
+                }
+        newIDs3 = {}
+        i = Offering.objects.filter(pk=newIDs['6'])[0]
+        i.update(data, context, newIDs3)
+        print("Offering update: ", i)
+
+    with transaction.atomic():
+        context = Context('en', mr)
+        data = {'names': [{'id':newIDs['10'], 'text': 'Bar Group'}],
+                'members': [{'id': newIDs['11'], 'user': 'user[email>text=testUser28@pathadvisor.com]'},
+                            {'id': newIDs['12'], 'delete': 'delete'}],
+                }
+        newIDs4 = {}
+        i = Group.objects.filter(pk=newIDs['9'])[0]
+        i.update(data, context, newIDs4)
+        print(i)
+
+except Exception as e:
+    logger = logging.getLogger(__name__)
+    logger.error("%s" % traceback.format_exc())
 
 with transaction.atomic():
     context = Context('en', mr)
