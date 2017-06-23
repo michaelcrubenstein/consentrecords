@@ -95,7 +95,7 @@ try:
 			context = Context('en', mr)
 			user = parse('user[email>text="foouser1@pathadvisor.com"]', context, User)[0]
 			newItem = Notification.create(user, d, context, newIDs=newIDs2)
-			print(str(newItem), newIDs2)
+			print("Notification create", str(newItem), newIDs2)
 
 	with transaction.atomic():
 		data = {'id': newIDs2['0'], 'is fresh': 'no'}
@@ -103,7 +103,7 @@ try:
 		context = Context('en', mr)
 		i = Notification.objects.filter(pk=newIDs2['0'])[0]
 		i.update(data, context, newIDs3)
-		print(i)
+		print("Notification update", i)
 
 	data = {'first name': 'Bar',
 			'last name': 'User1A',
@@ -160,7 +160,22 @@ try:
 		context = Context('en', mr)
 		i = User.objects.filter(pk=newIDs['0'])[0]
 		i.update(data, context, newIDs4)
-		print(i)
+		print("User Update:", i)
+
+	data = {'public access': 'find',
+			'primary administrator': 'user[email>text="elizabethskavish@gmail.com"]',
+			'user grants': [{'clientID': '1', 'grantee': 'user[path>screen name=tu28]', 'privilege': 'read'}],
+			'group grants': [{'clientID': '2', 
+							  'grantee': 'organization[name>text=theBase]/group[name>text=theBase Employees]', 
+							  'privilege': 'read'}],
+		   }
+	with transaction.atomic():
+		newIDs5 = {}
+		context = Context('en', mr)
+		grantTarget = parse('grant target/%s' % newUser.id.hex, context, GrantTarget)[0]
+		grantTarget.update(data, context, newIDs)
+		print("Grant Target Update:", str(grantTarget), newIDs)
+
 except Exception as e:
 	logger = logging.getLogger(__name__)
 	logger.error("%s" % traceback.format_exc())
