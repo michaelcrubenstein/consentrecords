@@ -25,19 +25,26 @@ with transaction.atomic():
     print(str(newItem), newIDs)
 
 try:
-	with transaction.atomic():
-		context = Context('en', mr)
-		data = {'translations': [{'id': newIDs['1'], 'text': 'Bar Comment Prompt'},
-						         {'id': newIDs['2'], 'text': 'Biff Comment Prompt', 'languageCode': 'zh'}],
-			   }
-		newIDs2 = {}
-		context = Context('en', mr)
-		i = newItem
-		i.update(data, context, newIDs2)
-		print(i)
+    with transaction.atomic():
+        context = Context('en', mr)
+        data = {'translations': [{'id': newIDs['1'], 'text': 'Bar Comment Prompt'},
+                                 {'id': newIDs['2'], 'text': 'Biff Comment Prompt', 'languageCode': 'zh'}],
+               }
+        newIDs2 = {}
+        context = Context('en', mr)
+        i = newItem
+        i.update(data, context, newIDs2)
+        print("Comment Prompt Translation Update", i)
+    
+    with transaction.atomic():
+        context = Context('en', mr)
+        data = {'translations': [{'id': newIDs['2'], 'delete': 'delete'}]}
+        newItem.update(data, context)
+        print("Comment Prompt Translation Delete Update", i)
+    
 except Exception as e:
-	logger = logging.getLogger(__name__)
-	logger.error("%s" % traceback.format_exc())
+    logger = logging.getLogger(__name__)
+    logger.error("%s" % traceback.format_exc())
         
 with transaction.atomic():
     context = Context('en', mr)
