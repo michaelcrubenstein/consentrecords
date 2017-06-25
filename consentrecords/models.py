@@ -6771,11 +6771,19 @@ class UserUserGrantRequestHistory(dbmodels.Model):
 class Context:
     def __init__(self, languageCode, user):
         self.languageCode = languageCode
-        self.user = user
         self._transaction = None
         if user:
-            self.authUser = user.authUser
+            if type(user) == User:
+                self.user = user
+                self.authUser = user.authUser
+            else:
+                self.authUser = user
+                qs = User.objects.filter(deleteTransaction__isnull=True, 
+                                         emails__text=user.email, 
+                                         emails__deleteTransaction__isnull=True)
+                self.user = qs[0] if qs.exists() else None
         else:
+            self.user = None
             self.authUser = AnonymousUser()
         self._privileges = {}
         
