@@ -1690,21 +1690,6 @@ cr.ObjectValue = (function() {
 	return ObjectValue;
 })();
 
-cr.signedinUser = new cr.ObjectValue();
-
-cr.createSignedinUser = function(instanceID, description)
-{
-	cr.signedinUser.instance(new cr.Instance());
-	cr.signedinUser.setInstanceID(instanceID);
-	cr.signedinUser.setDescription(description);
-	cr.signedinUser.promiseCellsFromCache([cr.fieldNames.systemAccess])
-		.then(function()
-			{
-				$(cr.signedinUser).trigger("signin.cr");
-			}, 
-			cr.asyncFail);
-}
-
 cr.cellFactory = {
 	string: cr.StringCell,
 	number: cr.NumberCell,
@@ -2213,3 +2198,867 @@ cr.logRecord = function(name, message)
 			return false;
 		});
 	}
+
+cr.IInstance = (function() {
+	IInstance.prototype = new cr.ModelObject();
+	IInstance.prototype._id = null;
+	IInstance.prototype._description = "None";
+	IInstance.prototype._privilege = null;
+	IInstance.prototype._parentID = null;
+	IInstance.prototype._dataLoaded = false;
+	
+	IInstance.prototype.id = function(newID)
+	{
+		if (newID === undefined)
+			return this._id;
+		else
+		{
+			this._id = newID;
+			return this;
+		}
+	}
+	
+	IInstance.prototype.description = function(newDescription)
+	{
+		if (newDescription === undefined)
+			return this._description;
+		else
+		{
+			this._description = newDescription || "None";
+			return this;
+		}
+	}
+	
+	IInstance.prototype.privilege = function(newPrivilege)
+	{
+		if (newPrivilege === undefined)
+			return this._privilege;
+		else
+		{
+			this._privilege = newPrivilege;
+			return this;
+		}
+	}
+	
+	/** if parentID is undefined, returns the parent of this instance. The parent off
+	 * an instance is the instance that, when deleted, will automatically delete this instance.
+	 *
+	 * If parentID is defined, then set the parentID of this instance and return this so that
+	 * subsequent operations can be chained.
+	 */
+	IInstance.prototype.parentID = function(newParentID)
+	{
+		if (newParentID === undefined)
+			return this._parentID && crp.getInstance(this._parentID);
+		else
+		{
+			this._parentID = newParentID;
+			return this;
+		}
+	}
+		
+	function IInstance() {
+	};
+	
+	return IInstance;
+
+})();
+	
+cr.TranslationInstance = (function() {
+	TranslationInstance.prototype = new cr.IInstance();
+	
+	TranslationInstance.prototype._text = null;
+	TranslationInstance.prototype._language = null;
+	
+	TranslationInstance.prototype.setDefaultValues = function()
+	{
+		this._text = "";
+		this._language = null;
+	}
+	
+	TranslationInstance.prototype.setData = function(d)
+	{
+		this._text = 'text' in d ? d['text'] : "";
+		this._position = 'languageCode' in d ? d['languageCode'] : "";
+	}
+	
+	function TranslationInstance() {
+	    cr.IInstance.call(this);
+	};
+	
+	return TranslationInstance;
+
+})();
+	
+cr.Address = (function() {
+	Address.prototype = new cr.IInstance();
+	
+	function Address() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Address;
+
+})();
+	
+cr.Comment = (function() {
+	Comment.prototype = new cr.IInstance();
+	
+	function Comment() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Comment;
+
+})();
+	
+cr.CommentPrompt = (function() {
+	CommentPrompt.prototype = new cr.IInstance();
+	
+	function CommentPrompt() {
+	    cr.IInstance.call(this);
+	};
+	
+	return CommentPrompt;
+
+})();
+	
+cr.CommentPromptText = (function() {
+	CommentPromptText.prototype = new cr.IInstance();
+	
+	function CommentPromptText() {
+	    cr.IInstance.call(this);
+	};
+	
+	return CommentPromptText;
+
+})();
+	
+cr.DisqualifyingTag = (function() {
+	DisqualifyingTag.prototype = new cr.IInstance();
+	
+	function DisqualifyingTag() {
+	    cr.IInstance.call(this);
+	};
+	
+	return DisqualifyingTag;
+
+})();
+	
+cr.Engagement = (function() {
+	Engagement.prototype = new cr.IInstance();
+	
+	function Engagement() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Engagement;
+
+})();
+	
+cr.Enrollment = (function() {
+	Enrollment.prototype = new cr.IInstance();
+	
+	function Enrollment() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Enrollment;
+
+})();
+	
+cr.Experience = (function() {
+	Experience.prototype = new cr.IInstance();
+	
+	function Experience() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Experience;
+
+})();
+	
+cr.ExperienceCustomService = (function() {
+	ExperienceCustomService.prototype = new cr.IInstance();
+	
+	function ExperienceCustomService() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ExperienceCustomService;
+
+})();
+	
+cr.ExperienceService = (function() {
+	ExperienceService.prototype = new cr.IInstance();
+	
+	function ExperienceService() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ExperienceService;
+
+})();
+	
+cr.ExperiencePrompt = (function() {
+	ExperiencePrompt.prototype = new cr.IInstance();
+	
+	function ExperiencePrompt() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ExperiencePrompt;
+
+})();
+	
+cr.ExperiencePromptService = (function() {
+	ExperiencePromptService.prototype = new cr.IInstance();
+	
+	function ExperiencePromptService() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ExperiencePromptService;
+
+})();
+	
+cr.ExperiencePromptText = (function() {
+	ExperiencePromptText.prototype = new cr.IInstance();
+	
+	function ExperiencePromptText() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ExperiencePromptText;
+
+})();
+	
+cr.GrantTarget = (function() {
+	GrantTarget.prototype = new cr.IInstance();
+	
+	function GrantTarget() {
+	    cr.IInstance.call(this);
+	};
+	
+	return GrantTarget;
+
+})();
+	
+cr.Group = (function() {
+	Group.prototype = new cr.IInstance();
+	
+	function Group() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Group;
+
+})();
+	
+cr.GroupGrant = (function() {
+	GroupGrant.prototype = new cr.IInstance();
+	
+	function GroupGrant() {
+	    cr.IInstance.call(this);
+	};
+	
+	return GroupGrant;
+
+})();
+	
+cr.GroupName = (function() {
+	GroupName.prototype = new cr.IInstance();
+	
+	function GroupName() {
+	    cr.IInstance.call(this);
+	};
+	
+	return GroupName;
+
+})();
+	
+cr.GroupMember = (function() {
+	GroupMember.prototype = new cr.IInstance();
+	
+	function GroupMember() {
+	    cr.IInstance.call(this);
+	};
+	
+	return GroupMember;
+
+})();
+	
+cr.Inquiry = (function() {
+	Inquiry.prototype = new cr.IInstance();
+	
+	function Inquiry() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Inquiry;
+
+})();
+	
+cr.Notification = (function() {
+	Notification.prototype = new cr.IInstance();
+	
+	function Notification() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Notification;
+
+})();
+	
+cr.NotificationArgument = (function() {
+	NotificationArgument.prototype = new cr.IInstance();
+	
+	function NotificationArgument() {
+	    cr.IInstance.call(this);
+	};
+	
+	return NotificationArgument;
+
+})();
+	
+cr.Offering = (function() {
+	Offering.prototype = new cr.IInstance();
+	
+	function Offering() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Offering;
+
+})();
+	
+cr.OfferingName = (function() {
+	OfferingName.prototype = new cr.IInstance();
+	
+	function OfferingName() {
+	    cr.IInstance.call(this);
+	};
+	
+	return OfferingName;
+
+})();
+	
+cr.OfferingService = (function() {
+	OfferingService.prototype = new cr.IInstance();
+	
+	function OfferingService() {
+	    cr.IInstance.call(this);
+	};
+	
+	return OfferingService;
+
+})();
+	
+cr.Organization = (function() {
+	Organization.prototype = new cr.IInstance();
+	
+	function Organization() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Organization;
+
+})();
+	
+cr.OrganizationName = (function() {
+	OrganizationName.prototype = new cr.IInstance();
+	
+	function OrganizationName() {
+	    cr.IInstance.call(this);
+	};
+	
+	return OrganizationName;
+
+})();
+	
+cr.Path = (function() {
+	Path.prototype = new cr.IInstance();
+	
+	function Path() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Path;
+
+})();
+	
+cr.Period = (function() {
+	Period.prototype = new cr.IInstance();
+	
+	function Period() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Period;
+
+})();
+	
+cr.Service = (function() {
+	Service.prototype = new cr.IInstance();
+	
+	function Service() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Service;
+
+})();
+	
+cr.ServiceName = (function() {
+	ServiceName.prototype = new cr.IInstance();
+	
+	function ServiceName() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ServiceName;
+
+})();
+	
+cr.ServiceOrganizationLabel = (function() {
+	ServiceOrganizationLabel.prototype = new cr.IInstance();
+	
+	function ServiceOrganizationLabel() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ServiceOrganizationLabel;
+
+})();
+	
+cr.ServiceSiteLabel = (function() {
+	ServiceSiteLabel.prototype = new cr.IInstance();
+	
+	function ServiceSiteLabel() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ServiceSiteLabel;
+
+})();
+	
+cr.ServiceOfferingLabel = (function() {
+	ServiceOfferingLabel.prototype = new cr.IInstance();
+	
+	function ServiceOfferingLabel() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ServiceOfferingLabel;
+
+})();
+	
+cr.ServiceImplication = (function() {
+	ServiceImplication.prototype = new cr.IInstance();
+	
+	function ServiceImplication() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ServiceImplication;
+
+})();
+	
+cr.Session = (function() {
+	Session.prototype = new cr.IInstance();
+	
+	function Session() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Session;
+
+})();
+	
+cr.SessionName = (function() {
+	SessionName.prototype = new cr.IInstance();
+	
+	function SessionName() {
+	    cr.IInstance.call(this);
+	};
+	
+	return SessionName;
+
+})();
+	
+cr.Site = (function() {
+	Site.prototype = new cr.IInstance();
+	
+	function Site() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Site;
+
+})();
+	
+cr.SiteName = (function() {
+	SiteName.prototype = new cr.IInstance();
+	
+	function SiteName() {
+	    cr.IInstance.call(this);
+	};
+	
+	return SiteName;
+
+})();
+	
+cr.Street = (function() {
+	Street.prototype = new cr.IInstance();
+	
+	function Street() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Street;
+
+})();
+	
+cr.User = (function() {
+	User.prototype = new cr.IInstance();
+	User.prototype._firstName = null;
+	User.prototype._lastName = null;
+	User.prototype._birthday = null;
+	User.prototype._systemAccess = null;
+	User.prototype._emails = null;
+	User.prototype._notifications = null;
+	User.prototype._path = null;
+	User.prototype._userGrantRequests = null;
+	
+	User.prototype.setDefaultValues = function()
+	{
+		this._firstName = "";
+		this._lastName = "";
+		this._birthday = "";
+		this._systemAccess = "write";
+		this._emails = [];
+		this._notifications = [];
+		this._path = new cr.Path();
+		this._userGrantRequests = [];
+	}
+	
+	User.prototype.setData = function(d)
+	{
+		this._firstName = 'first name' in d ? d['first name'] : "";
+		this._lastName = 'last name' in d ? d['last name'] : "";
+		this._birthday = 'birthday' in d ? d['birthday'] : "";
+		if ('description' in d)
+			this.description(d['description'])
+		if ('privilege' in d)
+			this.privilege(d['privilege']);
+		if ('system access' in d)
+			this.systemAccess(d['system access']);
+		if ('emails' in d)
+			this.emails(d['emails']);
+		if ('notifications' in d)
+			this.notifications(d['notifications']);
+		if ('path' in d)
+			this.path(d['path']);
+		if ('user grant requests' in d)
+			this.userGrantRequests(d['user grant requests']);
+	}
+	
+	User.prototype.firstName = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._firstName;
+		else
+		{
+		    if (newValue != this._firstName)
+		    {
+				this._firstName = newValue;
+			}
+			return this;
+		}
+	}
+	
+	User.prototype.lastName = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._lastName;
+		else
+		{
+		    if (newValue != this._lastName)
+		    {
+				this._lastName = newValue;
+			}
+			return this;
+		}
+	}
+	
+	User.prototype.birthday = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._birthday;
+		else
+		{
+		    if (newValue != this._birthday)
+		    {
+				this._birthday = newValue;
+			}
+			return this;
+		}
+	}
+	
+	User.prototype.name = function()
+	{
+		var firstName = user.firstName();
+		var lastName = user.lastName();
+		if (firstName)
+		{
+			if (lastName)
+				return firstName + " " + lastName;
+			else
+				return firstName;
+		}
+		else 
+			return lastName;
+	}
+	
+	User.prototype.systemAccess = function(newSystemAccess)
+	{
+		if (newSystemAccess === undefined)
+			return this._systemAccess;
+		else
+		{
+			this._systemAccess = newSystemAccess;
+			return this;
+		}
+	}
+	
+	User.prototype.path = function(newData)
+	{
+		if (newData === undefined)
+			return this._path;
+		else
+		{
+			this._path = new cr.Path();
+			this._path.setData(newData);
+			return this;
+		}
+	}
+	
+	User.prototype.emails = function(newData)
+	{
+		if (newData === undefined)
+			return this._emails;
+		else
+		{
+			this._emails = newData.map(function(d)
+				{
+					var i = new cr.UserEmail();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	User.prototype.notifications = function(newData)
+	{
+		if (newData === undefined)
+			return this._notifications;
+		else
+		{
+			this._notifications = newData.map(function(d)
+				{
+					var i = new cr.Notification();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	User.prototype.userGrantRequests = function(newData)
+	{
+		if (newData === undefined)
+			return this._userGrantRequests;
+		else
+		{
+			this._userGrantRequests = newData.map(function(d)
+				{
+					var i = new cr.UserUserGrantRequest();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	User.prototype.promiseDataLoaded = function(fields)
+	{
+		if (this.privilege() == cr.privileges.find)
+		{
+			var result = $.Deferred();
+			result.reject("You do not have permission to see information about {0}".format(this.description()));
+			return result.promise();
+		}
+		if (this._dataLoaded)
+		{
+			var result = $.Deferred();
+			result.resolve(this);
+			return result.promise();
+		}
+		else if (this.id())
+		{
+			var _this = this;
+			var jsonArray = {};
+			if (fields)
+				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
+			return $.getJSON(cr.urls.getData + "user/" + this.id() + "/", jsonArray)
+				.then(function(json)
+					{
+						var r2 = $.Deferred();
+						try {
+							/* If the data length is 0, then this item can not be read. */
+							if (json.data.length > 0)
+							{
+								_this.setData(json.data[0]);
+							}
+							else
+							{
+								_this.setDefaultValues();
+								_this.privilege(null);
+							}
+							
+							r2.resolve(_this);
+						}
+						catch (err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					},
+					cr.thenFail
+				 )
+				.then(function(instance)
+					{
+						if (!fields)
+							return;
+							
+						var subFields = fields.filter(function(s) { return s.indexOf("/") >= 0; });
+						if (subFields.length == 0)
+							return;
+						try
+						{
+							debugger;
+							// This code is used to get subField data. Is this necessary?
+// 							return $.when.apply(null, subFields.map(
+// 									function(s) {
+// 										var cellName = s.substring(0, s.indexOf("/"));
+// 										var fieldNames = s.substring(s.indexOf("/") + 1).split(",");
+// 										try
+// 										{
+// 											return cr.getCellValues(_this, cellName, fieldNames); 
+// 										}
+// 										catch(err)
+// 										{
+// 											var r3 = $.Deferred();
+// 											r3.reject(err);
+// 											return r3;
+// 										}
+// 									}))
+// 								.then(function()
+// 									{
+// 										var r3 = $.Deferred();
+// 										r3.resolve(cells);
+// 										return r3;
+// 									},
+// 									function(err)
+// 									{
+// 										var r3 = $.Deferred();
+// 										r3.reject(err);
+// 										return r3;
+// 									});
+						}
+						catch(err)
+						{
+							var r3 = $.Deferred();
+							r3.reject(err);
+							return r3;
+						}
+					}
+				);
+		}
+		else
+		{
+			this.setDefaultValues();
+		}
+	}
+	
+	function User() {
+	    cr.IInstance.call(this);
+	};
+	
+	return User;
+
+})();
+	
+cr.UserEmail = (function() {
+	UserEmail.prototype = new cr.IInstance();
+	
+	UserEmail.prototype._text = null;
+	UserEmail.prototype._position = null;
+	
+	UserEmail.prototype.setDefaultValues = function()
+	{
+		this._text = "";
+		this._position = 0;
+	}
+	
+	UserEmail.prototype.setData = function(d)
+	{
+		this._text = 'text' in d ? d['text'] : "";
+		this._position = 'position' in d ? parseInt(d['position']) : 0;
+	}
+	
+	function UserEmail() {
+	    cr.IInstance.call(this);
+	};
+	
+	return UserEmail;
+
+})();
+	
+cr.UserGrant = (function() {
+	UserGrant.prototype = new cr.IInstance();
+	
+	function UserGrant() {
+	    cr.IInstance.call(this);
+	};
+	
+	return UserGrant;
+
+})();
+	
+cr.UserUserGrantRequest = (function() {
+	UserUserGrantRequest.prototype = new cr.IInstance();
+	
+	function UserUserGrantRequest() {
+	    cr.IInstance.call(this);
+	};
+	
+	return UserUserGrantRequest;
+
+})();
+	
+cr.signedinUser = new cr.User();
+
+cr.createSignedinUser = function(id, description)
+{
+	cr.signedinUser.id(id)
+	               .description(description)
+	               .promiseDataLoaded([cr.fieldNames.systemAccess])
+		.then(function()
+			{
+				$(cr.signedinUser).trigger("signin.cr");
+			}, 
+			cr.asyncFail);
+}
+

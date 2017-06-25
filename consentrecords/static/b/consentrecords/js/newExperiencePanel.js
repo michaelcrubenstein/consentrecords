@@ -2282,7 +2282,7 @@ var ExperienceShareOptions = (function () {
 					{
 						if (prepareClick('click', duplicateText))
 						{
-							var tempExperience = new Experience(cr.signedinUser.getValue("Path"), experience);
+							var tempExperience = new Experience(cr.signedinUser.path(), experience);
 							var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
 							newPanel.showUp()
 								.done(function()

@@ -157,8 +157,8 @@ function appendSessionDescriptions(buttons)
 
 function getUserName(user)
 {
-	var firstName = user.getDatum(cr.fieldNames.firstName);
-	var lastName = user.getDatum(cr.fieldNames.lastName);
+	var firstName = user.firstName();
+	var lastName = user.lastName();
 	if (firstName)
 	{
 		if (lastName)
@@ -190,7 +190,7 @@ function getPathDescription(path)
 
 function getUserDescription(user)
 {
-	return getUserName(user) || user.getDescription();
+	return getUserName(user) || user.description();
 }
 				
 /**
@@ -221,7 +221,7 @@ function showUser(user)
 	 .then(function()
 		{
 			var panel = new PathlinesPanel(user, true);
-			panel.pathtree.setUser(user.getValue("Path"), true);
+			panel.pathtree.setUser(user.path(), true);
 			panel.showLeft().then(unblockClick);
 		},
 		cr.syncFail);

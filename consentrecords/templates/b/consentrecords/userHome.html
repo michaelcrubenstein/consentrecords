@@ -227,7 +227,7 @@
 					this.off("signinCanceled.cr", onSigninCanceled);
 					var firstPanel = new PathlinesPanel(cr.signedinUser, false);
 					firstPanel.setupSearchPanel();
-					firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+					firstPanel.pathtree.setUser(cr.signedinUser.path(), true)
 						.then(function()
 							{
 								handleState(firstPanel)
@@ -448,7 +448,7 @@
 										{
 											var done;
 											var panel;
-											if (cr.signedinUser.getInstanceID())
+											if (cr.signedinUser.id())
 											{
 												panel = new PathlinesPanel(users[0], true);
 											}	
@@ -461,12 +461,12 @@
 													};
 												panel = new PathlinesPanel(users[0], done);
 											}
-											panel.pathtree.setUser(users[0].getValue("Path"), true);
+											panel.pathtree.setUser(users[0].path(), true);
 											panel.showLeft();
 										}
 										else
 										{
-											if (!cr.signedinUser.getInstanceID())
+											if (!cr.signedinUser.id())
 											{
 												firstPanel = new WelcomePanel();
 												firstPanel.showNow();
@@ -489,7 +489,7 @@
 						var handleState = function(pathwayPanel)
 						{
 							var pathway = pathwayPanel.pathtree;
-							var experiencesPath = cr.signedinUser.getValue("Path");
+							var experiencesPath = cr.signedinUser.path();
 							cr.getData({path: experienceID, fields: ["Offering"]})
 								.then(function(experiences)
 								{
@@ -500,7 +500,7 @@
 												{
 													if (experiences[0].getTypeName() == "More Experience")
 													{
-														var experience = new Experience(cr.signedinUser.getValue("Path"), experiences[0]);
+														var experience = new Experience(cr.signedinUser.path(), experiences[0]);
 														new NewExperiencePanel(experience, experience.getPhase())
 															.showUp();
 													}
@@ -544,7 +544,7 @@
 							for (var i = 0; i < cell.data.length; ++i)
 							{
 								var d = cell.data[i];
-								if (d.getInstanceID() == newValue.getInstanceID())
+								if (d.id() == newValue.id())
 									d.triggerDeleteValue();
 							}
 						}
@@ -577,7 +577,7 @@
 					handleState = function(pathwayPanel)
 					{
 						var cell = cr.signedinUser.getCell("access request");
-						var v = cell.data.find(function(d) { return d.getInstanceID() === "{{follower}}"; });
+						var v = cell.data.find(function(d) { return d.id() === "{{follower}}"; });
 						if (v)
 						{
 							v.deleteValue()
@@ -694,13 +694,13 @@
 			/* Initialize all of the objects that are dependent on whether or not the user is
 				signed in.
 			 */
-			if (!cr.signedinUser.getInstanceID())
+			if (!cr.signedinUser.id())
 			{
 				$(cr.signedinUser).trigger("signout.cr");
 			}
 			
 			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
-			if (cr.signedinUser.getInstanceID())
+			if (cr.signedinUser.id())
 			{
 				cr.signedinUser.one("signin.cr", null, function(eventObject)
 					{
@@ -709,7 +709,7 @@
 							firstPanel = new PathlinesPanel(cr.signedinUser, false);
 							firstPanel.setupSearchPanel();
 							firstPanel.showNow();
-							firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+							firstPanel.pathtree.setUser(cr.signedinUser.path(), true)
 							.then(function()
 								{
 									if (handleState)
@@ -804,7 +804,7 @@
 					});
 			}
 			
-			var path = cr.signedinUser.getInstanceID() + '>"Consent Record"';
+			var path = cr.signedinUser.id() + '>"Consent Record"';
 			cr.getData({path: path, 
 						fields: ["parents"]})
 				.then(successFunction, cr.asyncFail);
@@ -938,7 +938,7 @@
 				}
 			}
 			
-			var path = cr.signedinUser.getInstanceID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
+			var path = "user/" + cr.signedinUser.id()+"/enrollment/session";
 			cr.getData({path: path, 
 						fields: ["parents"]})
 				.then(successFunction, cr.asyncFail);

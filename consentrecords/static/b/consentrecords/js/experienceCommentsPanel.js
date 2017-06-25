@@ -27,11 +27,11 @@ var ExperienceCommentsPanel = (function() {
 			.classed('asker', true)
 			.datum(function(d) { 
 				var cp = d.getValue("Comment Request"); 
-				return cp && cp.getInstanceID() && cp.getValue("Path"); })
+				return d.asker(); })
 			.text(function(d) {
-					if (!d || !d.getInstanceID())
+					if (!d || !d.id())
 						return null;
-					if (d.getInstanceID() == cr.signedinUser.getValue('Path').getInstanceID())
+					if (d.id() == cr.signedinUser.path().id())
 						return _this.youAskedText;
 					else {
 						var s = getPathDescription(d.instance());
@@ -145,7 +145,7 @@ var ExperienceCommentsPanel = (function() {
 	{
 		
 		/* Test case: add a comment to an experience that has had a comment */
-		return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.getValue("Path"), newText);
+		return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.path(), newText);
 	}
 	
 	/**

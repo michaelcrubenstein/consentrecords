@@ -1228,7 +1228,7 @@ var PathLines = (function() {
 	
 	PathLines.prototype.setUser = function(path, editable)
 	{
-		if (path.getPrivilege() === cr.privileges.find)
+		if (path.privilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(path.getDescription());
 		if (this.path)
 			throw "path has already been set for this pathtree";
@@ -1438,7 +1438,7 @@ var AlertButton = (function() {
 					_this.onClick();
 				})
 			.classed("settings", true)
-			.style("display", this.user.getPrivilege() == cr.privileges.administer ? null : "none")
+			.style("display", this.user.privilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", imagePath);
 		this.button.append("span")
@@ -1608,7 +1608,7 @@ var PathlinesPanel = (function () {
 					d3.event.preventDefault();
 				})
 			.classed("settings", true)
-			.style("display", user.getPrivilege() == cr.privileges.administer ? null : "none")
+			.style("display", user.privilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", notificationsImagePath);
 		button.append("span")
@@ -1662,8 +1662,8 @@ var PathlinesPanel = (function () {
 			.classed('site-active-text', true)
 			.text("+");
 			
-		var moreExperiences = user.getValue("Path");
-		var canAddExperience = (moreExperiences.getInstanceID() === null ? user.canWrite() : moreExperiences.canWrite());
+		var moreExperiences = user.path();
+		var canAddExperience = (moreExperiences.id() === null ? user.canWrite() : moreExperiences.canWrite());
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
 	
@@ -1798,7 +1798,7 @@ var PathlinesPanel = (function () {
 				setupOnViewEventHandler(user.getCell(cr.fieldNames.lastName), "dataChanged.cr", _this.node(), checkTitle);
 				setupOnViewEventHandler(user.getCell(cr.fieldNames.email), "dataChanged.cr", _this.node(), checkTitle);
 				
-// 				findButton.style("display", user.getPrivilege() === cr.privileges.administer ? null : "none");
+// 				findButton.style("display", user.privilege() === cr.privileges.administer ? null : "none");
 				
 				this.isMinHeight = true;
 				this.handleResize();
@@ -2242,7 +2242,7 @@ var OtherPathlines = (function() {
 		{
 			try
 			{
-				var tempExperience = new Experience(cr.signedinUser.getValue("Path"), fd.experience);
+				var tempExperience = new Experience(cr.signedinUser.path(), fd.experience);
 				new NewExperiencePanel(tempExperience, tempExperience.getPhase())
 					.showUp()
 					.always(unblockClick);

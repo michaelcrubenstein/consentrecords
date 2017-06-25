@@ -30,7 +30,7 @@ var Settings = (function () {
 		
 		var panel2Div = this.appendScrollArea();
 		
-		var path = user.getValue("Path");
+		var path = user.path();
 		var birthdayCell = user.getCell("Birthday");
 		var oldAppendUpdateBirthdayCommands = birthdayCell.data[0].appendUpdateCommands;
 		
@@ -116,7 +116,7 @@ var Settings = (function () {
 			return divs;
 		}
 		
-		if (user.getPrivilege() === cr.privileges.administer)
+		if (user.privilege() === cr.privileges.administer)
 		{
 			var userPublicAccessValue = userPublicAccessCell.data[0];
 			var pathPublicAccessValue = pathPublicAccessCell.data[0];
@@ -912,7 +912,7 @@ crn.ExperienceSuggestion = (function() {
 											showClickFeedback(this);
 					
 											var phase = phaseInstance ? phaseInstance.getDescription() : "Previous";
-											var experience = new Experience(cr.signedinUser.getValue("Path"))
+											var experience = new Experience(cr.signedinUser.path())
 											experience.initDateRange(phase);
 											var tag = crp.getInstance(args[1].getInstanceID());
 											experience.services.push(new ReportedObject({name: tag.getDescription(), pickedObject: tag}));

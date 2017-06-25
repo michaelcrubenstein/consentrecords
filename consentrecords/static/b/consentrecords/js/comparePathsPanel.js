@@ -518,9 +518,9 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
 	{
-		if (leftPath.getPrivilege() === cr.privileges.find)
+		if (leftPath.privilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(leftPath.getDescription());
-		if (rightPath.getPrivilege() === cr.privileges.find)
+		if (rightPath.privilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(rightPath.getDescription());
 		if (this.leftPath)
 			throw "paths have already been set for this pathtree";
