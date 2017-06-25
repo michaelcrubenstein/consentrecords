@@ -3575,6 +3575,7 @@ class Engagement(ChildInstance, dbmodels.Model):
                }
     
     elementMap = {'user': ('user__', 'User', 'userEngagements'),
+                  'session': ('parent__', 'Session', 'engagements'),
                  }
 
     def description(self, languageCode=None):
@@ -5446,6 +5447,7 @@ class Path(IInstance, dbmodels.Model):
                }
                
     elementMap = {'experience': ('experiences__', "Experience", 'parent'),
+                  'user': ('parent__', "User", 'paths'),
                  }
 
     def getSubClause(qs, user, accessType):
@@ -6057,6 +6059,7 @@ class Session(ChildInstance, dbmodels.Model):
                   'enrollment': ('enrollments__', "Enrollment", 'parent'),
                   'inquiry': ('inquiry__', "Inquiry", 'parent'),
                   'period': ('periods__', "Period", 'parent'),
+                  'offering': ('parent__', "Offering", 'sessions'),
                  }
 
     def __str__(self):
@@ -6606,6 +6609,7 @@ class User(RootInstance, dbmodels.Model):
                   'notification': ('notifications__', "Notification", 'parent'),
                   'path': ('paths__', "Path", 'parent'),
                   'user grant request': ('userGrantRequests__', "UserUserGrantRequest", 'parent'),
+                  'engagement': ('userEngagements__', "Engagement", 'user'),
                  }
 
     def getSubClause(qs, user, accessType):
