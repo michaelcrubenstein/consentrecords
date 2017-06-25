@@ -964,26 +964,24 @@ class api:
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
             
-            userInfo=UserInfo(user)
-            
-            fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
-            fieldNames = list(fieldNames)
-            
-            if 'none' in fields:
-                qs = pathparser.getObjectQuerySet(path, userInfo=userInfo)
-            else:
-                qs = pathparser.getObjectQuerySet(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            
             language = data.get('language', None)
-            types = qs.types
-            typeDuples = map(lambda t: (t, t.getFieldsData(language)), qs.types)
+            context = Context(language, user)
             
-            fieldsDataDictionary = FieldsDataDictionary(typeDuples, language=language)
-            p = qs.getData(fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language)
+            tokens = cssparser.tokenizeHTML(path)
+            qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+            if qs.count() == 0:
+                p = []
+            else:
+                resultClass = type(qs[0])
+                qs2 = resultClass.filterForGetData(qs, context.user, accessType)
+                qs2 = resultClass.select_related(qs2.distinct())
+                if end > 0:
+                    qs2 = qs2[start:end]
+                elif start > 0:
+                    qs2 = qs2[start:]
+                p = [i.getData(fields, context) for i in qs2]
         
             results = {'data': p}
-            if 'none' not in fields:
-                results['fields'] = fieldsDataDictionary.getData(types)
                 
         except Exception as e:
             logger = logging.getLogger(__name__)

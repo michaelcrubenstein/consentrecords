@@ -387,6 +387,27 @@ class SecureRootInstance(IInstance):
             qClause = Q((inClause, elementClause))
             return qs.filter(qClause)
 
+    def readableQuerySet(qs, user, prefix=''):
+        if not user:
+            return qs.filter(SecureRootInstance.anonymousReadFilter(prefix))
+        elif user.is_administrator:
+            return qs
+        else:
+            privilegeIDs = ["read", "write", "administer"]
+            inClause = (prefix + '__id__in') if prefix else 'id__in'
+            elementClause = GrantTarget.objects.filter(\
+                                 Q(publicAccess__in=privilegeIDs) |\
+                                 Q(primaryAdministrator=user) |\
+                                 Q(userGrants__privilege__in=privilegeIDs,
+                                   userGrants__deleteTransaction__isnull=True,
+                                   userGrants__grantee=user) |\
+                                 Q(groupGrants__privilege__in=privilegeIDs,
+                                   groupGrants__deleteTransaction__isnull=True,
+                                   groupGrants__grantee__members__user=user,
+                                   groupGrants__grantee__members__deleteTransaction__isnull=True))
+            qClause = Q((inClause, elementClause))
+            return qs.filter(qClause)
+
     def administrableQuerySet(qs, user, prefix=''):
         if not user:
             return qs.none()
@@ -624,6 +645,13 @@ class OrderedServiceLinkInstance(ServiceLinkInstance):
                                              instance=self,
                                              position=self.position,
                                              service=self.service)
+
+class PublicInstance():
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
+        
+    def filterForGetData(qs, user, accessType):
+        return qs
 
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -2982,6 +3010,9 @@ class GrantTarget(IInstance, dbmodels.Model):
         else:
             return SecureRootInstance.administrableQuerySet(qs, user), GrantTarget
             
+    def filterForGetData(qs, user, accessType):
+        return getSubClause(qs, user, accessType)[0]
+            
     def markDeleted(self, context):
         for i in self.userGrants.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -3073,6 +3104,9 @@ class UserGrant(AccessInstance, dbmodels.Model):
         else:
             return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
 
+    def filterForGetData(qs, user, accessType):
+        return getSubClause(qs, user, accessType)[0]
+            
     def create(parent, data, context, newIDs={}):
         newItem = UserGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -3117,6 +3151,9 @@ class GroupGrant(AccessInstance, dbmodels.Model):
         else:
             return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
 
+    def filterForGetData(qs, user, accessType):
+        return getSubClause(qs, user, accessType)[0]
+            
     def create(parent, data, context, newIDs={}):
         newItem = GroupGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -3193,6 +3230,9 @@ class Address(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, prefix='parent__parent')
+            
     def markDeleted(self, context):
         for i in self.streets.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -3317,6 +3357,9 @@ class Comment(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
+    def filterForGetData(qs, user, accessType):
+        return Path.readableQuerySet(qs, user, prefix='parent__parent')
+            
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied
@@ -3370,7 +3413,7 @@ class CommentHistory(dbmodels.Model):
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedCommentHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class CommentPrompt(RootInstance, dbmodels.Model):    
+class CommentPrompt(RootInstance, PublicInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdCommentPrompts')
     lastTransaction = lastTransactionField('changedCommentPrompts')
@@ -3400,9 +3443,6 @@ class CommentPrompt(RootInstance, dbmodels.Model):
         data = self.headData(context)
         data['translations'] = [i.getData([], context) for i in self.currentNames]
         return data
-        
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
         
     def markDeleted(self, context):
         for i in self.texts.filter(deleteTransaction__isnull=True):
@@ -3435,7 +3475,7 @@ class CommentPromptHistory(dbmodels.Model):
     transaction = createTransactionField('commentPromptHistories')
     instance = historyInstanceField(CommentPrompt)
     
-class CommentPromptText(TranslationInstance, dbmodels.Model):
+class CommentPromptText(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdCommentPromptTexts')
     lastTransaction = lastTransactionField('changedCommentPromptTexts')
@@ -3454,9 +3494,6 @@ class CommentPromptText(TranslationInstance, dbmodels.Model):
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '')
 
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(CommentPromptText.objects, parent, data, context, newIDs)
         
@@ -3472,7 +3509,7 @@ class CommentPromptTextHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class DisqualifyingTag(ServiceLinkInstance, dbmodels.Model):
+class DisqualifyingTag(ServiceLinkInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdDisqualifyingTags')
     lastTransaction = lastTransactionField('changedDisqualifyingTags')
@@ -3496,9 +3533,6 @@ class DisqualifyingTag(ServiceLinkInstance, dbmodels.Model):
                 data['service'] = self.service.headData(context)
             
         return data
-
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -3571,8 +3605,11 @@ class Engagement(ChildInstance, dbmodels.Model):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, prefix='parent__parent__parent__parent')
+            
     def create(parent, data, context, newIDs={}):
         newItem = Engagement.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -3663,8 +3700,11 @@ class Enrollment(ChildInstance, dbmodels.Model):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, prefix='parent__parent__parent__parent')
+            
     def create(parent, data, context, newIDs={}):
         newItem = Enrollment.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -3814,6 +3854,9 @@ class Experience(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent'), Path
 
+    def filterForGetData(qs, user, accessType):
+        return Path.readableQuerySet(qs, user, prefix='parent')
+            
     def markDeleted(self, context):
         for i in self.customServices.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -3977,6 +4020,9 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
+    def filterForGetData(qs, user, accessType):
+        return Path.readableQuerySet(qs, user, prefix='parent__parent')
+            
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied
@@ -4057,7 +4103,10 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
             return qs, accessType
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
-
+    
+    def filterForGetData(qs, user, accessType):
+        return Path.readableQuerySet(qs, user, prefix='parent__parent')
+            
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied
@@ -4084,7 +4133,7 @@ class ExperienceServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class ExperiencePrompt(RootInstance, dbmodels.Model):    
+class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdExperiencePrompts')
     lastTransaction = lastTransactionField('changedExperiencePrompts')
@@ -4157,9 +4206,6 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
         data['disqualifying tags'] = [i.headData(context) for i in self.fetchedDisqualifyingTags]
         return data
         
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-
     def markDeleted(self, context):
         for i in self.texts.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -4274,7 +4320,7 @@ class ExperiencePromptHistory(dbmodels.Model):
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ExperiencePromptService(OrderedServiceLinkInstance, dbmodels.Model):
+class ExperiencePromptService(OrderedServiceLinkInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdExperiencePromptServices')
     lastTransaction = lastTransactionField('changedExperiencePromptServices')
@@ -4301,9 +4347,6 @@ class ExperiencePromptService(OrderedServiceLinkInstance, dbmodels.Model):
             
         return data
 
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-                 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied
@@ -4331,7 +4374,7 @@ class ExperiencePromptServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServiceHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
-class ExperiencePromptText(TranslationInstance, dbmodels.Model):    
+class ExperiencePromptText(TranslationInstance, PublicInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdExperiencePromptTexts')
     lastTransaction = lastTransactionField('changedExperiencePromptTexts')
@@ -4349,9 +4392,6 @@ class ExperiencePromptText(TranslationInstance, dbmodels.Model):
                  
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '')
-
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
 
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ExperiencePromptText.objects, parent, data, context, newIDs)
@@ -4406,6 +4446,9 @@ class Group(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
+    
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
     def markDeleted(self, context):
         for i in self.names.filter(deleteTransaction__isnull=True):
@@ -4461,6 +4504,9 @@ class GroupName(TranslationInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
+
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(GroupName.objects, parent, data, context, newIDs)
         
@@ -4515,6 +4561,9 @@ class GroupMember(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -4595,7 +4644,10 @@ class Inquiry(ChildInstance, dbmodels.Model):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent__parent')
 
     def create(parent, data, context, newIDs={}):
         newItem = Inquiry.objects.create(transaction=context.transaction,
@@ -4696,6 +4748,9 @@ class Notification(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent')
+
     def markDeleted(self, context):
         for i in self.notificationArguments.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -4791,6 +4846,9 @@ class NotificationArgument(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), User
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
+
 class NotificationArgumentHistory(dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('notificationArgumentHistories')
@@ -4874,6 +4932,9 @@ class Offering(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
 
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
@@ -5005,6 +5066,9 @@ class OfferingName(TranslationInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
+
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(OfferingName.objects, parent, data, context, newIDs)
         
@@ -5053,6 +5117,9 @@ class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -5142,6 +5209,9 @@ class Organization(RootInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, '')
 
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
@@ -5240,6 +5310,9 @@ class OrganizationName(TranslationInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(OrganizationName.objects, parent, data, context, newIDs)
@@ -5346,6 +5419,26 @@ class Path(IInstance, dbmodels.Model):
                                groupGrants__grantee__members__user=user,
                                groupGrants__grantee__members__deleteTransaction__isnull=True)))))
 
+    def readableQuerySet(qs, user, prefix=''):
+        if not user:
+            return qs.filter(Path.anonymousReadFilter(prefix))
+        elif user.is_administrator:
+            return qs
+        else:
+            privilegeIDs = ["read", "write", "administer"]
+            inClause = (prefix + '__grantTarget__in') if prefix else 'grantTarget__in'
+            return qs.filter(Q((inClause,
+                                GrantTarget.objects.filter(\
+                             Q(publicAccess__in=privilegeIDs) |\
+                             Q(primaryAdministrator=user) |\
+                             Q(userGrants__privilege__in=privilegeIDs,
+                               userGrants__deleteTransaction__isnull=True,
+                               userGrants__grantee=user) |\
+                             Q(groupGrants__privilege__in=privilegeIDs,
+                               groupGrants__deleteTransaction__isnull=True,
+                               groupGrants__grantee__members__user=user,
+                               groupGrants__grantee__members__deleteTransaction__isnull=True)))))
+
     fieldMap = {'screen name': 'name',
                 'birthday': 'birthday',
                 'special access': 'specialAccess',
@@ -5360,6 +5453,9 @@ class Path(IInstance, dbmodels.Model):
             return qs, Path
         else:
             return Path.findableQuerySet(qs, user), Path
+
+    def filterForGetData(qs, user, accessType):
+        return Path.readableQuerySet(qs, user, '')
 
     def markDeleted(self, context):
         for i in self.experiences.filter(deleteTransaction__isnull=True):
@@ -5510,7 +5606,10 @@ class Period(ChildInstance, dbmodels.Model):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent__parent')
 
     def validateWeekday(data, key):
         if key not in data or re.search('^[0-6]$', data[key]):
@@ -5577,7 +5676,7 @@ class PeriodHistory(dbmodels.Model):
     startTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     endTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Service(RootInstance, dbmodels.Model):    
+class Service(RootInstance, PublicInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdServices')
     lastTransaction = lastTransactionField('changedServices')
@@ -5650,9 +5749,6 @@ class Service(RootInstance, dbmodels.Model):
                        'Volunteering', 'Wellness', 'Whatever', 'Working']
         _validateEnumeration(data, key, validValues)
     
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
             name.markDeleted(context)
@@ -5720,7 +5816,7 @@ class ServiceHistory(dbmodels.Model):
     instance = historyInstanceField(Service)
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
 
-class ServiceName(TranslationInstance, dbmodels.Model):
+class ServiceName(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceNames')
     lastTransaction = lastTransactionField('changedServiceNames')
@@ -5739,9 +5835,6 @@ class ServiceName(TranslationInstance, dbmodels.Model):
                
     elementMap = {}
                  
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-    
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ServiceName.objects, parent, data, context, newIDs)
         
@@ -5757,7 +5850,7 @@ class ServiceNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ServiceOrganizationLabel(TranslationInstance, dbmodels.Model):
+class ServiceOrganizationLabel(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceOrganizationLabels')
     lastTransaction = lastTransactionField('changedServiceOrganizationLabels')
@@ -5776,9 +5869,6 @@ class ServiceOrganizationLabel(TranslationInstance, dbmodels.Model):
                
     elementMap = {}
                  
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ServiceOrganizationLabel.objects, parent, data, context, newIDs)
         
@@ -5794,7 +5884,7 @@ class ServiceOrganizationLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ServiceSiteLabel(TranslationInstance, dbmodels.Model):
+class ServiceSiteLabel(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceSiteLabels')
     lastTransaction = lastTransactionField('changedServiceSiteLabels')
@@ -5813,9 +5903,6 @@ class ServiceSiteLabel(TranslationInstance, dbmodels.Model):
                
     elementMap = {}
                  
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ServiceSiteLabel.objects, parent, data, context, newIDs)
         
@@ -5831,7 +5918,7 @@ class ServiceSiteLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ServiceOfferingLabel(TranslationInstance, dbmodels.Model):
+class ServiceOfferingLabel(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceOfferingLabels')
     lastTransaction = lastTransactionField('changedServiceOfferingLabels')
@@ -5850,9 +5937,6 @@ class ServiceOfferingLabel(TranslationInstance, dbmodels.Model):
                
     elementMap = {}
                  
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ServiceOfferingLabel.objects, parent, data, context, newIDs)
         
@@ -5868,7 +5952,7 @@ class ServiceOfferingLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ServiceImplication(ChildInstance, dbmodels.Model):
+class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceImplications')
     lastTransaction = lastTransactionField('changedServiceImplications')
@@ -5909,9 +5993,6 @@ class ServiceImplication(ChildInstance, dbmodels.Model):
                   'service': ('impliedService__', "Service", 'impliedServiceImplications'),
                  }
                  
-    def getSubClause(qs, user, accessType):
-        return qs, accessType
-
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
             raise PermissionError
@@ -6034,6 +6115,9 @@ class Session(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
@@ -6158,7 +6242,10 @@ class SessionName(TranslationInstance, dbmodels.Model):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent__parent')
 
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(SessionName.objects, parent, data, context, newIDs)
@@ -6233,6 +6320,9 @@ class Site(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
@@ -6316,6 +6406,9 @@ class SiteName(TranslationInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
+
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(SiteName.objects, parent, data, context, newIDs)
         
@@ -6373,6 +6466,9 @@ class Street(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
     def create(parent, data, context, newIDs={}):
         newItem = Street.objects.create(transaction=context.transaction,
@@ -6444,9 +6540,11 @@ class User(RootInstance, dbmodels.Model):
     def select_related(querySet):
         return User.select_head_related(querySet)\
                    .prefetch_related(Prefetch('paths',
-                                         queryset=Path.objects.filter(deleteTransaction__isnull=True)))\
+                                         queryset=Path.objects.filter(deleteTransaction__isnull=True),
+                                         to_attr='currentPaths'))\
                    .prefetch_related(Prefetch('notifications',
-                                         queryset=Notification.objects.filter(deleteTransaction__isnull=True)))
+                                         queryset=Notification.objects.filter(deleteTransaction__isnull=True),
+                                         to_attr='currentNotifications'))
         
     def fetchPrivilege(self, user):
         return GrantTarget.objects.get(pk=self.id).fetchPrivilege(user)
@@ -6470,9 +6568,9 @@ class User(RootInstance, dbmodels.Model):
             data['emails'] = [i.headData(context) for i in emails]
 
         if 'path' in fields: 
-            qs = self.paths.filter(deleteTransaction__isnull=True)
-            if qs.exists():
-                data['path'] = Path.select_related(qs)[0].getData([], context)
+            data['path'] = self.currentPaths[0].getData([], context)
+        else:
+            data['path'] = self.currentPaths[0].headData(context)
 
         if 'notification' in fields: 
             data['notifications'] = [i.getData([], context) for i in \
@@ -6515,6 +6613,9 @@ class User(RootInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user), User
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, '')
 
     def markDeleted(self, context):
         for i in self.emails.filter(deleteTransaction__isnull=True):
@@ -6654,6 +6755,9 @@ class UserEmail(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent')
+
     def validateText(data, key):
         if key in data and data[key]:
             if _isEmail(data[key]):
@@ -6729,6 +6833,9 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
+
+    def filterForGetData(qs, user, accessType):
+        return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
     def create(parent, data, context, newIDs={}):
         newItem = UserUserGrantRequest.objects.create(transaction=context.transaction,
