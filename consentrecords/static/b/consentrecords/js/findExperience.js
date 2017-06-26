@@ -401,7 +401,7 @@ var FindExperienceSearchView = (function () {
 	
 	/* Overrides SearchView.prototype.onClickButton */
 	FindExperienceSearchView.prototype.onClickButton = function(d, i, button) {
-		if (prepareClick('click', 'pick ' + d.getTypeName() + ': ' + d.getDescription()))
+		if (prepareClick('click', 'pick ' + d.constructor.name + ': ' + d.getDescription()))
 		{
 			showClickFeedback(button);
 			

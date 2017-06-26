@@ -113,7 +113,7 @@ var CompareFlag = (function() {
 	/* Return true if the experience in this flag is on the specified path. */
 	CompareFlag.prototype.isOnPath = function(path)
 	{
-		return (this.experience.getTypeName() == "Experience") ?
+		return (this.experience instanceof cr.Engagement) ?
 			   (this.experience.getValue(cr.fieldNames.user).getInstanceID() == path.getValue(cr.fieldNames.user).getInstanceID()) :
 			   (this.experience.cell.parent == path);
 	}
@@ -307,7 +307,7 @@ var ComparePath = (function() {
 		
 		function getCompareFlag(experience)
 			{
-				var isLeft = (experience.getTypeName() == "Experience") ?
+				var isLeft = (experience instanceof cr.Engagement) ?
 							 (experience.getValue(cr.fieldNames.user).getInstanceID() == _this.leftPath.getValue(cr.fieldNames.user).getInstanceID()) :
 							 (experience.cell.parent == _this.leftPath);
 				if (isLeft)
@@ -468,7 +468,7 @@ var ComparePath = (function() {
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
-				return d.getTypeName() === "More Experience";
+				return d instanceof cr.Experience;
 			})
 			.forEach(function(d)
 			{
@@ -586,21 +586,20 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var p1 = crp.promise({path: this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)', 
+		var p1 = crp.promise({path: 'path/' + this.rightPath.id() + 'user/engagement', 
 				   fields: ["parents"]});
-		var p2 = crp.promise({path: this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
-						'::reference(Session)::reference(Sessions)::reference(Offering)'});
-		var p3 = crp.promise({path: this.rightPath.getInstanceID() + '/More Experience/Offering'});
+		var p2 = crp.promise({path: 'path/' + this.rightPath.id() + '/user/engagement/session/offering'});
+		var p3 = crp.promise({path: 'path/' + this.rightPath.id() + '/experience/offering'});
 		$.when(p1, p2, p3)
-		.then(function(experiences, r2, r3)
+		.then(function(engagements, r2, r3)
 			{
-				_this.allExperiences = experiences.slice();
-				$(experiences).each(function()
+				_this.allExperiences = engagements.slice();
+				$(engagements).each(function()
 				{
-					this.setDescription(this.getValue("Offering").getDescription());
+					this.setDescription(this.offering().description());
 				});
 				
-				return _this.rightPath.promiseCellsFromCache(["More Experience", "parents"]);
+				return _this.rightPath.promiseCellsFromCache(["experience", "parents"]);
 			})
 		.then(successFunction2, cr.asyncFail);
 	}

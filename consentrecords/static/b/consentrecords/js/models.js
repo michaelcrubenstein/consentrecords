@@ -78,35 +78,17 @@ var CRP = (function() {
 
 	CRP.prototype.pushInstance = function(i)
 	{
-		if (i.getInstanceID())
+		if (i.id())
 		{
-			if (!(i.getInstanceID() in this.instances))
+			if (!(i.id() in this.instances))
 			{
-				this.instances[i.getInstanceID()] = i;
+				this.instances[i.id()] = i;
 				return i;
 			}
 			else
 			{
-				var oldInstance = this.instances[i.getInstanceID()];
-				if (i.areCellsLoaded())
-				{
-					if (!oldInstance.getCells())
-					{
-						oldInstance.setCells(i.getCells());
-					}
-					else 
-					{
-						i.getCells().forEach(function(cell)
-							{
-								if (!oldInstance.getCell(cell.field.name))
-								{
-									oldInstance.importCell(cell);
-								}
-							});
-					}
-				}
-				if (!oldInstance.getTypeName() && i.getTypeName())
-					oldInstance.setTypeName(i.getTypeName());
+				var oldInstance = this.instances[i.id()];
+				oldInstance.mergeData(i);
 				return oldInstance;
 			}
 		}
@@ -124,10 +106,7 @@ var CRP = (function() {
 
 		var _this = this;
 		
-		var promise = cr.getData({path: args.path, 
-					start: args.start,
-					end: args.end,
-					fields: args.fields})
+		var promise = cr.getData(args)
 			.fail(function(err)
 				{
 					_this.promises[args.path] = undefined;
@@ -1997,7 +1976,9 @@ cr.getData = function(args)
 	{
 		if (!args.path)
 			throw new Error("path is not specified to getData");
-			
+		if (!args.resultType)
+		    throw new Error("resultType is not specified to getData");
+		
 		var data = {};
 		if (args.fields)
 			data['fields'] = JSON.stringify(args.fields); 
@@ -2014,14 +1995,12 @@ cr.getData = function(args)
 				{
 					try
 					{
-						if (json.fields)
-						{
-							json.fields.forEach(function(field)
-								{
-									crp.pushField(field);
-								});
-						}
-						return json.data.map(cr.ObjectCell.prototype.copyValue);
+						return json.data.map(function(d)
+							{
+								var i = new args.resultType();
+								i.setData(d);
+								return crp.pushInstance(i);
+							});
 					}
 					catch(err)
 					{
@@ -2257,13 +2236,62 @@ cr.IInstance = (function() {
 		}
 	}
 		
+	IInstance.prototype.setData = function(d)
+	{
+		if ('id' in d)
+			this.id(d['id'])
+		if ('description' in d)
+			this.description(d['description'])
+		if ('privilege' in d)
+			this.privilege(d['privilege']);
+		if ('parentID' in d)
+		    this.parentID(d['parentID'])
+	}
+	
+	IInstance.prototype.mergeData = function(source)
+	{
+		// Do nothing.
+	}
+	
+	IInstance.prototype.readCheckPromise = function()
+	{
+		if (this.privilege() == cr.privileges.find)
+		{
+			var result = $.Deferred();
+			result.reject("You do not have permission to see information about {0}".format(this.description()));
+			return result.promise();
+		}
+		else
+		    return undefined;
+	}
+	
+	IInstance.prototype.administerCheckPromise = function()
+	{
+		if (this.privilege() != cr.privileges.administer)
+		{
+			var result = $.Deferred();
+			result.reject("You do not have permission to administer {0}".format(this.description()));
+			return result.promise();
+		}
+		else
+		    return undefined;
+	}
+	
+	IInstance.prototype.canWrite = function()
+	{
+		if (this.id() === null)
+			throw(this.description() + " has not been saved");
+			
+		return [cr.privileges.write, cr.privileges.administer].indexOf(this.privilege()) >= 0;
+	}
+	
 	function IInstance() {
 	};
 	
 	return IInstance;
 
 })();
-	
+
 cr.TranslationInstance = (function() {
 	TranslationInstance.prototype = new cr.IInstance();
 	
@@ -2288,6 +2316,116 @@ cr.TranslationInstance = (function() {
 	
 	return TranslationInstance;
 
+})();
+
+cr.ServiceLinkInstance = (function() {
+	ServiceLinkInstance.prototype = new cr.IInstance();
+	ServiceLinkInstance.prototype._serviceID = null;
+	
+	ServiceLinkInstance.prototype.setDefaultValues = function()
+	{
+		this._serviceID = null;
+	}
+	
+	ServiceLinkInstance.prototype.service = function(newValue)
+	{
+		if (newValue === undefined)
+			return crp.getInstance(this._serviceID);
+		else
+		{
+		    if (newValue.id() != this._serviceID)
+		    {
+				this._serviceID = newValue.id();
+			}
+			return this;
+		}
+	}
+	
+	ServiceLinkInstance.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._serviceID = ('service' in d) ? d['service']['id'] : null;
+	}
+	
+	function ServiceLinkInstance() {
+	    cr.IInstance.call(this);
+	};
+	
+	return ServiceLinkInstance;
+})();
+	
+cr.OrderedServiceLinkInstance = (function() {
+	OrderedServiceLinkInstance.prototype = new cr.ServiceLinkInstance();
+	OrderedServiceLinkInstance.prototype._position = null;
+	
+	OrderedServiceLinkInstance.prototype.setDefaultValues = function()
+	{
+		ServiceLinkInstance.prototype.setDefaultValues.call(this);
+		this._position = null;
+	}
+	
+	OrderedServiceLinkInstance.prototype.position = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._position;
+		else
+		{
+		    if (newValue != this._position)
+		    {
+				this._position = newValue.id();
+			}
+			return this;
+		}
+	}
+	
+	OrderedServiceLinkInstance.prototype.setData = function(d)
+	{
+		cr.ServiceLinkInstance.prototype.setData.call(this, d);
+		this._position = d['position'];
+	}
+	
+	function OrderedServiceLinkInstance() {
+	    cr.ServiceLinkInstance.call(this);
+	};
+	
+	return OrderedServiceLinkInstance;
+})();
+	
+cr.AccessInstance = (function() {
+	AccessInstance.prototype = new cr.IInstance();
+	AccessInstance.prototype._grantee = null;
+	
+	AccessInstance.prototype.setDefaultValues = function()
+	{
+		this._grantee = null;
+	}
+	
+	AccessInstance.prototype.user = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._grantee;
+		else
+		{
+		    if (newValue.id() != this._grantee.id())
+		    {
+				this._grantee = newValue;
+			}
+			return this;
+		}
+	}
+	
+	AccessInstance.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._grantee = new cr.User();
+		this._grantee.setData(d['grantee']);
+	}
+	
+	function AccessInstance() {
+	    cr.IInstance.call(this);
+	};
+	
+	return AccessInstance;
 })();
 	
 cr.Address = (function() {
@@ -2347,7 +2485,129 @@ cr.DisqualifyingTag = (function() {
 	
 cr.Engagement = (function() {
 	Engagement.prototype = new cr.IInstance();
+	Engagement.prototype._user = null;
+	Engagement.prototype._start = null;
+	Engagement.prototype._end = null;
+	Engagement.prototype._organization = null;
+	Engagement.prototype._site = null;
+	Engagement.prototype._offering = null;
 	
+	Engagement.prototype.user = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._user;
+		else
+		{
+		    if (newValue != this._user)
+		    {
+				this._user = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Engagement.prototype.start = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._start;
+		else
+		{
+		    if (newValue != this._start)
+		    {
+				this._start = newValue;
+			}
+			return this;
+		}
+	}
+
+	Engagement.prototype.end = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._end;
+		else
+		{
+		    if (newValue != this._end)
+		    {
+				this._end = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Engagement.prototype.organization = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._organization;
+		else
+		{
+			if (!this._organization ||
+			    newValue.id != this._organization.id())
+			{
+				this._organization = new cr.Organization();
+				this._organization.setData(newValue);
+			}
+		}
+	}
+
+	Engagement.prototype.site = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._site;
+		else
+		{
+			if (!this._site ||
+			    newValue.id != this._site.id())
+			{
+				this._site = new cr.Site();
+				this._site.setData(newValue);
+			}
+		}
+	}
+
+	Engagement.prototype.offering = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._offering;
+		else
+		{
+			if (!this._offering ||
+			    newValue.id != this._offering.id())
+			{
+				this._offering = new cr.Offering();
+				this._offering.setData(newValue);
+				this._offering = crp.getInstance(this._offering.id());
+			}
+		}
+	}
+
+	Engagement.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		if ('user' in d)
+		{
+			this._user = new cr.User();
+			this._user.setData(d);
+		}
+		this._start = 'start' in d ? d['start'] : "";
+		this._end = 'end' in d ? d['end'] : "";
+		if ('organization' in d)
+		{
+			this._organization = new cr.Organization();
+			this._organization.setData(d['organization']);
+		}
+		if ('site' in d)
+		{
+			this._site = new cr.Organization();
+			this._site.setData(d['site']);
+		}
+		if ('offering' in d)
+		{
+			this._offering = new cr.Offering();
+			this._offering.setData(d['offering']);
+			this._offering = crp.getInstance(this._offering.id());
+		}
+    }
+    
 	function Engagement() {
 	    cr.IInstance.call(this);
 	};
@@ -2369,6 +2629,258 @@ cr.Enrollment = (function() {
 	
 cr.Experience = (function() {
 	Experience.prototype = new cr.IInstance();
+	Experience.prototype._organization = null;
+	Experience.prototype._customOrganization = null;
+	Experience.prototype._site = null;
+	Experience.prototype._customSite = null;
+	Experience.prototype._offering = null;
+	Experience.prototype._customOffering = null;
+	Experience.prototype._start = null;
+	Experience.prototype._end = null;
+	Experience.prototype._timeframe = null;
+	Experience.prototype._services = null;
+	Experience.prototype._customServices = null;
+	
+	Experience.prototype.organization = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._organization;
+		else
+		{
+		    if (newValue != this._organization)
+		    {
+				this._organization = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.customOrganization = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._customOrganization;
+		else
+		{
+		    if (newValue != this._customOrganization)
+		    {
+				this._customOrganization = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.site = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._site;
+		else
+		{
+		    if (newValue != this._site)
+		    {
+				this._site = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.customSite = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._customSite;
+		else
+		{
+		    if (newValue != this._customSite)
+		    {
+				this._customSite = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.offering = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._offering;
+		else
+		{
+		    if (newValue != this._offering)
+		    {
+				this._offering = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.customOffering = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._customOffering;
+		else
+		{
+		    if (newValue != this._customOffering)
+		    {
+				this._customOffering = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.start = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._start;
+		else
+		{
+		    if (newValue != this._start)
+		    {
+				this._start = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.end = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._end;
+		else
+		{
+		    if (newValue != this._end)
+		    {
+				this._end = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.timeframe = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._timeframe;
+		else
+		{
+		    if (newValue != this._timeframe)
+		    {
+				this._timeframe = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.services = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._services;
+		else
+		{
+		    if (newValue != this._services)
+		    {
+				this._services = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.customServices = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._customServices;
+		else
+		{
+		    if (newValue != this._customServices)
+		    {
+				this._customServices = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		if ('organization' in d) {
+			this._organization = new cr.Organization();
+			this._organization.setData(d['organization']);
+		}
+		else
+			this._organization = null;
+		this._customOrganization = 'custom organization' in d ? d['custom organization'] : "";
+		if ('site' in d) {
+			this._site = new cr.Site();
+			this._site.setData(d['site']);
+		}
+		else
+			this._site = null;
+		this._customSite = 'custom site' in d ? d['custom site'] : "";
+		if ('offering' in d) {
+			this._offering = new cr.Offering();
+			this._offering.setData(d['offering']);
+			this._offering = crp.getInstance(this._offering.id());
+		}
+		else
+			this._offering = null;
+		this._customOffering = 'custom offering' in d ? d['custom offering'] : "";
+		this._start = 'start' in d ? d['start'] : "";
+		this._end = 'end' in d ? d['end'] : "";
+		this._timeframe = 'timeframe' in d ? d['timeframe'] : "";
+		if ('services' in d)
+			this._services = d['services'].map(function(d) {
+								var i = new cr.ExperienceService();
+								i.setData(d);
+								return i;
+							});
+		if ('custom services' in d)
+			this._customServices = d['custom services'].map(function(d) {
+								var i = new cr.ExperienceCustomService();
+								i.setData(d);
+								return i;
+							});
+    }
+    
+	Experience.prototype.calculateDescription = function(languageCode)
+	{
+// 		if (!this.getCells())
+// 		{
+// 			if (!this.description())
+// 				this.description("None");
+// 		}
+// 		else
+		{
+			if (this._offering)
+				this.description(this._offering.description());
+			else if (this._customOffering)
+			    this.description(this._customOffering);
+			else
+			    this.description('Unnamed Offering');
+		}
+	}
+	
+	Experience.prototype.promiseOffering = function()
+	{
+		// No longer needed?
+		offering = experience._offering;
+		if (offering && offering.id() && !offering.names)
+		{
+			var storedI = crp.getInstance(offering.id());
+			if (storedI && storedI.getCells())
+			{
+				offering.importCells(storedI.getCells());
+				r = $.Deferred();
+				r.resolve();
+				return r;
+			}
+			else
+			{
+				return offering.promiseCells();
+			}
+		}
+		else
+		{
+			r = $.Deferred();
+			r.resolve();
+			return r;
+		}
+	}
 	
 	function Experience() {
 	    cr.IInstance.call(this);
@@ -2380,7 +2892,44 @@ cr.Experience = (function() {
 	
 cr.ExperienceCustomService = (function() {
 	ExperienceCustomService.prototype = new cr.IInstance();
+	ExperienceCustomService.prototype._name = null;
+	ExperienceCustomService.prototype._position = null;
 	
+	ExperienceCustomService.prototype.position = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._position;
+		else
+		{
+		    if (newValue != this._position)
+		    {
+				this._position = newValue.id();
+			}
+			return this;
+		}
+	}
+	
+	ExperienceCustomService.prototype.name = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._name;
+		else
+		{
+		    if (newValue != this._name)
+		    {
+				this._name = newValue.id();
+			}
+			return this;
+		}
+	}
+	
+	ExperienceCustomService.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._name = 'name' in d ? d['name'] : "";
+		this._position = 'position' in d ? d['position'] : 0;
+    }
+    
 	function ExperienceCustomService() {
 	    cr.IInstance.call(this);
 	};
@@ -2390,10 +2939,10 @@ cr.ExperienceCustomService = (function() {
 })();
 	
 cr.ExperienceService = (function() {
-	ExperienceService.prototype = new cr.IInstance();
+	ExperienceService.prototype = new cr.OrderedServiceLinkInstance();
 	
 	function ExperienceService() {
-	    cr.IInstance.call(this);
+	    cr.OrderedServiceLinkInstance.call(this);
 	};
 	
 	return ExperienceService;
@@ -2501,7 +3050,68 @@ cr.Inquiry = (function() {
 	
 cr.Notification = (function() {
 	Notification.prototype = new cr.IInstance();
+	Notification.prototype._name = null;
+	Notification.prototype._isFresh = null;
+	Notification.prototype._arguments = null;
 	
+	Notification.prototype.name = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._name;
+		else
+		{
+		    if (newValue != this._name)
+		    {
+				this._name = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Notification.prototype.isFresh = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._isFresh;
+		else
+		{
+		    if (newValue != this._isFresh)
+		    {
+				this._isFresh = newValue;
+			}
+			return this;
+		}
+	}
+	
+	/* Use the abbreviation args instead of arguments because "arguments" is 
+	   a reserved word in Javascript.
+	 */
+	Notification.prototype.args = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._arguments;
+		else
+		{
+		    if (newValue != this._arguments)
+		    {
+				this._arguments = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Notification.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._name = 'name' in d ? d['name'] : "";
+		this._isFresh = 'is fresh' in d ? d['is fresh'] : "";
+		this._arguments = d['arguments'].map(function(d)
+			{
+				i = new cr.IInstance();
+				i.setData(d);
+				return i;
+			});
+    }
+    
 	function Notification() {
 	    cr.IInstance.call(this);
 	};
@@ -2523,7 +3133,134 @@ cr.NotificationArgument = (function() {
 	
 cr.Offering = (function() {
 	Offering.prototype = new cr.IInstance();
+    Offering.prototype._webSite = null;
+    Offering.prototype._minimumAge = null;
+    Offering.prototype._maximumAge = null;
+    Offering.prototype._minimumGrade = null;
+    Offering.prototype._maximumGrade = null;
+    Offering.prototype._services = null;
+    Offering.prototype._sessions = null;
 	
+	Offering.prototype.webSite = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._webSite;
+		else
+		{
+		    if (newValue != this._webSite)
+		    {
+				this._webSite = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Offering.prototype.minimumAge = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._minimumAge;
+		else
+		{
+		    if (newValue != this._minimumAge)
+		    {
+				this._minimumAge = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Offering.prototype.maximumAge = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._maximumAge;
+		else
+		{
+		    if (newValue != this._maximumAge)
+		    {
+				this._maximumAge = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Offering.prototype.minimumGrade = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._minimumGrade;
+		else
+		{
+		    if (newValue != this._minimumGrade)
+		    {
+				this._minimumGrade = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Offering.prototype.maximumGrade = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._maximumGrade;
+		else
+		{
+		    if (newValue != this._maximumGrade)
+		    {
+				this._maximumGrade = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Offering.prototype.services = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._services;
+		else
+		{
+		    if (newValue != this._services)
+		    {
+				this._services = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Offering.prototype.sessions = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._sessions;
+		else
+		{
+		    if (newValue != this._sessions)
+		    {
+				this._sessions = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Offering.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._webSite = 'web site' in d ? d['web site'] : "";
+		this._minimumAge = 'minimum age' in d ? d['minimum age'] : "";
+		this._maximumAge = 'maximum age' in d ? d['maximum age'] : "";
+		this._minimumGrade = 'minimum grade' in d ? d['minimum grade'] : "";
+		this._maximumGrade = 'maximum grade' in d ? d['maximum grade'] : "";
+		if ('services' in d)
+			this._services = d['services'].map(function(d) {
+								var i = new cr.OfferingService();
+								i.setData(d);
+								return i;
+							});
+		if ('sessions' in d)
+			this._sessions = d['sessions'].map(function(d) {
+								var i = new cr.Session();
+								i.setData(d);
+								return i;
+							});
+    }
+    
 	function Offering() {
 	    cr.IInstance.call(this);
 	};
@@ -2533,10 +3270,10 @@ cr.Offering = (function() {
 })();
 	
 cr.OfferingName = (function() {
-	OfferingName.prototype = new cr.IInstance();
+	OfferingName.prototype = new cr.TranslationInstance();
 	
 	function OfferingName() {
-	    cr.IInstance.call(this);
+	    cr.TranslationInstance.call(this);
 	};
 	
 	return OfferingName;
@@ -2544,10 +3281,10 @@ cr.OfferingName = (function() {
 })();
 	
 cr.OfferingService = (function() {
-	OfferingService.prototype = new cr.IInstance();
+	OfferingService.prototype = new cr.OrderedServiceLinkInstance();
 	
 	function OfferingService() {
-	    cr.IInstance.call(this);
+	    cr.OrderedServiceLinkInstance.call(this);
 	};
 	
 	return OfferingService;
@@ -2578,7 +3315,130 @@ cr.OrganizationName = (function() {
 	
 cr.Path = (function() {
 	Path.prototype = new cr.IInstance();
+	Path.prototype._birthday = null;
+	Path.prototype._name = null;
+	Path.prototype._specialAccess = null;
+	Path.prototype._canAnswerExperience = null;
+	Path.prototype._experiences = null;
+	Path.prototype._experiencesPromise = null;
 	
+	Path.prototype.birthday = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._birthday;
+		else
+		{
+		    if (newValue != this._birthday)
+		    {
+				this._birthday = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Path.prototype.name = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._name;
+		else
+		{
+		    if (newValue != this._name)
+		    {
+				this._name = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Path.prototype.specialAccess = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._specialAccess;
+		else
+		{
+		    if (newValue != this._specialAccess)
+		    {
+				this._specialAccess = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Path.prototype.canAnswerExperience = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._canAnswerExperience;
+		else
+		{
+		    if (newValue != this._canAnswerExperience)
+		    {
+				this._canAnswerExperience = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Path.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._birthday = 'birthday' in d ? d['birthday'] : "";
+		this._name = 'name' in d ? d['name'] : "";
+		this._specialAccess = 'special access' in d ? d['special access'] : "";
+		this._canAnswerExperience = 'can answer experience' in d ? d['can answer experience'] : "";
+		if ('experiences' in d)
+			this._experiences = d['experiences'].map(function(d) {
+								var i = new cr.Experience();
+								i.setData(d);
+								return i;
+							});
+    }
+    
+    Path.prototype.experiences = function(newValue)
+    {
+    	if (newValue === undefined)
+    	{
+    		if (this._experiences === null)
+    			throw new Error("Runtime Error: experiences of a path have not been set");
+    		else
+    			return this._experiences;
+    	}
+    	else
+    	{
+    		this._experiences = newValue;
+    	}
+    }
+    
+    Path.prototype.promiseExperiences = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._experiencesPromise)
+        	return this._experiencesPromise;
+        else if (this._experiences)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._experiences);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._experiencesPromise = cr.getData(
+        	{
+        		path: 'path/{0}/experience'.format(this.id()),
+        		fields: ['service', 'custom service'],
+        		resultType: cr.Experience
+        	})
+        	.done(function(experiences)
+        		{
+        			_this._experiences = experiences;
+        			result = $.Deferred();
+        			result.resolve(experiences);
+        			return result;
+        		});
+        return this._experiencesPromise;
+    }
+    
 	function Path() {
 	    cr.IInstance.call(this);
 	};
@@ -2600,7 +3460,143 @@ cr.Period = (function() {
 	
 cr.Service = (function() {
 	Service.prototype = new cr.IInstance();
+	Service.prototype._stage = null;
+	Service.prototype._names = null;
+	Service.prototype._organizationLabels = null;
+	Service.prototype._siteLabels = null;
+	Service.prototype._offeringLabels = null;
+	Service.prototype._services = null;
 	
+	Service.prototype.stage = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._stage;
+		else
+		{
+		    if (newValue != this._stage)
+		    {
+				this._stage = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Service.prototype.names = function(newData)
+	{
+		if (newData === undefined)
+			return this._names;
+		else
+		{
+			this._names = newData.map(function(d)
+				{
+					var i = new cr.ServiceName();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Service.prototype.organizationLabels = function(newData)
+	{
+		if (newData === undefined)
+			return this._organizationLabels;
+		else
+		{
+			this._organizationLabels = newData.map(function(d)
+				{
+					var i = new cr.ServiceOrganizationLabel();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Service.prototype.siteLabels = function(newData)
+	{
+		if (newData === undefined)
+			return this._siteLabels;
+		else
+		{
+			this._siteLabels = newData.map(function(d)
+				{
+					var i = new cr.ServiceSiteLabel();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Service.prototype.offeringLabels = function(newData)
+	{
+		if (newData === undefined)
+			return this._offeringLabels;
+		else
+		{
+			this._offeringLabels = newData.map(function(d)
+				{
+					var i = new cr.ServiceOfferingLabel();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Service.prototype.services = function(newData)
+	{
+		if (newData === undefined)
+			return this._services;
+		else
+		{
+			this._services = newData.map(function(d)
+				{
+					var i = new cr.ServiceImplication();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Service.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._stage = 'stage' in d ? d['stage'] : "";
+		if ('names' in d)
+			this.names(d['names']);
+		if ('organization labels' in d)
+			this.organizationLabels(d['organization labels']);
+		if ('site labels' in d)
+			this.siteLabels(d['site labels']);
+		if ('offering labels' in d)
+			this.offeringLabels(d['offering labels']);
+		if ('services' in d)
+			this.services(d['services']);
+	}
+	
+    Service.servicesPromise = function()
+    {
+        if (cr.Service._servicesPromise)
+        	return cr.Service._servicesPromise;
+        
+        cr.Service._servicesPromise = cr.getData(
+        	{
+        		path: 'service',
+        		fields: ['services'],
+        		resultType: cr.Service
+        	})
+        	.done(function(services)
+        		{
+        			result = $.Deferred();
+        			result.resolve(services);
+        			return result;
+        		});
+        return cr.Service._servicesPromise;
+    }
+    
 	function Service() {
 	    cr.IInstance.call(this);
 	};
@@ -2608,6 +3604,7 @@ cr.Service = (function() {
 	return Service;
 
 })();
+cr.Service._servicesPromise = null;
 	
 cr.ServiceName = (function() {
 	ServiceName.prototype = new cr.IInstance();
@@ -2654,10 +3651,10 @@ cr.ServiceOfferingLabel = (function() {
 })();
 	
 cr.ServiceImplication = (function() {
-	ServiceImplication.prototype = new cr.IInstance();
+	ServiceImplication.prototype = new cr.ServiceLinkInstance();
 	
 	function ServiceImplication() {
-	    cr.IInstance.call(this);
+	    cr.ServiceLinkInstance.call(this);
 	};
 	
 	return ServiceImplication;
@@ -2727,8 +3724,10 @@ cr.User = (function() {
 	User.prototype._systemAccess = null;
 	User.prototype._emails = null;
 	User.prototype._notifications = null;
+	User.prototype._notificationsPromise = null;
 	User.prototype._path = null;
 	User.prototype._userGrantRequests = null;
+	User.prototype._userGrantRequestsPromise = null;
 	
 	User.prototype.setDefaultValues = function()
 	{
@@ -2744,13 +3743,10 @@ cr.User = (function() {
 	
 	User.prototype.setData = function(d)
 	{
+		cr.IInstance.prototype.setData.call(this, d);
 		this._firstName = 'first name' in d ? d['first name'] : "";
 		this._lastName = 'last name' in d ? d['last name'] : "";
 		this._birthday = 'birthday' in d ? d['birthday'] : "";
-		if ('description' in d)
-			this.description(d['description'])
-		if ('privilege' in d)
-			this.privilege(d['privilege']);
 		if ('system access' in d)
 			this.systemAccess(d['system access']);
 		if ('emails' in d)
@@ -2891,6 +3887,68 @@ cr.User = (function() {
 		}
 	}
 	
+    User.prototype.promiseUserGrantRequests = function()
+    {
+    	p = this.administerCheckPromise();
+    	if (p) return p;
+
+        if (this._userGrantRequestsPromise)
+        	return this._userGrantRequestsPromise;
+        else if (this._userGrantRequests)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._userGrantRequests);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._userGrantRequestsPromise = cr.getData(
+        	{
+        		path: 'user/{0}/user grant request'.format(this.id()),
+        		fields: [],
+        		resultType: cr.UserUserGrantRequest
+        	})
+        	.done(function(userGrantRequests)
+        		{
+        			_this._userGrantRequests = userGrantRequests;
+        			result = $.Deferred();
+        			result.resolve(userGrantRequests);
+        			return result;
+        		});
+        return this._userGrantRequestsPromise;
+    }
+    
+    User.prototype.promiseNotifications = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._notificationsPromise)
+        	return this._notificationsPromise;
+        else if (this._notifications)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._notifications);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._notificationsPromise = cr.getData(
+        	{
+        		path: 'user/{0}/notification'.format(this.id()),
+        		fields: [],
+        		resultType: cr.Notification
+        	})
+        	.done(function(notifications)
+        		{
+        			_this._notifications = notifications;
+        			result = $.Deferred();
+        			result.resolve(notifications);
+        			return result;
+        		});
+        return this._notificationsPromise;
+    }
+    
 	User.prototype.promiseDataLoaded = function(fields)
 	{
 		if (this.privilege() == cr.privileges.find)
@@ -3038,10 +4096,10 @@ cr.UserGrant = (function() {
 })();
 	
 cr.UserUserGrantRequest = (function() {
-	UserUserGrantRequest.prototype = new cr.IInstance();
+	UserUserGrantRequest.prototype = new cr.AccessInstance();
 	
 	function UserUserGrantRequest() {
-	    cr.IInstance.call(this);
+	    cr.AccessInstance.call(this);
 	};
 	
 	return UserUserGrantRequest;

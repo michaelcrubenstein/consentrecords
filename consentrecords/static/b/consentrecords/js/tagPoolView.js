@@ -9,7 +9,7 @@ var Service = (function() {
 	Service.prototype._getStage = function()
 	{
 		var service = this.service;
-		return service && service.getInstanceID() && crp.getInstance(service.getInstanceID()).getValue("Stage")
+		return service && service.id() && crp.getInstance(service.id()).stage()
 	}
 
 	Service.prototype.stageColumns = {
@@ -31,8 +31,7 @@ var Service = (function() {
 	
 	Service.prototype.getStageDescription = function(stage)
 	{
-		var stageDescription = stage && stage.getDescription();
-		return stageDescription in this.stageColumns && stageDescription;
+		return stage in this.stageColumns && stage;
 	}
 	
 	Service.prototype.getColumn = function()
@@ -43,18 +42,18 @@ var Service = (function() {
 			return this.stageColumns[stageDescription];
 		var _this = this;
 			
-		if (this.service && this.service.getInstanceID())
+		if (this.service && this.service.id())
 		{
-			var services = crp.getInstance(this.service.getInstanceID()).getCell("Service");
+			var services = crp.getInstance(this.service.id()).services();
 			/* services may be null if the service has been deleted */
-			var s = services && services.data.find(function(s)
+			var s = services && services.find(function(s)
 				{
-					var stage =  s.getInstanceID() && crp.getInstance(s.getInstanceID()).getValue("Stage");
+					var stage =  s.service() && s.service().stage();
 					return _this.getStageDescription(stage);
 				});
 			if (s)
 				return this.stageColumns[
-					this.getStageDescription(crp.getInstance(s.getInstanceID()).getValue("Stage"))
+					this.getStageDescription(s.service().stage())
 				];
 		}
 
@@ -86,9 +85,9 @@ var Service = (function() {
 		return PathGuides.data[column].poleColor;
 	}
 	
-	Service.prototype.getDescription = function()
+	Service.prototype.description = function()
 	{
-		return this.service.getDescription();
+		return this.service.description();
 	}
 	
 	/* Returns True if the service contains the specified text. */
@@ -97,11 +96,11 @@ var Service = (function() {
 		if (this.service)
 		{
 			var re = new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
-			if (re.test(this.service.getDescription()))
+			if (re.test(this.service.description()))
 				return true;
 			
 			var cell = this.service.getCell("Service");
-			return cell.data.find(function(d) { return d.getDescription().toLocaleUpperCase() == s; });	
+			return cell.data.find(function(d) { return d.description().toLocaleUpperCase() == s; });	
 		}
 		return false;
 	}
@@ -117,7 +116,7 @@ var Service = (function() {
 	{
 		var g = d3.select(node);
 		g.selectAll('text>tspan:nth-child(1)')
-			.text(this.getDescription())
+			.text(this.description())
 	}
 
 	function Service(dataObject) {
@@ -255,7 +254,7 @@ var TagPoolView = (function () {
 					if (!fs.contains(filterText.toLocaleUpperCase(), prefix) &&
 						!inputRegExps.reduce(function(a, b)
 							{
-								return a && b.test(fs.getDescription());
+								return a && b.test(fs.description());
 							}, true))
 						fs.visible = false;
 				});
@@ -333,12 +332,12 @@ var TagPoolView = (function () {
 			return true;
 		var data = this.flags().data();
 		var sd = data.find(function(sd) {
-				var d = sd.service;
-				return d.getCell && d.getCell(cr.fieldNames.name).data.find(
-					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
-					(d.getDescription && d.getDescription().toLocaleLowerCase() === compareText);
+				var d = sd.service();
+				return d.names().find(
+					function(d) { return d.text().toLocaleLowerCase() === compareText;}) ||
+					(d.description && d.description().toLocaleLowerCase() === compareText);
 			});
-		return sd && sd.service;
+		return sd && sd.service();
 	}
 	
 	function TagPoolView(container, divClass)

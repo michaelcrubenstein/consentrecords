@@ -619,7 +619,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleSchoolClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 1);
@@ -629,7 +629,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleInterestsClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 2);
@@ -639,7 +639,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleCareerClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 3);
@@ -649,7 +649,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.skillsClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 4);
@@ -659,7 +659,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.givingBackClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 5);
@@ -669,7 +669,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.housingClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 0);
@@ -679,7 +679,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.wellnessClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 6);
@@ -868,7 +868,7 @@ var SearchPathsPanel = (function () {
 
 				_this.searchPathsResultsView = new SearchPathsResultsView(_this);
 				
-				crp.promise({path: "Service"})
+				cr.Service.servicesPromise()
 					.done(function(services)
 						{
 							var s = services.map(function(e) { return new Service(e); });

@@ -261,7 +261,7 @@ var ExperienceCommentsPanel = (function() {
 	 */
 	ExperienceCommentsPanel.prototype.showDetailPanel = function(fd)
 	{
-		if (fd.experience.getTypeName() == "Experience") {
+		if (fd.experience instanceof cr.Engagement) {
 			;	/* Nothing to edit */
 		}
 		else

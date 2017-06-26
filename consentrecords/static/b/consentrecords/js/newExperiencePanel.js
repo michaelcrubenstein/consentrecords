@@ -121,7 +121,7 @@ var Experience = (function() {
 		{
 			var newName = args.text;
 			var d = args.instance;
-			if (d && d.getTypeName() != "Service")
+			if (d && !(d instanceof cr.Service))
 				throw new Error("Invalid instance to addService");
 				
 			service = new ReportedObject({name: newName, pickedObject: d});
@@ -132,7 +132,7 @@ var Experience = (function() {
 		}
 		else if ("instance" in args && args.instance)
 		{
-			if (args.instance.getTypeName() != "Service")
+			if (!(args.instance instanceof cr.Service))
 				throw new Error("Invalid instance to addService");
 				
 			var d = args.instance;
@@ -830,7 +830,7 @@ var ExperienceDatumSearchView = (function() {
 	
 	ExperienceDatumSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.getTypeName() === 'Service')
+		if (d instanceof cr.Service)
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{

@@ -22,17 +22,17 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getDescription = function()
 	{
-		var _this = this;
-		var f = function(name)
-		{
-			var d = _this.experience.getValue(name);
-			return d && d.getInstanceID() && d.getDescription();
-		}
-		return f("Offering") ||
-			this.experience.getDatum("User Entered Offering") ||
-			f("Service") ||
-			this.experience.getDatum("User Entered Service") ||
-			"None";
+		e = this.experience;
+		return (e.offering() && e.offering().description()) ||
+		    (e instanceof cr.Experience &&
+		     (e.customOffering() ||
+		      (e.services() &&
+		       e.services().length &&
+		       e.services()[0].description()) ||
+		      (e.customServices() &&
+		       e.customServices().length &&
+		       e.customServices()[0].description()))) ||
+		    "None";
 	}
 	
 	FlagController.prototype.subHeading = function()
@@ -41,13 +41,14 @@ var FlagController = (function() {
 		var f = function(name)
 		{
 			var d = _this.experience.getValue(name);
-			return d && d.getInstanceID() && d.getDescription();
+			return d && d.id() && d.getDescription();
 		}
-		return f("Organization") ||
-			this.experience.getDatum("User Entered Organization") ||
-			f("Site") ||
-			this.experience.getDatum("User Entered Site") ||
-			"";
+		e = this.experience;
+		return (e.organization() && e.organization().description()) ||
+		       (e instanceof cr.Experience && e.customOrganization()) ||
+		       (e.site() && e.site().description()) ||
+		       (e instanceof cr.Experience && e.customSite()) ||
+		       "";
 	}
 	
 	FlagController.prototype.pickedOrCreatedValue = function(pickedName, createdName)
@@ -55,20 +56,21 @@ var FlagController = (function() {
 		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
 	}
 	
+	/* Returns the column of the first service (either from 
+		the experience's offering or the experience itself)
+		that has a designated column.
+	 */
 	FlagController.prototype.getColumn = function()
 	{
 		var minColumn = PathGuides.data.length - 1;
 		var maxColumn = minColumn;
 		
-		var offering = this.experience.getValue("Offering");
-		if (offering && offering.getInstanceID())
+		var offering = this.experience.offering();
+		if (offering && offering.id())
 		{
-			if (!offering.areCellsLoaded())
-				throw new Error("Runtime error: offering data is not loaded");
-				
-			var services = offering.getCell("Service");
-			minColumn = services.data.map(function(s) {
-					return new Service(s).getColumn();
+			var services = offering.services();
+			minColumn = services.map(function(s) {
+					return new Service(s.service()).getColumn();
 				})
 				.reduce(function(a, b) {
 					if (a < maxColumn)
@@ -78,11 +80,11 @@ var FlagController = (function() {
 				}, minColumn);
 		}
 		
-		var service = this.experience.getCell("Service");
-		if (service)
+		if (this.experience instanceof cr.Experience)
 		{
-			minColumn = service.data.map(function(s) {
-						return new Service(s).getColumn();
+			var services = this.experience.services();
+			minColumn = services.map(function(s) {
+						return new Service(s.service()).getColumn();
 					})
 					.reduce(function(a, b) {
 						if (a < maxColumn)
@@ -96,22 +98,21 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getStartDate = function()
 	{
-		return this.experience.getDatum("Start") || this.getTimeframeText() || this.goalDateString;
+		return this.experience.start() || this.getTimeframeText() || this.goalDateString;
 	}
 	
 	FlagController.prototype.getTimeframe = function()
 	{
-		var timeframeValue = this.experience.getValue("Timeframe");
-		return timeframeValue && timeframeValue.getInstanceID() && timeframeValue.getDescription();
+		return this.experience.timeframe();
 	}
 	
 	FlagController.prototype.getEndDate = function()
 	{
-		var s = this.experience.getDatum("End");
+		var s = this.experience.end();
 		if (s) return s;
 		
-		var timeframe = this.getTimeframe();
-		s = this.experience.getDatum("Start");
+		var timeframe = this.experience.timeframe();
+		s = this.experience.start();
 		if (s)
 		{
 			if (timeframe == "Previous" || timeframe == "Current" ||
@@ -149,27 +150,30 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getYearArray = function()
 	{
-		var e = this.experience.getDatum("End");
-		var s = this.experience.getDatum("Start");
-		var t = this.experience.getValue("Timeframe");
+		var e = this.experience.end();
+		var s = this.experience.start();
+		var t;
 		var top, bottom;
 		
 		if (e)
 			top = new Date(e).getUTCFullYear();
 		else if (s)
 			top = (new Date().toISOString().substr(0, s.length) < s) ? "Goal" : "Now"
-		else if (t && t.getDescription() == "Previous")
-			top = "Done";
-		else if (t && t.getDescription() == "Current")
-			top = "Now";
-		else
-			top = "Goal";
+		else {
+			t = this.experience.timeframe();
+			if (t == "Previous")
+				top = "Done";
+			else if (t == "Current")
+				top = "Now";
+			else
+				top = "Goal";
+		}
 			
 		if (s)
 			bottom = new Date(s).getUTCFullYear();
-		else if (t && t.getDescription() == "Previous")
+		else if (t == "Previous")
 			bottom = "Done";
-		else if (t && t.getDescription() == "Current")
+		else if (t == "Current")
 			bottom = "Now";
 		else
 			bottom = "Goal";
@@ -191,13 +195,14 @@ var FlagController = (function() {
 	
 	FlagController.prototype.checkOfferingCells = function(done)
 	{
-		var offering = this.experience.getValue("Offering");
-		if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
-		{
-			offering.promiseCellsFromCache()
-				.then(done, cr.asyncFail);
-		}
-		else
+		// Is this needed any longer?
+// 		var offering = this.experience.getValue("Offering");
+// 		if (offering && offering.id() && !offering.areCellsLoaded())
+// 		{
+// 			offering.promiseCellsFromCache()
+// 				.then(done, cr.asyncFail);
+// 		}
+// 		else
 			done();
 	}
 	
@@ -466,17 +471,14 @@ var PathView = (function() {
 	 */
 	PathView.prototype.setupServiceTriggers = function(r, fd, handler)
 		{
-			var e = fd.experience;
-			var serviceCell = e.getCell("Service");
-			var userServiceCell = e.getCell("User Entered Service");
 			var f = function(eventObject, v)
 			{
 				if (!v.isEmpty())
 					handler(eventObject, v);
 			}
 			
-			setupOnViewEventHandler(serviceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
-			setupOnViewEventHandler(userServiceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
+			setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
+			setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
 		}
 	
 	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
@@ -484,21 +486,18 @@ var PathView = (function() {
 	 */	
 	PathView.prototype.setupColorWatchTriggers = function(r, fd)
 	{
-		var e = fd.experience;
-		var offeringCell = e.getCell("Offering");
-		
 		var f = function(eventObject)
 			{
 				fd.colorElement(eventObject.data);
 			}
 		
-		setupOneViewEventHandler(offeringCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
+		setupOneViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
 		this.setupServiceTriggers(r, fd, f);
 	}
 	
 	PathView.prototype.canEditExperience = function(fd)
 	{
-		return fd.experience.getTypeName() == "More Experience" && fd.experience.canWrite();
+		return fd.experience instanceof cr.Experience && fd.experience.canWrite();
 	}
 	
 	PathView.prototype.clearDetail = function()
@@ -523,7 +522,7 @@ var PathView = (function() {
 	
 	PathView.prototype.showDetailPanel = function(fd)
 	{
-		if (fd.experience.getTypeName() == "Experience") {
+		if (fd.experience instanceof cr.Engagement) {
 			;	/* Nothing to edit */
 		}
 		else
@@ -550,7 +549,7 @@ var PathView = (function() {
 	
 	PathView.prototype.showCommentsPanel = function(flag, fd)
 	{
-		if (fd.experience.getTypeName() == "Experience") {
+		if (fd.experience instanceof cr.Engagement) {
 			;	/* Nothing to edit */
 		}
 		else
@@ -614,9 +613,9 @@ var PathView = (function() {
 	
 		var node = this.sitePanel.node();
 		setupOnViewEventHandler(experience, "dataChanged.cr", node, handleDataChanged);
-		setupOnViewEventHandler(experience.getCell("Start"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
-		setupOnViewEventHandler(experience.getCell("End"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
-		setupOnViewEventHandler(experience.getCell("Timeframe"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
+		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
+		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
+		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
 	}
 	
 	PathView.prototype._setFlagText = function(node)
@@ -665,17 +664,7 @@ var PathView = (function() {
 						});	
 			}
 						
-		flagCells.forEach(function(s)
-		 {
-			/* cell will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			var cell = fd.experience.getCell(s);
-			if (cell)
-			{
-				setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, flagDataChanged);
-			}
-		 });
+		setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, flagDataChanged);
 	}
 	
 	PathView.prototype.compareDates = function (d1, d2)
@@ -1178,7 +1167,7 @@ var PathLines = (function() {
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
-				return d.getTypeName() === "More Experience";
+				return d instanceof cr.Experience;
 			})
 			.forEach(function(d)
 			{
@@ -1327,18 +1316,17 @@ var PathLines = (function() {
 			
 			try
 			{	
-				var cell = _this.path.getCell("More Experience");
 				var addedFunction = function(eventObject, newData)
 					{
 						eventObject.data.addMoreExperience(newData);
 					}
-				cell.on("valueAdded.cr", _this, addedFunction);
+				_this.path.on("experienceAdded.cr", _this, addedFunction);
 				$(_this.pathwayContainer.node()).on("remove", function()
 					{
-						cell.off("valueAdded.cr", addedFunction);
+						_this.path.off("experienceAdded.cr", addedFunction);
 					});
 				
-				var experiences = cell.data;
+				var experiences = _this.path.experiences();
 			
 				_this.allExperiences = _this.allExperiences.concat(experiences);
 			
@@ -1347,12 +1335,6 @@ var PathLines = (function() {
 					this.calculateDescription();
 				});
 			
-				/* Ensure that all of the offerings have their associated cells. */
-				_this.allExperiences.forEach(function(experience)
-					{
-						checkOfferingCells(experience);
-					});
-		
 				_this.showAllExperiences();
 			
 				$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
@@ -1373,28 +1355,32 @@ var PathLines = (function() {
 			}
 		}
 		
-		return crp.promise({path:  this.path.getInstanceID() + '::reference(user)::reference(Experience)', 
-				   fields: ["parents"]})
-		.then(function(experiences)
+		return cr.Service.servicesPromise()
+		.then(function() {
+			return crp.promise({path: "path/" + _this.path.id() + '/user/engagement/session/offering',
+			                    fields: ['service'],
+			                    resultType: cr.Offering});
+			})
+		.then(function() {
+				return crp.promise({path: "path/" + _this.path.id() + '/experience/offering',
+			                        fields: ['service'],
+			                        resultType: cr.Offering});
+			})
+		.then(function() {
+				return crp.promise({path:  "path/" + _this.path.id() + '/user/engagement',
+		           resultType: cr.Engagement, 
+				   fields: ['organization', 'site', 'offering']});
+			})
+		.then(function(engagements)
 			{
-				_this.allExperiences = experiences.slice();
-				$(experiences).each(function()
+				_this.allExperiences = engagements.slice();
+				$(engagements).each(function()
 				{
-					this.setDescription(this.getValue("Offering").getDescription());
+					this.description(this.offering().description());
 				});
 			})
 		.then(function() {
-			return crp.promise({path: _this.path.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
-								'::reference(Session)::reference(Sessions)::reference(Offering)'});
-			})
-		.then(function() {
-				return crp.promise({path: _this.path.getInstanceID() + '/More Experience/Offering'});
-			})
-		.then(function() {
-				return crp.promise({path: "Service"});
-			})
-		.then(function() {
-				return _this.path.promiseCellsFromCache(["More Experience", "parents"]);
+				return _this.path.promiseExperiences(["parents"]);
 			})
 		.then(successFunction2, cr.asyncFail);
 	}
@@ -1476,9 +1462,9 @@ var SettingsButton = (function() {
 	
 	SettingsButton.prototype.badgeCount = function()
 	{
-		var cell = this.user.getCell(cr.fieldNames.accessRequest);
-		if (cell && cell.data.length > 0)
-			return cell.data.length;
+		var cell = this.user.userGrantRequests();
+		if (cell && cell.length > 0)
+			return cell.length;
 		else
 			return "";
 	}
@@ -1488,9 +1474,13 @@ var SettingsButton = (function() {
 		AlertButton.prototype.setup.call(this, settingsImagePath);
 		
 		var _this = this;
-		setupOnViewEventHandler(this.user.getCell(cr.fieldNames.accessRequest), "valueDeleted.cr valueAdded.cr", 
-			this.button.node(), function() { _this.checkBadge(); });
-		this.checkBadge();
+		this.user.promiseUserGrantRequests()
+			.then(function()
+				{
+					setupOnViewEventHandler(_this.user, "valueDeleted.cr valueAdded.cr", 
+						_this.button.node(), function() { _this.checkBadge(); });
+					_this.checkBadge();
+				});
 	}
 	
 	function SettingsButton(button, user)
@@ -1523,14 +1513,13 @@ var NotificationsButton = (function() {
 	
 	NotificationsButton.prototype.badgeCount = function()
 	{
-		var cell = this.user.getCell(cr.fieldNames.notification);
-		if (!cell)
+		var notifications = this.user.notifications();
+		if (!notifications)
 			return "";
 		else {
-			var freshItems = cell.data.filter(function (d) 
+			var freshItems = notifications.filter(function (d) 
 			{ 
-				var isFreshEnum = d.getValue(cr.fieldNames.isFresh);
-				return isFreshEnum && isFreshEnum.getDescription() == cr.booleans.yes; 
+				return d.isFresh() == cr.booleans.yes; 
 			});
 			return freshItems.length || "";
 		}
@@ -1541,15 +1530,15 @@ var NotificationsButton = (function() {
 		AlertButton.prototype.setup.call(this, notificationsImagePath);
 		
 		var _this = this;
-		crp.promise({path: "{0}/notification".format(this.user.getInstanceID())})
+		this.user.promiseNotifications()
 			.then(function()
 				{
-					var cell = _this.user.getCell(cr.fieldNames.notification);
+					var cell = _this.user;
 					cell.on("valueDeleted.cr valueAdded.cr dataChanged.cr", 
 						_this.button.node(), function() { _this.checkBadge(); });
-					cell.data.forEach(function(d)
+					_this.user.notifications().forEach(function(d)
 						{
-							d.getCell(cr.fieldNames.isFresh).on("dataChanged.cr", _this.button.node(),
+							d.on("dataChanged.cr", _this.button.node(),
 								 function() { _this.checkBadge(); });
 						})
 		
@@ -1794,9 +1783,7 @@ var PathlinesPanel = (function () {
 					_this.notificationsAlertButton.setup();
 				}
 				
-				setupOnViewEventHandler(user.getCell(cr.fieldNames.firstName), "dataChanged.cr", _this.node(), checkTitle);
-				setupOnViewEventHandler(user.getCell(cr.fieldNames.lastName), "dataChanged.cr", _this.node(), checkTitle);
-				setupOnViewEventHandler(user.getCell(cr.fieldNames.email), "dataChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user, "dataChanged.cr", _this.node(), checkTitle);
 				
 // 				findButton.style("display", user.privilege() === cr.privileges.administer ? null : "none");
 				
@@ -1848,7 +1835,7 @@ var ShareOptions = (function () {
 		
 		var clipboard = new Clipboard('button.copy', {
 			text: function(trigger) {
-				return '{0}/for/{1}'.format(window.location.origin, user.getDatum(cr.fieldNames.email));
+				return '{0}/for/{1}'.format(window.location.origin, user.emails[0].text());
 			}});
 			
 		clipboard.on('error', function(e) {
@@ -1865,15 +1852,15 @@ var ShareOptions = (function () {
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							$(panel.node()).remove();
-							if (user.getInstanceID() == cr.signedinUser.getInstanceID())
+							if (user.id() == cr.signedinUser.id())
 							{
 								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-											.format(window.location.origin, user.getDatum(cr.fieldNames.email));
+											.format(window.location.origin, user.emails[0].text());
 							}
 							else
 							{
 								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(getUserDescription(user), window.location.origin, user.getDatum(cr.fieldNames.email));
+											.format(getUserDescription(user), window.location.origin, user.emails[0].text());
 							}
 							unblockClick();
 						});
@@ -2059,18 +2046,18 @@ var ExperienceIdeas = (function() {
 							{
 								return !d.getCell("Disqualifying Tag").data.find(function(dt)
 									{
-										var dtID = dt.getInstanceID();
+										var dtID = dt.id();
 										return moreExperienceData.find(function(experience)
 											{
 												return experience.getCell("Service").data.find(function(service)
 													{
-														return service.getInstanceID() == dtID;
+														return service.id() == dtID;
 													}) ||
 													experience.getCell("Offering").data.find(function(offering)
 														{
 															return !offering.isEmpty() && offering.getCell("Service").data.find(function(service)
 																{
-																	return service.getInstanceID() == dtID;
+																	return service.id() == dtID;
 																});
 														});
 											});

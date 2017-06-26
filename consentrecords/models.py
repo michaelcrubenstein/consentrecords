@@ -520,7 +520,7 @@ class TranslationInstance(ChildInstance):
     def select_head_related(querySet):
         return querySet
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet
         
     def headData(self, context):
@@ -589,7 +589,7 @@ class AccessInstance(ChildInstance):
     def select_head_related(querySet):
         return querySet.select_related('grantee')
 
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return AccessInstance.select_head_related(querySet)
 
     def getData(self, fieldNames, context):
@@ -616,7 +616,7 @@ class ServiceLinkInstance(ChildInstance):
                                                   queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentNames'))
     
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return ServiceLinkInstance.select_head_related(querySet)
                  
     def buildHistory(self, context):
@@ -2964,7 +2964,7 @@ class GrantTarget(IInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
     
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet.select_related('primaryAdministrator')\
                        .prefetch_related(Prefetch('userGrants',
                                           queryset=UserGrant.select_related(UserGrant.objects.filter(deleteTransaction__isnull=True)),
@@ -3203,7 +3203,7 @@ class Address(ChildInstance, dbmodels.Model):
     def __str__(self):
         return self.description() 
 
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet.prefetch_related(Prefetch('streets', 
                            queryset=Street.select_related(Street.objects.filter(deleteTransaction__isnull=True)).order_by('position'),
                            to_attr='currentStreets'))
@@ -3336,7 +3336,7 @@ class Comment(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet.select_related('asker')
         
     def getData(self, fields, context):
@@ -3436,7 +3436,7 @@ class CommentPrompt(RootInstance, PublicInstance, dbmodels.Model):
                                                   queryset=CommentPromptText.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentNames'))
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return CommentPrompt.select_head_related(querySet)
     
     def getData(self, fields, context):
@@ -3587,10 +3587,26 @@ class Engagement(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet.select_related('user')
         
-    def select_related(querySet):
-        return querySet.select_related('user')
+    def select_related(querySet, fields=[]):
+        print("Engagement", fields)
+        qs = querySet.select_related('user')
+        if 'offering' in fields:
+            qs = qs.prefetch_related(Prefetch('parent__parent',
+                                              queryset=Offering.select_head_related(Offering.objects.filter(deleteTransaction__isnull=True)),
+                                              to_attr='currentOfferings'))
+        if 'site' in fields:
+            qs = qs.prefetch_related(Prefetch('parent__parent__parent',
+                                              queryset=Site.select_head_related(Site.objects.filter(deleteTransaction__isnull=True)),
+                                              to_attr='currentSites'))
+        if 'organization' in fields:
+            qs = qs.prefetch_related(Prefetch('parent__parent__parent__parent',
+                                              queryset=Organization.select_head_related(Organization.objects.filter(deleteTransaction__isnull=True)),
+                                              to_attr='currentOrganizations'))
+        return qs
         
     def getData(self, fields, context):
+        print("Engagement getData", fields)
+        print(type(self.parent.parent))
         data = self.headData(context)
         if context.canRead(self):
             if self.user:
@@ -3599,6 +3615,12 @@ class Engagement(ChildInstance, dbmodels.Model):
                 data['start'] = self.start
             if self.end:
                 data['end'] = self.end
+            if 'organization' in fields:
+                data['organization'] = self.parent.parent.parent.currentOrganizations.headData(context)
+            if 'site' in fields:
+                data['site'] = self.parent.parent.currentSites.headData(context)
+            if 'offering' in fields:
+                data['offering'] = self.parent.currentOfferings.headData(context)
         
         return data
 
@@ -3686,7 +3708,7 @@ class Enrollment(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet.select_related('user')
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet.select_related('user')
         
     def getData(self, fields, context):
@@ -3798,23 +3820,31 @@ class Experience(ChildInstance, dbmodels.Model):
                                                   queryset=OfferingName.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentNames'))
     
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
+        csqs = ExperienceCustomService.objects.filter(deleteTransaction__isnull=True).order_by('position')
+        sqs = ExperienceService.objects.filter(deleteTransaction__isnull=True).order_by('position')
         return Experience.select_head_related(querySet).select_related('organization')\
                        .select_related('site')\
                        .prefetch_related(Prefetch('customServices', 
-                           queryset=ExperienceCustomService.objects.filter(deleteTransaction__isnull=True)))\
+                           queryset= ExperienceCustomService.select_related(csqs)
+                               if 'custom service' in fields else \
+                               ExperienceCustomService.select_head_related(csqs),
+                           to_attr='currentCustomServices'))\
                        .prefetch_related(Prefetch('services', 
-                           queryset=ExperienceService.objects.filter(deleteTransaction__isnull=True)))
+                           queryset=ExperienceService.select_related(sqs)
+                               if 'service' in fields else \
+                               ExperienceCustomService.select_head_related(sqs),
+                           to_attr='currentServices'))
     
     def getData(self, fieldNames, context):
         data = self.headData(context)
         if context.canRead(self):
             if self.customOrganization:
-                data['customOrganization'] = self.customOrganization
+                data['custom organization'] = self.customOrganization
             if self.customSite:
-                data['customSite'] = self.customSite
+                data['custom site'] = self.customSite
             if self.customOffering:
-                data['customOffering'] = self.customOffering
+                data['custom offering'] = self.customOffering
             if self.organization_id:
                 if 'organization' in fieldNames:
                     data['organization'] = self.organization.getData([], context)
@@ -3830,16 +3860,14 @@ class Experience(ChildInstance, dbmodels.Model):
                     data['offering'] = self.offering.getData([], context)
                 else:
                     data['offering'] = self.offering.headData(context)
-            qs = self.services.filter(deleteTransaction__isnull=True).order_by('position')
             if 'service' in fieldNames:
-                data['services'] = [i.getData([], context) for i in qs]
+                data['services'] = [i.getData([], context) for i in self.currentServices]
             else:
-                data['services'] = [i.headData(context) for i in qs]
-            qs = self.customServices.filter(deleteTransaction__isnull=True).order_by('position')
+                data['services'] = [i.headData(context) for i in self.currentServices]
             if 'custom service' in fieldNames:
-                data['custom services'] = [i.getData([], context) for i in qs]
+                data['custom services'] = [i.getData([], context) for i in self.currentCustomServices]
             else:
-                data['custom services'] = [i.headData(context) for i in qs]
+                data['custom services'] = [i.headData(context) for i in self.currentCustomServices]
             if self.start:
                 data['start'] = self.start
             if self.end:
@@ -4012,7 +4040,7 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet
         
     def getSubClause(qs, user, accessType):
@@ -4171,7 +4199,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return ExperiencePrompt.select_head_related(querySet)\
                     .select_related('organization')\
                     .select_related('site')\
@@ -4429,7 +4457,7 @@ class Group(ChildInstance, dbmodels.Model):
                                                   queryset=GroupName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return Group.select_head_related(querySet)\
                        .prefetch_related(Prefetch('members', 
                                                   queryset=GroupMember.select_related(GroupMember.objects.filter(deleteTransaction__isnull=True)),
@@ -4546,7 +4574,7 @@ class GroupMember(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet.select_related('user')
     
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return GroupMember.select_head_related(querySet)
     
     def getData(self, fields, context):
@@ -4630,7 +4658,7 @@ class Inquiry(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet.select_related('user')
     
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return Inquiry.select_head_related(querySet)
     
     def getData(self, fields, context):
@@ -4706,7 +4734,7 @@ class Notification(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
     
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet.prefetch_related(Prefetch('notificationArguments', 
                            queryset=NotificationArgument.objects.filter(deleteTransaction__isnull=True).order_by('position')))
     
@@ -4831,7 +4859,7 @@ class NotificationArgument(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet.order_by('position')
     
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet.order_by('position')
         
     def getData(self, fields, context):
@@ -4889,7 +4917,7 @@ class Offering(ChildInstance, dbmodels.Model):
                                                   queryset=OfferingName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return Offering.select_head_related(querySet)\
                        .prefetch_related(Prefetch('services',
                                          queryset=OfferingService.select_head_related(OfferingService.objects.filter(deleteTransaction__isnull=True)),
@@ -5173,7 +5201,7 @@ class Organization(RootInstance, dbmodels.Model):
                                                   queryset=OrganizationName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return Organization.select_head_related(querySet)\
                        .prefetch_related(Prefetch('sites',
                                          queryset=Site.select_head_related(Site.objects.filter(deleteTransaction__isnull=True)),
@@ -5349,7 +5377,7 @@ class Path(IInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet
         
     @property    
@@ -5589,7 +5617,7 @@ class Period(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet
     
     def getData(self, fields, context):
@@ -5704,7 +5732,7 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
                                                   queryset=ServiceName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return Service.select_head_related(querySet)\
                       .prefetch_related(Prefetch('organizationLabels',
                                                  queryset=ServiceOrganizationLabel.objects.filter(deleteTransaction__isnull=True),
@@ -5716,12 +5744,14 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
                                                  queryset=ServiceOfferingLabel.objects.filter(deleteTransaction__isnull=True),
                                                  to_attr='currentOfferingLabels'))\
                       .prefetch_related(Prefetch('serviceImplications',
-                                                 queryset=ServiceImplication.select_head_related(ServiceImplication.objects.filter(deleteTransaction__isnull=True)),
+                                                 queryset=\
+                                                     ServiceImplication.select_related(ServiceImplication.objects.filter(deleteTransaction__isnull=True)) \
+                                                     if 'services' in fields else \
+                                                     ServiceImplication.select_head_related(ServiceImplication.objects.filter(deleteTransaction__isnull=True)),
                                                  to_attr='currentServiceImplications'))
                         
     def getData(self, fields, context):
         data = super(Service, self).getData(fields, context)
-        
         if context.canRead(self):
             data['names'] = [i.getData([], context) for i in self.currentNamesQuerySet]
             if self.stage:
@@ -5741,7 +5771,10 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
                 data['offering labels'] = [i.getData([], context) for i in labels]
             else:
                 data['offering labels'] = [i.headData(context) for i in labels]
-            data['services'] = [i.headData(context) for i in self.currentServiceImplications]
+            if 'services' in fields:
+                data['services'] = [i.getData([], context) for i in self.currentServiceImplications]
+            else:
+                data['services'] = [i.headData(context) for i in self.currentServiceImplications]
             data['services'].sort(key=lambda i: i['description'])
         return data
     
@@ -5974,7 +6007,7 @@ class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
                        .prefetch_related(Prefetch('impliedService__names',
                                                   queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentNames'))
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return ServiceImplication.select_head_related(querySet)
     
     def __str__(self):
@@ -6070,7 +6103,7 @@ class Session(ChildInstance, dbmodels.Model):
                                                   queryset=SessionName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return Session.select_head_related(querySet)\
                        .prefetch_related(Prefetch('engagements',
                                          queryset=Engagement.select_head_related(Engagement.objects.filter(deleteTransaction__isnull=True)),
@@ -6289,7 +6322,7 @@ class Site(ChildInstance, dbmodels.Model):
                                                   queryset=SiteName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return Site.select_head_related(querySet)\
                        .prefetch_related(Prefetch('addresses',
                                          queryset=Address.select_related(Address.objects.filter(deleteTransaction__isnull=True)),
@@ -6452,7 +6485,7 @@ class Street(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
 
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet
 
     def headData(self, context):
@@ -6540,7 +6573,7 @@ class User(RootInstance, dbmodels.Model):
                                                   queryset=UserEmail.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentEMails'))
 
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return User.select_head_related(querySet)\
                    .prefetch_related(Prefetch('paths',
                                          queryset=Path.objects.filter(deleteTransaction__isnull=True),
@@ -6735,7 +6768,7 @@ class UserEmail(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet
         
-    def select_related(querySet):
+    def select_related(querySet, fields=[]):
         return querySet
         
     def headData(self, context):

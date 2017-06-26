@@ -21,7 +21,7 @@ def getData(path, context, resultClass, fields=[]):
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
     qs2 = qs2.distinct()
-    return [i.getData(fields, context) for i in resultClass.select_related(qs2)]
+    return [i.getData(fields, context) for i in resultClass.select_related(qs2, fields)]
     
 def showData(path, context, resultClass, fields=[]):
     data = getData(path, context, resultClass, fields)
