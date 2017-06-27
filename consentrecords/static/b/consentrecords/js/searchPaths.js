@@ -23,11 +23,11 @@ var SearchPathsResultsView = (function () {
 				/* TODO: */
 				var leftText = d3.select(this);
 				
-				var screenName = d.getDatum(cr.fieldNames.name);
-				var user = d.getValue(cr.fieldNames.user);
+				var screenName = d.name();
+				var user = d.user();
 				var userName = user && (getUserName(user));
-				var userDescription = user && user.getDescription();
-				var ageCalculator = new AgeCalculator(d.getValue("Birthday").getDescription());
+				var userDescription = user && user.description();
+				var ageCalculator = new AgeCalculator(d.birthday());
 				var ageDescription = ageCalculator.toString();			
 				
 				if (screenName) leftText.append('div').text(screenName);
@@ -130,7 +130,7 @@ var SearchPathsResultsView = (function () {
 			qf.forEach(function(sf)
 				{
 					if (sf.service)
-						path += '["More Experience"[TagTarget={0}|Offering[TagTarget={0}]]]'.format(sf.service.getInstanceID());
+						path += '[experience[service>service={0}|offering>service>service={0}]]'.format(sf.service.id());
 				});
 			return path;
 		}
@@ -543,7 +543,7 @@ var SearchPathsPanel = (function () {
 						.datum(newS)
 						.on('click', function(fd) 
 							{ 
-								if (prepareClick('click', 'remove query flag: {0}'.format(fd.getDescription())))
+								if (prepareClick('click', 'remove query flag: {0}'.format(fd.description())))
 								{
 									_this.onQueryFlagClicked(this, fd)
 										.done(unblockClick);
@@ -878,7 +878,7 @@ var SearchPathsPanel = (function () {
 									{
 										if (s.visible === undefined || s.visible)
 										{
-											if (prepareClick('click', 'add query flag: {0}'.format(s.getDescription())))
+											if (prepareClick('click', 'add query flag: {0}'.format(s.description())))
 											{
 												_this.addFlagToQuery(this, s);
 												unblockClick();
