@@ -3321,6 +3321,7 @@ cr.Path = (function() {
 	Path.prototype._canAnswerExperience = null;
 	Path.prototype._experiences = null;
 	Path.prototype._experiencesPromise = null;
+	Path.prototype._user = null;
 	
 	Path.prototype.birthday = function(newValue)
 	{
@@ -3378,6 +3379,20 @@ cr.Path = (function() {
 		}
 	}
 	
+	Path.prototype.user = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._user;
+		else
+		{
+		    if (newValue != this._user)
+		    {
+				this._user = newValue;
+			}
+			return this;
+		}
+	}
+	
 	Path.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -3391,6 +3406,11 @@ cr.Path = (function() {
 								i.setData(d);
 								return i;
 							});
+		if ('user' in d)
+		{
+			this._user = new cr.User();
+			this._user.setData(d['user']);
+		}
     }
     
     Path.prototype.experiences = function(newValue)
