@@ -153,10 +153,24 @@ def getFieldQ(field, symbol, testValue):
     else:
         raise ValueError("unrecognized symbol: %s"%symbol)
 
-def _subElementQuerySet(tokens, user, subType):
-    c = _filterClause(tokens, user, subType.fieldMap, subType.elementMap, prefix='')
+def _subElementQuerySet(tokens, user, subType, accessType):
+    # print("_subElementQuerySet", tokens, subType, accessType)
+    c = _filterQ(tokens, user, subType, accessType, prefix='')
     return subType.objects.filter(c, deleteTransaction__isnull=True)
 
+def _filterOrTokens(tokens):
+    orList = []
+    currentTokens = []
+    for t in tokens:
+        if t == '|':
+            orList.append(currentTokens)
+            currentTokens = []
+        else:
+            currentTokens.append(t)
+    if len(currentTokens):
+        orList.append(currentTokens)
+    return orList
+    
 # Return a Q clause according to the specified params.
 # If the parameter list is a single item:
 #     If there is a list, then the object must contain a value with the specified field type.
@@ -172,7 +186,7 @@ def _subElementQuerySet(tokens, user, subType):
 #     /api/Service[Domain[%22Service%20Domain%22[_name=Sports]][_name^=B]
 # If the parameter list is three values, interpret the three values as a query clause and
 #     filter self on that clause.  
-def _filterClause(tokens, user, fieldMap, elementMap, prefix=''):
+def _filterClause(tokens, user, fieldMap, elementMap, accessType, prefix=''):
     # print('_filterClause: %s, %s' % (tokens, prefix))
     fieldName = tokens[0]
     if fieldName in fieldMap:
@@ -189,18 +203,20 @@ def _filterClause(tokens, user, fieldMap, elementMap, prefix=''):
             subType = eval(elementMap[fieldName][1])
             
             if tokens[1] == '>':
-                return _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, prefix=prefix)
+                return _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, accessType, prefix=prefix)
             elif tokens[1] == '[':
-                q = Q((prefix + 'in', _subElementQuerySet(tokens[2], user, subType)))
+                q = Q((prefix + 'in', _subElementQuerySet(tokens[2], user, subType, accessType)))
                 i = 3
                 while i < len(tokens) - 2 and tokens[i] == '|' and tokens[i+1] == '[':
-                    q = q | Q((prefix + 'in', _subElementQuerySet(tokens[i+2], user, subType)))
+                    q = q | Q((prefix + 'in', _subElementQuerySet(tokens[i+2], user, subType, accessType)))
                     i += 3
                 return q
+            elif tokens[1] == '=':
+                return Q((prefix+'pk', tokens[2]))
             else:
-                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in tokens]))
+                raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
     else:
-        raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in tokens]))
+        raise ValueError("unrecognized path contents within [] for %s (expecting one of (%s))" % ("".join(tokens), ", ".join(elementMap.keys())))
 
 ### Access type is the type, if any, that the qs has already been filtered.
 def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
@@ -218,6 +234,17 @@ def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
     else:
         raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))    
 
+def _filterQ(tokens, user, qsType, accessType, prefix=''):
+    qList = map(lambda ts: _filterClause(ts, user, qsType.fieldMap, qsType.elementMap, accessType, prefix),
+                _filterOrTokens(tokens))
+    def mergeQs(a, b):
+        if a:
+            return a | b
+        else:
+            return b
+            
+    return reduce(mergeQs, qList, None)
+    
 def _parse(qs, tokens, user, qsType, accessType):
     # print('_parse: %s, %s' % (qsType, tokens))
     if len(tokens) == 0:
@@ -225,10 +252,10 @@ def _parse(qs, tokens, user, qsType, accessType):
     elif isUUID(tokens[0]):
         return _parse(qs.filter(pk=tokens[0]), tokens[1:], user, qsType, accessType)
     elif tokens[0] == '[':
-        q = _filterClause(tokens[1], user, qsType.fieldMap, qsType.elementMap)
+        q = _filterQ(tokens[1], user, qsType, accessType, prefix='')
         i = 2
         while i < len(tokens) - 2 and tokens[i] == '|' and tokens[i+1] == '[':
-            q = q | _filterClause(tokens[1+2], user, qsType.fieldMap, qsType.elementMap)
+            q = q | _filterQ(tokens[i+2], user, qsType, accessType, prefix='')
             i += 3
         return _parse(qs.filter(q), tokens[i:], user, qsType, accessType)
     elif tokens[0] == '/':
@@ -345,6 +372,9 @@ class IInstance():
 
     def description(self, languageCode=None):
         return IInstance.getName(self.currentNamesQuerySet, languageCode)
+    
+    def order_by(queryset, context):
+        return queryset
         
     def getData(self, fields, context):
         data = self.headData(context)
@@ -3467,7 +3497,6 @@ class CommentPrompt(RootInstance, PublicInstance, dbmodels.Model):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
         
-        print(changes)
         self.updateChildren(changes, 'translations', context, CommentPromptText, self.texts, newIDs)
                                                          
 class CommentPromptHistory(dbmodels.Model):
@@ -3588,7 +3617,6 @@ class Engagement(ChildInstance, dbmodels.Model):
         return querySet.select_related('user')
         
     def select_related(querySet, fields=[]):
-        print("Engagement", fields)
         qs = querySet.select_related('user')
         if 'offering' in fields:
             qs = qs.prefetch_related(Prefetch('parent__parent',
@@ -3605,8 +3633,6 @@ class Engagement(ChildInstance, dbmodels.Model):
         return qs
         
     def getData(self, fields, context):
-        print("Engagement getData", fields)
-        print(type(self.parent.parent))
         data = self.headData(context)
         if context.canRead(self):
             if self.user:
