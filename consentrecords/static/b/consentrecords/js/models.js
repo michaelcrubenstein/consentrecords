@@ -4132,7 +4132,7 @@ cr.createSignedinUser = function(id, description)
 {
 	cr.signedinUser.id(id)
 	               .description(description)
-	               .promiseDataLoaded([cr.fieldNames.systemAccess])
+	               .promiseDataLoaded(['path', cr.fieldNames.systemAccess])
 		.then(function()
 			{
 				$(cr.signedinUser).trigger("signin.cr");
