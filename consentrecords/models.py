@@ -6600,13 +6600,16 @@ class User(RootInstance, dbmodels.Model):
                                                   to_attr='currentEMails'))
 
     def select_related(querySet, fields=[]):
-        return User.select_head_related(querySet)\
-                   .prefetch_related(Prefetch('paths',
+        qs = User.select_head_related(querySet)
+        if 'path' in fields:
+            qs = qs.prefetch_related(Prefetch('paths',
                                          queryset=Path.objects.filter(deleteTransaction__isnull=True),
-                                         to_attr='currentPaths'))\
-                   .prefetch_related(Prefetch('notifications',
+                                         to_attr='currentPaths'))
+        if 'notification' in fields:
+            qs = qs.prefetch_related(Prefetch('notifications',
                                          queryset=Notification.objects.filter(deleteTransaction__isnull=True),
                                          to_attr='currentNotifications'))
+        return qs
         
     def fetchPrivilege(self, user):
         return GrantTarget.objects.get(pk=self.id).fetchPrivilege(user)
@@ -6631,12 +6634,9 @@ class User(RootInstance, dbmodels.Model):
 
         if 'path' in fields: 
             data['path'] = self.currentPaths[0].getData([], context)
-        else:
-            data['path'] = self.currentPaths[0].headData(context)
 
         if 'notification' in fields: 
-            data['notifications'] = [i.getData([], context) for i in \
-                Notification.select_related(self.notifications.filter(deleteTransaction__isnull=True).order_by('transaction__creation_time'))]
+            data['notifications'] = [i.getData([], context) for i in self.currentNotifications.order_by('transaction__creation_time')]
 
         if context.getPrivilege(self) == 'administer':
             if 'user grant request' in fields: 
