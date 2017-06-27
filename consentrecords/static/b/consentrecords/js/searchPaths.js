@@ -121,7 +121,7 @@ var SearchPathsResultsView = (function () {
 	{
 		var path;
 		{
-			path = 'Path';
+			path = 'path';
 			
 			var qf = this.searchPathsPanel.getQueryFlags();
 			if (!qf.length)
@@ -130,7 +130,7 @@ var SearchPathsResultsView = (function () {
 			qf.forEach(function(sf)
 				{
 					if (sf.service)
-						path += '[experience[service>service={0}|offering>service>service={0}]]'.format(sf.service.id());
+						path += '[experience[service>service>implies>service={0}|offering>service>service>implies>service={0}]]'.format(sf.service.id());
 				});
 			return path;
 		}
@@ -149,6 +149,11 @@ var SearchPathsResultsView = (function () {
 	SearchPathsResultsView.prototype.fields = function()
 	{
 		return ["parents", cr.fieldNames.user];
+	}
+	
+	SearchPathsResultsView.prototype.resultType = function()
+	{
+		return cr.Path;
 	}
 	
 	function SearchPathsResultsView(searchPathsPanel)
