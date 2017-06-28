@@ -130,7 +130,7 @@ var SearchPathsResultsView = (function () {
 			qf.forEach(function(sf)
 				{
 					if (sf.service)
-						path += '[experience[service>service>implies>service={0}|offering>service>service>implies>service={0}]]'.format(sf.service.id());
+						path += '[experience>implication>service={0}]'.format(sf.service.id());
 				});
 			return path;
 		}

@@ -154,7 +154,7 @@ def getFieldQ(field, symbol, testValue):
         raise ValueError("unrecognized symbol: %s"%symbol)
 
 def _subElementQuerySet(tokens, user, subType, accessType):
-    # print("_subElementQuerySet", tokens, subType, accessType)
+    # print(str(datetime.datetime.now()), "_subElementQuerySet", tokens, subType, accessType)
     c = _filterQ(tokens, user, subType, accessType, prefix='')
     return subType.objects.filter(c, deleteTransaction__isnull=True)
 
@@ -187,7 +187,7 @@ def _filterOrTokens(tokens):
 # If the parameter list is three values, interpret the three values as a query clause and
 #     filter self on that clause.  
 def _filterClause(tokens, user, fieldMap, elementMap, accessType, prefix=''):
-    # print('_filterClause: %s, %s' % (tokens, prefix))
+    # print(str(datetime.datetime.now()), '_filterClause: %s, %s' % (tokens, prefix))
     fieldName = tokens[0]
     if fieldName in fieldMap:
         prefix += fieldMap[fieldName]
@@ -220,7 +220,7 @@ def _filterClause(tokens, user, fieldMap, elementMap, accessType, prefix=''):
 
 ### Access type is the type, if any, that the qs has already been filtered.
 def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
-    # print('_subTypeParse: %s, %s, %s, %s' % (qsType, tokens, accessType, elementMap))
+    # print(str(datetime.datetime.now()), '_subTypeParse: %s, %s, %s, %s' % (qsType, tokens, accessType, elementMap))
     if isUUID(tokens[1]):
         return _parse(qs.filter(pk=tokens[1]), tokens[2:], user, qsType, accessType)
     elif tokens[1] in elementMap:
@@ -246,7 +246,7 @@ def _filterQ(tokens, user, qsType, accessType, prefix=''):
     return reduce(mergeQs, qList, None)
     
 def _parse(qs, tokens, user, qsType, accessType):
-    # print('_parse: %s, %s' % (qsType, tokens))
+    # print(str(datetime.datetime.now()), '_parse: %s, %s' % (qsType, tokens))
     if len(tokens) == 0:
         return qs, tokens, qsType, accessType
     elif isUUID(tokens[0]):
@@ -3823,6 +3823,7 @@ class Experience(ChildInstance, dbmodels.Model):
                   'custom service': ('customServices__', "ExperienceCustomService", 'parent'),
                   'service': ('services__', "ExperienceService", 'parent'),
                   'comment': ('comments__', "Comment", 'parent'),
+                  'implication': ('experienceImplications__', "ExperienceImplication", 'experience'),
                  }
                  
     @property
@@ -4019,6 +4020,22 @@ class Experience(ChildInstance, dbmodels.Model):
         if history:
             self.lastTransaction = context.transaction
             self.save()
+    
+    @property
+    def impliedServicesQuerySet(self):
+        return Service.objects.filter(deleteTransaction__isnull=True,
+            implyingService__deleteTransaction__isnull=True,
+            implyingService__experienceServices__deleteTransaction__isnull=True,
+            implyingService__experienceServices__parent=self)\
+            .union(Service.objects.filter(deleteTransaction__isnull=True,
+            implyingService__deleteTransaction__isnull=True,
+            implyingService__offeringServices__deleteTransaction__isnull=True,
+            implyingService__offeringServices__parent__experiences=self))
+
+    def cacheImplications(self):
+        ExperienceImplication.objects.filter(experience=self).delete()
+        ExperienceImplication.objects.bulk_create(\
+            [ExperienceImplication(experience=self, service=s) for s in self.impliedServicesQuerySet])
             
 class ExperienceHistory(dbmodels.Model):
     id = idField()
@@ -4035,6 +4052,17 @@ class ExperienceHistory(dbmodels.Model):
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+class ExperienceImplication(dbmodels.Model):
+    id = idField()
+    experience = dbmodels.ForeignKey('consentrecords.Experience', related_name='experienceImplications', db_index=True, null=False, on_delete=dbmodels.CASCADE)
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceImplications', db_index=True, null=False, on_delete=dbmodels.CASCADE)
+    
+    fieldMap = {}
+                
+    elementMap = {'experience': ('experience__', 'Experience', 'experienceImplications'),
+                  'service': ('service__', 'Service', 'experienceImplications'),
+                 }
+    
 class ExperienceCustomService(ChildInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdExperienceCustomServices')
@@ -4922,6 +4950,9 @@ class Offering(ChildInstance, dbmodels.Model):
     maximumAge = dbmodels.CharField(max_length=255, db_index=True, null=True)
     minimumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True)
     maximumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    service = dbmodels.ManyToManyField('consentrecords.Service', related_name='offering',
+        through='consentrecords.OfferingService',
+        through_fields=('parent','service'))
     
     fieldMap = {'web site': 'webSite',
                 'minimum age': 'minimumAge',
@@ -5738,6 +5769,9 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
     lastTransaction = lastTransactionField('changedServices')
     deleteTransaction = deleteTransactionField('deletedServices')
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True)
+    implication = dbmodels.ManyToManyField('consentrecords.Service', related_name='implyingService',
+        through='consentrecords.ServiceImplication',
+        through_fields=('parent','impliedService'))
 
     fieldMap = {'stage': 'stage',
                }
@@ -5748,6 +5782,7 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
                   'offering label': ('offeringLabels__', "ServiceOfferingLabel", 'parent'),
                   'implies': ('serviceImplications__', 'ServiceImplication', 'parent'),
                   'implied by': ('impliedServiceImplications__', 'ServiceImplication', 'impliedService'),
+                  'implication': ('implication__', 'Service', 'implyingService'),
                  }
                  
     def __str__(self):
