@@ -975,6 +975,7 @@ class api:
                 resultClass = type(qs[0])
                 qs2 = resultClass.filterForGetData(qs, context.user, accessType)
                 qs2 = resultClass.select_related(qs2.distinct(), fields)
+                qs2 = resultClass.order_by(qs2, context)
                 if end > 0:
                     qs2 = qs2[start:end]
                 elif start > 0:

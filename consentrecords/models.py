@@ -5810,7 +5810,11 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
                                                      if 'services' in fields else \
                                                      ServiceImplication.select_head_related(ServiceImplication.objects.filter(deleteTransaction__isnull=True)),
                                                  to_attr='currentServiceImplications'))
-                        
+    
+    def order_by(queryset, context):
+        return queryset.filter(names__deleteTransaction__isnull=True, names__languageCode=(context.languageCode or 'en'))\
+                       .order_by('names__text')
+    
     def getData(self, fields, context):
         data = super(Service, self).getData(fields, context)
         if context.canRead(self):
