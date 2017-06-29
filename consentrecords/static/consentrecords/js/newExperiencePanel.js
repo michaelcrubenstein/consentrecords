@@ -2501,8 +2501,7 @@ var NewExperiencePanel = (function () {
 			
 			if (service)
 			{
-				var s = new Service(service);
-				pathGuide = PathGuides.data[s.getColumn()];
+				pathGuide = PathGuides.data[service.getColumn()];
 		
 				d3.select(node)
 					.style('background-color', pathGuide.flagColor)
@@ -2704,21 +2703,20 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.setPlaceholders = function()
 	{
-		var service = this.experience.services.find(function(s)
+		var service = this.experience.services().find(function(s)
 			{
-				return s.pickedObject &&
-					   new Service(s.pickedObject).getColumn() < PathGuides.data.length - 1;
+				return s.service().getColumn() < PathGuides.data.length - 1;
 			});
 			
 		this.organizationInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Organization Label')) || this.organizationDefaultPlaceholder);
+				  (service && this._serviceLabel(service.service(), 'Organization Label')) || this.organizationDefaultPlaceholder);
 		this.siteInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Site Label')) || this.siteDefaultPlaceholder);
+				  (service && this._serviceLabel(service.service(), 'Site Label')) || this.siteDefaultPlaceholder);
 		this.offeringInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Offering Label')) || this.offeringDefaultPlaceholder);
+				  (service && this._serviceLabel(service.service(), 'Offering Label')) || this.offeringDefaultPlaceholder);
 	}
 	
 	NewExperiencePanel.prototype.updateInputs = function()
@@ -3478,7 +3476,7 @@ var NewExperiencePanel = (function () {
 			.then(function(newInstances)
 				{
 					_this.allServices = newInstances;
-					var services = newInstances.map(function(s) { return new Service(s); });
+					var services = newInstances.map(function(s) { return new ServiceFlagController(s); });
 					_this.tagSearchView.appendFlags(services)
 						.on('mousedown', function()
 							{

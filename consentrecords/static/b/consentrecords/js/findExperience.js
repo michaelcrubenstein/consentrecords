@@ -80,7 +80,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	offering.promiseCellsFromCache()
 		.then(function()
 			{
-				var serviceCell = offering.getCell("Service");
+				var serviceCell = offering.services();
 				serviceCell.field.label = "Tags";
 				if (!service && serviceCell.data.length > 0)
 					service = serviceCell.data[0];

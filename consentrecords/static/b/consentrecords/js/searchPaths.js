@@ -541,7 +541,7 @@ var SearchPathsPanel = (function () {
  			.style('left', newPosition.left + flagPosition.left)
  			.each("end", function() {
 					/* Add a query flag that is the same as the svg flag in the same position. */
-					var newS = new Service(s.service);
+					var newS = new ServiceFlagController(s.service);
 					newS.x = flagPosition.left;
 					newS.y = flagPosition.top / _this.emToPX;
 					var queryFlag = _this.queryContainer.svg.append('g')
@@ -876,7 +876,7 @@ var SearchPathsPanel = (function () {
 				cr.Service.servicesPromise()
 					.done(function(services)
 						{
-							var s = services.map(function(e) { return new Service(e); });
+							var s = services.map(function(e) { return new ServiceFlagController(e); });
 			
 							_this.poolContainer.appendFlags(s)
 								 .on('click', function(s)

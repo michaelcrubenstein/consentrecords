@@ -160,26 +160,26 @@ var Experience = (function() {
 			initialData["End"] = [{text: this.endDate}];
 		
 		if (this.organization)
-			initialData["Organization"] = [{instanceID: this.organization.getInstanceID()}];
+			initialData["Organization"] = [{instanceID: this.organization.id()}];
 		else if (this.organizationName)
 			initialData["User Entered Organization"] = [{text: this.organizationName}];
 			
 		if (this.site)
-			initialData["Site"] = [{instanceID: this.site.getInstanceID()}];
+			initialData["Site"] = [{instanceID: this.site.id()}];
 		else if (this.siteName)
 			initialData["User Entered Site"] = [{text: this.siteName}];
 			
 		if (this.offering)
-			initialData["Offering"] = [{instanceID: this.offering.getInstanceID()}];
+			initialData["offering"] = [{instanceID: this.offering.id()}];
 		else if (this.offeringName)
-			initialData["User Entered Offering"] = [{text: this.offeringName}];
+			initialData["custom offering"] = [{text: this.offeringName}];
 		
 		var existingServices = null;
 		if (this.offering && this.offering.getCell("Service"))
 			existingServices = this.offering.services();
 			
-		if (this.timeframe)
-			initialData["Timeframe"] = [{instanceID: this.timeframe.getInstanceID()}];
+		if (this.timeframe())
+			initialData["Timeframe"] = [{instanceID: this.timeframe()}];
 				
 		for (i = 0; i < this.services.length; ++i)
 		{
@@ -190,13 +190,13 @@ var Experience = (function() {
 			{
 				if (!existingServices || 
 					!existingServices.find(function(d) { 
-						return s.pickedObject.getInstanceID() == d.getInstanceID(); 
+						return s.pickedObject.id() == d.id(); 
 					}))
 				{
 					if (!initialData["Service"])
-						initialData["Service"] = [{instanceID: s.pickedObject.getInstanceID()}];
+						initialData["Service"] = [{instanceID: s.pickedObject.id()}];
 					else
-						initialData["Service"].push({instanceID: s.pickedObject.getInstanceID()});
+						initialData["Service"].push({instanceID: s.pickedObject.id()});
 				}
 			}
 			else if (s.name)
@@ -280,7 +280,7 @@ var Experience = (function() {
 		var tags = [];
 		
 		var offering = this.offering;
-		if (offering && offering.getInstanceID())
+		if (offering && offering.id())
 		{
 			names = offering.services()
 				.filter(function(v) { return !v.isEmpty(); });
@@ -395,13 +395,13 @@ var Experience = (function() {
 			var existingServices = null;
 			if (this.offering && this.offering.services())
 				existingServices = this.offering.services()
-					.map(function(d) { return d.getInstanceID(); });
+					.map(function(d) { return d.id(); });
 
 			var newServices = this.services.filter(function(s) {
 					return s.pickedObject &&
 						(!existingServices || 
 					     !existingServices.find(function(d) { 
-							return s.pickedObject.getInstanceID() == d;
+							return s.pickedObject.id() == d;
 							}));
 				})
 				.map(function(d) { return d.pickedObject; });
@@ -442,7 +442,7 @@ var Experience = (function() {
 				.then(function()
 					{
 						var offering = _this.instance.getValue("Offering");
-						if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
+						if (offering && offering.id() && !offering.areCellsLoaded())
 							return offering.promiseCellsFromCache();
 						else
 							return undefined;
@@ -458,7 +458,7 @@ var Experience = (function() {
 
 			this.appendData(initialData);
 		
-			return cr.createInstance(field, this.path.getInstanceID(), initialData)
+			return cr.createInstance(field, this.path.id(), initialData)
 			 .then(function(newData)
 					{
 						var r = $.Deferred();
@@ -593,11 +593,11 @@ var Experience = (function() {
 	{
 		if (this.services.length > 0 &&
 			this.services[0].pickedObject)
-			return '[Service[Service={0}]]'.format(this.services[0].pickedObject.getInstanceID());
+			return '[Service[Service={0}]]'.format(this.services[0].pickedObject.id());
 		else if (this.domain)
-			return '[Service[Service={0}]]'.format(this.domain.getInstanceID());
+			return '[Service[Service={0}]]'.format(this.domain.id());
 		else if (this.stage)
-			return '[Service[Stage={0}]]'.format(this.stage.getInstanceID());
+			return '[Service[Stage={0}]]'.format(this.stage);
 		else
 			return "";
 	}
@@ -784,7 +784,7 @@ var ReportedObject = function () {
     ReportedObject.prototype.equal = function(v2)
     {
     	if (this.pickedObject)
-    		return v2.pickedObject && v2.pickedObject.getInstanceID() == this.pickedObject.getInstanceID();
+    		return v2.pickedObject && v2.pickedObject.id() == this.pickedObject.id();
     	else
     		return !v2.pickedObject && this.name == v2.name;
     }
@@ -824,7 +824,7 @@ var ExperienceDatumSearchView = (function() {
 				if (!this.experience.offeringName &&
 					this.experience.services.find(function(d2)
 						{
-							return d2.pickedObject && d2.pickedObject.getInstanceID() == d.getInstanceID();
+							return d2.pickedObject && d2.pickedObject.id() == d.id();
 						}))
 					this.experience.setOffering({text: d.description() });
 				else
@@ -846,7 +846,7 @@ var ExperienceDatumSearchView = (function() {
 					/* Clear the site and offering if they aren't within the new organization. */
 					if (_this.experience.site &&
 						_this.experience.organization &&
-						_this.experience.organization.getInstanceID() != d.getInstanceID())
+						_this.experience.organization.id() != d.id())
 					{
 						if (this.experience.offering)
 						{
@@ -892,7 +892,7 @@ var ExperienceDatumSearchView = (function() {
 							{
 								if (_this.experience.offering &&
 									_this.experience.site &&
-									_this.experience.site.getInstanceID() != d.getInstanceID())
+									_this.experience.site.id() != d.id())
 									_this.experience.clearOffering();
 								_this.experience.setOrganization({instance: d});
 								_this.sitePanel.onExperienceUpdated();
@@ -1230,7 +1230,7 @@ var TagSearchView = (function() {
 					{
 						if (!fs.visible && fs.service.services().find(function(subService)
 							{
-								return subService.getInstanceID() == rootService.service.getInstanceID();
+								return subService.service().id() == rootService.service.id();
 							}))
 							fs.visible = true;
 					});
@@ -1247,10 +1247,11 @@ var TagSearchView = (function() {
 			// in the set of visible flags except for the service itself.
 			flags.each(function(fs)
 			{
-				flagServices[fs.service.getInstanceID()] = fs.service.services().filter(
-					function(s) {
+				flagServices[fs.service.id()] = fs.service.services()
+					.map(function(serviceImplication) { return serviceImplication.service(); })
+					.filter(function(s) {
 						return flagIndexOf(s.description().toLocaleUpperCase()) >= 0 && 
-										   s.getInstanceID() != fs.service.getInstanceID();
+										   s.id() != fs.service.id();
 					});
 			});
 			
@@ -1261,7 +1262,7 @@ var TagSearchView = (function() {
 			{
 				flags.each(function(fs)
 				{
-					var thisID = fs.service.getInstanceID();
+					var thisID = fs.service.id();
 					
 					if (!(thisID in levels))
 					{
@@ -1269,7 +1270,7 @@ var TagSearchView = (function() {
 						// are already in the levels except for itself.
 						var f = function(s)
 							{
-								return s.getInstanceID() in levels && levels[s.getInstanceID()] < levelCount;
+								return s.id() in levels && levels[s.id()] < levelCount;
 							};
 						
 						if (flagServices[thisID].filter(f).length == flagServices[thisID].length)
@@ -1280,7 +1281,7 @@ var TagSearchView = (function() {
 			
 			flags.each(function(fs)
 				{
-					fs.visible = fs.service.getInstanceID() in levels;
+					fs.visible = fs.service.id() in levels;
 				});
 		}
 	}
@@ -1293,15 +1294,15 @@ var TagSearchView = (function() {
 	
 	TagSearchView.prototype.hasSubService = function(service)
 	{
-		serviceID = service.getInstanceID();
+		serviceID = service.id();
 		
 		return this.sitePanel.allServices.find(function(s)
 			{
-				if (s.getInstanceID() == serviceID)
+				if (s.id() == serviceID)
 					return false;
 				return s.services().find(function(subS)
 					{
-						return subS.getInstanceID() == serviceID;
+						return subS.service().id() == serviceID;
 					});
 			});
 	}
@@ -1411,11 +1412,11 @@ var OrganizationSearchView = (function() {
 		{
 			if (this.typeName === "Site")
 			{
-				path = 'Site[ancestor:name*="{1}"]';
+				path = 'site[name>text*="{1}"|organization>name>text*="{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[name*="{1}"]';
+				path = 'organization[name>text*="{1}"]';
 			}
 			var symbol = "*=";
 		
@@ -1423,6 +1424,26 @@ var OrganizationSearchView = (function() {
 		}
 		else
 			return '';
+	}
+	
+	OrganizationSearchView.prototype.resultType = function(val)
+	{
+		var path;
+		if (val)
+		{
+			if (this.typeName === "Site")
+			{
+				return cr.Site;
+			}
+			else if (this.typeName === "Organization")
+			{
+				return cr.Organization;
+			}
+			else
+				throw new Error("unexpected typeName");
+		}
+		else
+			return null;
 	}
 	
 	OrganizationSearchView.prototype.setupSearchTypes = function(searchText)
@@ -1473,16 +1494,16 @@ var OrganizationSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
-				if (d.getTypeName() === "Site")
+				if (d instanceof cr.Site)
 				{
 					/* The organization name is either a value of d or, if d is a value
 					   of an Offering, then the organization name is the value of the offering.
 					 */
 					var orgValue;
-					if (d.cell && d.cell.parent && d.cell.parent.getTypeName() === "Offering")
-						orgValue = d.cell.parent.getValue("Organization");
+					if (d.parent() && d.parent() instanceof cr.Offering)
+						orgValue = d.parent.organization();
 					else
-						orgValue = d.getValue("Organization");
+						orgValue = d.organization();
 						
 					if (orgValue.description() == d.description())
 					{
@@ -1554,10 +1575,10 @@ var SiteSearchView = (function() {
 			else if (!val)
 			{
 				if (this.typeName === "Site")
-					return "{0}/Sites/Site".format(this.experience.organization.getInstanceID());
+					return "{0}/Sites/Site".format(this.experience.organization.id());
 				else if (this.typeName === "Offering from Site")
 				{
-					path = "{0}/Sites/Site/Offerings/Offering".format(this.experience.organization.getInstanceID());
+					path = "{0}/Sites/Site/Offering".format(this.experience.organization.id());
 					path += this.experience.getOfferingConstraint();
 					return path;
 				}
@@ -1566,14 +1587,14 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[ancestor:name*="{1}"]';
-					path = "{0}/Sites/Site/Offerings/".format(this.experience.organization.getInstanceID()) + path;
+					path = 'Offering[ancestor:name>text*="{1}"]';
+					path = "{0}/Sites/Site/Offerings/".format(this.experience.organization.id()) + path;
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site")
 				{
-					path = 'Site[name*="{1}"]';
-					path = "{0}/Sites/".format(this.experience.organization.getInstanceID()) + path;
+					path = 'Site[name>text*="{1}"]';
+					path = "{0}/Sites/".format(this.experience.organization.id()) + path;
 				}
 			
 				var symbol = "*=";
@@ -1591,20 +1612,20 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[ancestor:name*="{1}"]';
+					path = 'Offering[ancestor:name>text*="{1}"]';
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site")
 				{
-					path = 'Site[ancestor:name*="{1}"]';
+					path = 'Site[ancestor:name>text*="{1}"]';
 					if (this.experience.services[0].pickedObject)
 					{
-						path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.getInstanceID());
+						path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.id());
 					}
 				}
 				else if (this.typeName === "Organization")
 				{
-					path = 'Organization[name*="{1}"]';
+					path = 'Organization[name>text*="{1}"]';
 				}
 				else
 					throw "Unrecognized typeName: {0}".format(this.typeName);
@@ -1619,11 +1640,11 @@ var SiteSearchView = (function() {
 		{
 			if (this.typeName === "Site")
 			{
-				path = 'Site[ancestor:name*="{1}"]';
+				path = 'Site[ancestor:name>text*="{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[name*="{1}"]';
+				path = 'Organization[name>text*="{1}"]';
 			}
 			var symbol = "*=";
 		
@@ -1631,6 +1652,75 @@ var SiteSearchView = (function() {
 		}
 		else
 			return '';
+	}
+	
+	SiteSearchView.prototype.resultType = function(val)
+	{
+		var path;
+		if (this.experience.organizationName)
+		{
+			if (this.experience.organization == null)
+			{
+				return null;
+			}
+			else if (!val)
+			{
+				if (this.typeName === "Site")
+					return cr.Site;
+				else if (this.typeName === "Offering from Site")
+				{
+					return cr.Offering;
+				}
+			}
+			else
+			{
+				if (this.typeName === "Offering")
+				{
+					return cr.Offering;
+				}
+				else if (this.typeName === "Site")
+				{
+					return cr.Site;
+				}
+			}
+		}
+		else if (this.experience.services.length > 0)
+		{
+			if (!val)
+			{
+				return null;
+			}
+			else
+			{
+				if (this.typeName === "Offering")
+				{
+					return cr.Offering;
+				}
+				else if (this.typeName === "Site")
+				{
+					return cr.Site;
+				}
+				else if (this.typeName === "Organization")
+				{
+					return cr.Organization;
+				}
+				else
+					throw "Unrecognized typeName: {0}".format(this.typeName);
+			}
+		}
+		else if (val)
+		{
+			if (this.typeName === "Site")
+			{
+				return cr.Site;
+			}
+			else if (this.typeName === "Organization")
+			{
+				return cr.Organization;
+			}
+		}
+		else
+			return null;
 	}
 	
 	SiteSearchView.prototype.setupSearchTypes = function(searchText)
@@ -1738,7 +1828,7 @@ var SiteSearchView = (function() {
 						orgValue = d.getValue("Organization");
 						
 					if (orgValue.description() == d.description() ||
-						orgValue.getInstanceID() == (_this.experience.organization && _this.experience.organization.getInstanceID()))
+						orgValue.id() == (_this.experience.organization && _this.experience.organization.id()))
 					{
 						leftText.text(d.description());
 					}
@@ -1829,7 +1919,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Offerings>Offering".format(this.experience.site.getInstanceID());
+						path = "{0}>Offerings>Offering".format(this.experience.site.id());
 						return path;
 					}
 					else
@@ -1839,7 +1929,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[name*="{1}"]';
+						path = "{0}>Offerings>Offering".format(this.experience.site.id()) + '[name>text*="{1}"]';
 					}
 					else
 						throw new Error('unrecognized typeName');
@@ -1864,7 +1954,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getInstanceID());
+						path = "{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.id());
 						path += this.experience.getOfferingConstraint();
 						return path;
 					}
@@ -1875,8 +1965,8 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = 'Offering[ancestor:name*="{1}"]';
-						path = "{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
+						path = 'Offering[ancestor:name>text*="{1}"]';
+						path = "{0}>Sites>Site>Offerings>".format(this.experience.organization.id()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
 			
@@ -1896,7 +1986,7 @@ var OfferingSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[ancestor:name*="{1}"]';
+					path = 'Offering[ancestor:name>text*="{1}"]';
 					path += this.experience.getOfferingConstraint();
 				}
 				else
@@ -1918,7 +2008,7 @@ var OfferingSearchView = (function() {
 		{
 			if (this.typeName === "Offering")
 			{
-				path = 'Offering[name*="{1}"]' +
+				path = 'Offering[name>text*="{1}"]' +
 						this.experience.getOfferingConstraint();
 			}
 			else
@@ -1927,6 +2017,79 @@ var OfferingSearchView = (function() {
 			var symbol = "*=";
 		
 			return path.format(symbol, encodeURIComponent(val));
+		}
+		else
+			return '';
+	}
+	
+	OfferingSearchView.prototype.resultType = function(val)
+	{
+		var path;
+
+		if (this.experience.siteName)
+		{
+			if (this.experience.site)
+			{
+				if (this.typeName === "Offering")
+					return cr.Offering;
+				else
+					throw new Error('unrecognized typeName');
+			}
+			else if (val)
+			{
+				throw new Error("Unreachable code");
+			}
+			else
+				return '';
+		}
+		else if (this.experience.organizationName)
+		{
+			if (this.experience.organization)
+			{
+				if (!val)
+				{
+					if (this.typeName === "Offering")
+					{
+						return cr.Offering;
+					}
+					else
+						return cr.Service;
+				}
+				else
+				{
+					if (this.typeName === "Offering")
+					{
+						return cr.Offering;
+					}
+				}
+			}
+			else
+			{
+				throw new Error("Unreachable code");
+			}
+		}
+		else if (this.experience.services.length > 0)
+		{
+			if (val)
+			{
+				if (this.typeName === "Offering")
+				{
+					return cr.Offering;
+				}
+				else
+					throw "Unrecognized typeName: {0}".format(this.typeName);
+			}
+			else
+			{
+				return cr.Offering;
+			}
+		}
+ 		else if (val)
+		{
+			if (this.typeName === "Offering")
+				return cr.Offering;
+			else
+				throw new Error("Unrecognized typeName: {0}".format(this.typeName));
 		}
 		else
 			return '';
@@ -2022,7 +2185,7 @@ var OfferingSearchView = (function() {
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
 				if (d.getTypeName() === "Offering")
 				{
-					if (_this.experience.site && _this.experience.site.getInstanceID() == d.getValue("Site").getInstanceID())
+					if (_this.experience.site && _this.experience.site.id() == d.getValue("Site").id())
 						leftText.text(d.description());
 					else
 					{
@@ -2030,8 +2193,8 @@ var OfferingSearchView = (function() {
 							.classed('title', true).text(d.description());
 	
 						orgDiv = leftText.append('div').classed("organization", true);
-						if (d.getValue("Organization").getInstanceID() !=
-							(_this.experience.organization && _this.experience.organization.getInstanceID()))
+						if (d.getValue("Organization").id() !=
+							(_this.experience.organization && _this.experience.organization.id()))
 							orgDiv.append('div').text(d.getValue("Organization").description());
 						if (d.getValue("Site").description() != d.getValue("Organization").description())
 						{
@@ -2055,7 +2218,7 @@ var OfferingSearchView = (function() {
 	OfferingSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
-		return this.inputText() != (this.experience.offeringName || "");
+		return this.inputText() != (this.experience.offeringName() || "");
 	}
 	
 	function OfferingSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
@@ -2295,7 +2458,7 @@ var ExperienceShareOptions = (function () {
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
 							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}/.'
-										.format(window.location.origin, experience.getInstanceID());
+										.format(window.location.origin, experience.id());
 							unblockClick();
 						});
 						dimmer.hide();
@@ -2488,8 +2651,7 @@ var NewExperiencePanel = (function () {
 			
 			if (service)
 			{
-				var s = new Service(service);
-				pathGuide = PathGuides.data[s.getColumn()];
+				pathGuide = PathGuides.data[service.getColumn()];
 		
 				d3.select(node)
 					.style('background-color', pathGuide.flagColor)
@@ -2611,11 +2773,12 @@ var NewExperiencePanel = (function () {
 		var tags = [];
 		var _this = this;
 		
-		var offering = this.experience.offering;
-		if (offering && offering.getInstanceID())
+		var offering = this.experience.offering();
+		if (offering && offering.id())
 		{
 			offeringTags = offering.services()
-				.filter(function(v) { return !v.isEmpty(); });
+				.filter(function(v) { return !v.isEmpty(); })
+				.map(function(s) { return s.service(); });
 		}
 		
 		var container = this.mainDiv.select('span.offering-tags-container');
@@ -2642,7 +2805,9 @@ var NewExperiencePanel = (function () {
 			
 		container = this.mainDiv.select('.tags-container');
 		var tagDivs = container.selectAll('input.tag');
-		tags = tags.concat(this.experience.services.filter(function(v) 
+		tags = tags.concat(this.experience.services()
+			.map(function(s) { return s.service(); })
+			.filter(function(v) 
 			{ 
 				return !offeringTags.find(function(d)
 					{
@@ -2691,10 +2856,9 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.setPlaceholders = function()
 	{
-		var service = this.experience.services.find(function(s)
+		var service = this.experience.services().find(function(s)
 			{
-				return s.pickedObject &&
-					   new Service(s.pickedObject).getColumn() < PathGuides.data.length - 1;
+				return s.service().getColumn() < PathGuides.data.length - 1;
 			});
 			
 		this.organizationInput
@@ -2717,9 +2881,9 @@ var NewExperiencePanel = (function () {
 		this.siteInput.attr('placeholder', null);
 		this.offeringInput.attr('placeholder', null);
 		
-		this.organizationInput.node().value = this.experience.organizationName;
-		this.siteInput.node().value = this.experience.siteName;
-		this.offeringInput.node().value = this.experience.offeringName;
+		this.organizationInput.node().value = this.experience.organizationName();
+		this.siteInput.node().value = this.experience.siteName();
+		this.offeringInput.node().value = this.experience.offeringName();
 
 		this.setPlaceholders();
 	}
@@ -2749,9 +2913,9 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.organizationSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getInstanceID() != (this.experience.organization && this.experience.organization.getInstanceID()))
+				newInstance.id() != (this.experience.organization() && this.experience.organization().id()))
 				this.experience.setOrganization({instance: newInstance});
-			else if (newText != this.experience.organizationName)
+			else if (newText != this.experience.organizationName())
 				this.experience.setOrganization({text: newText});
 		}
 		else
@@ -2767,9 +2931,9 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.siteSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getInstanceID() != (this.experience.site && this.experience.site.getInstanceID()))
+				newInstance.id() != (this.experience.site() && this.experience.site().id()))
 				this.experience.setSite({instance: newInstance});
-			else if (newText != this.experience.siteName)
+			else if (newText != this.experience.siteName())
 				this.experience.setSite({text: newText});
 		}
 		else
@@ -2785,7 +2949,7 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.offeringSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getInstanceID() != (this.experience.offering && this.experience.offering.getInstanceID()))
+				newInstance.id() != (this.experience.offering() && this.experience.offering().id()))
 				this.experience.setOffering({instance: newInstance});
 			else if (newText != this.experience.offeringName)
 				this.experience.setOffering({text: newText});
@@ -2807,7 +2971,7 @@ var NewExperiencePanel = (function () {
 				if (this == exceptNode)
 					return;
 					
-				if (d && d.constructor == ReportedObject)
+				if (d instanceof cr.IInstance)
 				{
 					var newText = this.value.trim();
 					if (!newText)
@@ -2912,8 +3076,8 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.setTagHelp = function()
 	{
 		if (this.tagSearchView.focusNode == this.tagSearchView.firstTagInputNode() &&
-			(!this.experience.offering ||
-			  this.experience.offering.services().length == 0))
+			(!this.experience.offering() ||
+			  this.experience.offering().services().length == 0))
 			this.tagHelp.text(this.firstTagHelp);
 		else
 			this.tagHelp.text(this.otherTagHelp);
@@ -3213,7 +3377,7 @@ var NewExperiencePanel = (function () {
 		this.tagSearchView = new TagSearchView(searchContainer, this, experience);
 												
 		/* Code starting for the date range. */
-		var birthday = experience.path.getDatum("Birthday") ||
+		var birthday = experience.path().birthday() ||
 			(function()
 			 {
 				var todayDate = getUTCTodayDate();
@@ -3373,7 +3537,7 @@ var NewExperiencePanel = (function () {
 		this.organizationInput = section.append('input')
 			.classed('organization', true)
 			.attr('placeholder', this.organizationDefaultPlaceholder)
-			.attr('value', experience.organizationName);
+			.attr('value', experience.organizationName());
 		organizationHelp = section.append('div')
 			.classed('help', true);
 			
@@ -3390,7 +3554,7 @@ var NewExperiencePanel = (function () {
 		this.siteInput = section.append('input')
 			.classed('site', true)
 			.attr('placeholder', this.siteDefaultPlaceholder)
-			.attr('value', experience.siteName);
+			.attr('value', experience.siteName());
 		siteHelp = section.append('div').classed('help', true);
 		
 		searchContainer = section.append('div');
@@ -3406,7 +3570,7 @@ var NewExperiencePanel = (function () {
 		this.offeringInput = section.append('input')
 			.classed('offering', true)
 			.attr('placeholder', this.offeringDefaultPlaceholder)
-			.attr('value', experience.offeringName);
+			.attr('value', experience.offeringName());
 		offeringHelp = section.append('div').classed('help', true);
 			
 		searchContainer = section.append('div');
@@ -3461,12 +3625,12 @@ var NewExperiencePanel = (function () {
 				setDateRangeLabels();
 			});
 
-		crp.promise({path: "Service"})
-			.then(function(newInstances)
+		cr.Service.servicesPromise()
+			.then(function(services)
 				{
-					_this.allServices = newInstances;
-					var services = newInstances.map(function(s) { return new Service(s); });
-					_this.tagSearchView.appendFlags(services)
+					_this.allServices = services;
+					var controllers = services.map(function(s) { return new ServiceFlagController(s); });
+					_this.tagSearchView.appendFlags(controllers)
 						.on('mousedown', function()
 							{
 								/* Set this variable so that the focusout event of an active 
@@ -3489,7 +3653,7 @@ var NewExperiencePanel = (function () {
 					/* Have to hide after appending the flags or the metrics aren't calculated. */
 					_this.tagSearchView.reveal.hide();
 
-					if (_this.experience.services.length == 0)
+					if (_this.experience.services().length == 0)
 					{
 						var tagInput = _this.appendTag(tagsContainer, null);
 						tagInput.node().focus();

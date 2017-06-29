@@ -70,7 +70,7 @@ var FlagController = (function() {
 		{
 			var services = offering.services();
 			minColumn = services.map(function(s) {
-					return new Service(s.service()).getColumn();
+					return s.service().getColumn();
 				})
 				.reduce(function(a, b) {
 					if (a < maxColumn)
@@ -84,7 +84,7 @@ var FlagController = (function() {
 		{
 			var services = this.experience.services();
 			minColumn = services.map(function(s) {
-						return new Service(s.service()).getColumn();
+						return s.service().getColumn();
 					})
 					.reduce(function(a, b) {
 						if (a < maxColumn)
@@ -2015,17 +2015,16 @@ var ExperienceIdeas = (function() {
 										var dtID = dt.id();
 										return moreExperienceData.find(function(experience)
 											{
-												return experience.getCell("Service").data.find(function(service)
+												return experience.services().find(function(experienceService)
 													{
-														return service.id() == dtID;
+														return experienceService.service().id() == dtID;
 													}) ||
-													experience.getCell("Offering").data.find(function(offering)
-														{
-															return !offering.isEmpty() && offering.getCell("Service").data.find(function(service)
+													(experience.offering() &&
+													 !experience.offering().isEmpty() &&
+													 experience.offering().services().find(function(offeringService)
 																{
-																	return service.id() == dtID;
-																});
-														});
+																	return offeringService.service().id() == dtID;
+																}));
 											});
 									});
 							});

@@ -250,11 +250,7 @@ var ExperienceCommentsPanel = (function() {
 			{
 				try
 				{
-					var experience = new cr.Experience();
-					experience.path(fd.experience.path());
-					experience.replaced(fd.experience);
-					
-					new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft)
+					new NewExperiencePanel(fd.experience, fd.experience.getPhase(), revealPanelLeft)
 						.showLeft()
 						.always(unblockClick);
 				}

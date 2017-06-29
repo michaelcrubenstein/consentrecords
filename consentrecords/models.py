@@ -649,6 +649,17 @@ class ServiceLinkInstance(ChildInstance):
     def select_related(querySet, fields=[]):
         return ServiceLinkInstance.select_head_related(querySet)
                  
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.service:
+                if 'service' in fields:
+                    data['service'] = self.service.getData([], context)
+                else:
+                    data['service'] = self.service.headData(context)
+            
+        return data
+
     def buildHistory(self, context):
         return self.historyType.objects.create(transaction=self.lastTransaction,
                                              instance=self,
@@ -670,6 +681,13 @@ class ServiceLinkInstance(ChildInstance):
             self.save()
             
 class OrderedServiceLinkInstance(ServiceLinkInstance):
+    def getData(self, fields, context):
+        data = super(OrderedServiceLinkInstance, self).getData(fields, context)
+        if context.canRead(self):
+            data['position'] = str(self.position)
+            
+        return data
+        
     def buildHistory(self, context):
         return self.historyType.objects.create(transaction=self.lastTransaction,
                                              instance=self,
@@ -3555,14 +3573,6 @@ class DisqualifyingTag(ServiceLinkInstance, PublicInstance, dbmodels.Model):
     def __str__(self):
         return str(self.service)
 
-    def getData(self, fields, context):
-        data = self.headData(context)
-        if context.canRead(self):
-            if self.service:
-                data['service'] = self.service.headData(context)
-            
-        return data
-
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied
@@ -3853,14 +3863,14 @@ class Experience(ChildInstance, dbmodels.Model):
         return Experience.select_head_related(querySet).select_related('organization')\
                        .select_related('site')\
                        .prefetch_related(Prefetch('customServices', 
-                           queryset= ExperienceCustomService.select_related(csqs)
+                           queryset= (ExperienceCustomService.select_related(csqs)
                                if 'custom service' in fields else \
-                               ExperienceCustomService.select_head_related(csqs),
+                               ExperienceCustomService.select_head_related(csqs)).order_by('position'),
                            to_attr='currentCustomServices'))\
                        .prefetch_related(Prefetch('services', 
-                           queryset=ExperienceService.select_related(sqs)
+                           queryset=(ExperienceService.select_related(sqs)
                                if 'service' in fields else \
-                               ExperienceCustomService.select_head_related(sqs),
+                               ExperienceCustomService.select_head_related(sqs)).order_by('position'),
                            to_attr='currentServices'))
     
     def getData(self, fieldNames, context):
@@ -4165,16 +4175,6 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
     def __str__(self):
         return str(self.service)
     
-    def getData(self, fields, context):
-        data = self.headData(context)
-        data['position'] = self.position
-        if self.service:
-            if 'service' in fields:
-                data['service'] = self.service.getData([], context)
-            else:
-                data['service'] = self.service.headData(context)
-        return data
-    
     fieldMap = {'position': 'position',
                }
                
@@ -4260,7 +4260,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
                     .select_related('offering')\
                     .select_related('domain')\
                     .prefetch_related(Prefetch('services',
-                                               ExperiencePromptService.select_related(ExperiencePromptService.objects.all()),
+                                               ExperiencePromptService.select_related(ExperiencePromptService.objects.all()).order_by('position'),
                                                to_attr='fetchedServices'))\
                     .prefetch_related(Prefetch('texts',
                                                ExperiencePromptText.objects.all(),
@@ -4420,15 +4420,6 @@ class ExperiencePromptService(OrderedServiceLinkInstance, PublicInstance, dbmode
     
     def __str__(self):
         return str(self.service)
-
-    def getData(self, fields, context):
-        data = self.headData(context)
-        if context.canRead(self):
-            data['position'] = self.position
-            if self.service:
-                data['service'] = self.service.headData(context)
-            
-        return data
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -4964,6 +4955,7 @@ class Offering(ChildInstance, dbmodels.Model):
     elementMap = {'name': ('names__', "OfferingName", 'parent'),
                   'service': ('services__', "OfferingService", 'parent'),
                   'session': ('sessions__', "Session", 'parent'),
+                  'site': ('parent__', 'Site', 'offerings'),
                  }
 
     def __str__(self):
@@ -4977,7 +4969,7 @@ class Offering(ChildInstance, dbmodels.Model):
     def select_related(querySet, fields=[]):
         return Offering.select_head_related(querySet)\
                        .prefetch_related(Prefetch('services',
-                                         queryset=OfferingService.select_head_related(OfferingService.objects.filter(deleteTransaction__isnull=True)),
+                                         queryset=OfferingService.select_head_related(OfferingService.objects.filter(deleteTransaction__isnull=True)).order_by('position'),
                                          to_attr='currentServices'))\
                        .prefetch_related(Prefetch('sessions',
                                          queryset=Session.select_head_related(Session.objects.filter(deleteTransaction__isnull=True)),
@@ -5003,7 +4995,6 @@ class Offering(ChildInstance, dbmodels.Model):
                 data['services'] = [i.getData([], context) for i in self.currentServices]
             else:
                 data['services'] = [i.headData(context) for i in self.currentServices]
-            data['services'].sort(key=lambda i: i['description'])
             
             if 'session' in fields:
                 data['sessions'] = [i.getData([], context) for i in self.currentSessions]
@@ -5201,14 +5192,6 @@ class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
     def __str__(self):
         return str(self.service)
 
-    def getData(self, fields, context):
-        data = self.headData(context)
-        if context.canRead(self):
-            if self.service:
-                data['service'] = self.service.headData(context)
-            
-        return data
-        
     def getSubClause(qs, user, accessType):
         if accessType == Organization:
             return qs, accessType
@@ -6388,6 +6371,7 @@ class Site(ChildInstance, dbmodels.Model):
     elementMap = {'name': ('names__', 'SiteName', 'parent'),
                   'offering': ('offerings__', 'Offering', 'parent'),
                   'address': ('addresses__', 'Address', 'parent'),
+                  'organization': ('parent__', 'Organization', 'sites'),
                  }
 
     def __str__(self):

@@ -3173,6 +3173,30 @@ cr.Experience = (function() {
 			return 'Previous';
 	}
 	
+	Experience.prototype.organizationName = function()
+	{
+		if (this.organization())
+		    return this.organization().description();
+		else
+		    return this.customOrganization();
+	}
+	
+	Experience.prototype.siteName = function()
+	{
+		if (this.site())
+		    return this.site().description();
+		else
+		    return this.customSite();
+	}
+	
+	Experience.prototype.offeringName = function()
+	{
+		if (this.offering())
+		    return this.offering().description();
+		else
+		    return this.customOffering();
+	}
+	
 	function Experience() {
 	    cr.IInstance.call(this);
 	};
@@ -3974,6 +3998,94 @@ cr.Service = (function() {
         return cr.Service._servicesPromise;
     }
     
+	Service.prototype.stageColumns = {
+		Housing: 0,
+		Studying: 1,
+		Certificate: 1,
+		Training: 2,
+		Whatever: 2,
+		Working: 3,
+		Teaching: 3,
+		Expert: 3,
+		Skills: 4,
+		Mentoring: 5,
+		Tutoring: 5,
+		Coaching: 5,
+		Volunteering: 5,
+		Wellness: 6,
+	};
+	
+	Service.prototype.getStageDescription = function(stage)
+	{
+		return stage in this.stageColumns && stage;
+	}
+	
+	Service.prototype.getColumn = function()
+	{
+		var stage = this.stage();
+		var stageDescription = this.getStageDescription(stage);
+		if (stageDescription)
+			return this.stageColumns[stageDescription];
+		var _this = this;
+			
+		if (this.id())
+		{
+			var services = this.services();
+			/* services may be null if the service has been deleted */
+			var s = services && services.map(function(s)
+				{
+					return s.service();
+				})
+				.find(function(s)
+				{
+					var stage =  s.stage();
+					return s.getStageDescription(stage);
+				});
+			if (s)
+				return this.stageColumns[
+					s.getStageDescription(s.stage())
+				];
+		}
+
+		/* Other */
+		return 7;
+	}
+	
+	Service.prototype.getColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].color;
+	}
+	
+	Service.prototype.fontColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].fontColor;
+	}
+	
+	Service.prototype.flagColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].flagColor;
+	}
+	
+	Service.prototype.poleColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].poleColor;
+	}
+	
+	/* Returns True if the service contains the specified text. */
+	Service.prototype.descriptionContains = function(s, prefix)
+	{
+		var re = new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
+		if (re.test(this.description()))
+			return true;
+		
+		var services = this.services();
+		return services.find(function(d) { return d.description().toLocaleUpperCase() == s; });	
+	}
+	
 	function Service() {
 	    cr.IInstance.call(this);
 	};
