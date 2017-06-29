@@ -2235,6 +2235,11 @@ cr.IInstance = (function() {
 			return this;
 		}
 	}
+	
+	IInstance.prototype.copyData = function(target)
+	{
+		target._description = this._description;
+	}
 		
 	IInstance.prototype.setData = function(d)
 	{
@@ -2283,6 +2288,17 @@ cr.IInstance = (function() {
 			throw(this.description() + " has not been saved");
 			
 		return [cr.privileges.write, cr.privileges.administer].indexOf(this.privilege()) >= 0;
+	}
+	
+	/* isEmpty is used to identify temporary instances that are created to fill
+		the UI but don't yet have any data. This need may be obsolete.
+	 */
+	IInstance.prototype.isEmpty = function()
+	{
+		if (this.id())
+		    return false;
+		
+		return false;
 	}
 	
 	function IInstance() {
@@ -2347,6 +2363,12 @@ cr.ServiceLinkInstance = (function() {
 		this._serviceID = ('service' in d) ? d['service']['id'] : null;
 	}
 	
+    ServiceLinkInstance.prototype.copyData = function(target)
+    {
+    	cr.IInstance.prototype.copyData.call(this, target);
+    	target._serviceID = this._serviceID;
+    }
+    
 	function ServiceLinkInstance() {
 	    cr.IInstance.call(this);
 	};
@@ -2384,6 +2406,12 @@ cr.OrderedServiceLinkInstance = (function() {
 		this._position = d['position'];
 	}
 	
+    OrderedServiceLinkInstance.prototype.copyData = function(target)
+    {
+    	cr.ServiceLinkInstance.prototype.copyData.call(this, target);
+    	target._position = this._position;
+    }
+    
 	function OrderedServiceLinkInstance() {
 	    cr.ServiceLinkInstance.call(this);
 	};
@@ -2441,7 +2469,72 @@ cr.Address = (function() {
 	
 cr.Comment = (function() {
 	Comment.prototype = new cr.IInstance();
+	Comment.prototype._text = null;
+	Comment.prototype._question = null;
+	Comment.prototype._asker = null;
 	
+	Comment.prototype.text = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._text;
+		else
+		{
+		    if (newValue != this._text)
+		    {
+				this._text = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Comment.prototype.question = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._question;
+		else
+		{
+		    if (newValue != this._question)
+		    {
+				this._question = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Comment.prototype.asker = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._asker;
+		else
+		{
+		    if (newValue != this._asker)
+		    {
+				this._asker = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Comment.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		if ('user' in d)
+		{
+			this._user = new cr.User();
+			this._user.setData(d);
+		}
+		this._text = 'text' in d ? d['text'] : "";
+		this._question = 'question' in d ? d['question'] : "";
+    }
+    
+    Comment.prototype.copyData = function(target)
+    {
+    	cr.IInstance.prototype.copyData.call(this, target);
+    	target._user = this._user;
+    	target._text = this._text;
+    	target._question = this._question;
+    }
+    
 	function Comment() {
 	    cr.IInstance.call(this);
 	};
@@ -2452,7 +2545,33 @@ cr.Comment = (function() {
 	
 cr.CommentPrompt = (function() {
 	CommentPrompt.prototype = new cr.IInstance();
+	CommentPrompt.prototype._translations = null;
 	
+	CommentPrompt.prototype.translations = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._translations;
+		else
+		{
+		    if (newValue != this._translations)
+		    {
+				this._translations = newValue;
+			}
+			return this;
+		}
+	}
+	
+	CommentPrompt.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		if ('translations' in d)
+			this._translations = d['translations'].map(function(d) {
+								var i = new cr.CommentPromptText();
+								i.setData(d);
+								return i;
+							});
+    }
+    
 	function CommentPrompt() {
 	    cr.IInstance.call(this);
 	};
@@ -2462,10 +2581,10 @@ cr.CommentPrompt = (function() {
 })();
 	
 cr.CommentPromptText = (function() {
-	CommentPromptText.prototype = new cr.IInstance();
+	CommentPromptText.prototype = new cr.TranslationInstance();
 	
 	function CommentPromptText() {
-	    cr.IInstance.call(this);
+	    cr.TranslationInstance.call(this);
 	};
 	
 	return CommentPromptText;
@@ -2629,6 +2748,7 @@ cr.Enrollment = (function() {
 	
 cr.Experience = (function() {
 	Experience.prototype = new cr.IInstance();
+	Experience.prototype._path = null;
 	Experience.prototype._organization = null;
 	Experience.prototype._customOrganization = null;
 	Experience.prototype._site = null;
@@ -2640,6 +2760,22 @@ cr.Experience = (function() {
 	Experience.prototype._timeframe = null;
 	Experience.prototype._services = null;
 	Experience.prototype._customServices = null;
+	Experience.prototype._comments = null;
+	Experience.prototype._commentsPromise = null;
+	
+	Experience.prototype.path = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._path;
+		else
+		{
+		    if (newValue != this._path)
+		    {
+				this._path = newValue;
+			}
+			return this;
+		}
+	}
 	
 	Experience.prototype.organization = function(newValue)
 	{
@@ -2795,6 +2931,56 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.comments = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._comments;
+		else
+		{
+		    if (newValue != this._comments)
+		    {
+				this._comments = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.promiseCopy = function(newExperience)
+	{
+		var _this = this;
+		return this.promiseComments()
+			.then(function()
+				{
+					newExperience._path = _this._path;
+					newExperience._organization = _this._organization;
+					newExperience._customOrganization = _this._customOrganization
+					newExperience._site = _this._site;
+					newExperience._customSite = _this._customSite;
+					newExperience._offering = _this._offering;
+					newExperience._customOffering = _this._customOffering;
+					newExperience._start = _this._start;
+					newExperience._end = _this._end;
+					newExperience._timeframe = _this._timeframe;
+					newExperience._services = _this._services.map(function(i)
+						{
+							target = new cr.ExperienceService();
+							i.copyData(target);
+							return target;
+						});
+					newExperience._customServices = _this._customServices;
+					newExperience._comments = this._comments.map(function(i)
+						{
+							target = new cr.Comment();
+							i.copyData(target);
+							return target;
+						});
+						
+					r = $.Deferred();
+					r.resolve(newExperience);
+					return r;
+				});
+	}
+	
 	Experience.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -2832,6 +3018,12 @@ cr.Experience = (function() {
 		if ('custom services' in d)
 			this._customServices = d['custom services'].map(function(d) {
 								var i = new cr.ExperienceCustomService();
+								i.setData(d);
+								return i;
+							});
+		if ('comments' in d)
+			this._comments = d['comments'].map(function(d) {
+								var i = new cr.Comment();
 								i.setData(d);
 								return i;
 							});
@@ -2880,6 +3072,105 @@ cr.Experience = (function() {
 			r.resolve();
 			return r;
 		}
+	}
+	
+    Experience.prototype.promiseComments = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._commentsPromise)
+        	return this._commentsPromise;
+        else if (this._comments)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._comments);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._commentsPromise = cr.getData(
+        	{
+        		path: 'experience/{0}/comment'.format(this.id()),
+        		fields: [],
+        		resultType: cr.Comment
+        	})
+        	.done(function(comments)
+        		{
+        			_this._comments = comments;
+        			result = $.Deferred();
+        			result.resolve(comments);
+        			return result;
+        		});
+        return this._commentsPromise;
+    }
+    
+	Experience.prototype.pickedOrCreatedText = function(picked, created)
+	{
+		if (picked && picked.id())
+			return picked.description();
+		else
+			return created;
+	}
+
+	Experience.prototype.dateRange = function()
+	{
+		var startDate = this.start();
+		startDate = startDate ? getLocaleDateString(startDate) : "";
+		
+		var endDate = this.end();
+		endDate = endDate ? getLocaleDateString(endDate) : "";
+		
+		if (startDate || endDate)
+			return "{0} - {1}".format(startDate, endDate);
+		else
+			return "";
+	}
+
+	Experience.prototype.getTagList = function()
+	{
+		var names = [];
+	
+		var offering = this.offering();
+		if (offering && offering.id())
+		{
+			if (!offering.services())
+				throw new Error("Runtime error: offering services are not loaded");
+			
+			names = offering.services()
+				.filter(function(v) { return !v.isEmpty(); })
+				.map(function(v) { return v.description(); });
+		}
+	
+		var services = this.services();
+		var customServices = this.customServices();
+
+		if (services)
+			names = names.concat(services
+				.filter(function(v) { return !v.isEmpty(); })
+				.map(function(v) { return v.description(); }));
+	
+		if (customServices)
+			names = names.concat(customServices
+				.filter(function(v) { return !v.isEmpty(); })
+				.map(function(v) { return v.description(); }));
+	
+		return names.join(", ");
+	}
+
+	Experience.prototype.getPhase = function()
+	{
+		var t = this.timeframe();
+		if (t)
+			return t;
+			
+		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
+		if (!this.start() || this.start() > todayDate)
+			return 'Goal';
+		else if (!this.end() || this.end() > todayDate)
+			return 'Current';
+		else
+			return 'Previous';
 	}
 	
 	function Experience() {
@@ -3140,6 +3431,8 @@ cr.Offering = (function() {
     Offering.prototype._maximumGrade = null;
     Offering.prototype._services = null;
     Offering.prototype._sessions = null;
+    Offering.prototype._organization = null;
+    Offering.prototype._site = null;
 	
 	Offering.prototype.webSite = function(newValue)
 	{
@@ -3259,8 +3552,68 @@ cr.Offering = (function() {
 								i.setData(d);
 								return i;
 							});
+		if ('organization' in d)
+		{
+		    this._organization = new cr.Organization();
+		    this._organization.setData(d['organization']);
+		    this._organization = crp.getInstance(this._organization);
+		}
+		if ('site' in d)
+		{
+		    this._site = new cr.Site();
+		    this._site.setData(d['site']);
+		    this._site = crp.getInstance(this._site);
+		}
     }
     
+	Offering.prototype.ageRange = function()
+	{
+		var min = this.minimumAge();
+		var max = this.maximumAge();
+		if (min)
+		{
+			if (max)
+			{
+				if (min == max)
+					return min;
+				else
+					return min + " - " + max;
+			}
+			else
+				return min + " or older";
+		}
+		else if (max)
+		{
+			return "up to " + max;
+		}
+		else
+			return "";
+	}
+
+	Offering.prototype.gradeRange = function()
+	{
+		var min = this.minimumGrade();
+		var max = this.maximumGrade();
+		if (min)
+		{
+			if (max)
+			{
+				if (min == max)
+					return min;
+				else
+					return min + " - " + max;
+			}
+			else
+				return min + " or beyond";
+		}
+		else if (max)
+		{
+			return "up to " + max;
+		}
+		else
+			return "";
+	}
+
 	function Offering() {
 	    cr.IInstance.call(this);
 	};
@@ -3452,6 +3805,10 @@ cr.Path = (function() {
         	.done(function(experiences)
         		{
         			_this._experiences = experiences;
+        			_this._experiences.forEach(function(e)
+        				{
+        					e.path(_this);
+        				});
         			result = $.Deferred();
         			result.resolve(experiences);
         			return result;
@@ -4138,5 +4495,43 @@ cr.createSignedinUser = function(id, description)
 				$(cr.signedinUser).trigger("signin.cr");
 			}, 
 			cr.asyncFail);
+}
+
+/* Return a new date that will be a UTC date that represents the same date
+	as now in the currrent time zone. For example, 10:00 p.m. in Boston on Oct. 21, 2016 should
+	be a UTC date of Oct. 21, 2016 even though that time is actually a UTC Date of Oct. 22, 2016.
+ */ 
+function getUTCTodayDate()
+{
+	var startMinDate = new Date();
+	return new Date(Date.UTC(startMinDate.getFullYear(), startMinDate.getMonth(), startMinDate.getDate(), 0, 0, 0));
+}
+
+/* Given an ISO Date string, return a locale date string */
+function getLocaleDateString(s)
+{
+	if (s.length == 7)
+		return Date.CultureInfo.monthNames[parseInt(s.substr(5)) - 1] + " " + s.substr(0, 4);
+	else if (s.length == 10)
+	{
+		var a = new Date(s);
+		
+		/* Offset is set to set the time to 1:00 a.m. in the local time zone. Since creating
+			a new date sets the time to midnight UTC, we need to set it an hour later in case 
+			daylight saving's time is in effect. To account for different time zones, we 
+			add an hour if the offset is positive, or subtract an hour if the offset is negative.
+		 */
+		var offset = (a.getTimezoneOffset()) * 60 * 1000;
+		
+		if (offset >= 0)
+			offset += 60 * 60 * 1000;
+		else
+			offset -= 60 * 60 * 1000;
+			
+		a.setTime(a.getTime() + offset);
+		return a.toLocaleDateString();
+	}
+	else
+		return s;
 }
 

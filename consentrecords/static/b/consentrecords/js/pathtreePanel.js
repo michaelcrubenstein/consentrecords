@@ -51,9 +51,9 @@ var FlagController = (function() {
 		       "";
 	}
 	
-	FlagController.prototype.pickedOrCreatedValue = function(pickedName, createdName)
+	FlagController.prototype.pickedOrCreatedText = function(picked, created)
 	{
-		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
+		return this.experience.pickedOrCreatedText(picked, created);
 	}
 	
 	/* Returns the column of the first service (either from 
@@ -249,23 +249,24 @@ var FlagController = (function() {
 		
 		var title;
 		var tspan;
-		title = this.pickedOrCreatedValue("Offering", "User Entered Offering");
+		var e = this.experience;
+		title = e.pickedOrCreatedText(e.offering(), e.customOffering());
 		if (!title)
 		{
-			var serviceValue = this.experience.getValue("Service");
-			var userServiceValue = this.experience.getValue("User Entered Service");
+			var serviceValue = e.services().length > 0 ? e.services()[0] : null;
+			var userServiceValue = e.customService();
 
 			if (serviceValue)
-				title = serviceValue.getDescription();
+				title = serviceValue.description();
 			else if (userServiceValue)
-				title = userServiceValue.getDescription();
+				title = userServiceValue;
 		}
-		var orgString = this.pickedOrCreatedValue("Organization", "User Entered Organization");
-		var siteString = this.pickedOrCreatedValue("Site", "User Entered Site");
+		var orgString = e.pickedOrCreatedText(e.organization(), e.customOrganization());
+		var siteString = e.pickedOrCreatedText(e.site(), e.customSite());
 		if (siteString == orgString)
 			siteString = "";
-		var dateRange = getDateRange(this.experience);
-		var tagDescriptions = getTagList(this.experience);
+		var dateRange = e.dateRange();
+		var tagDescriptions = e.getTagList();
 		var lineHeight = 0;
 		var lineMargin = 3;
 		
@@ -366,42 +367,7 @@ var FlagController = (function() {
 	FlagController.prototype.setupChangeEventHandler = function(data, handler)
 	{
 		var experience = this.experience;
-		
-		var allCells = [experience.getCell("Organization"),
-		 experience.getCell("User Entered Organization"),
-		 experience.getCell("Site"),
-		 experience.getCell("User Entered Site"),
-		 experience.getCell("Offering"),
-		 experience.getCell("User Entered Offering"),
-		 experience.getCell("Start"),
-		 experience.getCell("End"),
-		 experience.getCell("Timeframe"),
-		 experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		var serviceCells = [experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		allCells.forEach(function(cell)
-		 {
-			/* cell will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (cell)
-			{
-				setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", data, handler);
-			}
-		 });
-		serviceCells.forEach(function(cell)
-		 {
-			/* cell will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (cell)
-			{
-				setupOnViewEventHandler(cell, "valueDeleted.cr", data, handler);
-			}
-		 });
+		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", data, handler);
 	}
 	
 	FlagController.prototype.selected = function(newValue)

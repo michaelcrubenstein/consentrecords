@@ -411,8 +411,8 @@ var SearchPathsPanel = (function () {
 			return -1;
 		else
 		{
-			aDesc = a.service.getDescription();
-			bDesc = b.service.getDescription();
+			aDesc = a.service.description();
+			bDesc = b.service.description();
 			return aDesc.localeCompare(bDesc);
 		}
 	}

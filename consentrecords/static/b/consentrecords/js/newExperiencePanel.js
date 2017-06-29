@@ -23,22 +23,22 @@ var Experience = (function() {
 			{
 				this.organization = d.getValue("Organization");
 				this.site = d;
-				this.organizationName = d.getValue("Organization").getDescription();
-				this.siteName = d.getDescription();
+				this.organizationName = d.getValue("Organization").description();
+				this.siteName = d.description();
 			}
 			else
 			{
 				this.organization = d;
 				this.site = null;
-				this.organizationName = d.getDescription();
+				this.organizationName = d.description();
 				this.siteName = null;
 			}
 		}
 		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
-			if ((this.site && textValue != this.site.getDescription() && textValue != this.organization.getDescription()) ||
-				(!this.site && this.organization && textValue != this.organization.getDescription()) ||
+			if ((this.site && textValue != this.site.description() && textValue != this.organization.description()) ||
+				(!this.site && this.organization && textValue != this.organization.description()) ||
 				(!this.site && !this.organization))
 			{
 				this.organization = null;
@@ -62,12 +62,12 @@ var Experience = (function() {
 		{
 			var d = args.instance;
 			this.site = d;
-			this.siteName = d.getDescription();
+			this.siteName = d.description();
 		}
 		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
-			if ((this.site && textValue != this.site.getDescription()) ||
+			if ((this.site && textValue != this.site.description()) ||
 				!this.site)
 			{
 				this.site = null;
@@ -87,12 +87,12 @@ var Experience = (function() {
 		{
 			var d = args.instance;
 			this.offering = d;
-			this.offeringName = d.getDescription();
+			this.offeringName = d.description();
 		}
 		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
-			if ((this.offering && textValue != this.offering.getDescription()) ||
+			if ((this.offering && textValue != this.offering.description()) ||
 				!this.offering)
 			{
 				this.offering = null;
@@ -176,7 +176,7 @@ var Experience = (function() {
 		
 		var existingServices = null;
 		if (this.offering && this.offering.getCell("Service"))
-			existingServices = this.offering.getCell("Service").data;
+			existingServices = this.offering.services();
 			
 		if (this.timeframe)
 			initialData["Timeframe"] = [{instanceID: this.timeframe.getInstanceID()}];
@@ -219,7 +219,7 @@ var Experience = (function() {
 	{
 		for (i = 0; i < this.services.length; ++i)
 		{
-			if (this.services[i].getDescription() == name)
+			if (this.services[i].description() == name)
 				return this.services[i];
 		}
 		return null;
@@ -230,16 +230,19 @@ var Experience = (function() {
 		var names = [];
 	
 		var offering = this.offering;
-		if (offering && offering.getInstanceID())
+		if (offering && offering.id())
 		{
-			names = offering.getCell("Service").data
+			if (!offering.services())
+				throw new Error("Runtime error: offering services are not loaded");
+			
+			names = offering.services()
 				.filter(function(v) { return !v.isEmpty(); })
-				.map(function(v) { return v.getDescription(); });
+				.map(function(v) { return v.description(); });
 		}
 	
 		this.services.forEach(function(d)
 			{
-				var name = d.getDescription();
+				var name = d.description();
 				if (!names.find(function(d) { return d === name; }))
 					names.push(name);
 			});
@@ -271,7 +274,7 @@ var Experience = (function() {
 				container.append('span')
 					.datum(instance)
 					.classed('tag', true)
-					.text(instance.getDescription());
+					.text(instance.description());
 			};
 			
 		var tags = [];
@@ -279,7 +282,7 @@ var Experience = (function() {
 		var offering = this.offering;
 		if (offering && offering.getInstanceID())
 		{
-			names = offering.getCell("Service").data
+			names = offering.services()
 				.filter(function(v) { return !v.isEmpty(); });
 			tags = tags.concat(names);
 		}
@@ -288,7 +291,7 @@ var Experience = (function() {
 			{ 
 				return !tags.find(function(d) 
 					{ 
-						return d.getDescription() === v.getDescription(); 
+						return d.description() === v.description(); 
 					})
 			}));
 		
@@ -388,11 +391,10 @@ var Experience = (function() {
 			
 			var i = 0;
 			var j = 0;
-			var oldServices = this.instance.getCell("Service");
 			
 			var existingServices = null;
-			if (this.offering && this.offering.getCell("Service"))
-				existingServices = this.offering.getCell("Service").data
+			if (this.offering && this.offering.services())
+				existingServices = this.offering.services()
 					.map(function(d) { return d.getInstanceID(); });
 
 			var newServices = this.services.filter(function(s) {
@@ -556,9 +558,9 @@ var Experience = (function() {
 
 	Experience.prototype.createFromOffering = function(d, services, previousNode, done)
 	{
-		if (!d.getValue("Organization"))
+		if (!d.organization())
 			throw new Error("Runtime Error: Organization is not present in offering record.")
-		if (!d.getValue("Site"))
+		if (!d.site())
 			throw new Error("Runtime Error: Site is not present in offering record.")
 
 		this.initPreviousDateRange();
@@ -605,21 +607,6 @@ var Experience = (function() {
 		this.instance = instance;
 	}
 	
-	Experience.prototype.getPhase = function()
-	{
-		var t = this.instance && this.instance.getValue('Timeframe');
-		if (t && t.getInstanceID())
-			return t.getDescription();
-			
-		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
-		if (!this.startDate || this.startDate > todayDate)
-			return 'Goal';
-		else if (!this.endDate || this.endDate > todayDate)
-			return 'Current';
-		else
-			return 'Previous';
-	}
-	
 	function Experience(path, dataExperience)
 	{
 		if (!path)
@@ -638,12 +625,12 @@ var Experience = (function() {
 				if (pickedObject && pickedObject.isEmpty())
 					pickedObject = null;
 				if (pickedObject)
-					return new ReportedObject({name: pickedObject.getDescription(), pickedObject: pickedObject});
+					return new ReportedObject({name: pickedObject.description(), pickedObject: pickedObject});
 				else
 				{
 					var createdObject = dataExperience.getValue(createdName);
 					if (createdObject && !createdObject.isEmpty())
-						return new ReportedObject({name: createdObject.getDescription()});
+						return new ReportedObject({name: createdObject.description()});
 					else
 						return new ReportedObject();
 				}
@@ -667,18 +654,18 @@ var Experience = (function() {
 			servicesCell.data.forEach(function(d)
 				{
 					if (!d.isEmpty())
-						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: d}));
+						_this.services.push(new ReportedObject({name: d.description(), pickedObject: d}));
 				});
 				
-			servicesCell = dataExperience.getCell("User Entered Service");
-			servicesCell.data.forEach(function(d)
+			customServices = dataExperience.customServices();
+			customServices.forEach(function(d)
 				{
 					if (!d.isEmpty())
-						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: null}));
+						_this.customServices().push(new ReportedObject({name: d.description(), pickedObject: null}));
 				});
 				
-			this.startDate = dataExperience.getDatum("Start");
-			this.endDate = dataExperience.getDatum("End");
+			this.start(dataExperience.start());
+			this.end(dataExperience.end());
 		}
 	}
 	
@@ -700,7 +687,7 @@ var MultiTypeOptionView = (function() {
 		return data.find(function(d) {
 				return d.getCell && d.getCell(cr.fieldNames.name).data.find(
 					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
-					(d.getDescription && d.getDescription().toLocaleLowerCase() === compareText);
+					(d.getDescription && d.description().toLocaleLowerCase() === compareText);
 			});
 	}
 	
@@ -716,7 +703,7 @@ var MultiTypeOptionView = (function() {
 			return true;
 		
 		return d.getDescription && 
-			   this.stringContains(d.getDescription(), compareText);
+			   this.stringContains(d.description(), compareText);
 	}
 	
 	MultiTypeOptionView.prototype.canConstrain = function(searchText, constrainText)
@@ -790,7 +777,7 @@ var ReportedObject = function () {
     
     ReportedObject.prototype.getDescription = function()
     {
-    	if (this.pickedObject) return this.pickedObject.getDescription();
+    	if (this.pickedObject) return this.pickedObject.description();
     	return this.name;
     }
     
@@ -832,14 +819,14 @@ var ExperienceDatumSearchView = (function() {
 		var _this = this;
 		if (d instanceof cr.Service)
 		{
-			if (prepareClick('click', 'service: ' + d.getDescription()))
+			if (prepareClick('click', 'service: ' + d.description()))
 			{
 				if (!this.experience.offeringName &&
 					this.experience.services.find(function(d2)
 						{
 							return d2.pickedObject && d2.pickedObject.getInstanceID() == d.getInstanceID();
 						}))
-					this.experience.setOffering({text: d.getDescription() });
+					this.experience.setOffering({text: d.description() });
 				else
 					this.experience.addService({instance: d});
 				this.sitePanel.onExperienceUpdated();
@@ -852,7 +839,7 @@ var ExperienceDatumSearchView = (function() {
 		}
 		else if (d.getTypeName() === 'Organization')
 		{
-			if (prepareClick('click', 'organization: ' + d.getDescription()))
+			if (prepareClick('click', 'organization: ' + d.description()))
 			{
 				try
 				{
@@ -875,7 +862,7 @@ var ExperienceDatumSearchView = (function() {
 						isn't cleared inappropriately.
 					 */
 					this.experience.organization = d;
-					this.experience.organizationName = d.getDescription();
+					this.experience.organizationName = d.description();
 					
 					this.sitePanel.onExperienceUpdated();
 					this.hideSearch(function()
@@ -895,7 +882,7 @@ var ExperienceDatumSearchView = (function() {
 		}
 		else if (d.getTypeName() === 'Site')
 		{
-			if (prepareClick('click', 'site: ' + d.getDescription()))
+			if (prepareClick('click', 'site: ' + d.description()))
 			{
 				/* Need to check the cells in case this site was a value within an offering. */
 				d.promiseCellsFromCache(["parents"])
@@ -928,7 +915,7 @@ var ExperienceDatumSearchView = (function() {
 		}
 		else if (d.getTypeName() === 'Offering')
 		{
-			if (prepareClick('click', 'offering: ' + d.getDescription()))
+			if (prepareClick('click', 'offering: ' + d.description()))
 			{
 				this.experience.setOffering({instance: d});
 				/* Set the organization, then the site, because setting the organization may
@@ -949,13 +936,13 @@ var ExperienceDatumSearchView = (function() {
 	
 	ExperienceDatumSearchView.prototype.hasUniqueSite = function(d)
 	{
-		var compareText = d.getDescription();
+		var compareText = d.description();
 	
 		var data = this.buttons().data();
 		return data.find(function(d) {
 				return d.getTypeName() === "Site" &&
-					   d.getDescription() === compareText &&
-					   d.getValue("Organization").getDescription() === compareText;
+					   d.description() === compareText &&
+					   d.getValue("Organization").description() === compareText;
 			});
 	}
 	
@@ -971,14 +958,14 @@ var ExperienceDatumSearchView = (function() {
 
 		if (d.getTypeName() === "Offering")
 		{
-			if (this.stringContains(d.getValue("Site").getDescription(), compareText))
+			if (this.stringContains(d.getValue("Site").description(), compareText))
 				return true;
-			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
+			if (this.stringContains(d.getValue("Organization").description(), compareText))
 				return true;
 		}
 		else if (d.getTypeName() === "Site")
 		{
-			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
+			if (this.stringContains(d.getValue("Organization").description(), compareText))
 				return true;
 		}
 		return false;
@@ -1178,11 +1165,11 @@ var TagSearchView = (function() {
 			TagPoolView.prototype.setFlagVisibles.call(this);
 		else if (this.focusNode != this.firstTagInputNode() ||
 				 (this.experience.offering &&
-			 	  this.experience.offering.getCell("Service").data.length > 0))
+			 	  this.experience.offering.services().length > 0))
 		{
 			this.flags().each(function(fs)
 				{
-					fs.visible = (fs.service.getCell("Service").data.length > 1) ? false : undefined;
+					fs.visible = (fs.service.services().length > 1) ? false : undefined;
 				});
 		}
 		else
@@ -1198,7 +1185,7 @@ var TagSearchView = (function() {
 						 "Housing"];
 			this.flags().each(function(fs)
 				{
-					fs.visible = (types.indexOf(fs.getDescription()) < 0 ? false : undefined);
+					fs.visible = (types.indexOf(fs.description()) < 0 ? false : undefined);
 				});
 		}
 	}
@@ -1211,7 +1198,7 @@ var TagSearchView = (function() {
 		{
 			var flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
 			var flagData = flags.data();
-			var flagDescriptions = flagData.map(function(fs) { return fs.getDescription().toLocaleUpperCase(); });
+			var flagDescriptions = flagData.map(function(fs) { return fs.description().toLocaleUpperCase(); });
 			
 			var flagIndexOf = function(s)
 			{
@@ -1241,7 +1228,7 @@ var TagSearchView = (function() {
 				// Add to the visible list any item that contains the root service as a sub service.
 				this.flags().each(function(fs)
 					{
-						if (!fs.visible && fs.service.getCell("Service").data.find(function(subService)
+						if (!fs.visible && fs.service.services().find(function(subService)
 							{
 								return subService.getInstanceID() == rootService.service.getInstanceID();
 							}))
@@ -1249,7 +1236,7 @@ var TagSearchView = (function() {
 					});
 				flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
 				flagData = flags.data();
-				flagDescriptions = flagData.map(function(fs) { return fs.getDescription().toLocaleUpperCase(); });
+				flagDescriptions = flagData.map(function(fs) { return fs.description().toLocaleUpperCase(); });
 			}
 			
 			var levels = {};
@@ -1260,9 +1247,9 @@ var TagSearchView = (function() {
 			// in the set of visible flags except for the service itself.
 			flags.each(function(fs)
 			{
-				flagServices[fs.service.getInstanceID()] = fs.service.getCell("Service").data.filter(
+				flagServices[fs.service.getInstanceID()] = fs.service.services().filter(
 					function(s) {
-						return flagIndexOf(s.getDescription().toLocaleUpperCase()) >= 0 && 
+						return flagIndexOf(s.description().toLocaleUpperCase()) >= 0 && 
 										   s.getInstanceID() != fs.service.getInstanceID();
 					});
 			});
@@ -1312,7 +1299,7 @@ var TagSearchView = (function() {
 			{
 				if (s.getInstanceID() == serviceID)
 					return false;
-				return s.getCell("Service").data.find(function(subS)
+				return s.services().find(function(subS)
 					{
 						return subS.getInstanceID() == serviceID;
 					});
@@ -1320,7 +1307,7 @@ var TagSearchView = (function() {
 	}
 	
 	TagSearchView.prototype.onClickButton = function(d) {
-		if (prepareClick('click', 'service: ' + d.getDescription()))
+		if (prepareClick('click', 'service: ' + d.description()))
 		{
 			try
 			{
@@ -1333,14 +1320,14 @@ var TagSearchView = (function() {
 				
 				var moveToNewInput = !this.hasSubService(d.service) ||
 					(this.focusNode && 
-					 this.focusNode.value.toLocaleUpperCase() == d.getDescription().toLocaleUpperCase());
+					 this.focusNode.value.toLocaleUpperCase() == d.description().toLocaleUpperCase());
 					
 				if (d3Focus && d3Focus.datum())
 				{
 					newDatum = d3Focus.datum();
-					newDatum.name = d.getDescription();
+					newDatum.name = d.description();
 					newDatum.pickedObject = d.service;
-					this.focusNode.value = d.getDescription();
+					this.focusNode.value = d.description();
 				}
 				else
 				{
@@ -1497,22 +1484,22 @@ var OrganizationSearchView = (function() {
 					else
 						orgValue = d.getValue("Organization");
 						
-					if (orgValue.getDescription() == d.getDescription())
+					if (orgValue.description() == d.description())
 					{
-						leftText.text(d.getDescription());
+						leftText.text(d.description());
 					}
 					else
 					{
 						orgDiv = leftText.append('div').classed("organization", true);		
-						orgDiv.append('div').text(orgValue.getDescription());
+						orgDiv.append('div').text(orgValue.description());
 						orgDiv.append('div')
 							.classed('address-line', true)
-							.text(d.getDescription());
+							.text(d.description());
 					}
 				}
 				else
 				{
-					leftText.text(d.getDescription());
+					leftText.text(d.description());
 				}
 			});
 	}
@@ -1729,14 +1716,14 @@ var SiteSearchView = (function() {
 				if (d.getTypeName() === "Offering")
 				{
 					leftText.append('div')
-						.classed('title', true).text(d.getDescription());
+						.classed('title', true).text(d.description());
 
 					orgDiv = leftText.append('div').classed("organization", true);
-					if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+					if (d.getValue("Site").description() != d.getValue("Organization").description())
 					{
 						orgDiv.append('div')
 							.classed('address-line', true)
-							.text(d.getValue("Site").getDescription());
+							.text(d.getValue("Site").description());
 					}
 				}
 				else if (d.getTypeName() === "Site")
@@ -1750,23 +1737,23 @@ var SiteSearchView = (function() {
 					else
 						orgValue = d.getValue("Organization");
 						
-					if (orgValue.getDescription() == d.getDescription() ||
+					if (orgValue.description() == d.description() ||
 						orgValue.getInstanceID() == (_this.experience.organization && _this.experience.organization.getInstanceID()))
 					{
-						leftText.text(d.getDescription());
+						leftText.text(d.description());
 					}
 					else
 					{
 						orgDiv = leftText.append('div').classed("organization", true);		
-						orgDiv.append('div').text(orgValue.getDescription());
+						orgDiv.append('div').text(orgValue.description());
 						orgDiv.append('div')
 							.classed('address-line', true)
-							.text(d.getDescription());
+							.text(d.description());
 					}
 				}
 				else
 				{
-					leftText.text(d.getDescription());
+					leftText.text(d.description());
 				}
 			});
 	}
@@ -1798,9 +1785,9 @@ var OfferingSearchView = (function() {
 		var _this = this;
 		if (d.getTypeName() === 'Service')
 		{
-			if (prepareClick('click', 'service for offering: ' + d.getDescription()))
+			if (prepareClick('click', 'service for offering: ' + d.description()))
 			{
-				this.experience.setOffering({text: d.getDescription() });
+				this.experience.setOffering({text: d.description() });
 				this.sitePanel.onExperienceUpdated();
 				this.hideSearch(function()
 					{
@@ -1811,7 +1798,7 @@ var OfferingSearchView = (function() {
 		}
 		else if (d.getTypeName() === 'Offering')
 		{
-			if (prepareClick('click', 'offering: ' + d.getDescription()))
+			if (prepareClick('click', 'offering: ' + d.description()))
 			{
 				this.experience.setOffering({instance: d});
 				/* Set the organization, then the site, because setting the organization may
@@ -2036,31 +2023,31 @@ var OfferingSearchView = (function() {
 				if (d.getTypeName() === "Offering")
 				{
 					if (_this.experience.site && _this.experience.site.getInstanceID() == d.getValue("Site").getInstanceID())
-						leftText.text(d.getDescription());
+						leftText.text(d.description());
 					else
 					{
 						leftText.append('div')
-							.classed('title', true).text(d.getDescription());
+							.classed('title', true).text(d.description());
 	
 						orgDiv = leftText.append('div').classed("organization", true);
 						if (d.getValue("Organization").getInstanceID() !=
 							(_this.experience.organization && _this.experience.organization.getInstanceID()))
-							orgDiv.append('div').text(d.getValue("Organization").getDescription());
-						if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+							orgDiv.append('div').text(d.getValue("Organization").description());
+						if (d.getValue("Site").description() != d.getValue("Organization").description())
 						{
 							orgDiv.append('div')
 								.classed('address-line', true)
-								.text(d.getValue("Site").getDescription());
+								.text(d.getValue("Site").description());
 						}
 					}
 				}
 				else if (d.getTypeName() === "Service")
 				{
-					leftText.text(d.getDescription());
+					leftText.text(d.description());
 				}
 				else
 				{
-					leftText.text(d.getDescription());
+					leftText.text(d.description());
 				}
 			});
 	}
@@ -2282,7 +2269,7 @@ var ExperienceShareOptions = (function () {
 					{
 						if (prepareClick('click', duplicateText))
 						{
-							var tempExperience = new Experience(cr.signedinUser.path(), experience);
+							var tempExperience = experience.clone();
 							var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
 							newPanel.showUp()
 								.done(function()
@@ -2543,7 +2530,7 @@ var NewExperiencePanel = (function () {
 			.datum(instance)
 			.classed('tag', true)
 			.attr('placeholder', 'Tag')
-			.attr('value', instance && instance.getDescription());
+			.attr('value', instance && instance.description());
 			
 		$(input.node()).on('click', function(e)
 			{
@@ -2595,9 +2582,9 @@ var NewExperiencePanel = (function () {
 					if (!input.node().value && !instance)
 						return;
 					/* If this is a node whose value matches the previous value, then don't handle here. */
-					else if (instance && input.node().value == instance.getDescription())
+					else if (instance && input.node().value == instance.description())
 						return;
-					else if (instance && input.node().value != instance.getDescription())
+					else if (instance && input.node().value != instance.description())
 					{
 						_this.checkTagInput();
 						_this.showAddTagButton();
@@ -2627,7 +2614,7 @@ var NewExperiencePanel = (function () {
 		var offering = this.experience.offering;
 		if (offering && offering.getInstanceID())
 		{
-			offeringTags = offering.getCell("Service").data
+			offeringTags = offering.services()
 				.filter(function(v) { return !v.isEmpty(); });
 		}
 		
@@ -2641,7 +2628,7 @@ var NewExperiencePanel = (function () {
 				.enter()
 				.append('span')
 				.classed('tag', true)
-				.text(function(d) { return d.getDescription(); })
+				.text(function(d) { return d.description(); })
 				.each(function()
 					{
 						_this.setTagColor(this);
@@ -2659,11 +2646,11 @@ var NewExperiencePanel = (function () {
 			{ 
 				return !offeringTags.find(function(d)
 					{
-						return d.getDescription() === v.getDescription();
+						return d.description() === v.description();
 					}) &&
 					!tags.find(function(d) 
 					{ 
-						return d.getDescription() === v.getDescription(); 
+						return d.description() === v.description(); 
 					})
 			}));
 		
@@ -2680,7 +2667,7 @@ var NewExperiencePanel = (function () {
 			else
 			{
 				input = tagDivs.filter(function(d) { return d == tags[i]; });
-				input.node().value = tags[i].getDescription();
+				input.node().value = tags[i].description();
 				this.setTagInputWidth(input.node());
 			}
 		}
@@ -2695,7 +2682,7 @@ var NewExperiencePanel = (function () {
 		if (label)
 			return label;
 			
-		var subObj = service.getCell("Service").data.find(function(s)
+		var subObj = service.services().find(function(s)
 			{
 				return s.getDatum(cellName);
 			});
@@ -2837,15 +2824,15 @@ var NewExperiencePanel = (function () {
 							{
 								d.pickedObject = null;
 								d.name = newText;
-								this.value = d.getDescription();	/* Reset the value in case there was trimming */
+								this.value = d.description();	/* Reset the value in case there was trimming */
 								$(this).trigger('input');
 							}
 						}
 						else if (newInstance != d.pickedObject)
 						{
 							d.pickedObject = newInstance;
-							d.name = newInstance.getDescription();
-							this.value = d.getDescription();
+							d.name = newInstance.description();
+							this.value = d.description();
 							$(this).trigger('input');
 						}
 					}
@@ -2926,7 +2913,7 @@ var NewExperiencePanel = (function () {
 	{
 		if (this.tagSearchView.focusNode == this.tagSearchView.firstTagInputNode() &&
 			(!this.experience.offering ||
-			  this.experience.offering.getCell("Service").data.length == 0))
+			  this.experience.offering.services().length == 0))
 			this.tagHelp.text(this.firstTagHelp);
 		else
 			this.tagHelp.text(this.otherTagHelp);
@@ -3050,11 +3037,11 @@ var NewExperiencePanel = (function () {
 		else if (experience.instance)
 			this.title = this.editTitle;
 		else if (experience.domain)
-			this.title = this.newFromDomainTitle.format(experience.domain.getDescription());
+			this.title = this.newFromDomainTitle.format(experience.domain.description());
 		else if (experience.stage)
-			this.title = this.newFromDomainTitle.format(experience.stage.getDescription());
+			this.title = this.newFromDomainTitle.format(experience.stage.description());
 		else if (experience.serviceDomain)
-			this.title = this.newFromDomainTitle.format(experience.serviceDomain.getDescription());
+			this.title = this.newFromDomainTitle.format(experience.serviceDomain.description());
 			
 		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
@@ -3137,7 +3124,7 @@ var NewExperiencePanel = (function () {
 											timeframeName = "Goal";
 										experience.timeframe = enumerators.find(function(d)
 											{
-												return d.getDescription() == timeframeName;
+												return d.description() == timeframeName;
 											});
 
 										experience.add()

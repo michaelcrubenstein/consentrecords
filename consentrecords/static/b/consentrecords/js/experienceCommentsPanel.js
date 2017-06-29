@@ -26,7 +26,6 @@ var ExperienceCommentsPanel = (function() {
 		var askers = divs.append('div')
 			.classed('asker', true)
 			.datum(function(d) { 
-				var cp = d.getValue("Comment Request"); 
 				return d.asker(); })
 			.text(function(d) {
 					if (!d || !d.id())
@@ -41,18 +40,14 @@ var ExperienceCommentsPanel = (function() {
 
 		var questions = divs.append('textarea')
 			.classed('question', true)
-			.datum(function(d) { 
-				var cp = d.getValue("Comment Request");
-				return cp && cp.getInstanceID() && cp.getValue(cr.fieldNames.text); })
 			.text(function(d) { 
-					return d && d.text; 
+					return d && d.question(); 
 				});
 				
 		var answers = divs.append('textarea')
 			.classed('answer', true)
-			.datum(function(d) { return d.getValue(cr.fieldNames.text); })
 			.text(function(d) { 
-					return (d && d.text); 
+					return (d && d.text()); 
 				})
 			.attr('placeholder', 'No Answer');
 				
@@ -112,33 +107,18 @@ var ExperienceCommentsPanel = (function() {
 	
 	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
 	{
-		var comments = this.fd.experience.getValue("Comments");
 		var initialData = {};
 		initialData[cr.fieldNames.text] = [{text: newText}];
 		
-		if (comments.getInstanceID())
-		{
-			/* Test case: add a comment to an experience that has had a comment */
-			var commentCell = comments.getCell("Comment");
-			$.when(cr.createInstance(commentCell.field, comments.getInstanceID(), initialData))
-		     .then(function(newValue)
-					{
-						newValue.promiseCellsFromCache()
-							.then( 
-							function() {
-								commentCell.addValue(newValue);
-								done(newValue);
-							},
-							fail);
-					},
-					fail);
-		}
-		else
-		{
-			/* Test case: add a comment to an experience that has not had a comment previously added. */
-			$.when(comments.saveNew({Comment: [{cells: initialData}]}))
-			 .then(done, fail);
-		}
+		/* Test case: add a comment to an experience that has had a comment */
+		var _this = this;
+		$.when(this.fd.experience.createComment(initialData))
+		 .then(function(newValue)
+				{
+					_this.fd.experience.addComment(newValue);
+					done(newValue);
+				},
+				fail);
 	}
 	
 	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
@@ -270,7 +250,8 @@ var ExperienceCommentsPanel = (function() {
 			{
 				try
 				{
-					var experience = new Experience(fd.experience.cell.parent, fd.experience);
+					var experience = new cr.Experience();
+					experience.path(fd.experience.path());
 					experience.replaced(fd.experience);
 					
 					new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft)
@@ -298,16 +279,16 @@ var ExperienceCommentsPanel = (function() {
 		var initialData = [];
 		var sourceObjects = [];
 
-		cr.signedinUser.getCell(cr.fieldNames.notification).data.forEach(function(n)
+		cr.signedinUser.notifications().forEach(function(n)
 			{
-				if (n.getDatum(cr.fieldNames.name) == "crn.ExperienceCommentRequested")
+				if (n.name() == "crn.ExperienceCommentRequested")
 				{
-					var args = n.getCell(cr.fieldNames.argument).data;
+					var args = n.args();
 					if (args.length >= 3 && 
-						args[1].getInstanceID() == _this.fd.experience.getInstanceID())
+						args[1].id() == _this.fd.experience.id())
 					{
-						var comment = crp.getInstance(args[2].getInstanceID());
-						if (comment.getDatum(cr.fieldNames.text))
+						var comment = crp.getInstance(args[2].id());
+						if (comment.text())
 						{
 							n.appendDeleteCommand(initialData, sourceObjects);
 						}
@@ -327,16 +308,11 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
-	ExperienceCommentsPanel.prototype.setupAsk = function(terms)
+	ExperienceCommentsPanel.prototype.setupAsk = function()
 	{
 		var _this = this;
-		var canBeAsked = this.fd.experience.cell.parent.getValue(cr.fieldNames.canBeAskedAboutExperience);
-		termNo = terms[0].getCell(cr.fieldNames.enumerator).data.find(function(d)
-			{
-				return d.getDescription() == cr.booleans.no;
-			});
-		if (cr.signedinUser.getInstanceID() &&
-			canBeAsked == null || canBeAsked.getInstanceID() != termNo.getInstanceID())
+		var canBeAsked = this.fd.experience.path().canAnswerExperience();
+		if (cr.signedinUser.id() && canBeAsked != "no")
 		{
 			var newQuestionDiv = this.mainDiv.append('section')
 				.classed('new-comment', true);
@@ -392,7 +368,8 @@ var ExperienceCommentsPanel = (function() {
 						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
 				}
 			
-			crp.promise({path:  'Comment Prompt'})
+			crp.promise({path:  'comment prompt',
+			             resultType: cr.CommentPrompt})
 			.then(function(prompts)
 				{
 					commentPromptsDiv.selectAll('div')
@@ -402,11 +379,11 @@ var ExperienceCommentsPanel = (function() {
 						.append('span')
 						.classed('site-active-text', true)
 						.text(function(d) 
-							{ return d.getDatum(cr.fieldNames.text); })
+							{ return d.description(); })
 						.on('click', function(d)
 							{
 								newQuestionInput.node().value = '';
-								newQuestionInput.node().value = d.getDatum(cr.fieldNames.text);
+								newQuestionInput.node().value = d.description();
 								newQuestionInput.node().focus();
 								var textWidth = newQuestionInput.node().value.length;
 								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
@@ -625,7 +602,7 @@ var ExperienceCommentsPanel = (function() {
 				})
 		}
 		
-		var comments = fd.experience.getValue("Comments");
+		var comments = fd.experience.comments();
 		var commentsDiv = panel2Div.append('section')
 			.classed('multiple comments', true);
 		var commentList = crf.appendItemList(commentsDiv)
@@ -638,24 +615,20 @@ var ExperienceCommentsPanel = (function() {
 		}
 		
 		/* commentsCells is an array of cells contained within a Comments instance. */
-		function onCommentsChecked(commentsCells)
+		function onCommentsChecked(experience)
 		{
-			var commentCell = commentsCells.find(function(cell)
-				{
-					return cell.field.name == "Comment";
-				});
-			setupOnViewEventHandler(commentCell, 'valueAdded.cr', commentsDiv.node(), onCommentAdded);
-			_this.loadComments(commentCell.data);
+			setupOnViewEventHandler(experience, 'valueAdded.cr', commentsDiv.node(), onCommentAdded);
+			_this.loadComments(experience.comments());
 		}
 		
-		setupOnViewEventHandler(comments, 'dataChanged.cr', commentsDiv.node(), 
+		setupOnViewEventHandler(fd.experience, 'dataChanged.cr', commentsDiv.node(), 
 			function (eventObject, changeTarget)
 			{
-				if (changeTarget.getTypeName() == "Comments")
-					changeTarget.promiseCellsFromCache(["Comment/Comment Request"])
+				if (changeTarget instanceof cr.Experience)
+					changeTarget.promiseComments()
 						.then(function()
 							{
-								onCommentsChecked(comments.getCells());
+								onCommentsChecked(changeTarget);
 							}, cr.asyncFail)
 			});
 		
@@ -718,18 +691,18 @@ var ExperienceCommentsPanel = (function() {
 						});
 			});					
 		
-		if (comments.getInstanceID())
+		if (fd.experience.id())
 		{
 			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
 				comments are loaded. This won't happen if the comments are already loaded.
 			 */
-			this.promise = comments.promiseCellsFromCache(["Comment/Comment Request"])
-				.then(function(commentsCells)
+			this.promise = fd.experience.promiseComments()
+				.then(function(comments)
 					{
 						var r = $.Deferred();
 						setTimeout(function()
 							{
-								onCommentsChecked(commentsCells);
+								onCommentsChecked(fd.experience);
 								r.resolve();
 							});
 						return r;
@@ -744,11 +717,7 @@ var ExperienceCommentsPanel = (function() {
 		this.promise = this.promise
 			.then(function()
 				{
-					return crp.promise({path: "term[name=boolean]"})
-						.then(function(terms)
-						{
-							_this.setupAsk(terms);
-						});
+					_this.setupAsk();
 				});
 	}
 		
