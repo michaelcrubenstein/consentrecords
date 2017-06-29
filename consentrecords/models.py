@@ -5011,6 +5011,17 @@ class Offering(ChildInstance, dbmodels.Model):
                 data['sessions'] = [i.headData(context) for i in self.currentSessions]
             data['sessions'].sort(key=lambda i: i['description'])
             
+            if 'parents' in fields:
+                if context.canRead(self.parent):
+                    if 'organization' in fields:
+                        data['organization'] = self.parent.parent.getData([], context)
+                    else:
+                        data['organization'] = self.parent.parent.headData(context)
+                    if 'site' in fields:
+                        data['site'] = self.parent.getData([], context)
+                    else:
+                        data['site'] = self.parent.headData(context)
+        
         return data
 
     def getSubClause(qs, user, accessType):
