@@ -143,7 +143,12 @@ var ExperienceCommentsPanel = (function() {
 			{
 				var newValue = this.value.trim();
 				if (d)
-					d.appendUpdateCommands(0, newValue, initialData, sourceObjects);
+				{
+					if (d3.select(this).classed('question'))
+						d.appendUpdateQuestionCommand(newValue, initialData, sourceObjects);
+					else if (d3.select(this).classed('answer'))
+						d.appendUpdateTextCommand(newValue, initialData, sourceObjects);
+				}
 			});
 		if (initialData.length > 0)
 			return cr.updateValues(initialData, sourceObjects);
@@ -250,7 +255,9 @@ var ExperienceCommentsPanel = (function() {
 			{
 				try
 				{
-					new NewExperiencePanel(fd.experience, fd.experience.getPhase(), revealPanelLeft)
+					var experienceController = new ExperienceController(fd.experience.path(), fd.experience);
+					experienceController.instance = fd.experience;
+					new NewExperiencePanel(experienceController, revealPanelLeft)
 						.showLeft()
 						.always(unblockClick);
 				}
@@ -440,7 +447,7 @@ var ExperienceCommentsPanel = (function() {
 				{
 					if (prepareClick('click', 'share'))
 					{
-						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.cell.parent);
+						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.path());
 					}
 				});
 		shareButton.append("img")

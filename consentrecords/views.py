@@ -1073,7 +1073,7 @@ def submitsignin(request):
     try:
         results = userviews.signinResults(request)
         user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None)
-        results["user"] = { "instanceID": user.idString, "description" : user.getDescription(None) }        
+        results["user"] = { "id": user.idString, "description" : user.getDescription(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -1089,11 +1089,13 @@ def submitNewUser(request):
         # An optional set of properties associated with the object.
         propertyString = request.POST.get('properties', "")
         propertyList = json.loads(propertyString)
+        languageCode = request.POST.get('languageCode', 'en')
         
         with transaction.atomic():
             results = userviews.newUserResults(request)
-            userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList)
-            results["user"] = { "instanceID": userInstance.idString, "description" : userInstance.getDescription(None) }
+            context = Context(languageCode, request.user)
+            userInstance = Context.user or UserFactory.createUserInstance(request.user, propertyList)
+            results["user"] = { "id": userInstance.idString, "description" : userInstance.getDescription(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

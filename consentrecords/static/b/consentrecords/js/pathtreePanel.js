@@ -497,10 +497,10 @@ var PathView = (function() {
 			{
 				try
 				{
-					var experience = new Experience(fd.experience.cell.parent, fd.experience);
-					experience.replaced(fd.experience);
+					var experienceController = new ExperienceController(fd.experience.path(), fd.experience);
+					experienceController.replaced(fd.experience);
 					
-					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
+					var editPanel = new NewExperiencePanel(experienceController, revealPanelLeft);
 					
 					editPanel.showLeft().then(unblockClick);
 				}
@@ -1573,17 +1573,17 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.createExperience = function()
 	{
-		return new Experience(this.pathtree.path);
+		return new ExperienceController(this.pathtree.path);
 	}
 	
 	PathlinesPanel.prototype.startNewExperience = function(phase, done, fail)
 	{
 		try
 		{
-			var experience = this.createExperience();
-			experience.initDateRange(phase);
+			var experienceController = new ExperienceController(this.path());
+			experienceController.initDateRange(phase);
 							
-			new NewExperiencePanel(experience, phase)
+			new NewExperiencePanel(experienceController)
 				.showUp()
 				.done(done);
 		}
@@ -2150,9 +2150,9 @@ var ExperienceIdeaPanel = (function() {
 								phase = experience.timeframe.getDescription();
 							else
 								phase = 'Previous';
-								
-							experience.initDateRange(phase);
-							var panel = new NewExperiencePanel(experience, phase);
+							var experienceController = new ExperienceController(this.path());	
+							experienceController.initDateRange(phase);
+							var panel = new NewExperiencePanel(experienceController);
 							panel.done = function()
 								{
 									skipButton.on('click')();
@@ -2194,8 +2194,8 @@ var OtherPathlines = (function() {
 		{
 			try
 			{
-				var tempExperience = new Experience(cr.signedinUser.path(), fd.experience);
-				new NewExperiencePanel(tempExperience, tempExperience.getPhase())
+				var tempExperience = new ExperienceController(cr.signedinUser.path(), fd.experience);
+				new NewExperiencePanel(tempExperience)
 					.showUp()
 					.always(unblockClick);
 			}

@@ -277,19 +277,19 @@
 			{% endif %}
 	
 			var experience = pathwayPanel.createExperience();
-			var done = function(services)
+			var done = function(service)
 			{
 				var panel;
 				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
 				{
-					crp.promise({path: offeringName, fields: ["parents"]}) 
+					crp.promise({path: "offering/" + offeringName, fields: ["parents"]}) 
 						.done(function(offerings)
 							{
 								if (offerings.length > 0)
 								{
 									if (offerings[0].getTypeName() == "Offering")
 									{
-										experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
+										experience.createFromOffering(offerings[0], service, pathwayPanel.node(), function(panelNode)
 											{
 												panelNode.sitePanel.showUp();
 											});
@@ -304,14 +304,14 @@
 				}
 				else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
 				{
-					crp.promise({path: siteName, fields: ["parents"]})
+					crp.promise({path: "site/" + siteName, fields: ["parents"]})
 						.done(function(sites)
 							{
 								if (sites.length > 0)
 								{
-									if (sites[0].getTypeName() == "Site")
+									if (sites[0] instanceof cr.Site)
 									{
-										experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
+										experience.createFromSite(sites[0], service, pathwayPanel.node(), function(panelNode)
 											{
 												panelNode.sitePanel.showUp();
 											});
@@ -333,16 +333,16 @@
 							{
 								if (organizations.length > 0)
 								{
-									if (organizations[0].getTypeName() == "Organization")
+									if (organizations[0] instanceof cr.Organization)
 									{
-										experience.createFromData({instance: organizations[0] },
-											siteName && {text : siteName},
-											offeringName && {text : offeringName},
-											services,
-											pathwayPanel.node(),
-											function(panelNode) {
-												panelNode.sitePanel.showUp();
-											});
+										experience.newExperience
+											.organization(organizations[0])
+											.customSite(siteName)
+											.customOffering(offeringName);
+										experience.service(service)
+												  .initPreviousDateRange();
+										var panel = new NewExperiencePanel(experience);
+										panel.showUp();
 									}
 									else
 										cr.asyncFail("The specified organization does not appear to be an organization.");
@@ -354,14 +354,14 @@
 				}
 				else if (organizationName || siteName || offeringName)
 				{
-					experience.createFromData({text: organizationName },
-						siteName && {text : siteName},
-						offeringName && {text : offeringName},
-						services,
-						pathwayPanel.node(),
-						function(panelNode) {
-							panelNode.sitePanel.showUp();
-						});
+					experience.newExperience
+						.customOrganization(organizationName)
+						.customSite(siteName)
+						.customOffering(offeringName);
+					experience.service(service)
+							  .initPreviousDateRange();
+					var panel = new NewExperiencePanel(experience);
+					panel.showUp();
 				}
 				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 				{
@@ -395,14 +395,14 @@
 							else if (services[0].getTypeName() != "Service")
 								cr.asyncFail(new Error("The specified tag does not appear to be a tag."));
 							else
-								done([{instance: services[0]}]);
+								done(services[0]);
 						})
 					.fail(cr.asyncFail);
 			}
 			else if (serviceName)
-				done([{text: serviceName}]);
+				done(serviceName);
 			else
-				done([]);
+				done();
 		}
 		
 		$(document).ready (function(e) {						

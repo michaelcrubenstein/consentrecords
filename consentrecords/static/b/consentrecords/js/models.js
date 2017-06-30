@@ -1054,12 +1054,6 @@ cr.Instance = (function() {
 			return undefined;
 	}
 	
-	Instance.prototype.subInstance = function(name)
-	{
-		var value = this.getValue(name);
-		return value && value.instance();
-	}
-	
 	Instance.prototype.importCell = function(oldCell)
 	{
 		var newCell = cr.createCell(oldCell.field);
@@ -1556,11 +1550,6 @@ cr.ObjectValue = (function() {
 		return this._instance && this._instance.getNonNullValue(name);
 	}
 		
-	ObjectValue.prototype.subInstance = function(name)
-	{
-		return this._instance && this._instance.subInstance(name);
-	}
-	
 	ObjectValue.prototype.importCell = function(cell)
 	{
 		this._instance.importCell(cell);
@@ -2301,6 +2290,50 @@ cr.IInstance = (function() {
 		return false;
 	}
 	
+	IInstance.prototype.appendUpdateReferenceCommand = function(newValue, f, key, initialData, sourceObjects)
+	{
+		var onChange = {target: this, update: function() { f(newValue); }};
+		if (!newValue)
+		{
+			if (f())
+			{
+				initialData[key] = null;
+				sourceObjects.push(onChange);
+			}
+		}
+		else if (!f() || f().id() != newValue.id())
+		{
+			initialData[key] = newValue.id();
+			sourceObjects.push(onChange);
+		}
+	}
+	
+	IInstance.prototype.appendUpdateValueCommand = function(newValue, f, key, initialData, sourceObjects)
+	{
+		var onChange = {target: this, update: function() { f(newValue); }};
+		if (!newValue)
+		{
+			if (f())
+			{
+				initialData[key] = null;
+				sourceObjects.push(onChange);
+			}
+		}
+		else if (f() != newValue)
+		{
+			initialData[key] = newValue;
+			sourceObjects.push(onChange);
+		}
+	}
+	
+	IInstance.prototype.updateFromChangeData = function(d)
+	{
+		if ('id' in d)
+			this._id = d['id'];
+		if ('description' in d)
+			this._description = d['description'];
+	}
+
 	function IInstance() {
 	};
 	
@@ -2487,6 +2520,12 @@ cr.Comment = (function() {
 		}
 	}
 	
+	Comment.prototype.appendUpdateTextCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.text, 'text', initialData, sourceObjects);
+	}
+
 	Comment.prototype.question = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2501,6 +2540,12 @@ cr.Comment = (function() {
 		}
 	}
 	
+	Comment.prototype.appendUpdateQuestionCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.question, 'question', initialData, sourceObjects);
+	}
+
 	Comment.prototype.asker = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2791,6 +2836,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateOrganizationCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateReferenceCommand(newValue, 
+			this.organization, 'organization', initialData, sourceObjects);
+	}
+
 	Experience.prototype.customOrganization = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2805,6 +2856,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateCustomOrganizationCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.customOrganization, 'custom organization', initialData, sourceObjects);
+	}
+
 	Experience.prototype.site = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2819,6 +2876,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateSiteCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateReferenceCommand(newValue, 
+			this.site, 'site', initialData, sourceObjects);
+	}
+
 	Experience.prototype.customSite = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2833,6 +2896,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateCustomSiteCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.customSite, 'custom site', initialData, sourceObjects);
+	}
+
 	Experience.prototype.offering = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2847,6 +2916,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateOfferingCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateReferenceCommand(newValue, 
+			this.offering, 'offering', initialData, sourceObjects);
+	}
+
 	Experience.prototype.customOffering = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2861,6 +2936,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateCustomOfferingCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.customOffering, 'custom offering', initialData, sourceObjects);
+	}
+
 	Experience.prototype.start = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2875,6 +2956,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateStartCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.start, 'start', initialData, sourceObjects);
+	}
+
 	Experience.prototype.end = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2889,6 +2976,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateEndCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.end, 'end', initialData, sourceObjects);
+	}
+
 	Experience.prototype.timeframe = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2903,6 +2996,12 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.appendUpdateTimeframeCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.timeframe, 'timeframe', initialData, sourceObjects);
+	}
+
 	Experience.prototype.services = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2945,29 +3044,41 @@ cr.Experience = (function() {
 		}
 	}
 	
+	/* Copies all of the data associated with this experience except the comments.
+	 */
+	Experience.prototype.duplicateData = function(newExperience)
+	{
+		newExperience._path = this._path;
+		newExperience._organization = this._organization;
+		newExperience._customOrganization = this._customOrganization
+		newExperience._site = this._site;
+		newExperience._customSite = this._customSite;
+		newExperience._offering = this._offering;
+		newExperience._customOffering = this._customOffering;
+		newExperience._start = this._start;
+		newExperience._end = this._end;
+		newExperience._timeframe = this._timeframe;
+		newExperience._services = this._services.map(function(i)
+			{
+				target = new cr.ExperienceService();
+				i.copyData(target);
+				return target;
+			});
+		newExperience._customServices = this._customServices.map(function(i)
+			{
+				target = new cr.ExperienceCustomService();
+				i.copyData(target);
+				return target;
+			});
+	}
+	
 	Experience.prototype.promiseCopy = function(newExperience)
 	{
 		var _this = this;
 		return this.promiseComments()
 			.then(function()
 				{
-					newExperience._path = _this._path;
-					newExperience._organization = _this._organization;
-					newExperience._customOrganization = _this._customOrganization
-					newExperience._site = _this._site;
-					newExperience._customSite = _this._customSite;
-					newExperience._offering = _this._offering;
-					newExperience._customOffering = _this._customOffering;
-					newExperience._start = _this._start;
-					newExperience._end = _this._end;
-					newExperience._timeframe = _this._timeframe;
-					newExperience._services = _this._services.map(function(i)
-						{
-							target = new cr.ExperienceService();
-							i.copyData(target);
-							return target;
-						});
-					newExperience._customServices = _this._customServices;
+					_this.duplicateData(newExperience);
 					newExperience._comments = this._comments.map(function(i)
 						{
 							target = new cr.Comment();
@@ -3243,6 +3354,13 @@ cr.ExperienceCustomService = (function() {
 		cr.IInstance.prototype.setData.call(this, d);
 		this._name = 'name' in d ? d['name'] : "";
 		this._position = 'position' in d ? d['position'] : 0;
+    }
+    
+    ExperienceCustomService.prototype.copyData = function(target)
+    {
+    	cr.IInstance.prototype.copyData.call(this, target);
+    	target._name = this._name;
+    	target._position = this._position;
     }
     
 	function ExperienceCustomService() {

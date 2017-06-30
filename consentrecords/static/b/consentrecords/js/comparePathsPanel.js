@@ -114,8 +114,8 @@ var CompareFlag = (function() {
 	CompareFlag.prototype.isOnPath = function(path)
 	{
 		return (this.experience instanceof cr.Engagement) ?
-			   (this.experience.getValue(cr.fieldNames.user).getInstanceID() == path.getValue(cr.fieldNames.user).getInstanceID()) :
-			   (this.experience.cell.parent == path);
+			   (this.experience.path().user().id() == path.user().id()) :
+			   (this.experience.path() == path);
 	}
 	
 	function CompareFlag(experience, ageCalculator)
@@ -308,8 +308,8 @@ var ComparePath = (function() {
 		function getCompareFlag(experience)
 			{
 				var isLeft = (experience instanceof cr.Engagement) ?
-							 (experience.getValue(cr.fieldNames.user).getInstanceID() == _this.leftPath.getValue(cr.fieldNames.user).getInstanceID()) :
-							 (experience.cell.parent == _this.leftPath);
+							 (experience.path().user().id() == _this.leftPath.user().id()) :
+							 (experience.path() == _this.leftPath);
 				if (isLeft)
 					return new CompareFlag(experience, _this.leftAgeCalculator);
 				else
@@ -368,7 +368,7 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
 	{
-		return (cr.signedinUser && path == cr.signedinUser.subInstance("Path") && this.youName) ||
+		return (cr.signedinUser && path == cr.signedinUser.path() && this.youName) ||
 			getPathDescription(path) ||
 			ageCalculator.toString();
 	}
@@ -652,8 +652,8 @@ var ComparePathsPanel = (function () {
 			throw "pathtree already assigned to pathtree panel";
 			
 		this.pathtree = new ComparePath(this, panel2Div.node());
-		this.pathtree.setUser(this.leftUser.subInstance("Path"),
-							  this.rightUser.subInstance("Path"));
+		this.pathtree.setUser(this.leftUser.path(),
+							  this.rightUser.path());
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{

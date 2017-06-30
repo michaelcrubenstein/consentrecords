@@ -912,11 +912,13 @@ crn.ExperienceSuggestion = (function() {
 											showClickFeedback(this);
 					
 											var phase = phaseInstance ? phaseInstance.getDescription() : "Previous";
-											var experience = new Experience(cr.signedinUser.path())
+											var experience = new ExperienceController(cr.signedinUser.path())
 											experience.initDateRange(phase);
 											var tag = crp.getInstance(args[1].getInstanceID());
-											experience.services.push(new ReportedObject({name: tag.getDescription(), pickedObject: tag}));
-											new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft)
+											var services = [new ExperienceService()];
+											services[0].service(tag);
+											experience.newExperiences.services(services);
+											new NewExperiencePanel(experience, revealPanelLeft)
 																.showLeft()
 																.always(unblockClick);
 										}
