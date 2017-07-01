@@ -3408,6 +3408,14 @@ class Comment(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, prefix='parent__parent')
             
+    def markDeleted(self, context):
+        # When deleting a comment, delete any notifications that refer to that comment.
+        for i in Notification.objects.filter(deleteTransaction__isnull=True,
+            notificationArguments__argument=self.id):
+            i.markDeleted(context)
+            
+        super(Comment, self).markDeleted(context)
+    
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied
@@ -3930,6 +3938,12 @@ class Experience(ChildInstance, dbmodels.Model):
             i.markDeleted(context)
         for i in self.comments.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
+        
+        # When deleting an experience, delete any notifications that refer to that comment.
+        for i in Notification.objects.filter(deleteTransaction__isnull=True,
+            notificationArguments__argument=self.id):
+            i.markDeleted(context)
+            
         super(Experience, self).markDeleted(context)
     
     def create(parent, data, context, newIDs={}):
