@@ -88,8 +88,7 @@ var CRP = (function() {
 			else
 			{
 				var oldInstance = this.instances[i.id()];
-				oldInstance.mergeData(i);
-				return oldInstance;
+				return oldInstance.mergeData(i);
 			}
 		}
 		else
@@ -925,25 +924,6 @@ cr.Instance = (function() {
 			this._parentID = parentID;
 			return this;
 		}
-	}
-	
-	/** Returns a promise that the parent of this instance can be retrieved from the parent 
-	 * function.
-	 */
-	Instance.prototype.parentPromise = function()
-	{
-		if (!this._parentID)
-		{
-			var r = $.Deferred();
-			r.resolve(null);
-			return r;
-		}
-		
-		var i = crp.getInstance(this._parentID);
-		if (i)
-			return i.promiseCellsFromCache();
-		else
-			return crp.promise({path: this._parentID});
 	}
 	
 	Instance.prototype.updateFromChangeData = function(changeData)
@@ -2245,6 +2225,7 @@ cr.IInstance = (function() {
 	IInstance.prototype.mergeData = function(source)
 	{
 		// Do nothing.
+		return this;
 	}
 	
 	IInstance.prototype.readCheckPromise = function()
@@ -2452,6 +2433,65 @@ cr.OrderedServiceLinkInstance = (function() {
 	return OrderedServiceLinkInstance;
 })();
 	
+cr.Grantable = (function() {
+	Grantable.prototype = new cr.IInstance();
+	Grantable.prototype._grantTarget = null;
+	Grantable.prototype._grantTargetPromise = null;
+
+	Grantable.prototype.grantTarget = function()
+	{
+		return this._grantTarget;
+	}
+	
+	Grantable.prototype.publicAccess = function(newValue)
+	{
+		return this._grantTarget.publicAccess(newValue);
+	}
+	
+	Grantable.prototype.primaryAdministrator = function(newValue)
+	{
+		return this._grantTarget.primaryAdministrator(newValue);
+	}
+	
+    Grantable.prototype.promiseGrantTarget = function()
+    {
+    	p = this.administerCheckPromise();
+    	if (p) return p;
+
+        if (this._grantTargetPromise)
+        	return this._grantTargetPromise;
+        else if (this._grantTarget)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._grantTarget);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._grantTargetPromise = cr.getData(
+        	{
+        		path: 'grant target/{0}'.format(this.id()),
+        		fields: [],
+        		resultType: cr.GrantTarget
+        	})
+        	.done(function(grantTargets)
+        		{
+        			_this._grantTarget = grantTargets[0];
+        			result = $.Deferred();
+        			result.resolve(_this._grantTarget);
+        			return result;
+        		});
+        return this._grantTargetPromise;
+    }
+    
+    function Grantable() {
+    	cr.IInstance.call(this);
+    }
+    
+    return Grantable;
+    
+})();
+
 cr.AccessInstance = (function() {
 	AccessInstance.prototype = new cr.IInstance();
 	AccessInstance.prototype._grantee = null;
@@ -2461,7 +2501,7 @@ cr.AccessInstance = (function() {
 		this._grantee = null;
 	}
 	
-	AccessInstance.prototype.user = function(newValue)
+	AccessInstance.prototype.grantee = function(newValue)
 	{
 		if (newValue === undefined)
 			return this._grantee;
@@ -3417,7 +3457,85 @@ cr.ExperiencePromptText = (function() {
 	
 cr.GrantTarget = (function() {
 	GrantTarget.prototype = new cr.IInstance();
+	GrantTarget.prototype._publicAccess = null;
+	GrantTarget.prototype._primaryAdministrator = null;
+	GrantTarget.prototype._userGrants = null;
+	GrantTarget.prototype._groupGrants = null;
 	
+	GrantTarget.prototype.publicAccess = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._publicAccess;
+		else
+		{
+			if (this._publicAccess != newValue)
+			{
+				this._publicAccess = newValue;
+			}
+			return this;
+		}
+	}
+	
+	GrantTarget.prototype.primaryAdministrator = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._primaryAdministrator;
+		else
+		{
+			if (this._primaryAdministrator != newValue)
+			{
+				this._primaryAdministrator = newValue;
+			}
+			return this;
+		}
+	}
+	
+	GrantTarget.prototype.userGrants = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._userGrants;
+		else
+		{
+			this._userGrants = newValue;
+			return this;
+		}
+	}
+	
+	GrantTarget.prototype.groupGrants = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._groupGrants;
+		else
+		{
+			this._groupGrants = newValue;
+			return this;
+		}
+	}
+	
+	GrantTarget.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._publicAccess = 'public access' in d ? d['public access'] : "";
+		if ('primary administrator' in d)
+		{
+		    this._primaryAdministrator = new cr.User();
+		    this._primaryAdministrator.setData(d['primary administrator']);
+		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator);
+		}
+		if ('user grants' in d)
+			this._sessions = d['user grants'].map(function(d) {
+								var i = new cr.UserGrant();
+								i.setData(d);
+								return i;
+							});
+		if ('group grants' in d)
+			this._sessions = d['user grants'].map(function(d) {
+								var i = new cr.UserGrant();
+								i.setData(d);
+								return i;
+							});
+    }
+    
 	function GrantTarget() {
 	    cr.IInstance.call(this);
 	};
@@ -3515,6 +3633,12 @@ cr.Notification = (function() {
 		}
 	}
 	
+	Notification.prototype.appendUpdateIsFreshCommand = function(newValue, initialData, sourceObjects)
+	{
+		this.appendUpdateValueCommand(newValue, 
+			this.isFresh, 'is fresh', initialData, sourceObjects);
+	}
+
 	/* Use the abbreviation args instead of arguments because "arguments" is 
 	   a reserved word in Javascript.
 	 */
@@ -3537,12 +3661,13 @@ cr.Notification = (function() {
 		cr.IInstance.prototype.setData.call(this, d);
 		this._name = 'name' in d ? d['name'] : "";
 		this._isFresh = 'is fresh' in d ? d['is fresh'] : "";
-		this._arguments = d['arguments'].map(function(d)
-			{
-				i = new cr.IInstance();
-				i.setData(d);
-				return i;
-			});
+		var f = this.controller();
+		this._arguments = f.parseArguments(d['arguments']);
+    }
+    
+    Notification.prototype.controller = function()
+    {
+    	return crn[this._name.split(".")[1]];
     }
     
 	function Notification() {
@@ -3787,10 +3912,10 @@ cr.OfferingService = (function() {
 })();
 	
 cr.Organization = (function() {
-	Organization.prototype = new cr.IInstance();
+	Organization.prototype = new cr.Grantable();
 	
 	function Organization() {
-	    cr.IInstance.call(this);
+	    cr.Grantable.call(this);
 	};
 	
 	return Organization;
@@ -3809,7 +3934,7 @@ cr.OrganizationName = (function() {
 })();
 	
 cr.Path = (function() {
-	Path.prototype = new cr.IInstance();
+	Path.prototype = new cr.Grantable();
 	Path.prototype._birthday = null;
 	Path.prototype._name = null;
 	Path.prototype._specialAccess = null;
@@ -3817,6 +3942,7 @@ cr.Path = (function() {
 	Path.prototype._experiences = null;
 	Path.prototype._experiencesPromise = null;
 	Path.prototype._user = null;
+	Path.prototype._userPromise = null;
 	
 	Path.prototype.birthday = function(newValue)
 	{
@@ -3888,9 +4014,49 @@ cr.Path = (function() {
 		}
 	}
 	
+    Path.prototype.promiseUser = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._userPromise)
+        	return this._userPromise;
+        else if (this._user)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._user);
+        	return result;
+        }
+        else if (this._parentID && crp.getInstance(this._parentID))
+        {
+        	this._user = crp.getInstance(this._parentID);
+        	result = $.Deferred();
+        	result.resolve(this._user);
+        	return result;
+		}
+		        
+        var _this = this;	
+        this._userPromise = cr.getData(
+        	{
+        		path: 'path/{0}/user'.format(this.id()),
+        		fields: [],
+        		resultType: cr.User
+        	})
+        	.done(function(users)
+        		{
+        			var user = users[0];
+        			_this._user = user;
+        			user.path(_this);
+        			result = $.Deferred();
+        			result.resolve(user);
+        			return result;
+        		});
+        return this._userPromise;
+    }
+    
 	Path.prototype.setData = function(d)
 	{
-		cr.IInstance.prototype.setData.call(this, d);
+		cr.Grantable.prototype.setData.call(this, d);
 		this._birthday = 'birthday' in d ? d['birthday'] : "";
 		this._name = 'name' in d ? d['name'] : "";
 		this._specialAccess = 'special access' in d ? d['special access'] : "";
@@ -3959,7 +4125,7 @@ cr.Path = (function() {
     }
     
 	function Path() {
-	    cr.IInstance.call(this);
+	    cr.Grantable.call(this);
 	};
 	
 	return Path;
@@ -4322,9 +4488,9 @@ cr.Street = (function() {
 	return Street;
 
 })();
-	
+
 cr.User = (function() {
-	User.prototype = new cr.IInstance();
+	User.prototype = new cr.Grantable();
 	User.prototype._firstName = null;
 	User.prototype._lastName = null;
 	User.prototype._birthday = null;
@@ -4350,12 +4516,11 @@ cr.User = (function() {
 	
 	User.prototype.setData = function(d)
 	{
-		cr.IInstance.prototype.setData.call(this, d);
+		cr.Grantable.prototype.setData.call(this, d);
 		this._firstName = 'first name' in d ? d['first name'] : "";
 		this._lastName = 'last name' in d ? d['last name'] : "";
 		this._birthday = 'birthday' in d ? d['birthday'] : "";
-		if ('system access' in d)
-			this.systemAccess(d['system access']);
+		this._systemAccess = 'system access' in d ? d['system access'] : null;
 		if ('emails' in d)
 			this.emails(d['emails']);
 		if ('notifications' in d)
@@ -4364,6 +4529,16 @@ cr.User = (function() {
 			this.path(d['path']);
 		if ('user grant requests' in d)
 			this.userGrantRequests(d['user grant requests']);
+	}
+	
+	User.prototype.mergeData = function(source)
+	{
+		cr.Grantable.prototype.mergeData.call(this, source);
+		this._firstName |= source._firstName;
+		this._lastName |= source._lastName;
+		this._birthday |= source._birthday;
+		this._systemAccess |= source._systemAccess;
+		return this;
 	}
 	
 	User.prototype.firstName = function(newValue)
@@ -4408,6 +4583,30 @@ cr.User = (function() {
 		}
 	}
 	
+	User.prototype.appendUpdateBirthdayCommand = function(newValue, initialData, sourceObjects)
+	{
+		if (!newValue)
+			throw new Error("Your birthday is required.");
+		var birthMonth = newValue.substr(0, 7);
+		if (birthMonth.length < 7)
+			throw new Error("Your birthday must include a year and a month.");
+		this.appendUpdateValueCommand(newValue, 
+			this.birthday, 'birthday', initialData, sourceObjects);
+		
+		var subData = {};
+		var subSourceObjects = [];
+		this.path().appendUpdateValueCommand(birthMonth, 
+		    this.path().birthday, 'birthday', subData, subSourceObjects);
+		if (subSourceObjects.length > 0)
+		{
+			if (!('path' in initialData))
+				initialData['path'] = {'id': this.path().id()};
+			initialData['path']['birthday'] = subData['birthday'];
+			for (var i = 0; i < subSourceObjects.length; ++i)
+				sourceObjects.push(subSourceObjects[0]);
+		}
+	}
+
 	User.prototype.name = function()
 	{
 		var firstName = user.firstName();
@@ -4438,6 +4637,11 @@ cr.User = (function() {
 	{
 		if (newData === undefined)
 			return this._path;
+		else if (newData instanceof cr.Path)
+		{
+			this._path = newData;
+			return this;
+		}
 		else
 		{
 			this._path = new cr.Path();
@@ -4658,7 +4862,7 @@ cr.User = (function() {
 	}
 	
 	function User() {
-	    cr.IInstance.call(this);
+	    cr.Grantable.call(this);
 	};
 	
 	return User;
@@ -4670,6 +4874,20 @@ cr.UserEmail = (function() {
 	
 	UserEmail.prototype._text = null;
 	UserEmail.prototype._position = null;
+	
+	UserEmail.prototype.text = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._text;
+		else
+		{
+			if (this._text != newValue)
+			{
+				this._text = newValue;
+			}
+			return this;
+		}
+	}
 	
 	UserEmail.prototype.setDefaultValues = function()
 	{
@@ -4693,6 +4911,48 @@ cr.UserEmail = (function() {
 	
 cr.UserGrant = (function() {
 	UserGrant.prototype = new cr.IInstance();
+	UserGrant.prototype._grantee = null;
+	UserGrant.prototype._privilege = null;
+	
+	UserGrant.prototype.grantee = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._grantee;
+		else
+		{
+		    if (newValue.id() != this._grantee.id())
+		    {
+				this._grantee = newValue;
+			}
+			return this;
+		}
+	}
+	
+	UserGrant.prototype.privilege = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._privilege;
+		else
+		{
+		    if (newValue != this._privilege)
+		    {
+				this._privilege = newValue;
+			}
+			return this;
+		}
+	}
+	
+	UserGrant.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		if ('grantee' in d)
+		{
+			this._grantee = new cr.User();
+			this._grantee.setData(d['grantee']);
+			this._grantee = crp.pushInstance(this._grantee);
+		}
+		this._privilege = 'privilege' in d ? d['privilege'] : "";
+	}
 	
 	function UserGrant() {
 	    cr.IInstance.call(this);

@@ -31,73 +31,52 @@ var Settings = (function () {
 		var panel2Div = this.appendScrollArea();
 		
 		var path = user.path();
-		var birthdayCell = user.getCell("Birthday");
-		var oldAppendUpdateBirthdayCommands = birthdayCell.data[0].appendUpdateCommands;
-		
-		/* Change the birthdayCell's data command to validate the birthday and update the
-			corresponding birthday in the Path object.
-		 */
-		birthdayCell.data[0].appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
-		{
-			if (!newValue)
-				throw new Error("Your birthday is required.");
-			var birthMonth = newValue.substr(0, 7);
-			if (birthMonth.length < 7)
-				throw new Error("Your birthday must include a year and a month.");
-			oldAppendUpdateBirthdayCommands.call(birthdayCell.data[0], i, newValue, initialData, sourceObjects);
-			path.getValue("Birthday").appendUpdateCommands(0, birthMonth, initialData, sourceObjects);
-		}
-		
 		doneButton.on("click", function()
 				{
 					panel2Div.handleDoneEditingButton.call(this);
-					birthdayCell.data[0].appendUpdateCommands = oldAppendUpdateBirthdayCommands;
 				})
  			.append("span").text(crv.buttonTexts.done);
 
-		var userPublicAccessCell = user.getCell(cr.fieldNames.publicAccess);
-		var userPrimaryAdministratorCell = user.getCell(cr.fieldNames.primaryAdministrator);
-		var pathPublicAccessCell = path.getCell(cr.fieldNames.publicAccess);
-		var pathSpecialAccessCell = path.getCell(cr.fieldNames.specialAccess);
-		var pathPrimaryAdministratorCell = path.getCell(cr.fieldNames.primaryAdministrator);
-		
-		user.getCell(cr.fieldNames.firstName).field.label = this.firstNameLabel;
-		user.getCell(cr.fieldNames.lastName).field.label = this.lastNameLabel;
-		path.getCell(cr.fieldNames.name).field.label = this.screenNameLabel;
-		userPublicAccessCell.field.label = this.userPublicAccessLabel;
-		
-		var oldGetDescription = userPublicAccessCell.data[0].getDescription;
-		userPublicAccessCell.data[0].getDescription = function() 
+		var getAccessDescription = function() 
 			{
-				var oldDescription = oldGetDescription.call(this);
-				if (oldDescription == cr.privileges.read ||
-					oldDescription == _this.allVisibleLabel)
+				if (user.publicAccess() == cr.privileges.read)
 					return _this.allVisibleLabel;
-				else if (pathPublicAccessCell.data[0].getDescription() == cr.privileges.read ||
-				         oldDescription == _this.pathVisibleLabel)
+				else if (path.publicAccess() == cr.privileges.read)
 				    return _this.pathVisibleLabel;
-				else if (oldDescription == cr.privileges.find ||
-						 oldDescription == _this.emailVisibleLabel)
+				else if (user.publicAccess() == cr.privileges.find)
 					return _this.emailVisibleLabel;
 				else
 					return _this.profileHiddenLabel;
 			};
 		
-		var cells = [user.getCell(cr.fieldNames.firstName),
-					 user.getCell(cr.fieldNames.lastName),
-					 path.getCell(cr.fieldNames.name)
-					 ];
-					 
-		this.showEditCells(cells, function() { return false; })
-			.classed('first', function(d, i) { return i != 1; });
-		this.showEditCells([birthdayCell])
-			.classed('first', true);
-		
-		var addUniqueCellSection = function(cell, label, clickFunction)
+		var firstNameSection = this.mainDiv.append('section')
+			.datum(user)
+			.classed('cell edit unique', true);
+		editUniqueString(firstNameSection, user, this.firstNameLabel, user.firstName(), 'text');
+				 
+		var lastNameSection = this.mainDiv.append('section')
+			.datum(user)
+			.classed('cell edit unique first', true);
+		editUniqueString(lastNameSection, user, this.lastNameLabel, user.lastName(), 'text');
+				 
+		var screenNameSection = this.mainDiv.append('section')
+			.datum(path)
+			.classed('cell edit unique first', true);
+		editUniqueString(screenNameSection, user, this.screenNameLabel, path.name(), 'text');
+				 
+		var birthdaySection = this.mainDiv.append('section')
+			.datum(user)
+			.classed('cell edit unique first', true);
+		birthdaySection.append('label')
+			.text('Birthday');
+			
+		editUniqueDateStampDayOptional(birthdaySection, user, 'Birthday', user.birthday(), 'date');
+
+		var addUniqueCellSection = function(user, label, clickFunction)
 		{
 			var sectionPanel = panel2Div.append('section')
 				.classed('cell edit unique first', true)
-				.datum(cell)
+				.datum(user)
 				.on("click", clickFunction);
 				
 			sectionPanel.append('label')
@@ -105,9 +84,11 @@ var Settings = (function () {
 			
 			var itemsDiv = crf.appendItemList(sectionPanel);
 
-			var items = appendItems(itemsDiv, cell.data);
+			var items = itemsDiv.append('li');
 	
-			var divs = appendButtonDescriptions(items)
+			var divs = items.append("div")
+				.classed("description-text string-value-view growable", true)
+				.text(getAccessDescription())
 				.classed('unselectable', true)
 				.each(_pushTextChanged);
 				
@@ -116,98 +97,55 @@ var Settings = (function () {
 			return divs;
 		}
 		
+		var appendUserActions = function()
+		{
+			if (user == cr.signedinUser)
+			{
+				_this.appendActionButton('Change Email', function() {
+						if (prepareClick('click', 'Change Email'))
+						{
+							showClickFeedback(this);
+							new UpdateUsernamePanel(user)
+								.showUp()
+								.always(unblockClick);
+						}
+					});
+		
+				_this.appendActionButton('Change Password', function() {
+						if (prepareClick('click', 'Change Password'))
+						{
+							showClickFeedback(this);
+							new UpdatePasswordPanel()
+								.showUp()
+								.always(unblockClick);
+						}
+					});
+
+				_this.appendActionButton('Sign Out', function() {
+						if (prepareClick('click', 'Sign Out'))
+						{
+							showClickFeedback(this);
+							sign_out(syncFailFunction);
+						}
+					})
+					.classed('first', true);
+			}
+		}
+
 		if (user.privilege() === cr.privileges.administer)
 		{
-			var userPublicAccessValue = userPublicAccessCell.data[0];
-			var pathPublicAccessValue = pathPublicAccessCell.data[0];
-			var pathSpecialAccessValue = pathSpecialAccessCell.data[0];
-			var pathPrimaryAdministratorValue = pathPrimaryAdministratorCell.data[0];
-			
-			var divs = addUniqueCellSection(userPublicAccessCell, this.userPublicAccessLabel,
-				function(cell) {
-					if (prepareClick('click', 'pick ' + _this.userPublicAccessLabel))
-					{
-						try
-						{
-							new PickUserAccessPanel()
-								.createRoot(user, path, userPublicAccessValue, pathPublicAccessValue, pathSpecialAccessValue, pathPrimaryAdministratorValue)
-								.showLeft().then(unblockClick);
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
-				});
-			
-			/* Change the contents of the div when the pathPublicAccessValue changes as well. */	
-			divs.each(function()
+			$.when(user.promiseGrantTarget(), user.path().promiseGrantTarget())
+				.then(function()
 				{
-					setupOnViewEventHandler(pathPublicAccessValue, "dataChanged.cr valueDeleted.cr", this, 
-						function(eventObject)
-						{
-							d3.select(eventObject.data).text(userPublicAccessValue.getDescription());
-						});
-				});
-			
-			var docSection = panel2Div.append('section')
-				.classed('cell documentation', true);
-			
-			var docDiv = docSection.append('div');
-			
-			var updateVisibilityDocumentation = function()
-			{
-				var description = userPublicAccessValue.getDescription();
-				var documentation;
-			
-				if (description === _this.profileHiddenLabel)
-					documentation = _this.hiddenDocumentation;
-				else if (description === _this.emailVisibleLabel)
-					documentation = _this.byRequestVisibleDocumentation;
-				else if (description === _this.pathVisibleLabel)
-					documentation = _this.pathVisibleDocumentation;
-				else if (description === _this.allVisibleLabel)
-					documentation = _this.allVisibleDocumentation;
-				docDiv.text(documentation);
-			}
-			
-			setupOnViewEventHandler(userPublicAccessValue, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
-				updateVisibilityDocumentation);
-			setupOnViewEventHandler(pathPublicAccessValue, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
-				updateVisibilityDocumentation);
-			updateVisibilityDocumentation();
-	
-			function checkSharingBadge()
-			{
-				var cell = user.getCell(cr.fieldNames.accessRequest);
-				cell.field.label = _this.accessRequestLabel;
-				var badgeCount = (cell && cell.data.length > 0) ? cell.data.length : "";
-
-				sharingButton.selectAll("span.badge").text(badgeCount);
-			}
-			
-			var urlSection = panel2Div.append('section')
-				.classed('cell edit unique', true)
-				.datum(user.getCell(cr.fieldNames.email));
-				
-			urlSection.append('label')
-				.text("Your Path");
-					
-			var urlList = crf.appendItemList(urlSection);
-						
-			var urlItem = urlList.append('li')
-				.classed('site-active-text', true)
-				.append('div')
-				.classed('growable unselectable', true)
-				.text("{0}/for/{1}"
-					.format(window.location.origin, user.getDatum(cr.fieldNames.email)))
-				.on('click', function()
-					{
-						if (prepareClick('click', 'share'))
+				var divs = addUniqueCellSection(user, _this.userPublicAccessLabel,
+					function(cell) {
+						if (prepareClick('click', 'pick ' + _this.userPublicAccessLabel))
 						{
 							try
 							{
-								new ShareOptions(_this.node(), user);
+								new PickUserAccessPanel()
+									.createRoot(user, path, getAccessDescription(), user.publicAccess(), path.publicAccess(), path.specialAccess(), path.primaryAdministrator())
+									.showLeft().then(unblockClick);
 							}
 							catch(err)
 							{
@@ -215,79 +153,127 @@ var Settings = (function () {
 							}
 						}
 					});
+			
+				/* Change the contents of the div when the pathPublicAccessValue changes as well. */	
+				divs.each(function()
+					{
+						setupOnViewEventHandler(path, "dataChanged.cr valueDeleted.cr", this, 
+							function(eventObject)
+							{
+								d3.select(eventObject.data).text(getAccessDescription());
+							});
+					});
+			
+				var docSection = panel2Div.append('section')
+					.classed('cell documentation', true);
+			
+				var docDiv = docSection.append('div');
+			
+				var updateVisibilityDocumentation = function()
+				{
+					var description = getAccessDescription();
+					var documentation;
+			
+					if (description === _this.profileHiddenLabel)
+						documentation = _this.hiddenDocumentation;
+					else if (description === _this.emailVisibleLabel)
+						documentation = _this.byRequestVisibleDocumentation;
+					else if (description === _this.pathVisibleLabel)
+						documentation = _this.pathVisibleDocumentation;
+					else if (description === _this.allVisibleLabel)
+						documentation = _this.allVisibleDocumentation;
+					docDiv.text(documentation);
+				}
+			
+				setupOnViewEventHandler(user, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
+					updateVisibilityDocumentation);
+				setupOnViewEventHandler(path, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
+					updateVisibilityDocumentation);
+				updateVisibilityDocumentation();
+	
+				function checkSharingBadge()
+				{
+					var grs = user.userGrantRequests();
+					var badgeCount = (grs && grs.length > 0) ? grs.length : "";
+
+					sharingButton.selectAll("span.badge").text(badgeCount);
+				}
+			
+				var urlSection = panel2Div.append('section')
+					.classed('cell edit unique', true)
+					.datum(user.emails()[0].text());
+				
+				urlSection.append('label')
+					.text("Your Path");
 					
-			function updateURL()
-			{
-				urlItem.text("{0}/for/{1}"
-					.format(window.location.origin, user.getDatum(cr.fieldNames.email)));
-			}
-			setupOnViewEventHandler(user.getCell(cr.fieldNames.email), 'dataChanged.cr', urlItem.node(), 
-				function()
+				var urlList = crf.appendItemList(urlSection);
+						
+				var urlItem = urlList.append('li')
+					.classed('site-active-text', true)
+					.append('div')
+					.classed('growable unselectable', true)
+					.text("{0}/for/{1}"
+						.format(window.location.origin, user.emails()[0].text()))
+					.on('click', function()
+						{
+							if (prepareClick('click', 'share'))
+							{
+								try
+								{
+									new ShareOptions(_this.node(), user);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
+							}
+						});
+					
+				function updateURL()
 				{
 					urlItem.text("{0}/for/{1}"
-						.format(window.location.origin, user.getDatum(cr.fieldNames.email)));
-				});
+						.format(window.location.origin, user.emails()[0].text()));
+				}
+				setupOnViewEventHandler(user, 'emailChanged.cr', urlItem.node(), 
+					function()
+					{
+						urlItem.text("{0}/for/{1}"
+							.format(window.location.origin, user.emails()[0].text()));
+					});
 	
-			var sharingDiv = this.appendActionButton('Sharing', function() {
-					if (prepareClick('click', 'Sharing'))
-					{
-						showClickFeedback(this);
-						new SharingPanel(user, Settings.prototype.panelTitle)
-							.showUp()
-							.always(unblockClick);
-					}
-				})
-				.classed('first', true);
-			var sharingButton = sharingDiv.select('ol>li>div');
-			sharingButton.append('span')
-				.classed('badge', true);
-			checkSharingBadge();
+				var sharingDiv = _this.appendActionButton('Sharing', function() {
+						if (prepareClick('click', 'Sharing'))
+						{
+							showClickFeedback(this);
+							new SharingPanel(user, Settings.prototype.panelTitle)
+								.showUp()
+								.always(unblockClick);
+						}
+					})
+					.classed('first', true);
+				var sharingButton = sharingDiv.select('ol>li>div');
+				sharingButton.append('span')
+					.classed('badge', true);
+				checkSharingBadge();
 			
-			setupOnViewEventHandler(user.getCell(cr.fieldNames.accessRequest), "valueDeleted.cr valueAdded.cr", 
-				sharingButton.node(), checkSharingBadge);
+				setupOnViewEventHandler(user, "userGrantRequestDeleted.cr userGrantRequestAdded.cr", 
+					sharingButton.node(), checkSharingBadge);
 				
-			this.appendActionButton('Following', function() {
-					if (prepareClick('click', 'Following'))
-					{
-						showClickFeedback(this);
-						new FollowingPanel(user)
-							.showUp()
-							.always(unblockClick);
-					}
-				});
-		}
+				_this.appendActionButton('Following', function() {
+						if (prepareClick('click', 'Following'))
+						{
+							showClickFeedback(this);
+							new FollowingPanel(user)
+								.showUp()
+								.always(unblockClick);
+						}
+					});
 				
-		if (user == cr.signedinUser)
-		{
-			this.appendActionButton('Change Email', function() {
-					if (prepareClick('click', 'Change Email'))
-					{
-						showClickFeedback(this);
-						new UpdateUsernamePanel(user)
-							.showUp()
-							.always(unblockClick);
-					}
-				});
-		
-			this.appendActionButton('Change Password', function() {
-					if (prepareClick('click', 'Change Password'))
-					{
-						showClickFeedback(this);
-						new UpdatePasswordPanel()
-							.showUp()
-							.always(unblockClick);
-					}
-				});
-
-			this.appendActionButton('Sign Out', function() {
-					if (prepareClick('click', 'Sign Out'))
-					{
-						showClickFeedback(this);
-						sign_out(syncFailFunction);
-					}
-				})
-				.classed('first', true);
+				appendUserActions();
+			});
 		}
+		else
+			appendUserActions(); /* In case the current user isn't their own administrator. */
 	}
 	
 	return Settings;
@@ -358,7 +344,7 @@ var PickUserAccessPanel = (function () {
 						  }
 						 ];
 	
-	PickUserAccessPanel.prototype.createRoot = function(user, path, oldUserAccessValue, oldPathAccessValue, oldPathSpecialAccessValue, oldPathPrimaryAdministratorValue)
+	PickUserAccessPanel.prototype.createRoot = function(user, path, oldDescription, oldUserAccessValue, oldPathAccessValue, oldPathSpecialAccessValue, oldPathPrimaryAdministratorValue)
 	{
 		PickFromListPanel.prototype.createRoot(null, this.title, "");
 		var _this = this;
@@ -376,13 +362,13 @@ var PickUserAccessPanel = (function () {
 				
 		items.filter(function(d, i)
 			{
-				return d.description === oldUserAccessValue.getDescription();
+				return d.description === oldDescription;
 			})
 			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
 				
 		items.on('click', function(d, i)
 				{
-					if (d.description === oldUserAccessValue.getDescription())
+					if (d.description === oldDescription)
 						return;
 					
 					if (prepareClick('click', d.description))
@@ -418,9 +404,9 @@ var PickUserAccessPanel = (function () {
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.getDescription() != cr.privileges.find &&
-										oldUserAccessValue.getDescription() != Settings.prototype.pathVisibleLabel &&
-										oldUserAccessValue.getDescription() != Settings.prototype.emailVisibleLabel)
+									if (oldUserAccessValue.description() != cr.privileges.find &&
+										oldUserAccessValue.description() != Settings.prototype.pathVisibleLabel &&
+										oldUserAccessValue.description() != Settings.prototype.emailVisibleLabel)
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,
@@ -433,7 +419,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: user.getInstanceID(),
+												containerUUID: user.id(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -459,9 +445,9 @@ var PickUserAccessPanel = (function () {
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.getDescription() != cr.privileges.find &&
-										oldUserAccessValue.getDescription() != Settings.prototype.pathVisibleLabel &&
-										oldUserAccessValue.getDescription() != Settings.prototype.emailVisibleLabel)
+									if (oldUserAccessValue.description() != cr.privileges.find &&
+										oldUserAccessValue.description() != Settings.prototype.pathVisibleLabel &&
+										oldUserAccessValue.description() != Settings.prototype.emailVisibleLabel)
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,
@@ -474,7 +460,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: user.getInstanceID(),
+												containerUUID: user.id(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -491,13 +477,13 @@ var PickUserAccessPanel = (function () {
 								{
 									initialData.push(
 											{
-												containerUUID: path.getInstanceID(),
+												containerUUID: path.id(),
 												fieldID: oldPathAccessValue.cell.field.nameID,
 												instance: d.pathPrivilegePath,
 												description: d.pathPrivilegeDescription
 											});
 								}
-								var newInstanceID = user.getValue(cr.fieldNames.primaryAdministrator).getInstanceID();
+								var newInstanceID = user.primaryAdministrator.id();
 								if (newInstanceID)
 								{
 									sourceObjects.push(oldPathPrimaryAdministratorValue);
@@ -508,11 +494,11 @@ var PickUserAccessPanel = (function () {
 									}
 									else
 									{
-										newData = { containerUUID: path.getInstanceID(),
+										newData = { containerUUID: path.id(),
 													fieldID: oldPathPrimaryAdministratorValue.cell.field.nameID };
 									}
 									newData.instanceID = newInstanceID;
-									newData.description = user.getValue(cr.fieldNames.primaryAdministrator).getDescription();
+									newData.description = user.primaryAdministrator().description();
 									initialData.push(newData);
 								}
 								sourceObjects.push(oldPathSpecialAccessValue);
@@ -526,7 +512,7 @@ var PickUserAccessPanel = (function () {
 								{
 									initialData.push(
 											{
-												containerUUID: path.getInstanceID(),
+												containerUUID: path.id(),
 												fieldID: oldPathSpecialAccessValue.cell.field.nameID,
 												instance: d.pathSpecialAccessPath,
 												description: d.pathSpecialAccessDescription
@@ -547,7 +533,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: user.getInstanceID(),
+												containerUUID: user.id(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -660,9 +646,17 @@ crn.FollowerAccept = (function() {
 	FollowerAccept.prototype = new crn.Notification();
 	FollowerAccept.prototype.buttonText = "<b>{0}</b> has accepted you as a follower.";
 	
+	FollowerAccept.parseArguments = function(d)
+	{
+		var user = new cr.User();
+		user.setData(d[0]);
+		
+		return [user];
+	}
+	
 	FollowerAccept.prototype.appendDescription = function(buttonNode, q)
 	{
-		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var args = this.notification.args();
 		var user = args[0];
 		
 		var _this = this;
@@ -719,25 +713,39 @@ crn.ExperienceCommentRequested = (function() {
 	ExperienceCommentRequested.prototype = new crn.Notification();
 	ExperienceCommentRequested.prototype.buttonText = "<b>{0}</b> has a question about your {1} experience.";
 
+	ExperienceCommentRequested.parseArguments = function(d)
+	{
+		var path = new cr.Path();
+		path.setData(d[0]);
+		
+		var experience = new cr.Experience();
+		experience.setData(d[1]);
+		
+		var comment = new cr.Comment();
+		comment.setData(d[2]);
+		
+		return [path, experience, comment];
+	}
+	
 	ExperienceCommentRequested.prototype.appendDescription = function(buttonNode, q)
 	{
-		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var args = this.notification.args();
 		var path = args[0];
 		
 		var _this = this;
 		var _this = this;
 		var spinnerSpan = this.appendSpinner(buttonNode);
 		var textSpan = this.appendTextSpan(buttonNode, spinnerSpan, 
-			_this.buttonText.format("", args[1].getDescription()));
+			_this.buttonText.format("", args[1].description()));
 		
 		q.add(function()
 			{
-				$.when(path.instance().parentPromise())
+				path.promiseUser()
 				 .then(function()
 					{
 						spinnerSpan.datum().stop();
 						spinnerSpan.remove();
-						textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription());
+						textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].description());
 	
 						$(buttonNode).click(function(e)
 							{
@@ -747,10 +755,8 @@ crn.ExperienceCommentRequested = (function() {
 									{
 										showClickFeedback(this);
 					
-										var experienceInstance = crp.getInstance(args[1].getInstanceID());
-										var experience = experienceInstance.parent().getCell("More Experience")
-															.data.find(function(v) { return v.instance() == experienceInstance; });
-										var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
+										var experienceInstance = crp.getInstance(args[1].id());
+										var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance));
 										newPanel.startEditing();
 										try 
 										{
@@ -758,12 +764,11 @@ crn.ExperienceCommentRequested = (function() {
 												{
 													try
 													{
-														var comments = experienceInstance.getValue("Comments");
-														var commentInstanceID = args[2].getInstanceID();
-														var comment = comments.getCell("Comment")
-															.data.find(function(v) { return v.getInstanceID() == commentInstanceID; });
+														var comments = experienceInstance.comments();
+														var commentInstanceID = args[2].id();
+														var comment = comments.find(function(v) { return v.id() == commentInstanceID; });
 	
-														newPanel.focusOnComment(comment.id);
+														newPanel.focusOnComment(comment.id());
 													}
 													catch (err) { cr.asyncFail(err); }
 												});
@@ -802,24 +807,35 @@ crn.ExperienceQuestionAnswered = (function() {
 	ExperienceQuestionAnswered.prototype = new crn.Notification();
 	ExperienceQuestionAnswered.prototype.buttonText = "<b>{0}</b> has answered a question you asked about their {1} experience.";
 
+	ExperienceQuestionAnswered.parseArguments = function(d)
+	{
+		var path = new cr.Path();
+		path.setData(d[0]);
+		
+		var experience = new cr.Experience();
+		experience.setData(d[1]);
+		
+		return [path, experience];
+	}
+	
 	ExperienceQuestionAnswered.prototype.appendDescription = function(buttonNode, q)
 	{
-		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var args = this.notification.args();
 		var path = args[0];
 		
 		var _this = this;
 		var spinnerSpan = this.appendSpinner(buttonNode);
 		var textSpan = this.appendTextSpan(buttonNode, spinnerSpan, 
-			_this.buttonText.format("", args[1].getDescription()));
+			_this.buttonText.format("", args[1].description()));
 		
 		q.add(function()
 			{
-				$.when(path.instance().parentPromise())
+				$.when(path.promiseUser())
 					.then(function()
 						{
 							spinnerSpan.datum().stop();
 							spinnerSpan.remove();
-							textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription());
+							textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].description());
 		
 							$(buttonNode).click(function(e)
 								{
@@ -828,17 +844,15 @@ crn.ExperienceQuestionAnswered = (function() {
 										try
 										{
 											showClickFeedback(this);
-											$.when(path.instance().promiseCellsFromCache(), args[1].promiseCellsFromCache())
+											$.when(path.promiseExperiences())
 												.then(function()
 													{
 														return checkOfferingCells(args[1]);
 													})
 												.then(function()
 													{
-														var experienceInstance = crp.getInstance(args[1].getInstanceID());
-														var experience = path.instance().getCell("More Experience")
-																			.data.find(function(v) { return v.instance() == experienceInstance; });
-														var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
+														var experienceInstance = crp.getInstance(args[1].id());
+														var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance));
 												
 														newPanel.showLeft()
 															.always(unblockClick);
@@ -872,36 +886,39 @@ crn.ExperienceSuggestion = (function() {
 	ExperienceSuggestion.prototype = new crn.Notification();
 	ExperienceSuggestion.prototype.buttonText = "<b>{0}</b> suggests: add {2} with the {1} tag to your path.";
 
+	ExperienceSuggestion.parseArguments = function(d)
+	{
+		var path = new cr.Path();
+		path.setData(d[0]);
+		
+		var service = new cr.Service();
+		service.setData(d[1]);
+		
+		var comment = new cr.Comment();
+		comment.setData(d[2]);
+		
+		return [path, experience, comment];
+	}
+	
 	ExperienceSuggestion.prototype.appendDescription = function(buttonNode, q)
 	{
-		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var args = this.notification.args();
 		var path = args[0];
-		var phaseInstance = args.length > 2 && args[2];
-		var phaseDescription;
-		
-		if (phaseInstance)
-		{
-			if (phaseInstance.getDescription() == "Goal")
-				phaseDescription = "a goal";
-			else
-				phaseDescription = "an experience";
-		}
-		else
-			phaseDescription = "an experience" 
+		var phaseDescription = "an experience" 
 		
 		var _this = this;
 		var spinnerSpan = this.appendSpinner(buttonNode);
 		var textSpan = this.appendTextSpan(buttonNode, spinnerSpan, 
-			_this.buttonText.format("", args[1].getDescription()), phaseDescription);
+			_this.buttonText.format("", args[1].description()), phaseDescription);
 		
 		q.add(function()
 			{
-				$.when(path.instance().parentPromise(), )
+				path.promiseUser()
 					.then(function()
 						{
 							spinnerSpan.datum().stop();
 							spinnerSpan.remove();
-							textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription(), phaseDescription);
+							textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].description(), phaseDescription);
 		
 							$(buttonNode).click(function(e)
 								{
@@ -911,10 +928,10 @@ crn.ExperienceSuggestion = (function() {
 										{
 											showClickFeedback(this);
 					
-											var phase = phaseInstance ? phaseInstance.getDescription() : "Previous";
+											var phase = "Previous";
 											var experience = new ExperienceController(cr.signedinUser.path())
 											experience.initDateRange(phase);
-											var tag = crp.getInstance(args[1].getInstanceID());
+											var tag = crp.getInstance(args[1].id());
 											var services = [new ExperienceService()];
 											services[0].service(tag);
 											experience.newExperiences.services(services);
@@ -958,7 +975,7 @@ var NotificationsPanel = (function () {
 	{
 		var text = this.noItemsDescription;
 		this.noItemsDiv.text(text);
-		this.noItemsDiv.style('display', (this.user.getCell(cr.fieldNames.notification).data.length !== 0) ? 'none' : null);
+		this.noItemsDiv.style('display', (this.user.notifications().length !== 0) ? 'none' : null);
 	}
 	
 	function NotificationsPanel(user) {
@@ -981,13 +998,13 @@ var NotificationsPanel = (function () {
 				})
  			.append("span").text(crv.buttonTexts.done);
 
-		var cells = [user.getCell(cr.fieldNames.notification)
-					 ];
-					 
-		var sections = this.mainDiv.appendSections(cells)
+		var cells = [user.notifications()];
+		
+		
+		var sections = this.mainDiv.append('section')
+		    .datum(user.notifications())
 			.classed("cell edit", true)
-			.classed("unique", function(cell) { return cell.isUnique(); })
-			.classed("multiple", function(cell) { return !cell.isUnique(); });
+			.classed("multiple", true);
 			
 		this.noItemsDiv = sections.append('div')
 			.classed('no-results', true)
@@ -996,12 +1013,11 @@ var NotificationsPanel = (function () {
 		itemCells = crf.appendItemList(sections)
 			.classed('deletable-items', true);
 	
-		var items = appendItems(itemCells, user.getCell(cr.fieldNames.notification).data.reverse());
+		var items = appendItems(itemCells, user.notifications().reverse());
 		
 		items.classed('is-fresh', function(d)
 				{
-					var e = d.getValue(cr.fieldNames.isFresh);
-					return e && e.getDescription() == cr.booleans.yes;
+					return d.isFresh() == cr.booleans.yes;
 				});
 
 		var deleteControls = crf.appendDeleteControls(items);
@@ -1009,24 +1025,23 @@ var NotificationsPanel = (function () {
 		var q = new Queue();
 		items.each(function(d)
 				{
-					var name = d.getDatum(cr.fieldNames.name);
+					var name = d.name();
 					if (name && name.indexOf('crn.') != 0)
 						name = null;
 					
 					if (name)
 					{
-						var arr = name.split(".")[1];
-						var f = crn[arr];
+						var f = d.controller();
 						if (f)
 						{
 							new f(d).appendDescription(this, q);
 							crf.appendRightChevrons(d3.select(this));
 						}
 						else
-							d3.select(this).text(d.getDescription());
+							d3.select(this).text(d.description());
 					}
 					else
-						d3.select(this).text(d.getDescription());
+						d3.select(this).text(d.description());
 				});
 				
 		crf.appendConfirmDeleteControls(items);
@@ -1034,52 +1049,43 @@ var NotificationsPanel = (function () {
 		
 		function checkIsFresh()
 		{
-			crp.promise({path: "term[name=boolean]"})
-				.then(function(terms)
+			try
+			{
+				var updateData = [];
+				var sourceObjects = [];
+				var scrollParent = $(itemCells.node()).scrollParent();
+				var scrollParentTop = scrollParent.offset().top;
+				var innerTop = scrollParent.scrollTop();
+				var innerBottom = innerTop + scrollParent.innerHeight();
+				items.each(function(d)
 					{
-						try
+						var itemTop = $(this).offset().top - scrollParentTop;
+						if (itemTop < innerBottom &&
+							itemTop >= innerTop)
 						{
-							termNo = terms[0].getCell(cr.fieldNames.enumerator).data.find(function(d)
-								{
-									return d.getDescription() == cr.booleans.no;
-								});
-							var updateData = [];
-							var sourceObjects = [];
-							var scrollParent = $(itemCells.node()).scrollParent();
-							var scrollParentTop = scrollParent.offset().top;
-							var innerTop = scrollParent.scrollTop();
-							var innerBottom = innerTop + scrollParent.innerHeight();
-							items.each(function(d)
-								{
-									var itemTop = $(this).offset().top - scrollParentTop;
-									if (itemTop < innerBottom &&
-										itemTop >= innerTop)
-									{
-										var v = d.getValue(cr.fieldNames.isFresh);
-										if (v && v.getDescription() == cr.booleans.yes)
-										{
-											v.appendUpdateCommands(0, termNo, updateData, sourceObjects);
-										}
-									}
-								});
-							if (updateData.length > 0)
+							var v = d.isFresh();
+							if (v == cr.booleans.yes)
 							{
-								cr.updateValues(updateData, sourceObjects)
-									.fail(cr.asyncFail);
+								v.appendUpdateIsFreshCommand("no", updateData, sourceObjects);
 							}
 						}
-						catch(err)
-						{
-							cr.asyncFail(err);
-						}
-					},
-					cr.asyncFail);
+					});
+				if (updateData.length > 0)
+				{
+					cr.updateValues(updateData, sourceObjects)
+						.fail(cr.asyncFail);
+				}
+			}
+			catch(err)
+			{
+				cr.asyncFail(err);
+			}
 		}
 					
 		$(panel2Div.node()).on('resize.cr', checkIsFresh);
 		$(itemCells.node()).scroll(checkIsFresh);
 		
-		user.getCell(cr.fieldNames.notification).on("valueDeleted.cr", panel2Div.node(), 
+		user.on("notificationDeleted.cr", panel2Div.node(), 
 			function() { _this.checkNoItems(); });
 		this.checkNoItems();
 	}

@@ -3021,10 +3021,11 @@ class GrantTarget(IInstance, dbmodels.Model):
                                           queryset=GroupGrant.select_related(GroupGrant.objects.filter(deleteTransaction__isnull=True)),
                                           to_attr='currentGroupGrant'))
                                           
-                 
+    
+    # fetchPrivilege for grant targets can only return None or "administer"            
     def fetchPrivilege(self, user):
         if not user:
-            return self.publicAccess
+            return None
         elif self.primaryAdministrator_id == user.id:
             return "administer"
         else:
@@ -3033,7 +3034,8 @@ class GrantTarget(IInstance, dbmodels.Model):
                                                   grantee__deleteTransaction__isnull=True,
                                                   grantee__members__deleteTransaction__isnull=True).values('privilege'))
             
-            return IInstance.reducePrivileges(f, self.publicAccess)
+            privilege = IInstance.reducePrivileges(f, self.publicAccess)
+            return privilege if privilege == "administer" else None
 
     def headData(self, context):
         data = {'id': self.id.hex
@@ -3059,7 +3061,7 @@ class GrantTarget(IInstance, dbmodels.Model):
             return SecureRootInstance.administrableQuerySet(qs, user), GrantTarget
             
     def filterForGetData(qs, user, accessType):
-        return getSubClause(qs, user, accessType)[0]
+        return GrantTarget.getSubClause(qs, user, accessType)[0]
             
     def markDeleted(self, context):
         for i in self.userGrants.filter(deleteTransaction__isnull=True):
@@ -3153,7 +3155,7 @@ class UserGrant(AccessInstance, dbmodels.Model):
             return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
 
     def filterForGetData(qs, user, accessType):
-        return getSubClause(qs, user, accessType)[0]
+        return UserGrant.getSubClause(qs, user, accessType)[0]
             
     def create(parent, data, context, newIDs={}):
         newItem = UserGrant.objects.create(transaction=context.transaction,
@@ -3200,7 +3202,7 @@ class GroupGrant(AccessInstance, dbmodels.Model):
             return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
 
     def filterForGetData(qs, user, accessType):
-        return getSubClause(qs, user, accessType)[0]
+        return GroupGrant.getSubClause(qs, user, accessType)[0]
             
     def create(parent, data, context, newIDs={}):
         newItem = GroupGrant.objects.create(transaction=context.transaction,

@@ -1534,10 +1534,9 @@ var PathlinesPanel = (function () {
 		
 	PathlinesPanel.prototype.notificationsBadgeCount = function(user)
 	{
-		// TODO:
-		var cell = user.getCell(cr.fieldNames.notification);
-		if (cell && cell.data.length > 0)
-			return cell.data.length;
+		var length = user.notifications().length;
+		if (length > 0)
+			return length;
 		else
 			return "";
 	}

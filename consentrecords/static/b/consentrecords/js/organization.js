@@ -116,9 +116,9 @@ function getUserName(user)
  */
 function getPathDescription(path)
 {
-	return (path.parent() && getUserName(path.parent())) ||
+	return (path.user() && getUserName(path.user())) ||
 			path.description() ||
-		   (path.parent() && path.parent().description()) ||
+		   (path.user() && path.user().description()) ||
 		    cr.organizationStrings.someone;
 }
 
@@ -275,10 +275,10 @@ function showWebSite(offering, successFunction)
 
 function checkOfferingCells(experience)
 {
-	offering = experience.getValue("Offering");
-	if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
+	offering = experience.offering();
+	if (offering && offering.id() && !offering.services)
 	{
-		var storedI = crp.getInstance(offering.getInstanceID());
+		var storedI = crp.getInstance(offering.id());
 		if (storedI && storedI.getCells())
 		{
 			offering.importCells(storedI.getCells());
