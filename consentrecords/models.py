@@ -203,7 +203,8 @@ def _filterClause(tokens, user, fieldMap, elementMap, accessType, prefix=''):
             subType = eval(elementMap[fieldName][1])
             
             if tokens[1] == '>':
-                return _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, accessType, prefix=prefix)
+                return _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, accessType, prefix=prefix) &\
+                       Q((prefix + 'deleteTransaction__isnull', True))
             elif tokens[1] == '[':
                 q = Q((prefix + 'in', _subElementQuerySet(tokens[2], user, subType, accessType)))
                 i = 3
@@ -215,6 +216,15 @@ def _filterClause(tokens, user, fieldMap, elementMap, accessType, prefix=''):
                 return Q((prefix+'pk', tokens[2]))
             else:
                 raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
+    elif fieldName == 'grant target':
+        # This special case handles grant targets for items.
+        subType = GrantTarget
+        if tokens[1] == '>':
+            return Q((prefix + 'id__in', 
+                      GrantTarget.objects.filter(\
+                         _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, accessType, prefix=''))))
+        else:
+            raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
     else:
         raise ValueError("unrecognized path contents within [] for %s (expecting one of (%s))" % ("".join(tokens), ", ".join(elementMap.keys())))
 

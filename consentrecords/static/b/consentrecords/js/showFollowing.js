@@ -123,11 +123,11 @@ var FollowingPanel = (function() {
 				if (prepareClick('click', 'delete access request'))
 				{
 					var path;
-					if (d.getInstanceID)
-						path = d.getInstanceID()
+					if (d.id)
+						path = 'user/' + d.id()
 					else
-						path = 'user[email={0}]'.format(d.getDescription())
-					path += '/{0}/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
+						path = 'user[email__text={0}]'.format(d.getDescription())
+					path += '/user grant request/{0}'.format(_this.grantRequest.id());
 					cr.getData({path: path})
 						.then(function(values)
 							{
@@ -306,8 +306,9 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._pendingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getPendingRequestsDone(foundObjects, startVal); });
-		this._pendingChunker.path = 'user["access request"={0}]'.format(this.user.getInstanceID());
+		this._pendingChunker.path = 'user[user grant request>grantee={0}]'.format(this.user.id());
 		this._pendingChunker.fields = ["none"];
+		this._pendingChunker.resultType = cr.User;
 		
 		this.appendActionButton("Ask To Follow", function()
 			{
@@ -334,8 +335,9 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._followingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
-		this._followingChunker.path = '{0}::reference("access record")[privilege=(read,write,administer)]::reference(user)'.format(this.user.getInstanceID());
+		this._followingChunker.path = 'user[grant target>user grant>grantee={0}]'.format(this.user.id());
 		this._followingChunker.fields = ["none"];
+		this._followingChunker.resultType = cr.User;
 		
 		$(this.node()).one("revealing.cr", function()
 			{
