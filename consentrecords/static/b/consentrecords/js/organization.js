@@ -151,7 +151,7 @@ function showPath(path)
  */				
 function showUser(user)
 {
-	user.promiseCells([])
+	user.promisePath()
 	 .then(function()
 		{
 			var panel = new PathlinesPanel(user, true);
@@ -196,17 +196,20 @@ function drawInfoButtons(infoButtons)
  */
 }
 
-function appendInfoButtons(items)
+function appendInfoButtons(items, dataF)
 {
 	/* infoButtons need to be wrapped inside of a div so that the other
 		div can contain a separate border if needed. 
 	 */
-	var outerDiv = items.append('div')
+	dataF = (dataF !== undefined) ? dataF : function(d) { return d; };
+	var outerDiv = items
+		.append('div')
 		.classed('info-button-container', true);
 	var infoButtons =  outerDiv
 		.append('div')
 		.classed('info-button', true)
-		.on('click', function(user) {
+		.on('click', function(userContainer) {
+			var user = dataF(userContainer);
 			if (prepareClick('click', 'show info: ' + user.description()))
 			{
 				try

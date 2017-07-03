@@ -2340,6 +2340,13 @@ cr.TranslationInstance = (function() {
 		this._position = 'languageCode' in d ? d['languageCode'] : "";
 	}
 	
+	TranslationInstance.prototype.mergeData = function(d)
+	{
+		cr.IInstance.mergeData.call(this, d);
+		if (!this._text) this._text = d._text;
+		if (!this._language) this._language = d._language;
+	}
+	
 	function TranslationInstance() {
 	    cr.IInstance.call(this);
 	};
@@ -2375,6 +2382,12 @@ cr.ServiceLinkInstance = (function() {
 	{
 		cr.IInstance.prototype.setData.call(this, d);
 		this._serviceID = ('service' in d) ? d['service']['id'] : null;
+	}
+	
+	ServiceLinkInstance.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._serviceID) this._serviceID = source._serviceID;
 	}
 	
     ServiceLinkInstance.prototype.copyData = function(target)
@@ -2418,6 +2431,12 @@ cr.OrderedServiceLinkInstance = (function() {
 	{
 		cr.ServiceLinkInstance.prototype.setData.call(this, d);
 		this._position = d['position'];
+	}
+	
+	OrderedServiceLinkInstance.prototype.mergeData = function(source)
+	{
+		cr.ServiceLinkInstance.prototype.mergeData.call(this, source);
+		if (!this._position) this._position = source._position;
 	}
 	
     OrderedServiceLinkInstance.prototype.copyData = function(target)
@@ -2492,6 +2511,59 @@ cr.Grantable = (function() {
     
 })();
 
+cr.Grant = (function() {
+	Grant.prototype = new cr.IInstance();
+	Grant.prototype._grantee = null;
+	Grant.prototype._privilege = null;
+	
+	Grant.prototype.grantee = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._grantee;
+		else
+		{
+		    if (newValue.id() != this._grantee.id())
+		    {
+				this._grantee = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Grant.prototype.privilege = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._privilege;
+		else
+		{
+		    if (newValue != this._privilege)
+		    {
+				this._privilege = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Grant.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		if ('grantee' in d)
+		{
+			this._grantee = new (this.granteeType())();
+			this._grantee.setData(d['grantee']);
+			this._grantee = crp.pushInstance(this._grantee);
+		}
+		this._privilege = 'privilege' in d ? d['privilege'] : "";
+	}
+	
+	function Grant() {
+	    cr.IInstance.call(this);
+	};
+	
+	return Grant;
+
+})();
+	
 cr.AccessInstance = (function() {
 	AccessInstance.prototype = new cr.IInstance();
 	AccessInstance.prototype._grantee = null;
@@ -3152,7 +3224,7 @@ cr.Experience = (function() {
 		if ('offering' in d) {
 			this._offering = new cr.Offering();
 			this._offering.setData(d['offering']);
-			this._offering = crp.getInstance(this._offering.id());
+			this._offering = crp.pushInstance(this._offering);
 		}
 		else
 			this._offering = null;
@@ -3523,14 +3595,14 @@ cr.GrantTarget = (function() {
 		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator);
 		}
 		if ('user grants' in d)
-			this._sessions = d['user grants'].map(function(d) {
+			this._userGrants = d['user grants'].map(function(d) {
 								var i = new cr.UserGrant();
 								i.setData(d);
 								return i;
 							});
 		if ('group grants' in d)
-			this._sessions = d['user grants'].map(function(d) {
-								var i = new cr.UserGrant();
+			this._groupGrants = d['group grants'].map(function(d) {
+								var i = new cr.GroupGrant();
 								i.setData(d);
 								return i;
 							});
@@ -3556,10 +3628,15 @@ cr.Group = (function() {
 })();
 	
 cr.GroupGrant = (function() {
-	GroupGrant.prototype = new cr.IInstance();
+	GroupGrant.prototype = new cr.Grant();
+	
+	GroupGrant.prototype.granteeType = function()
+	{
+		return cr.Group;
+	}
 	
 	function GroupGrant() {
-	    cr.IInstance.call(this);
+	    cr.Grant.call(this);
 	};
 	
 	return GroupGrant;
@@ -3691,6 +3768,7 @@ cr.NotificationArgument = (function() {
 	
 cr.Offering = (function() {
 	Offering.prototype = new cr.IInstance();
+	Offering.prototype._names = null;
     Offering.prototype._webSite = null;
     Offering.prototype._minimumAge = null;
     Offering.prototype._maximumAge = null;
@@ -3700,6 +3778,22 @@ cr.Offering = (function() {
     Offering.prototype._sessions = null;
     Offering.prototype._organization = null;
     Offering.prototype._site = null;
+	
+	Offering.prototype.names = function(newData)
+	{
+		if (newData === undefined)
+			return this._names;
+		else
+		{
+			this._names = newData.map(function(d)
+				{
+					var i = new cr.OfferingName();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
 	
 	Offering.prototype.webSite = function(newValue)
 	{
@@ -3802,6 +3896,8 @@ cr.Offering = (function() {
 	Offering.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
+		if ('name' in d)
+			this.names(d['name']);
 		this._webSite = 'web site' in d ? d['web site'] : "";
 		this._minimumAge = 'minimum age' in d ? d['minimum age'] : "";
 		this._maximumAge = 'maximum age' in d ? d['maximum age'] : "";
@@ -3823,15 +3919,50 @@ cr.Offering = (function() {
 		{
 		    this._organization = new cr.Organization();
 		    this._organization.setData(d['organization']);
-		    this._organization = crp.getInstance(this._organization);
+		    this._organization = crp.pushInstance(this._organization);
 		}
 		if ('site' in d)
 		{
 		    this._site = new cr.Site();
 		    this._site.setData(d['site']);
-		    this._site = crp.getInstance(this._site);
+		    this._site = crp.pushInstance(this._site);
 		}
     }
+    
+	Offering.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._names && source._names)
+			this._names = source._names.map(function(i)
+				{
+					j = new OfferingName();
+					j.mergeData(i);
+					return j;
+				});
+		if (!this._webSite) this._webSite = source._webSite;
+		if (!this._minimumAge) this._minimumAge = source._minimumAge;
+		if (!this._maximumAge) this._maximumAge = source._maximumAge;
+		if (!this._minimumGrade) this._minimumGrade = source._minimumGrade;
+		if (!this._maximumGrade) this._maximumGrade = source._maximumGrade;
+		if (!this._services && source._services)
+			this._services = source._services.map(function(i)
+				{
+					j = new cr.OfferingService();
+					j.mergeData(i);
+					return j;
+				});
+		if (!this._sessions && source._sessions)
+			this._sessions = source._sessions.map(function(i)
+				{
+					j = new cr.Session();
+					j.mergeData(i);
+					return j;
+				});
+		if (!this._organization) this._organization = source._organization;
+		if (!this._site) this._site = source._site;
+		return this;
+	}
+	
     
 	Offering.prototype.ageRange = function()
 	{
@@ -4436,7 +4567,336 @@ cr.ServiceImplication = (function() {
 	
 cr.Session = (function() {
 	Session.prototype = new cr.IInstance();
+	Session.prototype._names = null;
+	Session.prototype._registrationDeadline = null;
+	Session.prototype._start = null;
+	Session.prototype._end = null;
+	Session.prototype._canRegister = null;
+	Session.prototype._inquires = null;
+	Session.prototype._enrollments = null;
+	Session.prototype._engagements = null;
+	Session.prototype._periods = null;
+	Session.prototype._enrollmentsPromise = null;
+	Session.prototype._engagementsPromise = null;
+	Session.prototype._periodsPromise = null;
 	
+	Session.prototype.names = function(newData)
+	{
+		if (newData === undefined)
+			return this._names;
+		else
+		{
+			this._names = newData.map(function(d)
+				{
+					var i = new cr.SessionName();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Session.prototype.registrationDeadline = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._registrationDeadline;
+		else
+		{
+		    if (newValue != this._registrationDeadline)
+		    {
+				this._registrationDeadline = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Session.prototype.start = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._start;
+		else
+		{
+		    if (newValue != this._start)
+		    {
+				this._start = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Session.prototype.end = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._end;
+		else
+		{
+		    if (newValue != this._end)
+		    {
+				this._end = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Session.prototype.canRegister = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._canRegister;
+		else
+		{
+		    if (newValue != this._canRegister)
+		    {
+				this._canRegister = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Session.prototype.inquiries = function(newData)
+	{
+		if (newData === undefined)
+			return this._inquiries;
+		else
+		{
+			this._inquiries = newData.map(function(d)
+				{
+					var i = new cr.Inquiry();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Session.prototype.enrollments = function(newData)
+	{
+		if (newData === undefined)
+			return this._enrollments;
+		else
+		{
+			this._enrollments = newData.map(function(d)
+				{
+					var i = new cr.Enrollment();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Session.prototype.engagements = function(newData)
+	{
+		if (newData === undefined)
+			return this._engagements;
+		else
+		{
+			this._engagements = newData.map(function(d)
+				{
+					var i = new cr.Engagement();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+	Session.prototype.periods = function(newData)
+	{
+		if (newData === undefined)
+			return this._periods;
+		else
+		{
+			this._periods = newData.map(function(d)
+				{
+					var i = new cr.Period();
+					i.setData(d);
+					return i;
+				});
+			return this;
+		}
+	}
+	
+    Session.prototype.promiseInquiries = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._inquiriesPromise)
+        	return this._inquiriesPromise;
+        else if (this._inquiries)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._inquiries);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._inquiriesPromise = cr.getData(
+        	{
+        		path: 'session/{0}/inquiry'.format(this.id()),
+        		fields: [],
+        		resultType: cr.Inquiry
+        	})
+        	.done(function(inquiries)
+        		{
+        			_this._inquiries = inquiries;
+        			_this._inquiries.forEach(function(e)
+        				{
+        					e.session(_this);
+        				});
+        			result = $.Deferred();
+        			result.resolve(inquiries);
+        			return result;
+        		});
+        return this._inquiriesPromise;
+    }
+    
+    Session.prototype.promiseEnrollments = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._enrollmentsPromise)
+        	return this._enrollmentsPromise;
+        else if (this._enrollments)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._enrollments);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._enrollmentsPromise = cr.getData(
+        	{
+        		path: 'session/{0}/enrollment'.format(this.id()),
+        		fields: [],
+        		resultType: cr.Enrollment
+        	})
+        	.done(function(enrollments)
+        		{
+        			_this._enrollments = enrollments;
+        			_this._enrollments.forEach(function(e)
+        				{
+        					e.session(_this);
+        				});
+        			result = $.Deferred();
+        			result.resolve(enrollments);
+        			return result;
+        		});
+        return this._enrollmentsPromise;
+    }
+    
+    Session.prototype.promiseEngagements = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._engagementsPromise)
+        	return this._engagementsPromise;
+        else if (this._engagements)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._engagements);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._engagementsPromise = cr.getData(
+        	{
+        		path: 'session/{0}/engagement'.format(this.id()),
+        		fields: [],
+        		resultType: cr.Engagement
+        	})
+        	.done(function(engagements)
+        		{
+        			_this._engagements = engagements;
+        			_this._engagements.forEach(function(e)
+        				{
+        					e.session(_this);
+        				});
+        			result = $.Deferred();
+        			result.resolve(engagements);
+        			return result;
+        		});
+        return this._engagementsPromise;
+    }
+    
+	Session.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		if ('name' in d)
+			this.names(d['name']);
+		this._registrationDeadline = 'registration deadline' in d ? d['registration deadline'] : "";
+		this._start = 'start' in d ? d['start'] : "";
+		this._end = 'end' in d ? d['end'] : "";
+		this._canRegister = 'can register' in d ? d['can register'] : "";
+		if ('inquiries' in d)
+			this._inquiries = d['inquiries'].map(function(d) {
+								var i = new cr.Inquiry();
+								i.setData(d);
+								return i;
+							});
+		if ('enrollments' in d)
+			this._enrollments = d['enrollments'].map(function(d) {
+								var i = new cr.Enrollment();
+								i.setData(d);
+								return i;
+							});
+		if ('engagements' in d)
+			this._engagements = d['engagements'].map(function(d) {
+								var i = new cr.Engagement();
+								i.setData(d);
+								return i;
+							});
+		if ('periods' in d)
+			this._periods = d['periods'].map(function(d) {
+								var i = new cr.Period();
+								i.setData(d);
+								return i;
+							});
+    }
+    
+	Session.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._names && source._names)
+			this._names = source._names.map(function(i)
+				{
+					j = new OfferingName();
+					j.mergeData(i);
+					return j;
+				});
+		if (!this._webSite) this._webSite = source._webSite;
+		if (!this._registrationDeadline) this._registrationDeadline = source._registrationDeadline;
+		if (!this._start) this._start = source._start;
+		if (!this._end) this._end = source._end;
+		if (!this._canRegister) this._canRegister = source._canRegister;
+		if (!this._inquiries && source._inquiries)
+			this._inquiries = source._inquiries.map(function(d) {
+								var i = new cr.Inquiry();
+								i.mergeData(d);
+								return i;
+							});
+		if (!this._enrollments && source._enrollments)
+				this._enrollments = source._enrollments.map(function(d) {
+									var i = new cr.Enrollment();
+									i.mergeData(d);
+									return i;
+								});
+		if (!this._engagements && source._engagements)
+				this._engagements = source._engagements.map(function(d) {
+									var i = new cr.Engagement();
+									i.mergeData(d);
+									return i;
+								});
+		if (!this._periods && source._periods)
+				this._periods = source._periods.map(function(d) {
+									var i = new cr.Period();
+									i.mergeData(d);
+									return i;
+								});
+    }
+    
 	function Session() {
 	    cr.IInstance.call(this);
 	};
@@ -4499,6 +4959,7 @@ cr.User = (function() {
 	User.prototype._notifications = null;
 	User.prototype._notificationsPromise = null;
 	User.prototype._path = null;
+	User.prototype._pathPromise = null;
 	User.prototype._userGrantRequests = null;
 	User.prototype._userGrantRequestsPromise = null;
 	
@@ -4534,10 +4995,10 @@ cr.User = (function() {
 	User.prototype.mergeData = function(source)
 	{
 		cr.Grantable.prototype.mergeData.call(this, source);
-		this._firstName |= source._firstName;
-		this._lastName |= source._lastName;
-		this._birthday |= source._birthday;
-		this._systemAccess |= source._systemAccess;
+		if (!this._firstName) this._firstName = source._firstName;
+		if (!this._lastName) this._lastName = source._lastName;
+		if (!this._birthday) this._birthday = source._birthday;
+		if (!this._systemAccess) this._systemAccess = source._systemAccess;
 		return this;
 	}
 	
@@ -4698,6 +5159,37 @@ cr.User = (function() {
 		}
 	}
 	
+    User.prototype.promisePath = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._pathPromise)
+        	return this._pathPromise;
+        else if (this._path)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._path);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._pathPromise = cr.getData(
+        	{
+        		path: 'user/{0}/path'.format(this.id()),
+        		fields: ['experience', 'experience/service', 'experience/custom service'],
+        		resultType: cr.Path
+        	})
+        	.done(function(paths)
+        		{
+        			_this._path = paths[0];
+        			result = $.Deferred();
+        			result.resolve(paths[0]);
+        			return result;
+        		});
+        return this._pathPromise;
+    }
+    
     User.prototype.promiseUserGrantRequests = function()
     {
     	p = this.administerCheckPromise();
@@ -4910,52 +5402,15 @@ cr.UserEmail = (function() {
 })();
 	
 cr.UserGrant = (function() {
-	UserGrant.prototype = new cr.IInstance();
-	UserGrant.prototype._grantee = null;
-	UserGrant.prototype._privilege = null;
+	UserGrant.prototype = new cr.Grant();
 	
-	UserGrant.prototype.grantee = function(newValue)
+	UserGrant.prototype.granteeType = function()
 	{
-		if (newValue === undefined)
-			return this._grantee;
-		else
-		{
-		    if (newValue.id() != this._grantee.id())
-		    {
-				this._grantee = newValue;
-			}
-			return this;
-		}
-	}
-	
-	UserGrant.prototype.privilege = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._privilege;
-		else
-		{
-		    if (newValue != this._privilege)
-		    {
-				this._privilege = newValue;
-			}
-			return this;
-		}
-	}
-	
-	UserGrant.prototype.setData = function(d)
-	{
-		cr.IInstance.prototype.setData.call(this, d);
-		if ('grantee' in d)
-		{
-			this._grantee = new cr.User();
-			this._grantee.setData(d['grantee']);
-			this._grantee = crp.pushInstance(this._grantee);
-		}
-		this._privilege = 'privilege' in d ? d['privilege'] : "";
+		return cr.User;
 	}
 	
 	function UserGrant() {
-	    cr.IInstance.call(this);
+	    cr.Grant.call(this);
 	};
 	
 	return UserGrant;

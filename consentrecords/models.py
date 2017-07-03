@@ -5465,6 +5465,8 @@ class Path(IInstance, dbmodels.Model):
         data = self.headData(context)
         
         data['birthday'] = self.birthday
+        if self.name:
+            data['name'] = self.name
         if self.specialAccess:
             data['special access'] = self.specialAccess
         if self.canAnswerExperience:
@@ -5477,9 +5479,11 @@ class Path(IInstance, dbmodels.Model):
                 else:
                     data['user'] = self.parent.headData(context)
         
-        if 'experience' in fields: 
-            data['experiences'] = [i.getData([], context) for i in \
-                Experience.select_related(self.experiences.filter(deleteTransaction__isnull=True))]
+        if 'experience' in fields:
+            experienceFields = list(map(lambda s: s[len('experience/'):], 
+                filter(lambda s: s.startswith('experience/'), fields)))
+            data['experiences'] = [i.getData(experienceFields, context) for i in \
+                Experience.select_related(self.experiences.filter(deleteTransaction__isnull=True), experienceFields)]
 
         return data
     
