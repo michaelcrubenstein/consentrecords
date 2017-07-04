@@ -67,19 +67,14 @@ var Signup = (function () {
 					initialData, 
 					function(data)
 					{
-						cr.signedinUser.updateFromChangeData(data);
-						cr.signedinUser.promiseCells([cr.fieldNames.systemAccess])
-							.then(function()
+						cr.signedinUser.setData(data);
+						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
+						_thisSignup.hideDown(
+							function()
 							{
-								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								_thisSignup.hideDown(
-									function()
-									{
-										$(cr.signedinUser).trigger("signin.cr");
-										unblockClick();
-									});
-							},
-						cr.syncFail);
+								$(cr.signedinUser).trigger("signin.cr");
+								unblockClick();
+							});
 					},
 					cr.syncFail)
 				
@@ -597,19 +592,14 @@ var SigninPanel = (function()
 		var signInSuccess = function(data)
 		{
 			crp.clear();
-			cr.signedinUser.updateFromChangeData(data);
-			cr.signedinUser.promiseCells([cr.fieldNames.systemAccess])
-				.then(function()
-					{
-						_this.hideRight(function()
-							{
-								crp.pushInstance(cr.signedinUser);
-								$(cr.signedinUser).trigger("signin.cr");
-								unblockClick();
-							});
-					
-					},
-					cr.syncFail);
+			cr.Service.clearPromises();
+			cr.signedinUser.setData(data);
+			_this.hideRight(function()
+				{
+					crp.pushInstance(cr.signedinUser);
+					$(cr.signedinUser).trigger("signin.cr");
+					unblockClick();
+				});
 		}
 		
 		this.passwordInput = form.append('input')

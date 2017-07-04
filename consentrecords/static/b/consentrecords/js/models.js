@@ -53,7 +53,6 @@ var Queue = (function () {
 var CRP = (function() {
 	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
 	CRP.prototype.promises = {};	/* keys are paths, values are promises */
-	CRP.prototype.fields = {};		/* keys are field ids, values are field data */
 	
     function CRP() {
     	this.clear();
@@ -62,7 +61,6 @@ var CRP = (function() {
     CRP.prototype.clear = function() {
     	this.instances = {};
     	this.promises = {};
-    	this.fields = {};
     };
     
     /* Get an instance that has been loaded, or undefined if it hasn't been loaded. */
@@ -115,29 +113,6 @@ var CRP = (function() {
 				});
 		this.promises[args.path] = promise;
 		return promise;
-	}
-	
-	CRP.prototype.field = function(id)
-	{
-    	if (!id)
-    		throw new Error("id is not defined");
-    	if (id in this.fields)
-    		return this.fields[id];
-    	else
-    		return undefined;
-	}
-	
-	CRP.prototype.pushField = function(field)
-	{
-		if (!field.id)
-			throw new Error("field id is not defined");
-		if (field.id in this.fields)
-			return this.fields[field.id];
-		else
-		{
-			this.fields[field.id] = field;
-			return field;
-		}
 	}
 	
 	return CRP;
@@ -2010,6 +1985,7 @@ cr.submitSignout = function()
 		return $.post(cr.urls.submitSignout, { })
 			.then(function(json) {
 					crp.clear();
+					cr.Service.clearPromises();
 				},
 				cr.thenFail)
 			.promise();
@@ -2317,12 +2293,21 @@ cr.IInstance = (function() {
 		}
 	}
 	
-	IInstance.prototype.updateFromChangeData = function(d)
+	IInstance.prototype.updateData = function(d)
 	{
 		if ('id' in d)
 			this._id = d['id'];
 		if ('description' in d)
 			this._description = d['description'];
+	}
+	
+	IInstance.prototype.clear = function()
+	{
+		this._id = null;
+		this._description = null;
+		this._parentID = null;
+		this._privilege = null;
+		return this;
 	}
 
 	function IInstance() {
@@ -3258,13 +3243,13 @@ cr.Experience = (function() {
 		newExperience._services = this._services.map(function(i)
 			{
 				target = new cr.ExperienceService();
-				i.copyData(target);
+				target.mergeData(i);
 				return target;
 			});
 		newExperience._customServices = this._customServices.map(function(i)
 			{
 				target = new cr.ExperienceCustomService();
-				i.copyData(target);
+				target.mergeData(i);
 				return target;
 			});
 	}
@@ -4614,6 +4599,11 @@ cr.Service = (function() {
 })();
 cr.Service._servicesPromise = null;
 	
+cr.Service.clearPromises = function()
+{
+	cr.Service._servicesPromise = null;
+}
+
 cr.ServiceName = (function() {
 	ServiceName.prototype = new cr.TranslationInstance();
 	
@@ -5067,6 +5057,22 @@ cr.User = (function() {
 	User.prototype._userGrantRequests = null;
 	User.prototype._userGrantRequestsPromise = null;
 	
+	User.prototype.clear = function()
+	{
+		cr.IInstance.prototype.clear.call(this);
+		this._firstName = null;
+		this._lastName = null;
+		this._birthday = null;
+		this._systemAccess = null;
+		this._emails = null;
+		this._notifications = null;
+		this._notificationsPromise = null;
+		this._path = null;
+		this._pathPromise = null;
+		this._userGrantRequests = null;
+		this._userGrantRequestPromise = null;
+	}
+	
 	User.prototype.setDefaultValues = function()
 	{
 		this._firstName = "";
@@ -5088,12 +5094,25 @@ cr.User = (function() {
 		this._systemAccess = 'system access' in d ? d['system access'] : null;
 		if ('emails' in d)
 			this.emails(d['emails']);
+		else
+			this._emails = null;
 		if ('notifications' in d)
 			this.notifications(d['notifications']);
+		else
+			this._notifications = null;
 		if ('path' in d)
 			this.path(d['path']);
+		else
+			this._path = null;
 		if ('user grant requests' in d)
 			this.userGrantRequests(d['user grant requests']);
+		else
+			this._userGrantRequests = null;
+			
+		/* Clear all of the promises. */
+		this._notificationsPromise = null;
+		this._pathPromise = null;
+		this._userGrantRequestPromise = null;
 	}
 	
 	User.prototype.mergeData = function(source)
@@ -5104,6 +5123,19 @@ cr.User = (function() {
 		if (!this._birthday) this._birthday = source._birthday;
 		if (!this._systemAccess) this._systemAccess = source._systemAccess;
 		return this;
+	}
+	
+	User.prototype.updateData = function(d)
+	{
+		cr.Grantable.prototype.mergeData.call(this, source);
+		if ('first name' in d)
+			this._firstName = d['first name'];
+		if ('last name' in d)
+			this._lastName = d['last name'];
+		if ('birthday' in d)
+			this._birthday = d['birthday'];
+		if ('system access' in d)
+			this._systemAccess = d['system access'];
 	}
 	
 	User.prototype.firstName = function(newValue)

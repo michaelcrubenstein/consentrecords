@@ -1085,8 +1085,19 @@ def submitsignin(request):
     
     try:
         results = userviews.signinResults(request)
-        user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None)
-        results["user"] = { "id": user.idString, "description" : user.getDescription(None) }        
+        languageCode = request.POST.get('languageCode', 'en')
+        qs = User.getAuthorizedUserQuerySet(request.user)
+        if qs.count() == 0:
+            context = Context(languageCode, request.user)
+            data = {'emails': [{'text': request.user.email}],
+                    'first name': request.user.firstName,
+                    'last name': request.user.lastName}
+            user = User.create(data, context)
+        else:
+            context = Context(languageCode, request.user)
+            qs = User.select_related(qs)
+            user = qs[0]
+        results["user"] = user.getData(['system access', 'email'], context)
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

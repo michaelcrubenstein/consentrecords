@@ -599,18 +599,22 @@ var WelcomePanel = (function () {
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
 			pathwayPanel.setupSearchPanel();
-			pathwayPanel.pathtree.setUser(cr.signedinUser.path(), true)
+			cr.signedinUser.promisePath()
+				.then(function()
+					{
+						var promise = pathwayPanel.pathtree.setUser(cr.signedinUser.path(), true);
+						pathwayPanel.showLeft().then(
+							function()
+							{
+								if (onPathwayCreated)
+									onPathwayCreated(pathwayPanel);
+								$(_this.node()).remove();
+							});
+					})
 				.then(function()
 					{
 						pathwayPanel.checkShowIdeas();
 					});
-			pathwayPanel.showLeft().then(
-				function()
-				{
-					if (onPathwayCreated)
-						onPathwayCreated(pathwayPanel);
-					$(_this.node()).remove();
-				});
 			
 		};
 		

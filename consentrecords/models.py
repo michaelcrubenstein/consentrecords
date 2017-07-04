@@ -186,25 +186,28 @@ def _filterOrTokens(tokens):
 #     /api/Service[Domain[%22Service%20Domain%22[_name=Sports]][_name^=B]
 # If the parameter list is three values, interpret the three values as a query clause and
 #     filter self on that clause.  
-def _filterClause(tokens, user, fieldMap, elementMap, accessType, prefix=''):
+def _filterClause(tokens, user, qsType, accessType, prefix=''):
     # print(str(datetime.datetime.now()), '_filterClause: %s, %s' % (tokens, prefix))
     fieldName = tokens[0]
-    if fieldName in fieldMap:
-        prefix += fieldMap[fieldName]
+    if fieldName in qsType.fieldMap:
+        prefix += qsType.fieldMap[fieldName]
         if len(tokens) == 1:
             return Q((prefix + '__isnull', False))
         else:
             return getFieldQ(prefix, tokens[1], tokens[2])
-    elif fieldName in elementMap:
-        prefix = prefix + elementMap[fieldName][0]
+    elif fieldName in qsType.elementMap:
+        prefix = prefix + qsType.elementMap[fieldName][0]
         if len(tokens) == 1:
             return Q((prefix + 'isnull', False), (prefix + 'deleteTransaction__isnull', True))
         else:
-            subType = eval(elementMap[fieldName][1])
+            subType = eval(qsType.elementMap[fieldName][1])
             
             if tokens[1] == '>':
-                return _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, accessType, prefix=prefix) &\
-                       Q((prefix + 'deleteTransaction__isnull', True))
+                subQ = _filterClause(tokens[2:], user, subType, accessType, prefix=prefix)
+                if 'deleteTransaction' in subType.__dict__:
+                    return subQ & Q((prefix + 'deleteTransaction__isnull', True))
+                else:
+                    return subQ
             elif tokens[1] == '[':
                 q = Q((prefix + 'in', _subElementQuerySet(tokens[2], user, subType, accessType)))
                 i = 3
@@ -222,11 +225,11 @@ def _filterClause(tokens, user, fieldMap, elementMap, accessType, prefix=''):
         if tokens[1] == '>':
             return Q((prefix + 'id__in', 
                       GrantTarget.objects.filter(\
-                         _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, accessType, prefix=''))))
+                         _filterClause(tokens[2:], user, subType, accessType, prefix=''))))
         else:
             raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
     else:
-        raise ValueError("unrecognized path contents within [] for %s (expecting one of (%s))" % ("".join(tokens), ", ".join(elementMap.keys())))
+        raise ValueError("unrecognized path contents within [] for %s (expecting one of (%s))" % ("".join(tokens), ", ".join(qsType.elementMap.keys())))
 
 ### Access type is the type, if any, that the qs has already been filtered.
 def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
@@ -245,7 +248,7 @@ def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
         raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))    
 
 def _filterQ(tokens, user, qsType, accessType, prefix=''):
-    qList = map(lambda ts: _filterClause(ts, user, qsType.fieldMap, qsType.elementMap, accessType, prefix),
+    qList = map(lambda ts: _filterClause(ts, user, qsType, accessType, prefix),
                 _filterOrTokens(tokens))
     def mergeQs(a, b):
         if a:
@@ -6675,6 +6678,11 @@ class User(RootInstance, dbmodels.Model):
                                          to_attr='currentNotifications'))
         return qs
         
+    def getAuthorizedUserQuerySet(authUser):
+        return User.objects.filter(deleteTransaction__isnull=True, 
+                                   emails__text=authUser.email, 
+                                   emails__deleteTransaction__isnull=True)
+    
     def fetchPrivilege(self, user):
         return GrantTarget.objects.get(pk=self.id).fetchPrivilege(user)
     
@@ -7012,10 +7020,11 @@ class Context:
                 self.authUser = user.authUser
             else:
                 self.authUser = user
-                qs = User.objects.filter(deleteTransaction__isnull=True, 
-                                         emails__text=user.email, 
-                                         emails__deleteTransaction__isnull=True)
-                self.user = qs[0] if qs.exists() else None
+                if self.authUser.is_authenticated:
+                    qs = User.getAuthorizedUserQuerySet(user)
+                    self.user = qs[0] if qs.exists() else None
+                else:
+                    self.user = None
         else:
             self.user = None
             self.authUser = AnonymousUser()
