@@ -282,12 +282,14 @@
 				var panel;
 				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
 				{
-					crp.promise({path: "offering/" + offeringName, fields: ["parents"]}) 
+					crp.promise({path: "offering/" + offeringName, 
+								 fields: ["parents"],
+								 resultType: cr.Offering}) 
 						.done(function(offerings)
 							{
 								if (offerings.length > 0)
 								{
-									if (offerings[0].getTypeName() == "Offering")
+									if (offerings[0] instanceof cr.Offering)
 									{
 										experience.createFromOffering(offerings[0], service, pathwayPanel.node(), function(panelNode)
 											{
@@ -304,7 +306,9 @@
 				}
 				else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
 				{
-					crp.promise({path: "site/" + siteName, fields: ["parents"]})
+					crp.promise({path: "site/" + siteName, 
+								 fields: ["parents"],
+								 resultType: cr.Site})
 						.done(function(sites)
 							{
 								if (sites.length > 0)
@@ -328,7 +332,9 @@
 				}
 				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
 				{
-					crp.promise({path: organizationName, fields: ["parents"]})
+					crp.promise({path: "organization/" + organizationName, 
+					             fields: ["parents"],
+					             resultType: cr.Organization})
 						.done(function(organizations)
 							{
 								if (organizations.length > 0)
@@ -387,7 +393,8 @@
 			}
 			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 			{
-				crp.promise({path: serviceName, fields: ["parents"]})
+				crp.promise({path: "service/" + serviceName, fields: ["parents"],
+							 resultType: cr.Service})
 					.done(function(services)
 						{
 							if (services.length == 0)
@@ -441,7 +448,9 @@
 						var pathwayID = stateString;
 						handleState = function()
 						{
-							crp.promise({path: pathwayID})
+							crp.promise({path: "user/" + pathwayID,
+										 fields: ['path'], 
+										 resultType: cr.User})
 								.done(function(users)
 									{
 										if (users.length > 0)

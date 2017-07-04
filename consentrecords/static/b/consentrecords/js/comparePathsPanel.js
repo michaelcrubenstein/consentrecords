@@ -82,27 +82,27 @@ var CompareFlag = (function() {
 	
 	CompareFlag.prototype.getYearArray = function()
 	{
-		var e = this.experience.getDatum("End");
-		var s = this.experience.getDatum("Start");
-		var t = this.experience.getValue("Timeframe");
+		var e = this.experience.end();
+		var s = this.experience.start();
+		var t = this.experience.timeframe();
 		var top, bottom;
 		
 		if (e)
 			top = this.ageCalculator.getYears(e);
 		else if (s)
 			top = "Now";
-		else if (t && t.getDescription() == "Previous")
+		else if (t  == "Previous")
 			top = "Done";
-		else if (t && t.getDescription() == "Current")
+		else if (t == "Current")
 			top = "Now";
 		else
 			top = "Goal";
 			
 		if (s)
 			bottom = this.ageCalculator.getYears(s);
-		else if (t && t.getDescription() == "Previous")
+		else if (t == "Previous")
 			bottom = "Done";
-		else if (t && t.getDescription() == "Current")
+		else if (t == "Current")
 			bottom = "Now";
 		else
 			bottom = "Goal";
@@ -391,8 +391,8 @@ var ComparePath = (function() {
 		var _this = this;
 		var firstTime = true;
 		
-		this.leftAgeCalculator = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
-		this.rightAgeCalculator = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
+		this.leftAgeCalculator = new AgeCalculator(this.leftPath.birthday());
+		this.rightAgeCalculator = new AgeCalculator(this.rightPath.birthday());
 		
 		this.columnData[0].name = this.getPathDescription(this.leftPath, this.leftAgeCalculator);
 		this.columnData[1].name = this.getPathDescription(this.rightPath, this.rightAgeCalculator);
@@ -424,21 +424,21 @@ var ComparePath = (function() {
 			.attr('y2', 500)
 			.attr('stroke', function(d) { return d.color; });
 	
-		var leftCell = this.leftPath.getCell("More Experience");
-		var rightCell = this.rightPath.getCell("More Experience");
+		var leftCell = this.leftPath.experiences();
+		var rightCell = this.rightPath.experiences();
 		var addedFunction = function(eventObject, newData)
 			{
 				_this.addMoreExperience(newData);
 			}
-		setupOnViewEventHandler(leftCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
-		setupOnViewEventHandler(rightCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
+		setupOnViewEventHandler(this.leftPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
+		setupOnViewEventHandler(this.rightPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
 			
-		var experiences = leftCell.data;
+		var experiences = leftCell;
 		
 		this.allExperiences = this.allExperiences.concat(experiences);
 		
-		this.allExperiences = this.allExperiences.concat(rightCell.data);
-		$(rightCell.data).each(function()
+		this.allExperiences = this.allExperiences.concat(rightCell);
+		$(rightCell).each(function()
 			{
 				this.calculateDescription();
 			});
@@ -586,10 +586,15 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var p1 = crp.promise({path: 'path/' + this.rightPath.id() + 'user/engagement', 
-				   fields: ["parents"]});
-		var p2 = crp.promise({path: 'path/' + this.rightPath.id() + '/user/engagement/session/offering'});
-		var p3 = crp.promise({path: 'path/' + this.rightPath.id() + '/experience/offering'});
+		var p1 = crp.promise({path: 'path/' + this.rightPath.id() + '/user/engagement', 
+				   fields: ["parents"],
+				   resultType: cr.Engagement});
+		var p2 = crp.promise({path: 'path/' + this.rightPath.id() + '/user/engagement/session/offering',
+							  fields: ['service'],
+							  resultType: cr.Offering});
+		var p3 = crp.promise({path: 'path/' + this.rightPath.id() + '/experience/offering',
+							  fields: ['service'],
+							  resultType: cr.Offering});
 		$.when(p1, p2, p3)
 		.then(function(engagements, r2, r3)
 			{
@@ -599,7 +604,7 @@ var ComparePath = (function() {
 					this.setDescription(this.offering().description());
 				});
 				
-				return _this.rightPath.promiseCellsFromCache(["experience", "parents"]);
+				return _this.rightPath.promiseExperiences();
 			})
 		.then(successFunction2, cr.asyncFail);
 	}

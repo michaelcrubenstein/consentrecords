@@ -4294,10 +4294,12 @@ cr.Path = (function() {
 		this._name = 'name' in d ? d['name'] : "";
 		this._specialAccess = 'special access' in d ? d['special access'] : "";
 		this._canAnswerExperience = 'can answer experience' in d ? d['can answer experience'] : "";
+		var _this = this;
 		if ('experiences' in d)
 			this._experiences = d['experiences'].map(function(d) {
 								var i = new cr.Experience();
 								i.setData(d);
+								i.path(_this);
 								return i;
 							});
 		if ('user' in d)

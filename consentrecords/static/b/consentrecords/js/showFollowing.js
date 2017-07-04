@@ -37,7 +37,7 @@ var RequestFollowPanel = (function() {
 						_this.followingPanel._pendingSection.selectAll('li').sort(
 							function(a, b)
 							{
-								return a.getDescription().localeCompare(b.getDescription());
+								return a.description().localeCompare(b.description());
 							}
 						);
 						_this.followingPanel._noPendingResultsDiv.style('display', 'none');
@@ -126,7 +126,7 @@ var FollowingPanel = (function() {
 					if (d.id)
 						path = 'user/' + d.id()
 					else
-						path = 'user[email__text={0}]'.format(d.getDescription())
+						path = 'user[email__text={0}]'.format(d.description())
 					path += '/user grant request/{0}'.format(_this.grantRequest.id());
 					cr.getData({path: path})
 						.then(function(values)
@@ -188,9 +188,9 @@ var FollowingPanel = (function() {
 		items.append('button')
 			.classed("compare-button", true)
 			.on("click", function(user) {
-				if (prepareClick('click', 'compare to: ' + user.getDescription()))
+				if (prepareClick('click', 'compare to: ' + user.description()))
 				{
-					user.promiseCells([])
+					user.promisePath()
 						.then(function()
 						{
 							try

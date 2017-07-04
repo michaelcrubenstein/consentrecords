@@ -44,7 +44,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		site.promiseCellsFromCache()
 			.then(function()
 				{
-					var address = site.getValue("Address");
+					var address = site.address();
 					appendAddress.call(orgDiv.node(), address);
 				});
 	}

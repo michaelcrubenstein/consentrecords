@@ -4995,7 +4995,7 @@ class Offering(ChildInstance, dbmodels.Model):
     def select_related(querySet, fields=[]):
         return Offering.select_head_related(querySet)\
                        .prefetch_related(Prefetch('services',
-                                         queryset=OfferingService.select_head_related(OfferingService.objects.filter(deleteTransaction__isnull=True)).order_by('position'),
+                                         queryset=OfferingService.select_related(OfferingService.objects.filter(deleteTransaction__isnull=True)).order_by('position'),
                                          to_attr='currentServices'))\
                        .prefetch_related(Prefetch('sessions',
                                          queryset=Session.select_head_related(Session.objects.filter(deleteTransaction__isnull=True)),

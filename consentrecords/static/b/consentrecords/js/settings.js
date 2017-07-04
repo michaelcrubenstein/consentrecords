@@ -666,7 +666,7 @@ crn.FollowerAccept = (function() {
 		
 		q.add(function()
 			{
-				$.when(user.promiseCellsFromCache())
+				$.when(user.promisePath())
 				 .then(function()
 				 	{
 						spinnerSpan.datum().stop();
