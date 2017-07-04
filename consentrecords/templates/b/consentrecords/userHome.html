@@ -20,7 +20,7 @@
     <title>PathAdvisor</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -146,15 +146,15 @@
     	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}?v={{jsversion}}"></script>
   	</body>
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.12/clipboard.min.js"></script>
+	<script src="{{cdn_url}}jquery/3.1.1/jquery.min.js"></script>
+	<script src="{{cdn_url}}/spin.js/2.3.2/spin.min.js"></script>
+	<script src="{{cdn_url}}hammer.js/2.0.8/hammer.min.js"></script>
+	<script src="{{cdn_url}}jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="{{cdn_url}}twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="{{cdn_url}}jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="{{cdn_url}}d3/3.5.17/d3.min.js"></script>
+	<script src="{{cdn_url}}datejs/1.0/date.min.js"></script>
+	<script src="{{cdn_url}}clipboard.js/1.5.12/clipboard.min.js"></script>
 	<script src="{% static "datejs/time.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/models.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>

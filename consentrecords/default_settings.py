@@ -114,6 +114,8 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT= os.path.join(BASE_DIR, 'static')
 
+CDN_URL = 'https://cdnjs.cloudflare.com/ajax/libs/'
+
 # Auth User Model
 AUTH_USER_MODEL = 'custom_user.AuthUser'
 

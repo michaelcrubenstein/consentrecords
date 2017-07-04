@@ -60,6 +60,7 @@ def home(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -86,6 +87,7 @@ def showLines(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -109,6 +111,7 @@ def orgHome(request):
     args = {
         'user': request.user,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -135,6 +138,7 @@ def find(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -175,6 +179,7 @@ def showInstances(request):
             'canAddObject': request.user.is_staff,
             'path': urllib.parse.unquote_plus(path),
             'header': header,
+            'cdn_url': settings.CDN_URL,
             }
         if root:
             argList["rootID"] = root.idString
@@ -199,6 +204,7 @@ def showPathway(request, email):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -227,6 +233,7 @@ def showExperience(request, id):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -263,6 +270,7 @@ def accept(request, email):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -294,6 +302,7 @@ def ignore(request, email):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -324,6 +333,7 @@ def userSettings(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -348,6 +358,7 @@ def signup(request, email=None):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if settings.FACEBOOK_SHOW:
@@ -532,6 +543,7 @@ def addExperience(request, experienceID):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if request.user.is_authenticated:
@@ -604,6 +616,7 @@ def addToPathway(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
 
     if settings.FACEBOOK_SHOW:
@@ -1127,6 +1140,7 @@ def features(request):
     template = loader.get_template('doc/features.html')
     args = {
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
         
     return HttpResponse(template.render(args))
