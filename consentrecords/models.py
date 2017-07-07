@@ -4289,13 +4289,13 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
                     .select_related('offering')\
                     .select_related('domain')\
                     .prefetch_related(Prefetch('services',
-                                               ExperiencePromptService.select_related(ExperiencePromptService.objects.all()).order_by('position'),
+                                               ExperiencePromptService.select_related(ExperiencePromptService.objects.filter(deleteTransaction__isnull=True)).order_by('position'),
                                                to_attr='fetchedServices'))\
                     .prefetch_related(Prefetch('texts',
-                                               ExperiencePromptText.objects.all(),
+                                               ExperiencePromptText.select_related(ExperiencePromptText.objects.filter(deleteTransaction__isnull=True)),
                                                to_attr='fetchedTexts'))\
                     .prefetch_related(Prefetch('disqualifyingTags',
-                                               DisqualifyingTag.select_related(DisqualifyingTag.objects.all()),
+                                               DisqualifyingTag.select_related(DisqualifyingTag.objects.filter(deleteTransaction__isnull=True)),
                                                to_attr='fetchedDisqualifyingTags'))
     
     def getData(self, fields, context):
@@ -4313,9 +4313,10 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
             data['stage'] = self.stage
         if self.timeframe:
             data['timeframe'] = self.timeframe
-        data['services'] = [i.headData(context) for i in self.fetchedServices]
+        data['services'] = [i.getData([], context) for i in self.fetchedServices]
+        print(data['name'], data['services'])
         data['translations'] = [i.getData([], context) for i in self.fetchedTexts]
-        data['disqualifying tags'] = [i.headData(context) for i in self.fetchedDisqualifyingTags]
+        data['disqualifying tags'] = [i.getData([], context) for i in self.fetchedDisqualifyingTags]
         return data
         
     def markDeleted(self, context):

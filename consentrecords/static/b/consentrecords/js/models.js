@@ -195,6 +195,12 @@ cr.booleans = {
 	no: "no"
 }
 
+cr.assertArrayType = function(a, type)
+{
+	for (var i = 0; i < a.length; ++i)
+		console.assert(a[i] instanceof type);
+}
+
 cr.ModelObject = (function()
 {
 	ModelObject.prototype.on = function(events, data, handler)
@@ -2156,6 +2162,11 @@ cr.IInstance = (function() {
 		}
 	}
 	
+	IInstance.prototype.toString = function()
+	{
+		return this._description;
+	}
+	
 	IInstance.prototype.privilege = function(newPrivilege)
 	{
 		if (newPrivilege === undefined)
@@ -2194,6 +2205,13 @@ cr.IInstance = (function() {
 			this.privilege(d['privilege']);
 		if ('parentID' in d)
 		    this.parentID(d['parentID'])
+	}
+	
+	IInstance.prototype.setDefaultValues = function()
+	{
+		this._description = "";
+		this._id = null;
+		this._privilege = 'write';
 	}
 	
 	IInstance.prototype.mergeData = function(source)
@@ -2353,14 +2371,16 @@ cr.TranslationInstance = (function() {
 	
 	TranslationInstance.prototype.setDefaultValues = function()
 	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._text = "";
 		this._language = null;
 	}
 	
 	TranslationInstance.prototype.setData = function(d)
 	{
+		cr.IInstance.prototype.setData.call(this, d);
 		this._text = 'text' in d ? d['text'] : "";
-		this._position = 'languageCode' in d ? d['languageCode'] : "";
+		this._language = 'languageCode' in d ? d['languageCode'] : "";
 	}
 	
 	TranslationInstance.prototype.mergeData = function(d)
@@ -2370,9 +2390,41 @@ cr.TranslationInstance = (function() {
 		if (!this._language) this._language = d._language;
 	}
 	
+	/** Called after the contents of the ServiceLinkInstance have been updated on the server. */
+	TranslationInstance.prototype.mergeData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		if ('text' in d)
+			this._text = d['text'];
+		if ('languageCode' in d)
+			this._language = d['languageCode'];
+	}
+	
 	function TranslationInstance() {
 	    cr.IInstance.call(this);
 	};
+	
+	TranslationInstance.localText = function(list, language)
+	{
+		if (!list)
+			return "";
+		
+		language = language !== undefined ? language : 'en';
+			
+        var enName = '';
+        var noneName = '';
+		for (var i = 0; i < list.length; ++i)
+		{
+			var t = list[i];
+		    if (language == t.language())
+		    	return t.text() || '';
+		    else if (t.language() == 'en')
+		    	enName = t.text();
+		    else if (!t.language())
+		    	noneName = t.text();
+		}
+		return noneName || enEname || '';
+	}
 	
 	return TranslationInstance;
 
@@ -2390,7 +2442,7 @@ cr.ServiceLinkInstance = (function() {
 	ServiceLinkInstance.prototype.service = function(newValue)
 	{
 		if (newValue === undefined)
-			return crp.getInstance(this._serviceID);
+			return this._serviceID && crp.getInstance(this._serviceID);
 		else
 		{
 		    if (newValue.id() != this._serviceID)
@@ -2401,6 +2453,9 @@ cr.ServiceLinkInstance = (function() {
 		}
 	}
 	
+	/** Sets the data for this ServiceLinkInstance based on a dictionary of data that
+		came from the server.
+	 */
 	ServiceLinkInstance.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -2411,6 +2466,14 @@ cr.ServiceLinkInstance = (function() {
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
 		if (!this._serviceID) this._serviceID = source._serviceID;
+	}
+	
+	/** Called after the contents of the ServiceLinkInstance have been updated on the server. */
+	ServiceLinkInstance.prototype.updateData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		if ('service' in d)
+			this._serviceID = d['service']['id'];
 	}
 	
 	function ServiceLinkInstance() {
@@ -2438,12 +2501,15 @@ cr.OrderedServiceLinkInstance = (function() {
 		{
 		    if (newValue != this._position)
 		    {
-				this._position = newValue.id();
+				this._position = newValue;
 			}
 			return this;
 		}
 	}
 	
+	/** Sets the data for this OrderedServiceLinkInstance based on a dictionary of data that
+		came from the server.
+	 */
 	OrderedServiceLinkInstance.prototype.setData = function(d)
 	{
 		cr.ServiceLinkInstance.prototype.setData.call(this, d);
@@ -2454,6 +2520,14 @@ cr.OrderedServiceLinkInstance = (function() {
 	{
 		cr.ServiceLinkInstance.prototype.mergeData.call(this, source);
 		if (!this._position) this._position = source._position;
+	}
+	
+	/** Called after the contents of the OrderedServiceLinkInstance have been updated on the server. */
+	OrderedServiceLinkInstance.prototype.updateData = function(d)
+	{
+		cr.ServiceLinkInstance.prototype.updateData.call(this, d);
+		if ('position' in d)
+			this._position = d['position'];
 	}
 	
 	function OrderedServiceLinkInstance() {
@@ -2676,9 +2750,281 @@ cr.AccessInstance = (function() {
 	
 	return AccessInstance;
 })();
+
+cr.NamedInstance = (function() {
+	NamedInstance.prototype.names = function(newData)
+	{
+		if (newData === undefined)
+			return this._names;
+		else
+		{
+			if (this._names != newData)
+				this._names = newData;
+			return this;
+		}
+	}
+	
+	function NamedInstance() {};
+	return NamedInstance;
+})();
+
+cr.WebSiteInstance = (function() {
+	WebSiteInstance.prototype.webSite = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._webSite;
+		else
+		{
+		    if (newValue != this._webSite)
+		    {
+				this._webSite = newValue;
+			}
+			return this;
+		}
+	}
+	
+	function WebSiteInstance() {};
+	return WebSiteInstance;
+})();
+
+cr.OrganizationLinkInstance = (function() {
+	OrganizationLinkInstance.prototype.organization = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._organization;
+		else
+		{
+			if ((this._organization == null) != (newValue == null) ||
+			    (newValue && newValue.id != this._organization.id()))
+			{
+				this._organization = newValue;
+			}
+			return this;
+		}
+	}
+	
+	OrganizationLinkInstance.prototype.setData = function(d)
+	{
+		if ('organization' in d) {
+			this._organization = new cr.Organization();
+			this._organization.setData(d['organization']);
+			this._organization = crp.pushInstance(this._organization);
+		}
+		else
+			this._organization = null;
+	}
+
+	OrganizationLinkInstance.prototype.updateData = function(d)
+	{
+		if ('organization' in d) {
+			this._organization = crp.getInstance(d['organization']['id']);
+		}
+	}
+
+	function OrganizationLinkInstance() {};
+	return OrganizationLinkInstance;
+})();
+	
+cr.SiteLinkInstance = (function() {
+	SiteLinkInstance.prototype.site = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._site;
+		else
+		{
+			if ((this._site == null) != (newValue == null) ||
+			    (newValue && newValue.id != this._site.id()))
+			{
+				this._site = newValue;
+			}
+			return this;
+		}
+	}
+
+	SiteLinkInstance.prototype.setData = function(d)
+	{
+		if ('site' in d) {
+			this._site = new cr.Site();
+			this._site.setData(d['site']);
+			this._site = crp.pushInstance(this._site);
+		}
+		else
+			this._site = null;
+	}
+
+	SiteLinkInstance.prototype.updateData = function(d)
+	{
+		if ('site' in d) {
+			this._site = crp.getInstance(d['site']['id']);
+		}
+	}
+
+	function SiteLinkInstance() {};
+	return SiteLinkInstance;
+})();
+	
+cr.OfferingLinkInstance = (function() {
+	OfferingLinkInstance.prototype.offering = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._offering;
+		else
+		{
+			if ((this._offering == null) != (newValue == null) ||
+			    (newValue && newValue.id != this._offering.id()))
+			{
+				this._offering = newValue;
+			}
+			return this;
+		}
+	}
+
+	OfferingLinkInstance.prototype.setData = function(d)
+	{
+		if ('offering' in d) {
+			this._offering = new cr.Offering();
+			this._offering.setData(d['offering']);
+			this._offering = crp.pushInstance(this._offering);
+		}
+		else
+			this._offering = null;
+	}
+
+	OfferingLinkInstance.prototype.updateData = function(d)
+	{
+		if ('offering' in d) {
+			this._offering = crp.getInstance(d['offering']['id']);
+		}
+	}
+
+	function OfferingLinkInstance() {};
+	return OfferingLinkInstance;
+})();
 	
 cr.Address = (function() {
 	Address.prototype = new cr.IInstance();
+	Address.prototype._city = null;
+	Address.prototype._state = null;
+	Address.prototype._zipCode = null;
+	Address.prototype._streets = null;
+	
+	Address.prototype.city = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._city;
+		else
+		{
+		    if (newValue != this._city)
+		    {
+				this._city = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Address.prototype.state = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._state;
+		else
+		{
+		    if (newValue != this._state)
+		    {
+				this._state = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Address.prototype.zipCode = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._zipCode;
+		else
+		{
+		    if (newValue != this._zipCode)
+		    {
+				this._zipCode = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Address.prototype.streets = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._streets;
+		else
+		{
+		    if (newValue != this._streets)
+		    {
+				this._streets = newValue;
+			}
+			return this;
+		}
+	}
+	
+	/** Sets the data for this address based on a dictionary of data that
+		came from the server.
+	 */
+	Address.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._city = 'city' in d ? d['city'] : "";
+		this._state = 'state' in d ? d['state'] : "";
+		this._zipCode = 'zipCode' in d ? d['zipCode'] : "";
+		if ('streets' in d)
+			this._streets = d['streets'].map(function(d) {
+								var i = new cr.Street();
+								i.setData(d);
+								return i;
+							});
+    }
+    
+    /** Merge the contents of the specified source into this Address for
+    	values that are not specified herein.
+     */
+	Address.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._city) this._city = source._city;
+		if (!this._state) this._state = source._state;
+		if (!this._zipCode) this._zipCode = source._zipCode;
+		if (!this._streets && source._streets)
+			this._streets = source._streets.map(function(i)
+				{
+					j = new cr.Street();
+					j.mergeData(i);
+					return j;
+				});
+		return this;
+	}
+	
+	/** For a newly created address, set its contents to valid values. */
+	Address.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._city = "";
+		this._state = "";
+		this._zipCode = "";
+		this._streets = [];
+	}
+	
+	/** Called after the contents of the Address have been updated on the server. */
+	Address.prototype.updateData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		if ('city' in d)
+			this._city = d['city'];
+		if ('state' in d)
+			this._state = d['state'];
+		if ('zip code' in d)
+			this._zipCode = d['zip code'];
+		if ('streets' in d)
+		{
+			updateList(this.streets, d['streets'], cr.Street, "streetAdded.cr", "streetDeleted.cr");
+		}
+	}
 	
 	function Address() {
 	    cr.IInstance.call(this);
@@ -2826,10 +3172,10 @@ cr.CommentPromptText = (function() {
 })();
 	
 cr.DisqualifyingTag = (function() {
-	DisqualifyingTag.prototype = new cr.IInstance();
+	DisqualifyingTag.prototype = new cr.ServiceLinkInstance();
 	
 	function DisqualifyingTag() {
-	    cr.IInstance.call(this);
+	    cr.ServiceLinkInstance.call(this);
 	};
 	
 	return DisqualifyingTag;
@@ -2873,75 +3219,18 @@ cr.Engagement = (function() {
 		}
 	}
 	
-	Engagement.prototype.organization = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._organization;
-		else
-		{
-			if (!this._organization ||
-			    newValue.id != this._organization.id())
-			{
-				this._organization = new cr.Organization();
-				this._organization.setData(newValue);
-			}
-		}
-	}
-
-	Engagement.prototype.site = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._site;
-		else
-		{
-			if (!this._site ||
-			    newValue.id != this._site.id())
-			{
-				this._site = new cr.Site();
-				this._site.setData(newValue);
-			}
-		}
-	}
-
-	Engagement.prototype.offering = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._offering;
-		else
-		{
-			if (!this._offering ||
-			    newValue.id != this._offering.id())
-			{
-				this._offering = new cr.Offering();
-				this._offering.setData(newValue);
-				this._offering = crp.getInstance(this._offering.id());
-			}
-		}
-	}
+	Engagement.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
+	Engagement.prototype.site = cr.SiteLinkInstance.prototype.site;
+	Engagement.prototype.offering = cr.OfferingLinkInstance.prototype.offering;
 
 	Engagement.prototype.setData = function(d)
 	{
 		cr.UserLinkInstance.prototype.setData.call(this, d);
 		this._start = 'start' in d ? d['start'] : "";
 		this._end = 'end' in d ? d['end'] : "";
-		if ('organization' in d)
-		{
-			this._organization = new cr.Organization();
-			this._organization.setData(d['organization']);
-			this._organization = crp.pushInstance(this._organization);
-		}
-		if ('site' in d)
-		{
-			this._site = new cr.Organization();
-			this._site.setData(d['site']);
-			this._site = crp.pushInstance(this._site);
-		}
-		if ('offering' in d)
-		{
-			this._offering = new cr.Offering();
-			this._offering.setData(d['offering']);
-			this._offering = crp.pushInstance(this._offering);
-		}
+		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
+		cr.SiteLinkInstance.prototype.setData.call(this, d);
+		cr.OfferingLinkInstance.prototype.setData.call(this, d);
     }
     
     Engagement.prototype.mergeData = function(source)
@@ -3004,19 +3293,9 @@ cr.Experience = (function() {
 		}
 	}
 	
-	Experience.prototype.organization = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._organization;
-		else
-		{
-		    if (newValue != this._organization)
-		    {
-				this._organization = newValue;
-			}
-			return this;
-		}
-	}
+	Experience.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
+	Experience.prototype.site = cr.SiteLinkInstance.prototype.site;
+	Experience.prototype.offering = cr.OfferingLinkInstance.prototype.offering;
 	
 	Experience.prototype.appendUpdateOrganizationCommand = function(newValue, initialData, sourceObjects)
 	{
@@ -3044,20 +3323,6 @@ cr.Experience = (function() {
 			this.customOrganization, 'custom organization', initialData, sourceObjects);
 	}
 
-	Experience.prototype.site = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._site;
-		else
-		{
-		    if (newValue != this._site)
-		    {
-				this._site = newValue;
-			}
-			return this;
-		}
-	}
-	
 	Experience.prototype.appendUpdateSiteCommand = function(newValue, initialData, sourceObjects)
 	{
 		this.appendUpdateReferenceCommand(newValue, 
@@ -3084,20 +3349,6 @@ cr.Experience = (function() {
 			this.customSite, 'custom site', initialData, sourceObjects);
 	}
 
-	Experience.prototype.offering = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._offering;
-		else
-		{
-		    if (newValue != this._offering)
-		    {
-				this._offering = newValue;
-			}
-			return this;
-		}
-	}
-	
 	Experience.prototype.appendUpdateOfferingCommand = function(newValue, initialData, sourceObjects)
 	{
 		this.appendUpdateReferenceCommand(newValue, 
@@ -3184,14 +3435,19 @@ cr.Experience = (function() {
 			this.timeframe, 'timeframe', initialData, sourceObjects);
 	}
 
-	Experience.prototype.services = function(newValue)
+	Experience.prototype.experienceServices = function(newValue)
 	{
 		if (newValue === undefined)
+		{
+			if (this._services)
+				cr.assertArrayType(this._services, cr.ExperienceService);
 			return this._services;
+		}
 		else
 		{
 		    if (newValue != this._services)
 		    {
+		    	cr.assertArrayType(newValue, cr.ExperienceService);
 				this._services = newValue;
 			}
 			return this;
@@ -3274,30 +3530,31 @@ cr.Experience = (function() {
 				});
 	}
 	
+	Experience.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._organization = null;
+		this._customOrganization = "";
+		this._site = null;
+		this._customSite = "";
+		this._offering = null;
+		this._customOffering = "";
+		this._start = "";
+		this._end = "";
+		this._timeframe = "Previous";
+		this._services = [];
+		this._customServices = [];
+		this._comments = [];
+	}
+	
 	Experience.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		if ('organization' in d) {
-			this._organization = new cr.Organization();
-			this._organization.setData(d['organization']);
-		}
-		else
-			this._organization = null;
+		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
+		cr.SiteLinkInstance.prototype.setData.call(this, d);
+		cr.OfferingLinkInstance.prototype.setData.call(this, d);
 		this._customOrganization = 'custom organization' in d ? d['custom organization'] : "";
-		if ('site' in d) {
-			this._site = new cr.Site();
-			this._site.setData(d['site']);
-		}
-		else
-			this._site = null;
 		this._customSite = 'custom site' in d ? d['custom site'] : "";
-		if ('offering' in d) {
-			this._offering = new cr.Offering();
-			this._offering.setData(d['offering']);
-			this._offering = crp.pushInstance(this._offering);
-		}
-		else
-			this._offering = null;
 		this._customOffering = 'custom offering' in d ? d['custom offering'] : "";
 		this._start = 'start' in d ? d['start'] : "";
 		this._end = 'end' in d ? d['end'] : "";
@@ -3322,7 +3579,7 @@ cr.Experience = (function() {
 							});
     }
     
-	Experience.prototype.calculateDescription = function(languageCode)
+	Experience.prototype.calculateDescription = function(language)
 	{
 // 		if (!this.getCells())
 // 		{
@@ -3427,15 +3684,15 @@ cr.Experience = (function() {
 		var offering = this.offering();
 		if (offering && offering.id())
 		{
-			if (!offering.services())
+			if (!offering.offeringServices())
 				throw new Error("Runtime error: offering services are not loaded");
 			
-			names = offering.services()
+			names = offering.offeringServices()
 				.filter(function(v) { return !v.isEmpty(); })
 				.map(function(v) { return v.description(); });
 		}
 	
-		var services = this.services();
+		var services = this.experienceServices();
 		var customServices = this.customServices();
 
 		if (services)
@@ -3573,6 +3830,216 @@ cr.ExperienceService = (function() {
 	
 cr.ExperiencePrompt = (function() {
 	ExperiencePrompt.prototype = new cr.IInstance();
+    ExperiencePrompt.prototype._name = null;
+    ExperiencePrompt.prototype._organization = null;
+    ExperiencePrompt.prototype._site = null;
+    ExperiencePrompt.prototype._offering = null;
+    ExperiencePrompt.prototype._domain = null;
+    ExperiencePrompt.prototype._stage = null;
+    ExperiencePrompt.prototype._timeframe = null;
+	ExperiencePrompt.prototype._translations = null;
+	ExperiencePrompt.prototype._services = null;
+	ExperiencePrompt.prototype._disqualifyingTags = null;
+	
+	ExperiencePrompt.prototype.name = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._name;
+		else
+		{
+		    if (newValue != this._name)
+		    {
+				this._name = newValue;
+			}
+			return this;
+		}
+	}
+	
+	ExperiencePrompt.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
+	ExperiencePrompt.prototype.site = cr.SiteLinkInstance.prototype.site;
+	ExperiencePrompt.prototype.offering = cr.OfferingLinkInstance.prototype.offering;
+	
+	ExperiencePrompt.prototype.domain = function(newValue)
+	{
+		if (newValue === undefined)
+		{
+			return this._domainID && crp.getInstance(this._domainID);
+		}
+		else
+		{
+		    if (newValue.id() != this._domainID)
+		    {
+				this._domainID = newValue.id();
+			}
+			return this;
+		}
+	}
+	
+	ExperiencePrompt.prototype.stage = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._stage;
+		else
+		{
+		    if (newValue != this._stage)
+		    {
+				this._stage = newValue;
+			}
+			return this;
+		}
+	}
+	
+	ExperiencePrompt.prototype.timeframe = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._timeframe;
+		else
+		{
+		    if (newValue != this._timeframe)
+		    {
+				this._timeframe = newValue;
+			}
+			return this;
+		}
+	}
+	
+	ExperiencePrompt.prototype.translations = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._translations;
+		else
+		{
+		    if (newValue != this._translations)
+		    {
+				this._translations = newValue;
+			}
+			return this;
+		}
+	}
+	
+	ExperiencePrompt.prototype.text = function(language)
+	{
+		return cr.TranslationInstance.localText(this._translations, language);
+	}
+	
+	ExperiencePrompt.prototype.experiencePromptServices = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._services;
+		else
+		{
+		    if (newValue != this._services)
+		    {
+				this._services = newValue;
+			}
+			return this;
+		}
+	}
+	
+	ExperiencePrompt.prototype.disqualifyingTags = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._disqualifyingTags;
+		else
+		{
+		    if (newValue != this._disqualifyingTags)
+		    {
+				this._disqualifyingTags = newValue;
+			}
+			return this;
+		}
+	}
+	
+	ExperiencePrompt.prototype.setDefaultValues = function()
+	{
+		this._name = "";
+		this._organization = null;
+		this._site = null;
+		this._offering = null;
+		this._domainID = null;
+		this._stage = "";
+		this._timeframe = "";
+		this._translations = [];
+		this._services = [];
+		this._disqualifyingTags = [];
+	}
+	
+	/** Sets the data for this ExperiencePrompt based on a dictionary of data that
+		came from the server.
+	 */
+	ExperiencePrompt.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
+		cr.SiteLinkInstance.prototype.setData.call(this, d);
+		cr.OfferingLinkInstance.prototype.setData.call(this, d);
+		this._name = ('name' in d) ? d['name'] : "";
+		this._domainID = ('domain' in d) ? d['domain']['id'] : null;
+		this._stage = ('stage' in d) ? d['stage'] : "";
+		this._timeframe = ('timeframe' in d) ? d['timeframe'] : "";
+		if ('translations' in d)
+			this._translations = d['translations'].map(function(d) {
+								var i = new cr.ExperiencePromptText();
+								i.setData(d);
+								return i;
+							});
+		if ('services' in d)
+			this._services = d['services'].map(function(d) {
+								var i = new cr.ExperiencePromptService();
+								i.setData(d);
+								return i;
+							});
+		if ('disqualifying tags' in d)
+			this._disqualifyingTags = d['disqualifying tags'].map(function(d) {
+								var i = new cr.DisqualifyingTag();
+								i.setData(d);
+								return i;
+							});
+	}
+	
+    /** Merge the contents of the specified source into this ExperiencePrompt for
+    	values that are not specified herein.
+     */
+	ExperiencePrompt.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._organization) this._organization = source._organization;
+		if (!this._site) this._site = source._site;
+		if (!this._offering) this._offering = source._offering;
+		if (!this._domainID) this._domainID = source._domainID;
+		if (!this._stage) this._stage = source._stage;
+		if (!this._timeframe) this._timeframe = source._timeframe;
+		if (!this._translations) this._translations = source._translations;
+		if (!this._services) this._services = source._services;
+		if (!this._disqualifyingTags) this._disqualifyingTags = source._disqualifyingTags;
+	}
+	
+	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
+	ExperiencePrompt.prototype.updateData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		cr.OrganizationLinkInstance.prototype.updateData.call(this, d);
+		cr.SiteLinkInstance.prototype.updateData.call(this, d);
+		cr.OfferingLinkInstance.prototype.updateData.call(this, d);
+		if ('domain' in d)
+			this._domainID = d['domain']['id'];
+		if ('stage' in d)
+			this._stage = d['stage'];
+		if ('timeframe' in d)
+			this._timeframe = d['timeframe'];
+		if ('translations' in d)
+		{
+			updateList(this.translations, d['translations'], cr.ExperiencePromptText, "translationAdded.cr", "translationDeleted.cr");
+		}
+		if ('services' in d)
+		{
+			updateList(this.services, d['services'], cr.ExperiencePromptService, "serviceAdded.cr", "serviceDeleted.cr");
+		}
+		if ('disqualifyingTags' in d)
+		{
+			updateList(this.disqualifyingTags, d['disqualifyingTags'], cr.DisqualifyingTag, "disqualifyingTagAdded.cr", "disqualifyingTagDeleted.cr");
+		}
+	}
 	
 	function ExperiencePrompt() {
 	    cr.IInstance.call(this);
@@ -3583,10 +4050,10 @@ cr.ExperiencePrompt = (function() {
 })();
 	
 cr.ExperiencePromptService = (function() {
-	ExperiencePromptService.prototype = new cr.IInstance();
+	ExperiencePromptService.prototype = new cr.OrderedServiceLinkInstance();
 	
 	function ExperiencePromptService() {
-	    cr.IInstance.call(this);
+	    cr.OrderedServiceLinkInstance.call(this);
 	};
 	
 	return ExperiencePromptService;
@@ -3594,10 +4061,10 @@ cr.ExperiencePromptService = (function() {
 })();
 	
 cr.ExperiencePromptText = (function() {
-	ExperiencePromptText.prototype = new cr.IInstance();
+	ExperiencePromptText.prototype = new cr.TranslationInstance();
 	
 	function ExperiencePromptText() {
-	    cr.IInstance.call(this);
+	    cr.TranslationInstance.call(this);
 	};
 	
 	return ExperiencePromptText;
@@ -3866,35 +4333,8 @@ cr.Offering = (function() {
     Offering.prototype._organization = null;
     Offering.prototype._site = null;
 	
-	Offering.prototype.names = function(newData)
-	{
-		if (newData === undefined)
-			return this._names;
-		else
-		{
-			this._names = newData.map(function(d)
-				{
-					var i = new cr.OfferingName();
-					i.setData(d);
-					return i;
-				});
-			return this;
-		}
-	}
-	
-	Offering.prototype.webSite = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._webSite;
-		else
-		{
-		    if (newValue != this._webSite)
-		    {
-				this._webSite = newValue;
-			}
-			return this;
-		}
-	}
+	Offering.prototype.names = cr.NamedInstance.prototype.names;
+	Offering.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
 	
 	Offering.prototype.minimumAge = function(newValue)
 	{
@@ -3952,7 +4392,7 @@ cr.Offering = (function() {
 		}
 	}
 	
-	Offering.prototype.services = function(newValue)
+	Offering.prototype.offeringServices = function(newValue)
 	{
 		if (newValue === undefined)
 			return this._services;
@@ -3983,8 +4423,12 @@ cr.Offering = (function() {
 	Offering.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		if ('name' in d)
-			this.names(d['name']);
+		if ('names' in d)
+			this._names = d['names'].map(function(d) {
+					var i = new cr.OfferingName();
+					i.setData(d);
+					return i;
+				});
 		this._webSite = 'web site' in d ? d['web site'] : "";
 		this._minimumAge = 'minimum age' in d ? d['minimum age'] : "";
 		this._maximumAge = 'maximum age' in d ? d['maximum age'] : "";
@@ -4002,55 +4446,32 @@ cr.Offering = (function() {
 								i.setData(d);
 								return i;
 							});
-		if ('organization' in d)
-		{
-		    this._organization = new cr.Organization();
-		    this._organization.setData(d['organization']);
-		    this._organization = crp.pushInstance(this._organization);
-		}
-		if ('site' in d)
-		{
-		    this._site = new cr.Site();
-		    this._site.setData(d['site']);
-		    this._site = crp.pushInstance(this._site);
-		}
+		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
+		cr.SiteLinkInstance.prototype.setData.call(this, d);
     }
     
+    /** Merge the contents of the specified source into this Offering for
+    	values that are not specified herein.
+     */
 	Offering.prototype.mergeData = function(source)
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
 		if (!this._names && source._names)
-			this._names = source._names.map(function(i)
-				{
-					j = new OfferingName();
-					j.mergeData(i);
-					return j;
-				});
+			this._names = source._names;
 		if (!this._webSite) this._webSite = source._webSite;
 		if (!this._minimumAge) this._minimumAge = source._minimumAge;
 		if (!this._maximumAge) this._maximumAge = source._maximumAge;
 		if (!this._minimumGrade) this._minimumGrade = source._minimumGrade;
 		if (!this._maximumGrade) this._maximumGrade = source._maximumGrade;
 		if (!this._services && source._services)
-			this._services = source._services.map(function(i)
-				{
-					j = new cr.OfferingService();
-					j.mergeData(i);
-					return j;
-				});
+			this._services = source._services;
 		if (!this._sessions && source._sessions)
-			this._sessions = source._sessions.map(function(i)
-				{
-					j = new cr.Session();
-					j.mergeData(i);
-					return j;
-				});
+			this._sessions = source._sessions;
 		if (!this._organization) this._organization = source._organization;
 		if (!this._site) this._site = source._site;
 		return this;
 	}
 	
-    
 	Offering.prototype.ageRange = function()
 	{
 		var min = this.minimumAge();
@@ -4131,6 +4552,148 @@ cr.OfferingService = (function() {
 	
 cr.Organization = (function() {
 	Organization.prototype = new cr.Grantable();
+	Organization.prototype._webSite = null;
+	Organization.prototype._inquiryAccessGroup = null;
+	Organization.prototype._names = null;
+	Organization.prototype._groups = null;
+	Organization.prototype._sites = null;
+	
+	Organization.prototype.names = cr.NamedInstance.prototype.names;
+	Organization.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
+	
+	Organization.prototype.inquiryAccessGroup = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._inquiryAccessGroup;
+		else
+		{
+		    if (newValue != this._inquiryAccessGroup)
+		    {
+				this._inquiryAccessGroup = newValue;
+			}
+			return this;
+		}
+	}
+	
+
+	Organization.prototype.groups = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._groups;
+		else
+		{
+		    if (newValue != this._groups)
+		    {
+				this._groups = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Organization.prototype.sites = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._sites;
+		else
+		{
+		    if (newValue != this._sites)
+		    {
+				this._sites = newValue;
+			}
+			return this;
+		}
+	}
+	
+	/** Sets the data for this Organization based on a dictionary of data that
+		came from the server.
+	 */
+	Organization.prototype.setData = function(d)
+	{
+		cr.Grantable.prototype.setData.call(this, d);
+		this._webSite = 'web site' in d ? d['web site'] : "";
+		if ('names' in d)
+			this._names = d['names'].map(function(d) {
+								var i = new cr.OrganizationName();
+								i.setData(d);
+								return i;
+							});
+		if ('groups' in d)
+			this._groups = d['groups'].map(function(d) {
+								var i = new cr.Group();
+								i.setData(d);
+								return crp.pushInstance(i);
+							});
+		if ('sites' in d)
+			this._sites = d['sites'].map(function(d) {
+								var i = new cr.Site();
+								i.setData(d);
+								return crp.pushInstance(i);
+							});
+		if ('inquiry access group' in d && this_groups)
+			this._inquiryAccessGroup = this._groups.find(function(group)
+				{
+					return group.id() == d['inquiry access group']['id'];
+				});
+    }
+    
+    /** Merge the contents of the specified source into this Organization for
+    	values that are not specified herein.
+     */
+	Organization.prototype.mergeData = function(source)
+	{
+		cr.Grantable.prototype.mergeData.call(this, source);
+		if (!this._webSite) this._webSite = source._webSite;
+		if (!this._names && source._names)
+			this._names = source._names;
+		if (!this._groups && source._groups)
+			this._groups = source._groups;
+		if (!this._sites && source._sites)
+			this._sites = source._sites;
+		if (!this._inquiryAccessGroup && source._inquiryAccessGroup && this._groups)
+		{
+			this._inquiryAccessGroup = this._groups.find(function(group)
+				{
+					return group.id() == source._inquiryAccessGroup.id();
+				});
+		}
+		return this;
+	}
+	
+	/** For a newly created Organization, set its contents to valid values. */
+	Organization.prototype.setDefaultValues = function()
+	{
+		cr.Grantable.prototype.setDefaultValues.call(this);
+		this._webSite = "";
+		this._names = [];
+		this._groups = [];
+		this._sites = [];
+		this._inquiryAccessGroup = null;
+	}
+	
+	/** Called after the contents of the Organization have been updated on the server. */
+	Organization.prototype.updateData = function(d)
+	{
+		cr.Grantable.prototype.updateData.call(this, d);
+		if ('web site' in d)
+			this._city = d['web site'];
+		if ('names' in d)
+		{
+			updateList(this.names, d['names'], cr.SiteName, "nameAdded.cr", "nameDeleted.cr");
+		}
+		if ('groups' in d)
+		{
+			updateList(this.groups, d['groups'], cr.Group, "groupAdded.cr", "groupDeleted.cr");
+		}
+		if ('sites' in d)
+		{
+			updateList(this.sites, d['sites'], cr.Site, "siteAdded.cr", "siteDeleted.cr");
+		}
+		if ('inquiry access group' in d)
+			this._inquiryAccessGroup = this.groups().find(function(group)
+				{
+					return group.id() == d['inquiry access group']['id'];
+				});
+	}
 	
 	function Organization() {
 	    cr.Grantable.call(this);
@@ -4354,6 +4917,95 @@ cr.Path = (function() {
 	
 cr.Period = (function() {
 	Period.prototype = new cr.IInstance();
+    Period.prototype._weekday = null;
+    Period.prototype._startTime = null;
+    Period.prototype._endTime = null;
+	
+	Period.prototype.weekday = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._weekday;
+		else
+		{
+		    if (newValue != this._weekday)
+		    {
+				this._weekday = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Period.prototype.startTime = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._startTime;
+		else
+		{
+		    if (newValue != this._startTime)
+		    {
+				this._startTime = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Period.prototype.endTime = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._endTime;
+		else
+		{
+		    if (newValue != this._endTime)
+		    {
+				this._endTime = newValue;
+			}
+			return this;
+		}
+	}
+	
+	/** Sets the data for this Period based on a dictionary of data that
+		came from the server.
+	 */
+	Period.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._weekday = 'weekday' in d ? d['weekday'] : "";
+		this._startTime = 'start time' in d ? d['start time'] : "";
+		this._endTime = 'end time' in d ? d['end time'] : "";
+    }
+    
+    /** Merge the contents of the specified source into this Period for
+    	values that are not specified herein.
+     */
+	Period.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (this._weekday === null) this._weekday = source._weekday;
+		if (!this._startTime) this._startTime = source._startTime;
+		if (!this._endTime) this._endTime = source._endTime;
+		return this;
+	}
+	
+	/** For a newly created Period, set its contents to valid values. */
+	Period.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._weekday = "";
+		this._startTime = "";
+		this._endTime = "";
+	}
+	
+	/** Called after the contents of the Period have been updated on the server. */
+	Period.prototype.updateData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		if ('weekday' in d)
+			this._weekday = d['weekday'];
+		if ('start time' in d)
+			this._startTime = d['start time'];
+		if ('end time' in d)
+			this._endTime = d['end time'];
+	}
 	
 	function Period() {
 	    cr.IInstance.call(this);
@@ -4386,21 +5038,7 @@ cr.Service = (function() {
 		}
 	}
 	
-	Service.prototype.names = function(newData)
-	{
-		if (newData === undefined)
-			return this._names;
-		else
-		{
-			this._names = newData.map(function(d)
-				{
-					var i = new cr.ServiceName();
-					i.setData(d);
-					return i;
-				});
-			return this;
-		}
-	}
+	Service.prototype.names = cr.NamedInstance.prototype.names;
 	
 	Service.prototype.organizationLabels = function(newData)
 	{
@@ -4450,7 +5088,7 @@ cr.Service = (function() {
 		}
 	}
 	
-	Service.prototype.services = function(newData)
+	Service.prototype.serviceImplications = function(newData)
 	{
 		if (newData === undefined)
 			return this._services;
@@ -4471,7 +5109,12 @@ cr.Service = (function() {
 		cr.IInstance.prototype.setData.call(this, d);
 		this._stage = 'stage' in d ? d['stage'] : "";
 		if ('names' in d)
-			this.names(d['names']);
+			this._names = d['names'].map(function(d)
+				{
+					var i = new cr.ServiceName();
+					i.setData(d);
+					return i;
+				});
 		if ('organization labels' in d)
 			this.organizationLabels(d['organization labels']);
 		if ('site labels' in d)
@@ -4479,7 +5122,7 @@ cr.Service = (function() {
 		if ('offering labels' in d)
 			this.offeringLabels(d['offering labels']);
 		if ('services' in d)
-			this.services(d['services']);
+			this.serviceImplications(d['services']);
 	}
 	
     Service.servicesPromise = function()
@@ -4534,7 +5177,7 @@ cr.Service = (function() {
 			
 		if (this.id())
 		{
-			var services = this.services();
+			var services = this.serviceImplications();
 			/* services may be null if the service has been deleted */
 			var s = services && services.map(function(s)
 				{
@@ -4586,7 +5229,7 @@ cr.Service = (function() {
 		if (re.test(this.description()))
 			return true;
 		
-		var services = this.services();
+		var services = this.serviceImplications();
 		return services.find(function(d) { return d.description().toLocaleUpperCase() == s; });	
 	}
 	
@@ -4919,7 +5562,12 @@ cr.Session = (function() {
 	{
 		cr.IInstance.prototype.setData.call(this, d);
 		if ('name' in d)
-			this.names(d['name']);
+			this._names = d['name'].map(function(d)
+				{
+					var i = new cr.SessionName();
+					i.setData(d);
+					return i;
+				});
 		this._registrationDeadline = 'registration deadline' in d ? d['registration deadline'] : "";
 		this._start = 'start' in d ? d['start'] : "";
 		this._end = 'end' in d ? d['end'] : "";
@@ -4954,41 +5602,20 @@ cr.Session = (function() {
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
 		if (!this._names && source._names)
-			this._names = source._names.map(function(i)
-				{
-					j = new SessionName();
-					j.mergeData(i);
-					return j;
-				});
+			this._names = source._names;
 		if (!this._webSite) this._webSite = source._webSite;
 		if (!this._registrationDeadline) this._registrationDeadline = source._registrationDeadline;
 		if (!this._start) this._start = source._start;
 		if (!this._end) this._end = source._end;
 		if (!this._canRegister) this._canRegister = source._canRegister;
 		if (!this._inquiries && source._inquiries)
-			this._inquiries = source._inquiries.map(function(d) {
-								var i = new cr.Inquiry();
-								i.mergeData(d);
-								return i;
-							});
+			this._inquiries = source._inquiries;
 		if (!this._enrollments && source._enrollments)
-				this._enrollments = source._enrollments.map(function(d) {
-									var i = new cr.Enrollment();
-									i.mergeData(d);
-									return i;
-								});
+			this._enrollments = source._enrollments;
 		if (!this._engagements && source._engagements)
-				this._engagements = source._engagements.map(function(d) {
-									var i = new cr.Engagement();
-									i.mergeData(d);
-									return i;
-								});
+			this._engagements = source._engagements;
 		if (!this._periods && source._periods)
-				this._periods = source._periods.map(function(d) {
-									var i = new cr.Period();
-									i.mergeData(d);
-									return i;
-								});
+			this._periods = source._periods;
     }
     
 	function Session() {
@@ -5012,6 +5639,123 @@ cr.SessionName = (function() {
 	
 cr.Site = (function() {
 	Site.prototype = new cr.IInstance();
+	Site.prototype._webSite = null;
+	Site.prototype._names = null;
+	Site.prototype._offerings = null;
+	Site.prototype._address = null;
+	Site.prototype._organization = null;
+
+	Site.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
+	Site.prototype.names = cr.NamedInstance.prototype.names;
+	
+	Site.prototype.offerings = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._offerings;
+		else
+		{
+		    if (newValue != this._offerings)
+		    {
+				this._offerings = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Site.prototype.address = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._address;
+		else
+		{
+		    if (newValue != this._address)
+		    {
+				this._address = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Site.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
+	
+	/** Sets the data for this Site based on a dictionary of data that
+		came from the server.
+	 */
+	Site.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._webSite = 'web site' in d ? d['web site'] : "";
+		if ('names' in d)
+			this._names = d['names'].map(function(d) {
+								var i = new cr.SiteName();
+								i.setData(d);
+								return i;
+							});
+		if ('address' in d)
+		{
+			this._address = new cr.Address();
+			this._address.setData(d['address']);
+		}
+		if ('offerings' in d)
+			this._offerings = d['offerings'].map(function(d) {
+								var i = new cr.Offering();
+								i.setData(d);
+								return crp.pushInstance(i);
+							});
+		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
+    }
+    
+    /** Merge the contents of the specified source into this Site for
+    	values that are not specified herein.
+     */
+	Site.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._webSite) this._webSite = source._webSite;
+		if (!this._names && source._names)
+			this._names = source._names;
+		if (source._address)
+		{
+			if (!this._address)
+				this._address = new cr.Address();
+			this._address.mergeData(source._address);
+		}
+		if (!this._offerings && source._offerings)
+			this._offerings = source._offerings;
+		/* Set organization separately. */
+		return this;
+	}
+	
+	/** For a newly created Site, set its contents to valid values. */
+	Site.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._webSite = "";
+		this._names = [];
+		this._address = new cr.Address();
+		this._address.setDefaultValues();
+		this._offerings = [];
+	}
+	
+	/** Called after the contents of the Site have been updated on the server. */
+	Site.prototype.updateData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		if ('web site' in d)
+			this._city = d['web site'];
+		if ('address' in d)
+			this._address.updateData(d['address']);
+		if ('zip code' in d)
+			this._zipCode = d['zip code'];
+		if ('names' in d)
+		{
+			updateList(this.names, d['names'], cr.SiteName, "nameAdded.cr", "nameDeleted.cr");
+		}
+		if ('offerings' in d)
+		{
+			updateList(this.offerings, d['offerings'], cr.Offering, "offeringAdded.cr", "offeringDeleted.cr");
+		}
+	}
 	
 	function Site() {
 	    cr.IInstance.call(this);
@@ -5034,6 +5778,75 @@ cr.SiteName = (function() {
 	
 cr.Street = (function() {
 	Street.prototype = new cr.IInstance();
+	Street.prototype._position = null;
+	Street.prototype._text = null;
+	
+	Street.prototype.position = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._position;
+		else
+		{
+		    if (newValue != this._position)
+		    {
+				this._position = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Street.prototype.text = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._text;
+		else
+		{
+		    if (newValue != this._text)
+		    {
+				this._text = newValue;
+			}
+			return this;
+		}
+	}
+	
+	/** Sets the data for this street based on a dictionary of data that
+		came from the server.
+	 */
+	Street.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._position = 'position' in d ? d['position'] : "";
+		this._text = 'text' in d ? d['text'] : "";
+    }
+    
+    /** Merge the contents of the specified source into this Street for
+    	values that are not specified herein.
+     */
+	Street.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (this._position === null) this._position = source._position;
+		if (!this._text) this._text = source._text;
+		return this;
+	}
+	
+	/** For a newly created street, set its contents to valid values. */
+	Street.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._position = "";
+		this._text = "";
+	}
+	
+	/** Called after the contents of the Street have been updated on the server. */
+	Street.prototype.updateData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		if ('position' in d)
+			this._position = d['position'];
+		if ('text' in d)
+			this._text = d['text'];
+	}
 	
 	function Street() {
 	    cr.IInstance.call(this);
@@ -5127,7 +5940,7 @@ cr.User = (function() {
 	
 	User.prototype.updateData = function(d)
 	{
-		cr.Grantable.prototype.mergeData.call(this, source);
+		cr.Grantable.prototype.updateData.call(this, d);
 		if ('first name' in d)
 			this._firstName = d['first name'];
 		if ('last name' in d)

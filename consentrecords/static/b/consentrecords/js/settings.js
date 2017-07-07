@@ -934,7 +934,7 @@ crn.ExperienceSuggestion = (function() {
 											var tag = crp.getInstance(args[1].id());
 											var services = [new ExperienceService()];
 											services[0].service(tag);
-											experience.newExperiences.services(services);
+											experience.experienceServices(services);
 											new NewExperiencePanel(experience, revealPanelLeft)
 																.showLeft()
 																.always(unblockClick);

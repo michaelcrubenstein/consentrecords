@@ -6,6 +6,52 @@ var ExperienceController = (function() {
 	ExperienceController.prototype.instance = null;
 	ExperienceController.prototype.newExperience = null;
 	
+	ExperienceController.prototype._domain = null;
+	ExperienceController.prototype._stage = null;
+	ExperienceController.prototype._title = null;
+	
+	ExperienceController.prototype.domain = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._domain;
+		else
+		{
+		    if (newValue != this._domain)
+		    {
+				this._domain = newValue;
+			}
+			return this;
+		}
+	}
+	
+	ExperienceController.prototype.stage = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._stage;
+		else
+		{
+		    if (newValue != this._stage)
+		    {
+				this._stage = newValue;
+			}
+			return this;
+		}
+	}
+	
+	ExperienceController.prototype.title = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._title;
+		else
+		{
+		    if (newValue != this._title)
+		    {
+				this._title = newValue;
+			}
+			return this;
+		}
+	}
+	
 	ExperienceController.prototype.organizationName = function()
 	{
 		return this.newExperience.organizationName();
@@ -36,9 +82,9 @@ var ExperienceController = (function() {
 		return this.newExperience.offering(newValue);
 	}
 
-	ExperienceController.prototype.services = function(newValue)
+	ExperienceController.prototype.experienceServices = function(newValue)
 	{
-		return this.newExperience.services(newValue);
+		return this.newExperience.experienceServices(newValue);
 	}
 
 	ExperienceController.prototype.start = function(newValue)
@@ -57,24 +103,21 @@ var ExperienceController = (function() {
 	}
 
 	ExperienceController.prototype.setOrganization = function(args) {
-		if ("instance" in args && args.instance)
-		{
-			var d = args.instance;
-			if (d instanceof cr.Site)
-			{
-				this.newExperience.organization(d.organization())
-								  .site(d)
-								  .customOrganization(null)
-								  .customSite(null);
-			}
-			else
-			{
-				this.newExperience.organization(d)
-								  .site(null)
-								  .customOrganization(null)
-								  .customSite(null);
-			}
-		}
+	    if (args instanceof cr.Site)
+			this.newExperience.organization(args.organization())
+							  .site(args)
+							  .customOrganization(null)
+							  .customSite(null);
+		else if (args instanceof cr.Organization)
+			this.newExperience.organization(args)
+							  .site(null)
+							  .customOrganization(null)
+							  .customSite(null);
+		else if (!args)
+			this.newExperience.organization(null)
+							  .site(null)
+							  .customOrganization(null)
+							  .customSite(null);
 		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
@@ -102,7 +145,17 @@ var ExperienceController = (function() {
 	}
 	
 	ExperienceController.prototype.setSite = function(args) {
-		if ("instance" in args && args.instance)
+		if (args instanceof cr.Site)
+		{
+			this.newExperience.site(args)
+							  .customSite(null);
+		}
+		else if (!args)
+		{
+			this.newExperience.site(null)
+							  .customSite(null);
+		}
+		else if ("instance" in args && args.instance)
 		{
 			this.newExperience.site(args.instance)
 							  .customSite(null);
@@ -126,7 +179,17 @@ var ExperienceController = (function() {
 	}
 	
 	ExperienceController.prototype.setOffering = function(args) {
-		if ("instance" in args && args.instance)
+		if (args instanceof cr.Offering)
+		{
+			this.newExperience.offering(args)
+							  .customOffering(null);
+		}
+		else if (!args)
+		{
+			this.newExperience.offering(null)
+							  .customOffering(null);
+		}
+		else if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			this.newExperience.offering(d)
@@ -150,42 +213,24 @@ var ExperienceController = (function() {
 						  .customOffering(null);
 	}
 	
-	/* Args can either be a ReportedObject or a dictionary with a "text" or "instance" property. */
+	/* Args can either be a cr.Service or a string. */
 	ExperienceController.prototype.addService = function(args)
 	{
-		var service;
-		
-		if (args.constructor === ReportedObject)
+		if (args instanceof cr.Service)
 		{
-			service = args;
-			this.services.push(service);
+			var i = new cr.ExperienceService();
+			i.description(args.description());
+			i.service(args);
+			this.experienceServices().push(i);
 		}
-		else if ("text" in args && args.text)
+		else if (typeof(args) == "string")
 		{
-			var newName = args.text;
-			var d = args.instance;
-			if (d && !(d instanceof cr.Service))
-				throw new Error("Invalid instance to addService");
-				
-			service = new ReportedObject({name: newName, pickedObject: d});
-			if (newName.length > 0)
-			{
-				this.services.push(service);
-			}
-		}
-		else if ("instance" in args && args.instance)
-		{
-			if (!(args.instance instanceof cr.Service))
-				throw new Error("Invalid instance to addService");
-				
-			var d = args.instance;
-			var service = new ReportedObject({pickedObject: d})
-			this.services.push(service);
+			var i = new cr.ExperienceCustomService();
+			i.text(args);
+			this.newExperience.customServices().push(i);
 		}
 		else
 			throw new Error("Invalid arguments to addService");
-			
-		return service;
 	}
 	
 	ExperienceController.prototype.removeService = function(service)
@@ -218,8 +263,9 @@ var ExperienceController = (function() {
 			initialData["custom offering"] = [{text: this.offeringName}];
 		
 		var existingServices = null;
-		if (this.offering && this.offering.getCell("Service"))
-			existingServices = this.offering.services();
+		if (this.offering && this.offering.offeringServices())
+			existingServices = this.offering.offeringServices()
+				.map(function(os) { return os.service(); });
 			
 		if (this.timeframe())
 			initialData["Timeframe"] = [{instanceID: this.timeframe()}];
@@ -229,33 +275,29 @@ var ExperienceController = (function() {
 			var s = this.services[i];
 			
 			/* Make sure the service isn't part of the offering's services. */
-			if (s.pickedObject)
+			if (s instanceof cr.Service)
 			{
 				if (!existingServices || 
 					!existingServices.find(function(d) { 
-						return s.pickedObject.id() == d.id(); 
+						return s.id() == d.id(); 
 					}))
 				{
-					if (!initialData["Service"])
-						initialData["Service"] = [{instanceID: s.pickedObject.id()}];
+					if (!initialData["services"])
+						initialData["services"] = [{instanceID: s.id()}];
 					else
-						initialData["Service"].push({instanceID: s.pickedObject.id()});
+						initialData["services"].push({instanceID: s.id()});
 				}
 			}
-			else if (s.name)
+			else if (typeof(s) == "string")
 			{
-				if (!initialData["User Entered Service"])
-					initialData["User Entered Service"] = [{text: s.name}];
+				if (!initialData["custom services"])
+					initialData["custom services"] = [{text: s}];
 				else
-					initialData["User Entered Service"].push({text: s.name});
+					initialData["custom services"].push({text: s});
 			}
 		}
 		
-		initialData["Comments"] = [{cells:
-				{
-					"Comment": []
-				}}
-			];
+		initialData["comments"] = [];
 	}
 	
 	ExperienceController.prototype.getServiceByName = function(name)
@@ -275,10 +317,10 @@ var ExperienceController = (function() {
 		var offering = this.offering;
 		if (offering && offering.id())
 		{
-			if (!offering.services())
+			if (!offering.offeringServices())
 				throw new Error("Runtime error: offering services are not loaded");
 			
-			names = offering.services()
+			names = offering.offeringServices()
 				.filter(function(v) { return !v.isEmpty(); })
 				.map(function(v) { return v.description(); });
 		}
@@ -325,25 +367,27 @@ var ExperienceController = (function() {
 		var offering = this.offering;
 		if (offering && offering.id())
 		{
-			names = offering.services()
-				.filter(function(v) { return !v.isEmpty(); });
+			names = offering.offeringServices()
+				.filter(function(v) { return !v.isEmpty(); })
+				.map(function(os) { return os.service(); });
 			tags = tags.concat(names);
 		}
 
-		tags = tags.concat(this.services.filter(function(v) 
-			{ 
+		tags = tags.concat(this.experienceServices.filter(function(es) 
+			{
+				var esDescription = es.description();
 				return !tags.find(function(d) 
 					{ 
-						return d.description() === v.description(); 
+						return d.description() === esDescription; 
 					})
-			}));
+			})
+			.map(function(es) { return es.service(); })
+			);
 		
 		if (this.domain)
 			tags.push(this.domain);
 		if (this.stage)
 			tags.push(this.stage);
-		if (this.serviceDomain)
-			tags.push(this.serviceDomain);
 			
 		tagDivs.filter(function(d) { return d != null && tags.indexOf(d) < 0; } ).remove();
 		
@@ -435,20 +479,18 @@ var ExperienceController = (function() {
 			var j = 0;
 			
 			var existingServices = null;
-			if (this.offering && this.offering.services())
-				existingServices = this.offering.services()
-					.map(function(d) { return d.id(); });
+			if (this.offering && this.offering.offeringServices())
+				existingServices = this.offering.offeringServices()
+					.map(function(d) { return d.service().id(); });
 
-			var newServices = this.services.filter(function(s) {
-					return s.pickedObject &&
+			var newServices = this.experienceServices().filter(function(es) {
+					return 
 						(!existingServices || 
 					     !existingServices.find(function(d) { 
-							return s.pickedObject.id() == d;
+							return es.service().id() == d;
 							}));
-				})
-				.map(function(d) { return d.pickedObject; });
-			var newUserEnteredServices = this.services.filter(function(d) { return !d.pickedObject; })
-				.map(function(d) { return d.name; });
+				});
+			var newUserEnteredServices = this.customServices();
 			
 			var collateValues = function(cell, newValues, updateData, sourceObjects)
 			{
@@ -475,8 +517,8 @@ var ExperienceController = (function() {
 				}
 			}
 			
-			collateValues(this.instance.getCell("Service"), newServices, updateData, sourceObjects);
-			collateValues(this.instance.getCell("User Entered Service"), newUserEnteredServices, updateData, sourceObjects);
+			collateValues(this.instance.experienceServices(), newServices, updateData, sourceObjects);
+			collateValues(this.instance.customServices(), newUserEnteredServices, updateData, sourceObjects);
 			
 			bootstrap_alert.show($('.alert-container'), "Saving Experience...", "alert-info");
 			
@@ -568,7 +610,7 @@ var ExperienceController = (function() {
 			var services = [new cr.ExperienceService()];
 			services[0].service(service)
 					   .position(0);
-			this.newExperience.services(services);
+			this.newExperience.experienceServices(services);
 		}
 		else
 		{
@@ -585,7 +627,7 @@ var ExperienceController = (function() {
 		this.initPreviousDateRange();
 		
 		/* Call setOrganization, which recognizes this as a site and does the correct thing. */
-		this.setOrganization({instance: d});
+		this.setOrganization(d);
 		
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
@@ -608,8 +650,8 @@ var ExperienceController = (function() {
 		/* Set the organization, then the site, because setting the organization may
 			also set the site.
 		 */
-		this.setOrganization({instance: d.getValue("Organization")});
-		this.setSite({instance: d.getValue("Site")});
+		this.setOrganization(d.organization());
+		this.setSite(d.site());
 		
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
@@ -630,12 +672,12 @@ var ExperienceController = (function() {
 	ExperienceController.prototype.getOfferingConstraint = function()
 	{
 		if (this.services.length > 0 &&
-			this.services[0].pickedObject)
-			return '[Service[Service={0}]]'.format(this.services[0].pickedObject.id());
-		else if (this.domain)
-			return '[Service[Service={0}]]'.format(this.domain.id());
-		else if (this.stage)
-			return '[Service[Stage={0}]]'.format(this.stage);
+			this.services[0])
+			return '[service>service={0}]'.format(this.services[0].id());
+		else if (this.domain())
+			return '[service>service={0}]'.format(this.domain().id());
+		else if (this.stage())
+			return '[service>service[stage={0}]]'.format(this.stage());
 		else
 			return "";
 	}
@@ -659,6 +701,10 @@ var ExperienceController = (function() {
 		if (dataExperience)
 		{
 			dataExperience.duplicateData(this.newExperience);
+		}
+		else
+		{
+			this.newExperience.setDefaultValues();
 		}
 	}
 	
@@ -754,37 +800,6 @@ var MultiTypeOptionView = (function() {
 	
 })();
 
-/* A reported object combines a name and a ModelObject that might be picked. */
-var ReportedObject = function () {
-	ReportedObject.prototype.name = null;
-	ReportedObject.prototype.pickedObject = null;
-	
-	function ReportedObject(args) {
-		args = args !== undefined ? args : {};
-		if (!("name" in args)) args.name = null;
-		if (!("pickedObject" in args)) args.pickedObject = null;
-		
-		this.name = args.name;
-		this.pickedObject = args.pickedObject;
-    };
-    
-    ReportedObject.prototype.getDescription = function()
-    {
-    	if (this.pickedObject) return this.pickedObject.description();
-    	return this.name;
-    }
-    
-    ReportedObject.prototype.equal = function(v2)
-    {
-    	if (this.pickedObject)
-    		return v2.pickedObject && v2.pickedObject.id() == this.pickedObject.id();
-    	else
-    		return !v2.pickedObject && this.name == v2.name;
-    }
-    
-    return ReportedObject;
-}();
-
 var ExperienceDatumSearchView = (function() {
 	ExperienceDatumSearchView.prototype = new MultiTypeOptionView();
 	ExperienceDatumSearchView.prototype.typeNames = null;
@@ -815,13 +830,13 @@ var ExperienceDatumSearchView = (function() {
 			if (prepareClick('click', 'service: ' + d.description()))
 			{
 				if (!this.experience.offeringName &&
-					this.experience.services.find(function(d2)
+					this.experience.experienceServices().find(function(es)
 						{
-							return d2.pickedObject && d2.pickedObject.id() == d.id();
+							return es.service().id() == d.id();
 						}))
 					this.experience.setOffering({text: d.description() });
 				else
-					this.experience.addService({instance: d});
+					this.experience.addService(d);
 				this.sitePanel.onExperienceUpdated();
 				this.hideSearch(function()
 					{
@@ -841,7 +856,7 @@ var ExperienceDatumSearchView = (function() {
 						_this.experience.organization &&
 						_this.experience.organization.id() != d.id())
 					{
-						if (this.experience.offering)
+						if (this.experience.offering())
 						{
 							this.experience.clearOffering();
 							this.experience.clearSite();
@@ -883,11 +898,11 @@ var ExperienceDatumSearchView = (function() {
 						{
 							try
 							{
-								if (_this.experience.offering &&
-									_this.experience.site &&
-									_this.experience.site.id() != d.id())
+								if (_this.experience.offering() &&
+									_this.experience.site() &&
+									_this.experience.site().id() != d.id())
 									_this.experience.clearOffering();
-								_this.experience.setOrganization({instance: d});
+								_this.experience.setOrganization(d);
 								_this.sitePanel.onExperienceUpdated();
 								_this.hideSearch(function()
 									{
@@ -910,12 +925,12 @@ var ExperienceDatumSearchView = (function() {
 		{
 			if (prepareClick('click', 'offering: ' + d.description()))
 			{
-				this.experience.setOffering({instance: d});
+				this.experience.setOffering(d);
 				/* Set the organization, then the site, because setting the organization may
 					also set the site.
 				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
+				this.experience.setOrganization(d.organization());
+				this.experience.setSite(d.site());
 				this.sitePanel.onExperienceUpdated();
 				_this.hideSearch(function()
 					{
@@ -1157,12 +1172,12 @@ var TagSearchView = (function() {
 		if (this.focusNode.value)
 			TagPoolView.prototype.setFlagVisibles.call(this);
 		else if (this.focusNode != this.firstTagInputNode() ||
-				 (this.experience.offering &&
-			 	  this.experience.offering.services().length > 0))
+				 (this.experience.offering() &&
+			 	  this.experience.offering().offeringServices().length > 0))
 		{
 			this.flags().each(function(fs)
 				{
-					fs.visible = (fs.service.services().length > 1) ? false : undefined;
+					fs.visible = (fs.service.serviceImplications().length > 1) ? false : undefined;
 				});
 		}
 		else
@@ -1221,7 +1236,7 @@ var TagSearchView = (function() {
 				// Add to the visible list any item that contains the root service as a sub service.
 				this.flags().each(function(fs)
 					{
-						if (!fs.visible && fs.service.services().find(function(subService)
+						if (!fs.visible && fs.service.serviceImplications().find(function(subService)
 							{
 								return subService.service().id() == rootService.service.id();
 							}))
@@ -1240,7 +1255,7 @@ var TagSearchView = (function() {
 			// in the set of visible flags except for the service itself.
 			flags.each(function(fs)
 			{
-				flagServices[fs.service.id()] = fs.service.services()
+				flagServices[fs.service.id()] = fs.service.serviceImplications()
 					.map(function(serviceImplication) { return serviceImplication.service(); })
 					.filter(function(s) {
 						return flagIndexOf(s.description().toLocaleUpperCase()) >= 0 && 
@@ -1293,7 +1308,7 @@ var TagSearchView = (function() {
 			{
 				if (s.id() == serviceID)
 					return false;
-				return s.services().find(function(subS)
+				return s.serviceImplications().find(function(subS)
 					{
 						return subS.service().id() == serviceID;
 					});
@@ -1318,15 +1333,31 @@ var TagSearchView = (function() {
 					
 				if (d3Focus && d3Focus.datum())
 				{
-					newDatum = d3Focus.datum();
-					newDatum.name = d.description();
-					newDatum.pickedObject = d.service;
+					var oldService = d3Focus.datum();
+					if (oldService instanceof cr.Service)
+					{
+						var oldES = this.experience.experienceServices().find(function(es)
+							{
+								return es.service() == oldService;
+							});
+						/* Replace the old experienceService with a new one. */
+						if (oldES)
+						{
+							oldES.service(d.service);
+							oldES.description(d.service.description());
+							oldES.id(null);
+						}
+						else
+							this.experience.addService(d.service);
+					}
+					d3Focus.datum(d.service);
 					this.focusNode.value = d.description();
 				}
 				else
 				{
-					newDatum = this.experience.addService({instance: d.service});
+					this.experience.addService(d.service);
 				}
+				newDatum = d.service;
 				
 				this.sitePanel.updateInputs();
 				this.sitePanel.showTags();
@@ -1376,13 +1407,13 @@ var OrganizationSearchView = (function() {
 	{
 		if (this.experience.organization)
 		{
-			if (this.experience.offering)
+			if (this.experience.offering())
 			{
 				this.experience.clearOffering();
 				this.experience.clearSite();
 				this.experience.clearOrganization();
 			}
-			else if (this.experience.site)
+			else if (this.experience.site())
 			{
 				this.experience.clearSite();
 				this.experience.clearOrganization();
@@ -1540,7 +1571,7 @@ var SiteSearchView = (function() {
 	{
 		if (this.experience.site)
 		{
-			if (this.experience.offering)
+			if (this.experience.offering())
 			{
 				this.experience.clearOffering();
 				this.experience.clearSite();
@@ -1611,9 +1642,9 @@ var SiteSearchView = (function() {
 				else if (this.typeName === "Site")
 				{
 					path = 'Site[ancestor:name>text*="{1}"]';
-					if (this.experience.services[0].pickedObject)
+					if (this.experience.services[0] instanceof cr.Service)
 					{
-						path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.id());
+						path += '[offering>service>service={0}]]'.format(this.experience.services[0].id());
 					}
 				}
 				else if (this.typeName === "Organization")
@@ -1735,7 +1766,7 @@ var SiteSearchView = (function() {
 		}
 		else if (this.experience.services.length > 0)
 		{
-			if (this.experience.services[0].pickedObject)
+			if (this.experience.services[0] instanceof cr.Service)
 			{
 				if (searchText && searchText.length > 0)
 					this.typeNames = ["Offering", "Site", "Organization"];
@@ -1887,8 +1918,8 @@ var OfferingSearchView = (function() {
 				/* Set the organization, then the site, because setting the organization may
 					also set the site.
 				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
+				this.experience.setOrganization(d.organization());
+				this.experience.setSite(d.site());
 				this.sitePanel.onExperienceUpdated();
 				_this.hideSearch(function()
 					{
@@ -2120,7 +2151,7 @@ var OfferingSearchView = (function() {
 		}
 		else if (this.experience.services.length > 0)
 		{
-			if (this.experience.services[0].pickedObject)
+			if (this.experience.services[0] instanceof cr.Service)
 			{
 				if (searchText)
 					this.typeNames = ["Offering"];
@@ -2636,10 +2667,8 @@ var NewExperiencePanel = (function () {
 			
 			if (d)
 			{
-				if (d.constructor == cr.ModelObject)
-					service = d;	/* This occurs for tags associated with offerings. */
-				else if (d.constructor == ReportedObject)
-					service = d.pickedObject;
+				if (d instanceof cr.Service)
+					service = d;
 			}
 			
 			if (service)
@@ -2710,8 +2739,15 @@ var NewExperiencePanel = (function () {
 			})
 			.on('focusin', function()
 			{
-				_this.tagSearchView.focusNode = this;
-				_this.onFocusInTagInput(this);
+				try
+				{
+					_this.tagSearchView.focusNode = this;
+					_this.onFocusInTagInput(this);
+				}
+				catch (err)
+				{
+					cr.asyncFail(err);
+				}
 			})
 			.on('focusout', function()
 			{
@@ -2769,7 +2805,7 @@ var NewExperiencePanel = (function () {
 		var offering = this.experienceController.offering();
 		if (offering && offering.id())
 		{
-			offeringTags = offering.services()
+			offeringTags = offering.offeringServices()
 				.filter(function(v) { return !v.isEmpty(); })
 				.map(function(s) { return s.service(); });
 		}
@@ -2798,17 +2834,18 @@ var NewExperiencePanel = (function () {
 			
 		container = this.mainDiv.select('.tags-container');
 		var tagDivs = container.selectAll('input.tag');
-		tags = tags.concat(this.experienceController.services()
+		tags = tags.concat(this.experienceController.experienceServices()
 			.map(function(s) { return s.service(); })
-			.filter(function(v) 
-			{ 
+			.filter(function(s) 
+			{
+				sDescription = s.description();
 				return !offeringTags.find(function(d)
 					{
-						return d.description() === v.description();
+						return d.description() === sDescription;
 					}) &&
 					!tags.find(function(d) 
 					{ 
-						return d.description() === v.description(); 
+						return d.description() === sDescription; 
 					})
 			}));
 		
@@ -2831,38 +2868,41 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	NewExperiencePanel.prototype._serviceLabel = function(service, cellName)
+	NewExperiencePanel.prototype._serviceLabel = function(service, namesFunction)
 	{
 		if (!service)
 			return "";
+		
+		var names = namesFunction(service);
+		if (names && names.length)
+			return names[0];	
 			
-		var label = service.getDatum(cellName);
-		if (label)
-			return label;
-			
-		var subObj = service.services().find(function(s)
+		var subObj = service.serviceImplications().find(function(s)
 			{
-				return s.getDatum(cellName);
+				var names = namesFunction(s.service());
+				return names && names.length;
 			});
-		return subObj && subObj.getDatum(cellName);
+		return subObj && namesFunction(subObj.service())[0];
 	}
 	
 	NewExperiencePanel.prototype.setPlaceholders = function()
 	{
-		var service = this.experienceController.services().find(function(s)
+		var experienceService = this.experienceController.experienceServices().find(function(s)
 			{
 				return s.service().getColumn() < PathGuides.data.length - 1;
 			});
+		
+		var service = experienceService && experienceService.service();
 			
 		this.organizationInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Organization Label')) || this.organizationDefaultPlaceholder);
+				  (service && this._serviceLabel(service, function(s) { return s.organizationLabels(); })) || this.organizationDefaultPlaceholder);
 		this.siteInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Site Label')) || this.siteDefaultPlaceholder);
+				  (service && this._serviceLabel(service, function(s) { return s.siteLabels(); })) || this.siteDefaultPlaceholder);
 		this.offeringInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Offering Label')) || this.offeringDefaultPlaceholder);
+				  (service && this._serviceLabel(service, function(s) { return s.offeringLabels(); })) || this.offeringDefaultPlaceholder);
 	}
 	
 	NewExperiencePanel.prototype.updateInputs = function()
@@ -2907,7 +2947,7 @@ var NewExperiencePanel = (function () {
 			var newInstance = this.organizationSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
 				newInstance.id() != (this.experienceController.organization() && this.experienceController.organization().id()))
-				this.experienceController.setOrganization({instance: newInstance});
+				this.experienceController.setOrganization(newInstance);
 			else if (newText != this.experienceController.organizationName())
 				this.experienceController.setOrganization({text: newText});
 		}
@@ -2977,18 +3017,15 @@ var NewExperiencePanel = (function () {
 						var newInstance = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
 						if (!newInstance)
 						{
-							if (newText != d.name)
+							if (newText != d)
 							{
 								d.pickedObject = null;
-								d.name = newText;
-								this.value = d.description();	/* Reset the value in case there was trimming */
+								this.value = newText;	/* Reset the value in case there was trimming */
 								$(this).trigger('input');
 							}
 						}
-						else if (newInstance != d.pickedObject)
+						else if (newInstance != d)
 						{
-							d.pickedObject = newInstance;
-							d.name = newInstance.description();
 							this.value = d.description();
 							$(this).trigger('input');
 						}
@@ -3001,9 +3038,9 @@ var NewExperiencePanel = (function () {
 					{
 						var d = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
 						if (d)
-							_this.experience.addService({instance: d});
+							_this.experience.addService(d);
 						else
-							_this.experience.addService({text: newText});
+							_this.experience.addService(newText);
 						_this.showTags();
 						this.value = "";
 						$(this).attr('placeholder', $(this).attr('placeholder'));
@@ -3070,7 +3107,7 @@ var NewExperiencePanel = (function () {
 	{
 		if (this.tagSearchView.focusNode == this.tagSearchView.firstTagInputNode() &&
 			(!this.experienceController.offering() ||
-			  this.experienceController.offering().services().length == 0))
+			  this.experienceController.offering().offeringServices().length == 0))
 			this.tagHelp.text(this.firstTagHelp);
 		else
 			this.tagHelp.text(this.otherTagHelp);
@@ -3191,16 +3228,14 @@ var NewExperiencePanel = (function () {
 	function NewExperiencePanel(experienceController, showFunction) {
 		this.experienceController = experienceController;
 			
-		if (this.experienceController.title)
-			this.title = this.experienceController.title;
+		if (this.experienceController.title())
+			this.title = this.experienceController.title();
 		else if (this.experienceController.instance)
 			this.title = this.editTitle;
-		else if (this.experienceController.domain)
-			this.title = this.newFromDomainTitle.format(this.experienceController.domain.description());
-		else if (this.experienceController.stage)
-			this.title = this.newFromDomainTitle.format(this.experienceController.stage.description());
-		else if (this.experienceController.serviceDomain)
-			this.title = this.newFromDomainTitle.format(this.experienceController.serviceDomain.description());
+		else if (this.experienceController.domain())
+			this.title = this.newFromDomainTitle.format(this.experienceController.domain().description());
+		else if (this.experienceController.stage())
+			this.title = this.newFromDomainTitle.format(this.experienceController.stage());
 			
 		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
@@ -3306,7 +3341,7 @@ var NewExperiencePanel = (function () {
 				_this.checkTagInput();
 						
 				if (!experienceController.offeringName() &&
-					experienceController.services().length == 0)
+					experienceController.experienceServices().length == 0)
 					asyncFailFunction(_this.nameOrTagRequiredMessage);
 				else
 				{
@@ -3636,7 +3671,7 @@ var NewExperiencePanel = (function () {
 					/* Have to hide after appending the flags or the metrics aren't calculated. */
 					_this.tagSearchView.reveal.hide();
 
-					if (_this.experienceController.services().length == 0)
+					if (_this.experienceController.experienceServices().length == 0)
 					{
 						var tagInput = _this.appendTag(tagsContainer, null);
 						tagInput.node().focus();

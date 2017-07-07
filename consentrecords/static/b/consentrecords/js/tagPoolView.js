@@ -44,7 +44,7 @@ var ServiceFlagController = (function() {
 			
 		if (this.service && this.service.id())
 		{
-			var services = crp.getInstance(this.service.id()).services();
+			var services = crp.getInstance(this.service.id()).serviceImplications();
 			/* services may be null if the service has been deleted */
 			var s = services && services.find(function(s)
 				{

@@ -26,9 +26,9 @@ var FlagController = (function() {
 		return (e.offering() && e.offering().description()) ||
 		    (e instanceof cr.Experience &&
 		     (e.customOffering() ||
-		      (e.services() &&
-		       e.services().length &&
-		       e.services()[0].description()) ||
+		      (e.experienceServices() &&
+		       e.experienceServices().length &&
+		       e.experienceServices()[0].description()) ||
 		      (e.customServices() &&
 		       e.customServices().length &&
 		       e.customServices()[0].description()))) ||
@@ -68,7 +68,7 @@ var FlagController = (function() {
 		var offering = this.experience.offering();
 		if (offering && offering.id())
 		{
-			var services = offering.services();
+			var services = offering.offeringServices();
 			minColumn = services.map(function(s) {
 					return s.service().getColumn();
 				})
@@ -82,7 +82,7 @@ var FlagController = (function() {
 		
 		if (this.experience instanceof cr.Experience)
 		{
-			var services = this.experience.services();
+			var services = this.experience.experienceServices();
 			minColumn = services.map(function(s) {
 						return s.service().getColumn();
 					})
@@ -253,7 +253,7 @@ var FlagController = (function() {
 		title = e.pickedOrCreatedText(e.offering(), e.customOffering());
 		if (!title)
 		{
-			var serviceValue = e.services().length > 0 ? e.services()[0] : null;
+			var serviceValue = e.experienceServices().length > 0 ? e.experienceServices()[0] : null;
 			var userServiceValue = e.customService();
 
 			if (serviceValue)
@@ -1579,7 +1579,7 @@ var PathlinesPanel = (function () {
 	{
 		try
 		{
-			var experienceController = new ExperienceController(this.path());
+			var experienceController = this.createExperience();
 			experienceController.initDateRange(phase);
 							
 			new NewExperiencePanel(experienceController)
@@ -2000,27 +2000,28 @@ var ExperienceIdeas = (function() {
 		  return array;
 		}
 
-		crp.promise({path: 'Experience Prompt'})
+		crp.promise({path: 'experience prompt',
+		             resultType: cr.ExperiencePrompt})
 			.done(function(prompts)
 				{
 					try
 					{
 						/* Remove prompts that have disqualifying tags */
-						var moreExperienceData = path.getCell("More Experience").data;
+						var experiences = path.experiences();
 						prompts = prompts.filter(function(d)
 							{
-								return !d.getCell("Disqualifying Tag").data.find(function(dt)
+								return !d.disqualifyingTags().find(function(dt)
 									{
 										var dtID = dt.id();
-										return moreExperienceData.find(function(experience)
+										return experiences.find(function(experience)
 											{
-												return experience.services().find(function(experienceService)
+												return experience.experienceServices().find(function(experienceService)
 													{
 														return experienceService.service().id() == dtID;
 													}) ||
 													(experience.offering() &&
 													 !experience.offering().isEmpty() &&
-													 experience.offering().services().find(function(offeringService)
+													 experience.offering().offeringServices().find(function(offeringService)
 																{
 																	return offeringService.service().id() == dtID;
 																}));
@@ -2030,18 +2031,21 @@ var ExperienceIdeas = (function() {
 						prompts = shuffle(prompts);
 						data = prompts.map(function(d)
 							{
-								var datum = {name: d.getDatum(cr.fieldNames.name),
-											 prompt: d.getDatum(cr.fieldNames.text),
-											 experience: new Experience(path)};
-								var s = d.getNonNullValue('Service');
-								if (s) datum.experience.addService({instance: s});
-								datum.experience.domain = d.getNonNullValue('Domain');
-								datum.experience.stage = d.getNonNullValue('Stage');
-								datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
-								datum.experience.setSite({instance: d.getNonNullValue('Site')});
-								datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
-								datum.experience.timeframe = d.getNonNullValue('Timeframe');
-								datum.experience.title = d.getDatum(cr.fieldNames.name);
+								var datum = {name: d.name(),
+											 prompt: d.text(),
+											 experience: new ExperienceController(path)};
+								if (d.experiencePromptServices().length)
+								{
+									var s = d.experiencePromptServices()[0].service();
+									datum.experience.addService(s);
+								}
+								datum.experience.domain(d.domain());
+								datum.experience.stage(d.stage());
+								datum.experience.setOrganization(d.organization());
+								datum.experience.setSite(d.site());
+								datum.experience.setOffering(d.offering());
+								datum.experience.timeframe(d.timeframe());
+								datum.experience.title(d.name());
 								return datum;
 							});
 						getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
@@ -2095,7 +2099,7 @@ var ExperienceIdeaPanel = (function() {
 			{done: done});
 	}
 	
-	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experience, getNext)
+	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experienceController, getNext)
 	{
 		var _this = this;
 		this.panelNode = panelNode;
@@ -2144,13 +2148,6 @@ var ExperienceIdeaPanel = (function() {
 					{
 						try
 						{
-							var phase;
-							if (experience.timeframe)
-								phase = experience.timeframe.getDescription();
-							else
-								phase = 'Previous';
-							var experienceController = new ExperienceController(this.path());	
-							experienceController.initDateRange(phase);
 							var panel = new NewExperiencePanel(experienceController);
 							panel.done = function()
 								{
