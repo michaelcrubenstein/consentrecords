@@ -58,11 +58,10 @@ var Signup = (function () {
 			{
 				var birthDay = _thisSignup.getBirthday();
 				var birthMonth = birthDay.substr(0, 7);
-				var initialData = {"Birthday": [{text: birthDay}],
-				                   "Path": 
-				                   		[{cells: {"Birthday": [{text: birthMonth}] }}
-				                   		]};
-				initialData[cr.fieldNames.publicAccess] = [{path: "term[name=privilege]>enumerator[name=find]"}];
+				var initialData = {'birthday': birthDay,
+				                   'path':{'birthday': birthMonth}
+				                  };
+				initialData[cr.fieldNames.publicAccess] = 'find';
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
 					initialData, 
 					function(data)

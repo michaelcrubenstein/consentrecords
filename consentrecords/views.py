@@ -64,10 +64,12 @@ def home(request):
     }
     
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        languageCode = request.GET.get('languageCode', 'en')
+        context = Context(languageCode, request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -94,7 +96,7 @@ def showLines(request):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -118,7 +120,7 @@ def orgHome(request):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -142,7 +144,7 @@ def find(request):
     }
     
     if request.user.is_authenticated:
-        args['userID'] = Instance.getUserInstance(request.user).idString
+        args['userID'] = Instance.getUserInstance(request.user).id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -182,14 +184,14 @@ def showInstances(request):
             'cdn_url': settings.CDN_URL,
             }
         if root:
-            argList["rootID"] = root.idString
+            argList["rootID"] = root.id.hex
             argList["singularName"] = root._description
         
         if request.user.is_authenticated:
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-            argList['userID'] = user.idString
+            argList['userID'] = user.id.hex
         
         return HttpResponse(template.render(argList))
     except Exception as e:
@@ -211,7 +213,7 @@ def showPathway(request, email):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -220,7 +222,7 @@ def showPathway(request, email):
     userInfo = UserInfo(request.user)
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
-        args['state'] = 'user/%s' % objs[0].idString
+        args['state'] = 'user/%s' % objs[0].id.hex
 
     return HttpResponse(template.render(args))
 
@@ -240,7 +242,7 @@ def showExperience(request, id):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -277,7 +279,7 @@ def accept(request, email):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -287,9 +289,9 @@ def accept(request, email):
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
-        args['follower'] = objs[0].idString
+        args['follower'] = objs[0].id.hex
         args['cell'] = TermNames.user
-        args['privilege'] = terms.readPrivilegeEnum.idString
+        args['privilege'] = 'read'
 
     return HttpResponse(template.render(args))
 
@@ -309,7 +311,7 @@ def ignore(request, email):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -319,7 +321,7 @@ def ignore(request, email):
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'ignore'
-        args['follower'] = objs[0].idString
+        args['follower'] = objs[0].id.hex
         args['follower_description'] = objs[0].getDescription()
         
     return HttpResponse(template.render(args))
@@ -340,7 +342,7 @@ def userSettings(request):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -351,7 +353,7 @@ def userSettings(request):
 
 @ensure_csrf_cookie
 def signup(request, email=None):
-    LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
+    LogRecord.emit(request.user, 'pathAdvisor/signup', email)
     
     template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
@@ -425,7 +427,7 @@ def acceptFollower(request, userPath=None):
                     except Value.DoesNotExist:
                         ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
                             {TermNames.privilege: [{'instanceID': privilegeID}],
-                             followerField.getDescription(): [{'instanceID': follower.idString}]}, nameLists, userInfo, transactionState)
+                             followerField.getDescription(): [{'instanceID': follower.id.hex}]}, nameLists, userInfo, transactionState)
     
                     # Remove any corresponding access requests.
                     vs = user.value_set.filter(field=terms.accessRequest,
@@ -436,9 +438,9 @@ def acceptFollower(request, userPath=None):
                 
                     if follower.typeID_id == terms.user.id:
                         propertyList = {\
-                                'name': [{'text': 'crn.FollowerAccept'}],
-                                'argument': [{'instanceID': user.idString}],
-                                'is fresh': [{'instanceID': terms.yesEnum.idString}]
+                                'name': 'crn.FollowerAccept',
+                                'argument': [{'instanceID': user.id.hex}],
+                                'is fresh': 'yes'
                             }
                         item, v = instancecreator.create(terms['notification'], 
                             follower, terms['notification'], -1, 
@@ -517,8 +519,8 @@ def requestAccess(request):
                                 Emailer.sendNewFollowerEmail(salutation,
                                     recipientEMail, 
                                     follower.getDescription(),
-                                    protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.idString,
-                                    protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.idString)
+                                    protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id.hex,
+                                    protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id.hex)
                             
                                 results = {'object': data}
                     else:
@@ -550,7 +552,7 @@ def addExperience(request, experienceID):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -627,19 +629,19 @@ def addToPathway(request):
         args['fbDescription'] = atText
 
     if organizationName:
-        args['organization'] = organization.idString if organization else organizationName
+        args['organization'] = organization.id.hex if organization else organizationName
     if siteName:
-        args['site'] = site.idString if site else siteName
+        args['site'] = site.id.hex if site else siteName
     if offeringName:
-        args['offering'] = offering.idString if offering else offeringName
+        args['offering'] = offering.id.hex if offering else offeringName
     if serviceName:
-        args['service'] = service.idString if service else serviceName
+        args['service'] = service.id.hex if service else serviceName
 
     if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.idString
+        args['userID'] = user.id.hex
     
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -686,7 +688,7 @@ def requestExperienceComment(request):
                                 commentsValue = None
                                 propertyList = {\
                                         'Comment Request': [{'cells': {\
-                                            'Path': [{'instanceID': follower.idString}],
+                                            'Path': [{'instanceID': follower.id.hex}],
                                             TermNames.text: [{'text': question}],
                                            }}],
                                     }
@@ -698,7 +700,7 @@ def requestExperienceComment(request):
                                 propertyList = {\
                                         'Comment': [{'cells': {\
                                             'Comment Request': [{'cells': {\
-                                                'Path': [{'instanceID': follower.idString}],
+                                                'Path': [{'instanceID': follower.id.hex}],
                                                 TermNames.text: [{'text': question}],
                                                }}],
                                             }}],
@@ -734,11 +736,11 @@ def requestExperienceComment(request):
                             
                             # Create a notification for the user.    
                             notificationData = {\
-                                    'name': [{'text': 'crn.ExperienceCommentRequested'}],
-                                    'argument': [{'instanceID': follower.idString},
-                                                 {'instanceID': experience.idString},
-                                                 {'instanceID': item.idString}],
-                                    'is fresh': [{'instanceID': terms.yesEnum.idString}]
+                                    'name': 'crn.ExperienceCommentRequested',
+                                    'argument': [{'instanceID': follower.id.hex},
+                                                 {'instanceID': experience.id.hex},
+                                                 {'instanceID': item.id.hex}],
+                                    'is fresh': 'yes',
                                 }
                             notification, notificationValue = instancecreator.create(terms['notification'], 
                                 recipient, terms['notification'], -1, 
@@ -874,11 +876,11 @@ class api:
 
                 # Create a notification for the user.    
                 notificationData = {\
-                    'name': [{'text': 'crn.ExperienceQuestionAnswered'}],
-                    'argument': [{'instanceID': following.idString},
-                                 {'instanceID': experienceValue.referenceValue.idString},
-                                 {'instanceID': comment.idString}],
-                    'is fresh': [{'instanceID': terms.yesEnum.idString}]
+                    'name': 'crn.ExperienceQuestionAnswered',
+                    'argument': [{'instanceID': following.id.hex},
+                                 {'instanceID': experienceValue.referenceValue.id.hex},
+                                 {'instanceID': comment.id.hex}],
+                    'is fresh': 'yes',
                 }
                 notification, notificationValue = instancecreator.create(terms['notification'], 
                     recipient, terms['notification'], -1, 
@@ -941,7 +943,7 @@ class api:
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
                             newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, userInfo, transactionState)
-                            instanceID = newInstance.idString
+                            instanceID = newInstance.id.hex
                         else:
                             item = container.addValue(field, c, newIndex, userInfo, transactionState)
                             instanceID = item.referenceValue_id and item.referenceValue_id.hex
@@ -952,7 +954,7 @@ class api:
                             descriptionQueue.append(container)
                     else:
                         raise ValueError("subject id was not specified")
-                    valueIDs.append(item.idString if item else None)
+                    valueIDs.append(item.id.hex if item else None)
                     instanceIDs.append(instanceID)
                                 
                 Instance.updateDescriptions(descriptionQueue, nameLists)
@@ -1086,17 +1088,8 @@ def submitsignin(request):
     try:
         results = userviews.signinResults(request)
         languageCode = request.POST.get('languageCode', 'en')
-        qs = User.getAuthorizedUserQuerySet(request.user)
-        if qs.count() == 0:
-            context = Context(languageCode, request.user)
-            data = {'emails': [{'text': request.user.email}],
-                    'first name': request.user.firstName,
-                    'last name': request.user.lastName}
-            user = User.create(data, context)
-        else:
-            context = Context(languageCode, request.user)
-            qs = User.select_related(qs)
-            user = qs[0]
+        context = Context(languageCode, request.user)
+        user = context.user
         results["user"] = user.getData(['system access', 'email'], context)
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -1117,9 +1110,9 @@ def submitNewUser(request):
         
         with transaction.atomic():
             results = userviews.newUserResults(request)
-            context = Context(languageCode, request.user)
-            userInstance = Context.user or UserFactory.createUserInstance(request.user, propertyList)
-            results["user"] = { "id": userInstance.idString, "description" : userInstance.getDescription(None) }
+            context = Context(languageCode, request.user, propertyList=propertyList)
+            userInstance = context.user
+            results["user"] = { "id": userInstance.id.hex, "description" : userInstance.description(languageCode) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

@@ -2264,7 +2264,7 @@ var OtherPathPanel = (function () {
 		else if (user)
 			title = getUserName(user) || user.getDescription();
 		else
-			title = (new AgeCalculator(path.getValue("Birthday").getDescription())).toString();
+			title = (new AgeCalculator(path.birthday())).toString();
 		
 		this.navContainer.appendTitle(title);
 		

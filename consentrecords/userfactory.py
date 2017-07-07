@@ -7,16 +7,15 @@ from consentrecords.models import *
 from consentrecords import instancecreator
 
 class UserFactory:
-    def createUserInstance(user, propertyList):
+    def createUserInstance(context, propertyList):
         with transaction.atomic():
-            context = Context(user)
 
             if not propertyList: propertyList = {}
-            propertyList['email'] = user.email
-            if user.first_name:
-                propertyList['first name'] = user.first_name
-            if user.last_name:
-                propertyList['last name'] = user.last_name
+            propertyList['email'] = context.authUser.email
+            if context.authUser.first_name:
+                propertyList['first name'] = context.authUser.first_name
+            if context.authUser.last_name:
+                propertyList['last name'] = context.authUser.last_name
             item = User.create(propertyList, context)
                         
             return item

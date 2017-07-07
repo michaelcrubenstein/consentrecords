@@ -3084,11 +3084,17 @@ class GrantTarget(IInstance, dbmodels.Model):
         super(GrantTarget, self).markDeleted(context)
     
     def create(id, data, context, newIDs={}):
+        # Handle special case for primary administrator when creating a new GrantTarget.
+        if 'primary administrator' in data and data['primary administrator'] == 'user/%s' % id.hex:
+            primaryAdministrator = User.objects.get(pk=id)
+        else:
+            primaryAdministrator = _orNoneForeignKey(data, 'primary administrator', context, User)
+            
         newItem = GrantTarget.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  id=id,
                                  publicAccess=_orNone(data, 'public access'),
-                                 primaryAdministrator=_orNoneForeignKey(data, 'primary administrator', context, User)
+                                 primaryAdministrator=primaryAdministrator
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
@@ -4314,7 +4320,6 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
         if self.timeframe:
             data['timeframe'] = self.timeframe
         data['services'] = [i.getData([], context) for i in self.fetchedServices]
-        print(data['name'], data['services'])
         data['translations'] = [i.getData([], context) for i in self.fetchedTexts]
         data['disqualifying tags'] = [i.getData([], context) for i in self.fetchedDisqualifyingTags]
         return data
@@ -5597,7 +5602,8 @@ class Path(IInstance, dbmodels.Model):
         Path.validateSpecialAccess(data, 'special access')
         Path.validateCanAnswerExperience(data, 'can answer experience')
         
-        birthday = data['birthday'] if 'birthday' in data else parent.birthday[0:7]
+        birthday = data['birthday'] if 'birthday' in data \
+            else parent.birthday[0:7] if parent.birthday else None
         
         newItem = Path.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -6768,7 +6774,7 @@ class User(RootInstance, dbmodels.Model):
 
     def validateBirthday(data, key):
         if key not in data:
-            raise ValueError('a user can not be created without specifying a birthday')
+            return
         _validateDate(data[key])
     
     def create(data, context, newIDs={}):
@@ -6778,7 +6784,7 @@ class User(RootInstance, dbmodels.Model):
                                  lastTransaction=context.transaction,
                                  firstName = _orNone(data, 'first name'),
                                  lastName = _orNone(data, 'last name'),
-                                 birthday = data['birthday'],
+                                 birthday = _orNone(data, 'birthday'),
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
@@ -6789,6 +6795,7 @@ class User(RootInstance, dbmodels.Model):
             GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
         else:
             GrantTarget.create(newItem.id, {'primary administrator': 'user/%s' % newItem.id.hex}, context, newIDs)
+        newItem.save()
         
         newItem.createChildren(data, 'emails', context, UserEmail, newIDs)
         if not context.user:
@@ -7012,7 +7019,7 @@ class UserUserGrantRequestHistory(dbmodels.Model):
     grantee = dbmodels.ForeignKey(User, related_name='userUserGrantRequestHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
 class Context:
-    def __init__(self, languageCode, user):
+    def __init__(self, languageCode, user, propertyList=None):
         self.languageCode = languageCode
         self._transaction = None
         if user:
@@ -7020,12 +7027,17 @@ class Context:
                 self.user = user
                 self.authUser = user.authUser
             else:
+                self.user = None
                 self.authUser = user
                 if self.authUser.is_authenticated:
                     qs = User.getAuthorizedUserQuerySet(user)
-                    self.user = qs[0] if qs.exists() else None
-                else:
-                    self.user = None
+                    if qs.exists():
+                        self.user = User.select_related(qs)[0]
+                    else:
+                        self.user = self.createUserInstance(propertyList)
+                    print("Paths", self.user.paths.filter(deleteTransaction__isnull=True))
+                    if not self.user.paths.filter(deleteTransaction__isnull=True).exists():
+                        Path.create(self.user, {}, context)
         else:
             self.user = None
             self.authUser = AnonymousUser()
@@ -7034,6 +7046,17 @@ class Context:
     def __str__(self):
         return "context: %s/%s" % (str(self.user), self.languageCode)
         
+    def createUserInstance(self, propertyList):
+        if not propertyList: propertyList = {}
+        propertyList['emails'] = [{'text': self.authUser.email, 'position': 0}]
+        if self.authUser.first_name:
+            propertyList['first name'] = self.authUser.first_name
+        if self.authUser.last_name:
+            propertyList['last name'] = self.authUser.last_name
+        self.user = User.create(propertyList, self)
+                    
+        return self.user
+            
     def getPrivilege(self, i):
         if self.is_administrator:
             return "administer"
