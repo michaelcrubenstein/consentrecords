@@ -2596,12 +2596,12 @@ cr.Grantable = (function() {
 	
 	Grantable.prototype.publicAccess = function(newValue)
 	{
-		return this._grantTarget.publicAccess(newValue);
+		return this.grantTarget().publicAccess(newValue);
 	}
 	
 	Grantable.prototype.primaryAdministrator = function(newValue)
 	{
-		return this._grantTarget.primaryAdministrator(newValue);
+		return this.grantTarget().primaryAdministrator(newValue);
 	}
 	
     Grantable.prototype.promiseGrantTarget = function()
@@ -2611,17 +2611,17 @@ cr.Grantable = (function() {
 
         if (this._grantTargetPromise)
         	return this._grantTargetPromise;
-        else if (this._grantTarget)
+        else if (this.grantTarget())
         {
         	result = $.Deferred();
-        	result.resolve(this._grantTarget);
+        	result.resolve(this.grantTarget());
         	return result;
         }
         
         var _this = this;	
         this._grantTargetPromise = cr.getData(
         	{
-        		path: 'grant target/{0}'.format(this.id()),
+        		path: this.grantTargetPath(),
         		fields: [],
         		resultType: cr.GrantTarget
         	})
@@ -4872,6 +4872,11 @@ cr.Organization = (function() {
 		}
 	}
 	
+    Organization.prototype.grantTargetPath = function()
+    {
+        return 'organization/{0}/grant target'.format(this.id());
+    }
+    
 	/** Sets the data for this Organization based on a dictionary of data that
 		came from the server.
 	 */
@@ -5101,6 +5106,14 @@ cr.Path = (function() {
         			return result;
         		});
         return this._userPromise;
+    }
+    
+    Path.prototype.grantTargetPath = function()
+    {
+        if (this.specialAccess() == 'custom')
+            return 'path/{0}/grant target'.format(this.id());
+        else
+        	return 'path/{0}/user/grant target'.format(this.id());
     }
     
 	Path.prototype.setData = function(d)
@@ -6185,6 +6198,11 @@ cr.User = (function() {
 		this._userGrantRequests = [];
 	}
 	
+    User.prototype.grantTargetPath = function()
+    {
+        return 'user/{0}/grant target'.format(this.id());
+    }
+    
 	User.prototype.setData = function(d)
 	{
 		cr.Grantable.prototype.setData.call(this, d);

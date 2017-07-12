@@ -244,6 +244,12 @@ def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
         return _parse(subType.objects.filter(Q((inClause, elementClause)),
                                              deleteTransaction__isnull=True), 
                       tokens[2:], user, subType, newAccessType)
+    elif tokens[1] == 'grant target':
+        subType = GrantTarget
+        inClause = 'id__in'
+        elementClause, newAccessType = qsType.getSubClause(qs, user, accessType)
+        return _parse(subType.objects.filter(Q((inClause, elementClause))), 
+                      tokens[2:], user, subType, None)
     else:
         raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))    
 
@@ -3035,6 +3041,10 @@ class GrantTarget(IInstance, dbmodels.Model):
                                           to_attr='currentGroupGrant'))
                                           
     
+    @property    
+    def privilegeSource(self):
+        return self
+        
     # fetchPrivilege for grant targets can only return None or "administer"            
     def fetchPrivilege(self, user):
         if not user:
