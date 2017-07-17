@@ -470,7 +470,7 @@ function editUniqueString(sectionObj, container, placeHolder, value, inputType)
 		.property("value", value);
 }
 
-function editUniqueDateStampDayOptional(sectionObj, container, placeHolder, value, inputType)
+function editUniqueDateStampDayOptional(sectionObj, placeHolder, value, inputType)
 {
 	var itemsDiv = crf.appendItemList(sectionObj);
 	
@@ -484,6 +484,13 @@ function editUniqueDateStampDayOptional(sectionObj, container, placeHolder, valu
 		if (value && value.length > 0)
 			input.value(value);
 	});
+}
+
+function getUniqueDateStampDayOptionalValue(sectionObj)
+{
+	var dateRow = sectionObj.selectAll('.date-row');
+	var input = dateRow.node().dateInput;
+	return input.value();
 }
 
 function _showEditStringCell(obj, cell, inputType)
@@ -2908,7 +2915,7 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 		
 		var checkEdit = function()
 		{
-			if (cr.signedinUser.getValue(cr.fieldNames.systemAccess))
+			if (cr.signedinUser.systemAccess())
 			{
 				var editButton = navContainer.appendRightButton()
 					.on("click", function(d) {

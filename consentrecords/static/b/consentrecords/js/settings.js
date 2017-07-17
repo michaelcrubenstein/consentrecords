@@ -32,10 +32,75 @@ var Settings = (function () {
 		
 		var path = user.path();
 		doneButton.on("click", function()
+			{
+				if (prepareClick('click', 'Settings done'))
 				{
-					panel2Div.handleDoneEditingButton.call(this);
-				})
- 			.append("span").text(crv.buttonTexts.done);
+					showClickFeedback(this);
+		
+					/* Build up an update for initialData. */
+					var changes = {}
+					var newFirstName = firstNameSection.selectAll('input').node().value;
+					if (newFirstName != user.firstName())
+						changes['first name'] = newFirstName;
+					var newLastName = lastNameSection.selectAll('input').node().value;
+					if (newLastName != user.lastName())
+						changes['last name'] = newLastName;
+					var newScreenName = screenNameSection.selectAll('input').node().value;
+					if (newScreenName != path.name())
+					    changes['path'] = {'screen name': newScreenName};
+					var newBirthday = getUniqueDateStampDayOptionalValue(birthdaySection);
+					if (newBirthday != user.birthday())
+						changes['birthday'] = newBirthday();
+					
+					if (user.privilege() === cr.privileges.administer)
+					{
+						var publicAccessDescription = publicAccessSectionTextContainer.text();
+						var newPathSpecialAccess = pathSpecialAccess(publicAccessDescription);
+						if (newPathSpecialAccess != path.specialAccess())
+						{
+							if (!('path' in changes))
+								changes['path'] = {}
+							changes['path']['special access'] = newPathSpecialAccess;
+						}
+						
+						var newUserPublicAccess = userPublicAccess(publicAccessDescription);
+						if (newUserPublicAccess != user.grantTarget().publicAccess())
+						{
+							if (!('grant target' in changes))
+								changes['grant target'] = {}
+							changes['grant target']['public access'] = newUserPublicAccess;
+						}
+						
+						var newPathPublicAccess = pathPublicAccess(publicAccessDescription);
+						if (newPathPublicAccess != (path.grantTarget() && path.grantTarget().publicAccess()))
+						{
+							if (!('path' in changes))
+								changes['path'] = {}
+							if (!('grant target' in changes['path']))
+								changes['path']['grant target'] = {}
+							changes['path']['grant target']['public access'] = newPathPublicAccess;
+						}
+						
+						var newPathPrimaryAdministrator = pathPrimaryAdministrator(publicAccessDescription);
+						if (newPathPrimaryAdministrator != (path.grantTarget() && path.grantTarget().primaryAdministrator()))
+						{
+							if (!('path' in changes))
+								changes['path'] = {}
+							if (!('grant target' in changes['path']))
+								changes['path']['grant target'] = {}
+							changes['path']['grant target']['primary administrator'] = 
+								newPathPrimaryAdministrator && "user/{0}".format(newPathPrimaryAdministrator.id());
+						}
+					}
+					
+					
+					/* Send the update to the server. */
+					user.update(changes)
+						.then(function() { _this.hide(); },
+						      cr.syncFail)
+				}
+			})
+		.append("span").text(crv.buttonTexts.done);
 
 		var getAccessDescription = function() 
 			{
@@ -48,6 +113,41 @@ var Settings = (function () {
 				else
 					return _this.profileHiddenLabel;
 			};
+		
+		var pathSpecialAccess = function(label)
+		{
+			if (label == _this.pathVisibleLabel)
+				return cr.specialAccesses.custom;
+			else
+				return "";
+		}
+			
+		var userPublicAccess = function(label)
+		{
+			if (label == _this.allVisibleLabel)
+				return cr.privileges.read;
+			else if (label == _this.pathVisibleLabel ||
+					 label == _this.emailVisibleLabel)
+				return cr.privileges.find;
+			else
+				return "";
+		}
+		
+		var pathPublicAccess = function(label)
+		{
+			if (label == _this.pathVisibleLabel)
+				return cr.privileges.read;
+			else
+				return "";
+		}
+		
+		var pathPrimaryAdministrator = function(label)
+		{
+			if (label == _this.pathVisibleLabel)
+				return user.grantTarget().primaryAdministrator();
+			else
+				return null;
+		}
 		
 		var firstNameSection = this.mainDiv.append('section')
 			.datum(user)
@@ -70,32 +170,10 @@ var Settings = (function () {
 		birthdaySection.append('label')
 			.text('Birthday');
 			
-		editUniqueDateStampDayOptional(birthdaySection, user, 'Birthday', user.birthday(), 'date');
+		editUniqueDateStampDayOptional(birthdaySection, 'Birthday', user.birthday(), 'date');
 
-		var addUniqueCellSection = function(user, label, clickFunction)
-		{
-			var sectionPanel = panel2Div.append('section')
-				.classed('cell edit unique first', true)
-				.datum(user)
-				.on("click", clickFunction);
-				
-			sectionPanel.append('label')
-				.text(label);
-			
-			var itemsDiv = crf.appendItemList(sectionPanel);
-
-			var items = itemsDiv.append('li');
-	
-			var divs = items.append("div")
-				.classed("description-text string-value-view growable", true)
-				.text(getAccessDescription())
-				.classed('unselectable', true)
-				.each(_pushTextChanged);
-				
-			crf.appendRightChevrons(items);	
-			
-			return divs;
-		}
+		var publicAccessSection = null;
+		var publicAccessSectionTextContainer = null;
 		
 		var appendUserActions = function()
 		{
@@ -137,140 +215,152 @@ var Settings = (function () {
 			$.when(user.promiseGrantTarget(), user.path().promiseGrantTarget())
 				.then(function()
 				{
-				var divs = addUniqueCellSection(user, _this.userPublicAccessLabel,
-					function(cell) {
-						if (prepareClick('click', 'pick ' + _this.userPublicAccessLabel))
-						{
-							try
-							{
-								new PickUserAccessPanel()
-									.createRoot(user, path, getAccessDescription(), user.publicAccess(), path.publicAccess(), path.specialAccess(), path.primaryAdministrator())
-									.showLeft().then(unblockClick);
-							}
-							catch(err)
-							{
-								cr.syncFail(err);
-							}
-						}
-					});
-			
-				/* Change the contents of the div when the pathPublicAccessValue changes as well. */	
-				divs.each(function()
-					{
-						setupOnViewEventHandler(path, "dataChanged.cr valueDeleted.cr", this, 
-							function(eventObject)
-							{
-								d3.select(eventObject.data).text(getAccessDescription());
-							});
-					});
-			
-				var docSection = panel2Div.append('section')
-					.classed('cell documentation', true);
-			
-				var docDiv = docSection.append('div');
-			
-				var updateVisibilityDocumentation = function()
-				{
-					var description = getAccessDescription();
-					var documentation;
-			
-					if (description === _this.profileHiddenLabel)
-						documentation = _this.hiddenDocumentation;
-					else if (description === _this.emailVisibleLabel)
-						documentation = _this.byRequestVisibleDocumentation;
-					else if (description === _this.pathVisibleLabel)
-						documentation = _this.pathVisibleDocumentation;
-					else if (description === _this.allVisibleLabel)
-						documentation = _this.allVisibleDocumentation;
-					docDiv.text(documentation);
-				}
-			
-				setupOnViewEventHandler(user, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
-					updateVisibilityDocumentation);
-				setupOnViewEventHandler(path, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
-					updateVisibilityDocumentation);
-				updateVisibilityDocumentation();
-	
-				function checkSharingBadge()
-				{
-					var grs = user.userGrantRequests();
-					var badgeCount = (grs && grs.length > 0) ? grs.length : "";
-
-					sharingButton.selectAll("span.badge").text(badgeCount);
-				}
-			
-				var urlSection = panel2Div.append('section')
-					.classed('cell edit unique', true)
-					.datum(user.emails()[0].text());
-				
-				urlSection.append('label')
-					.text("Your Path");
-					
-				var urlList = crf.appendItemList(urlSection);
-						
-				var urlItem = urlList.append('li')
-					.classed('site-active-text', true)
-					.append('div')
-					.classed('growable unselectable', true)
-					.text("{0}/for/{1}"
-						.format(window.location.origin, user.emails()[0].text()))
-					.on('click', function()
-						{
-							if (prepareClick('click', 'share'))
-							{
-								try
+					publicAccessSection = panel2Div.append('section')
+						.classed('cell edit unique first', true)
+						.datum(user)
+						.on("click", 
+							function(cell) {
+								if (prepareClick('click', 'pick ' + _this.userPublicAccessLabel))
 								{
-									new ShareOptions(_this.node(), user);
+									try
+									{
+										var panel = new PickUserAccessPanel();
+										panel.createRoot(user, path, publicAccessSectionTextContainer.text())
+											 .showLeft().then(unblockClick);
+									
+										$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
+											{
+												publicAccessSectionTextContainer.text(newDescription);
+												updateVisibilityDocumentation();
+											});
+									}
+									catch(err)
+									{
+										cr.syncFail(err);
+									}
 								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
 						});
+				
+					publicAccessSection.append('label')
+						.text(_this.userPublicAccessLabel);
+			
+					var itemsDiv = crf.appendItemList(publicAccessSection);
+
+					var items = itemsDiv.append('li');
+	
+					var divs = items.append('div')
+						.classed('description-text string-value-view growable', true)
+						.text(getAccessDescription())
+						.classed('unselectable', true)
+						.each(_pushTextChanged);
+						
+					publicAccessSectionTextContainer = publicAccessSection.selectAll('div.description-text');
+				
+					crf.appendRightChevrons(items);	
+			
+					var docSection = panel2Div.append('section')
+						.classed('cell documentation', true);
+			
+					var docDiv = docSection.append('div');
+			
+					var updateVisibilityDocumentation = function()
+					{
+						var description = publicAccessSectionTextContainer.text();
+						var documentation;
+			
+						if (description === _this.profileHiddenLabel)
+							documentation = _this.hiddenDocumentation;
+						else if (description === _this.emailVisibleLabel)
+							documentation = _this.byRequestVisibleDocumentation;
+						else if (description === _this.pathVisibleLabel)
+							documentation = _this.pathVisibleDocumentation;
+						else if (description === _this.allVisibleLabel)
+							documentation = _this.allVisibleDocumentation;
+						docDiv.text(documentation);
+					}
+			
+					updateVisibilityDocumentation();
+	
+					function checkSharingBadge()
+					{
+						var grs = user.userGrantRequests();
+						var badgeCount = (grs && grs.length > 0) ? grs.length : "";
+
+						sharingButton.selectAll("span.badge").text(badgeCount);
+					}
+			
+					var urlSection = panel2Div.append('section')
+						.classed('cell edit unique', true)
+						.datum(user.emails()[0].text());
+				
+					urlSection.append('label')
+						.text("Your Path");
 					
-				function updateURL()
-				{
-					urlItem.text("{0}/for/{1}"
-						.format(window.location.origin, user.emails()[0].text()));
-				}
-				setupOnViewEventHandler(user, 'emailChanged.cr', urlItem.node(), 
-					function()
+					var urlList = crf.appendItemList(urlSection);
+						
+					var urlItem = urlList.append('li')
+						.classed('site-active-text', true)
+						.append('div')
+						.classed('growable unselectable', true)
+						.text("{0}/for/{1}"
+							.format(window.location.origin, user.emails()[0].text()))
+						.on('click', function()
+							{
+								if (prepareClick('click', 'share'))
+								{
+									try
+									{
+										new ShareOptions(_this.node(), user);
+									}
+									catch(err)
+									{
+										cr.syncFail(err);
+									}
+								}
+							});
+					
+					function updateURL()
 					{
 						urlItem.text("{0}/for/{1}"
 							.format(window.location.origin, user.emails()[0].text()));
-					});
+					}
+					setupOnViewEventHandler(user, 'emailChanged.cr', urlItem.node(), 
+						function()
+						{
+							urlItem.text("{0}/for/{1}"
+								.format(window.location.origin, user.emails()[0].text()));
+						});
 	
-				var sharingDiv = _this.appendActionButton('Sharing', function() {
-						if (prepareClick('click', 'Sharing'))
-						{
-							showClickFeedback(this);
-							new SharingPanel(user, Settings.prototype.panelTitle)
-								.showUp()
-								.always(unblockClick);
-						}
-					})
-					.classed('first', true);
-				var sharingButton = sharingDiv.select('ol>li>div');
-				sharingButton.append('span')
-					.classed('badge', true);
-				checkSharingBadge();
+					var sharingDiv = _this.appendActionButton('Sharing', function() {
+							if (prepareClick('click', 'Sharing'))
+							{
+								showClickFeedback(this);
+								new SharingPanel(user, Settings.prototype.panelTitle)
+									.showUp()
+									.always(unblockClick);
+							}
+						})
+						.classed('first', true);
+					var sharingButton = sharingDiv.select('ol>li>div');
+					sharingButton.append('span')
+						.classed('badge', true);
+					checkSharingBadge();
 			
-				setupOnViewEventHandler(user, "userGrantRequestDeleted.cr userGrantRequestAdded.cr", 
-					sharingButton.node(), checkSharingBadge);
+					setupOnViewEventHandler(user, "userGrantRequestDeleted.cr userGrantRequestAdded.cr", 
+						sharingButton.node(), checkSharingBadge);
 				
-				_this.appendActionButton('Following', function() {
-						if (prepareClick('click', 'Following'))
-						{
-							showClickFeedback(this);
-							new FollowingPanel(user)
-								.showUp()
-								.always(unblockClick);
-						}
-					});
+					_this.appendActionButton('Following', function() {
+							if (prepareClick('click', 'Following'))
+							{
+								showClickFeedback(this);
+								new FollowingPanel(user)
+									.showUp()
+									.always(unblockClick);
+							}
+						});
 				
-				appendUserActions();
-			});
+					appendUserActions();
+				});
 		}
 		else
 			appendUserActions(); /* In case the current user isn't their own administrator. */
@@ -344,7 +434,7 @@ var PickUserAccessPanel = (function () {
 						  }
 						 ];
 	
-	PickUserAccessPanel.prototype.createRoot = function(user, path, oldDescription, oldUserAccessValue, oldPathAccessValue, oldPathSpecialAccessValue, oldPathPrimaryAdministratorValue)
+	PickUserAccessPanel.prototype.createRoot = function(user, path, oldDescription)
 	{
 		PickFromListPanel.prototype.createRoot(null, this.title, "");
 		var _this = this;
@@ -375,197 +465,8 @@ var PickUserAccessPanel = (function () {
 					{
 						try
 						{
-							var sourceObjects = [];
-							var initialData = [];
-							if (d.description == Settings.prototype.profileHiddenLabel)
-							{
-								if (oldUserAccessValue.id)
-								{
-									sourceObjects.push(oldUserAccessValue);
-									initialData.push({ id: oldUserAccessValue.id });
-								}
-								if (oldPathAccessValue.id)
-								{
-									sourceObjects.push(oldPathAccessValue);
-									initialData.push({ id: oldPathAccessValue.id });
-								}
-								if (oldPathSpecialAccessValue.id)
-								{
-									sourceObjects.push(oldPathSpecialAccessValue);
-									initialData.push({ id: oldPathSpecialAccessValue.id });
-								}
-								if (oldPathPrimaryAdministratorValue.id)
-								{
-									sourceObjects.push(oldPathPrimaryAdministratorValue);
-									initialData.push({ id: oldPathPrimaryAdministratorValue.id });
-								}
-							}
-							else if (d.description == Settings.prototype.emailVisibleLabel)
-							{
-								if (oldUserAccessValue.id)
-								{
-									if (oldUserAccessValue.description() != cr.privileges.find &&
-										oldUserAccessValue.description() != Settings.prototype.pathVisibleLabel &&
-										oldUserAccessValue.description() != Settings.prototype.emailVisibleLabel)
-									{
-										sourceObjects.push(oldUserAccessValue);
-										initialData.push({ id: oldUserAccessValue.id,
-													 instance: d.instancePath,
-													 description: d.description });
-									}
-								}
-								else
-								{
-									sourceObjects.push(oldUserAccessValue);
-									initialData.push(
-											{
-												containerUUID: user.id(),
-												fieldID: oldUserAccessValue.cell.field.nameID,
-												instance: d.instancePath,
-												description: d.description
-											});
-								}
-								if (oldPathAccessValue.id)
-								{
-									sourceObjects.push(oldPathAccessValue);
-									initialData.push({ id: oldPathAccessValue.id });
-								}
-								if (oldPathSpecialAccessValue.id)
-								{
-									sourceObjects.push(oldPathSpecialAccessValue);
-									initialData.push({ id: oldPathSpecialAccessValue.id });
-								}
-								if (oldPathPrimaryAdministratorValue.id)
-								{
-									sourceObjects.push(oldPathPrimaryAdministratorValue);
-									initialData.push({ id: oldPathPrimaryAdministratorValue.id });
-								}
-							}
-							else if (d.description == Settings.prototype.pathVisibleLabel)
-							{
-								if (oldUserAccessValue.id)
-								{
-									if (oldUserAccessValue.description() != cr.privileges.find &&
-										oldUserAccessValue.description() != Settings.prototype.pathVisibleLabel &&
-										oldUserAccessValue.description() != Settings.prototype.emailVisibleLabel)
-									{
-										sourceObjects.push(oldUserAccessValue);
-										initialData.push({ id: oldUserAccessValue.id,
-													 instance: d.instancePath,
-													 description: d.description });
-									}
-								}
-								else
-								{
-									sourceObjects.push(oldUserAccessValue);
-									initialData.push(
-											{
-												containerUUID: user.id(),
-												fieldID: oldUserAccessValue.cell.field.nameID,
-												instance: d.instancePath,
-												description: d.description
-											});
-								}
-								sourceObjects.push(oldPathAccessValue);
-								if (oldPathAccessValue.id)
-								{
-									initialData.push({ id: oldPathAccessValue.id,
-												 instance: d.pathPrivilegePath,
-												 description: d.description });
-								}
-								else
-								{
-									initialData.push(
-											{
-												containerUUID: path.id(),
-												fieldID: oldPathAccessValue.cell.field.nameID,
-												instance: d.pathPrivilegePath,
-												description: d.pathPrivilegeDescription
-											});
-								}
-								var newInstanceID = user.primaryAdministrator.id();
-								if (newInstanceID)
-								{
-									sourceObjects.push(oldPathPrimaryAdministratorValue);
-									var newData;
-									if (oldPathPrimaryAdministratorValue.id)
-									{
-										newData = { id: oldPathPrimaryAdministratorValue.id }
-									}
-									else
-									{
-										newData = { containerUUID: path.id(),
-													fieldID: oldPathPrimaryAdministratorValue.cell.field.nameID };
-									}
-									newData.instanceID = newInstanceID;
-									newData.description = user.primaryAdministrator().description();
-									initialData.push(newData);
-								}
-								sourceObjects.push(oldPathSpecialAccessValue);
-								if (oldPathSpecialAccessValue.id)
-								{
-									initialData.push({ id: oldPathSpecialAccessValue.id,
-												 instance: d.pathSpecialAccessPath,
-												 description: d.pathSpecialAccessDescription });
-								}
-								else
-								{
-									initialData.push(
-											{
-												containerUUID: path.id(),
-												fieldID: oldPathSpecialAccessValue.cell.field.nameID,
-												instance: d.pathSpecialAccessPath,
-												description: d.pathSpecialAccessDescription
-											});
-								}
-							}
-							else
-							{
-								if (oldUserAccessValue.id)
-								{
-									sourceObjects.push(oldUserAccessValue);
-									initialData.push({ id: oldUserAccessValue.id,
-												 instance: d.instancePath,
-												 description: d.description });
-								}
-								else
-								{
-									sourceObjects.push(oldUserAccessValue);
-									initialData.push(
-											{
-												containerUUID: user.id(),
-												fieldID: oldUserAccessValue.cell.field.nameID,
-												instance: d.instancePath,
-												description: d.description
-											});
-								}
-								if (oldPathAccessValue.id)
-								{
-									sourceObjects.push(oldPathAccessValue);
-									initialData.push({ id: oldPathAccessValue.id });
-								}
-								if (oldPathSpecialAccessValue.id)
-								{
-									sourceObjects.push(oldPathSpecialAccessValue);
-									initialData.push({ id: oldPathSpecialAccessValue.id });
-								}
-								if (oldPathPrimaryAdministratorValue.id)
-								{
-									sourceObjects.push(oldPathPrimaryAdministratorValue);
-									initialData.push({ id: oldPathPrimaryAdministratorValue.id });
-								}
-							}
-							
-							if (initialData.length > 0)
-							{
-								/* Test case: Change the public accessibility for a user from Public Profile and Path to Public Path Only. */
-								cr.updateValues(initialData, sourceObjects)
-									.then(function()
-										{
-											_this.hideRight(unblockClick);
-										},
-										cr.syncFail);
-							}
+							$(_this.node()).trigger('itemPicked.cr', d.description);
+							_this.hideRight(unblockClick);
 						}
 						catch(err)
 						{
@@ -671,7 +572,7 @@ crn.FollowerAccept = (function() {
 				 	{
 						spinnerSpan.datum().stop();
 						spinnerSpan.remove();
-						textSpan.node().innerHTML = _this.buttonText.format(getUserDescription(user));
+						textSpan.node().innerHTML = _this.buttonText.format(user.caption());
 						$(buttonNode).click(function(e)
 							{
 								if (prepareClick('click', "Follower Accepted"))
@@ -745,7 +646,7 @@ crn.ExperienceCommentRequested = (function() {
 					{
 						spinnerSpan.datum().stop();
 						spinnerSpan.remove();
-						textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].description());
+						textSpan.node().innerHTML = _this.buttonText.format(path.caption(), args[1].description());
 	
 						$(buttonNode).click(function(e)
 							{
@@ -835,7 +736,7 @@ crn.ExperienceQuestionAnswered = (function() {
 						{
 							spinnerSpan.datum().stop();
 							spinnerSpan.remove();
-							textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].description());
+							textSpan.node().innerHTML = _this.buttonText.format(path.caption(), args[1].description());
 		
 							$(buttonNode).click(function(e)
 								{
@@ -918,7 +819,7 @@ crn.ExperienceSuggestion = (function() {
 						{
 							spinnerSpan.datum().stop();
 							spinnerSpan.remove();
-							textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].description(), phaseDescription);
+							textSpan.node().innerHTML = _this.buttonText.format(path.caption(), args[1].description(), phaseDescription);
 		
 							$(buttonNode).click(function(e)
 								{

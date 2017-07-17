@@ -1703,7 +1703,7 @@ var PathlinesPanel = (function () {
 
 		var addExperienceButton = this.navContainer.appendRightButton();
 		
-		this.navContainer.appendTitle(getUserDescription(user));
+		this.navContainer.appendTitle(user.caption());
 		
 // 		var findButton = this.bottomNavContainer.appendRightButton()
 // 				.on("click",
@@ -1733,7 +1733,7 @@ var PathlinesPanel = (function () {
 		
 		function checkTitle()
 		{
-			_this.navContainer.setTitle(getUserDescription(user));
+			_this.navContainer.setTitle(user.caption());
 		}
 				
 		$(this.pathtree).on("userSet.cr", function()
@@ -1748,7 +1748,7 @@ var PathlinesPanel = (function () {
 					_this.notificationsAlertButton.setup();
 				}
 				
-				setupOnViewEventHandler(user, "dataChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user, "userChanged.cr", _this.node(), checkTitle);
 				
 // 				findButton.style("display", user.privilege() === cr.privileges.administer ? null : "none");
 				
@@ -1825,7 +1825,7 @@ var ShareOptions = (function () {
 							else
 							{
 								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(getUserDescription(user), window.location.origin, user.emails[0].text());
+											.format(user.caption(), window.location.origin, user.emails[0].text());
 							}
 							unblockClick();
 						});
@@ -2262,7 +2262,7 @@ var OtherPathPanel = (function () {
 		if (screenName)
 			title = screenName;
 		else if (user)
-			title = getUserName(user) || user.getDescription();
+			title = user.caption();
 		else
 			title = (new AgeCalculator(path.birthday())).toString();
 		

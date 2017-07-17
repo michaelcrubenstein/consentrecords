@@ -27,14 +27,13 @@ var ExperienceCommentsPanel = (function() {
 			.classed('asker', true)
 			.datum(function(d) { 
 				return d.asker(); })
-			.text(function(d) {
-					if (!d || !d.id())
+			.text(function(path) {
+					if (!path || !path.id())
 						return null;
-					if (d.id() == cr.signedinUser.path().id())
+					if (path.id() == cr.signedinUser.path().id())
 						return _this.youAskedText;
 					else {
-						var s = getPathDescription(d.instance());
-						return _this.someoneAskedText.format(s);
+						return _this.someoneAskedText.format(path.caption());
 					}
 				});
 

@@ -4,11 +4,6 @@
 	Utility routines for managing organizations and their contents
  */
  
-cr.organizationStrings = 
-	{
-		someone: "Someone"
-	};
-
 /* Append the specified address to the specified div, which is a d3.js object */
 function appendAddress(address)
 {
@@ -107,26 +102,6 @@ function getUserName(user)
 		return lastName;
 }
 
-/**
- * Returns a string that describes the user associated with the specified path.
- * The string may be either the name of the user associated with the path (if defined
- * and accessible), the screen name associated with the path, the email address
- * associated with the user associated with the path (if defined and accessible) or
- * "Someone" (or some translation thereof)
- */
-function getPathDescription(path)
-{
-	return (path.user() && getUserName(path.user())) ||
-			path.description() ||
-		   (path.user() && path.user().description()) ||
-		    cr.organizationStrings.someone;
-}
-
-function getUserDescription(user)
-{
-	return getUserName(user) || user.description();
-}
-				
 /**
  *	Displays a panel containing the experiences within the specified path.
  */				

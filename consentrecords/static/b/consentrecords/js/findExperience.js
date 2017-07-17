@@ -158,15 +158,15 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = organization.getInstanceID() + '/Inquiry Access Group';
+		groupPath = 'organization/' + organization.id() + '/inquiry access group';
 		cr.getData({path: groupPath, fields: ['none']})
 			.then(function(groupPaths)
 				{
 					var initialData = [{
-							container: '{0}/Inquiries'.format(session.getInstanceID()),
+							container: 'session/{0}/inquiry'.format(session.id()),
 							field: cr.fieldNames.user,
 							instanceID: user.getInstanceID(),
-							description: getUserDescription(user)
+							description: user.caption(),
 						}];
 					var sourceObjects = [new cr.ObjectValue()];
 					sourceObjects[0].on('dataChanged.cr', user, function(eventObject)
@@ -175,10 +175,10 @@ function showSessionDetails(user, session, service, previousPanelNode)
 							function done()
 							{
 								s = "{2} signed up for {0}/{1}.\n\nLook out for a notice when {3} enrolled."
-									.format(offering.getDescription(),
-											session.getDescription(),
-											user === cr.signedinUser ? "You have" : getUserDescription(user) + " has",
-											user === cr.signedinUser ? "you are" : getUserDescription(user) + " is");
+									.format(offering.description(),
+											session.description(),
+											user === cr.signedinUser ? "You have" : user.caption() + " has",
+											user === cr.signedinUser ? "you are" : user.caption() + " is");
 								bootstrap_alert.success(s,
 											  ".alert-container");
 								checkInquiryFunction(user, newInquiryID); 

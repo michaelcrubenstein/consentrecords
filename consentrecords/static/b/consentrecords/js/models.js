@@ -2328,6 +2328,31 @@ cr.IInstance = (function() {
 		return this;
 	}
 
+	IInstance.prototype.update = function(changes)
+	{
+		var _this = this;
+		return $.post(cr.urls.updateValues + this.urlPath() + '/', 
+			{ commands: JSON.stringify(changes)
+			})
+			.then(function(json)
+				{
+					var r2 = $.Deferred();
+					try
+					{
+					    /* If the server succeeds, then update this with the changes and any new IDs. */
+						newIDs = json['new IDs'];
+					    _this.updateData(changes, newIDs);
+						r2.resolve();
+					}
+					catch (err)
+					{
+						r2.reject(err);
+					}
+					return r2;
+				},
+				cr.thenFail);
+	}
+	
 	function IInstance() {
 	};
 	
@@ -4997,6 +5022,7 @@ cr.Path = (function() {
 	Path.prototype._experiencesPromise = null;
 	Path.prototype._user = null;
 	Path.prototype._userPromise = null;
+	Path.prototype.someoneString = "Someone";
 	
 	Path.prototype.birthday = function(newValue)
 	{
@@ -5024,6 +5050,21 @@ cr.Path = (function() {
 			}
 			return this;
 		}
+	}
+	
+/**
+ * Returns a string that describes the user associated with the specified path.
+ * The string may be either the name of the user associated with the path (if defined
+ * and accessible), the screen name associated with the path, the email address
+ * associated with the user associated with the path (if defined and accessible) or
+ * "Someone" (or some translation thereof)
+ */
+	Path.prototype.caption = function()
+	{
+		return (this.user() && this.user().fullName()) ||
+				this.description() ||
+			   (this.user() && this.user().description()) ||
+				this.someoneString;
 	}
 	
 	Path.prototype.specialAccess = function(newValue)
@@ -5145,7 +5186,7 @@ cr.Path = (function() {
 	Path.prototype.mergeData = function(source)
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
-		if (this._weekday === null) this._weekday = source._weekday;
+		if (this._name === null) this._name = source._name;
 		if (!this._experiences) 
 		{
 			this._experiences = source._experiences;
@@ -5155,6 +5196,42 @@ cr.Path = (function() {
 		}
 		if (!this._user) this._user = source._user;
 		return this;
+	}
+	
+	/** Called after the contents of the Path have been updated on the server. */
+	Path.prototype.updateData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		var changed = false;
+		if ('screen name' in d)
+		{
+			this._name = d['screen name'];
+			this.description(this._name);
+			changed = true;
+		}
+		if ('special access' in d)
+		{
+			this._specialAccess = d['special access'];
+			changed = true;
+		}
+		if ('can answer experience' in d)
+		{
+			this._canAnswerExperience = d['can answer experience'];
+			changed = true;
+		}
+
+		if (changed)
+		{
+			$(this).trigger("pathChanged.cr");
+		}
+		
+		if ('grant target' in d && this.grantTarget())
+			this.grantTarget().updateData(d['grant target']);
+		
+		if ('experiences' in d)
+		{
+			updateList(this.experiences, d['experiences'], cr.Experience, "experienceAdded.cr", "experienceDeleted.cr");
+		}
 	}
 	
     Path.prototype.experiences = function(newValue)
@@ -6191,7 +6268,7 @@ cr.User = (function() {
 		this._firstName = "";
 		this._lastName = "";
 		this._birthday = "";
-		this._systemAccess = "write";
+		this._systemAccess = "read";
 		this._emails = [];
 		this._notifications = [];
 		this._path = new cr.Path();
@@ -6246,14 +6323,41 @@ cr.User = (function() {
 	User.prototype.updateData = function(d)
 	{
 		cr.Grantable.prototype.updateData.call(this, d);
+		
+		var changed = false;
 		if ('first name' in d)
+		{
 			this._firstName = d['first name'];
+			changed = true;
+		}
 		if ('last name' in d)
+		{
 			this._lastName = d['last name'];
+			changed = true;
+		}
 		if ('birthday' in d)
+		{
 			this._birthday = d['birthday'];
-		if ('system access' in d)
-			this._systemAccess = d['system access'];
+			this.path().birthday(this._birthday.substr(0, 7));
+			changed = true;
+		}
+		if (changed)
+		{
+			$(this).trigger("userChanged.cr");
+		}
+		
+		if ('grant target' in d && this.grantTarget())
+			this.grantTarget().updateData(d['grant target']);
+		
+		if ('path' in d)
+		{
+			this.path().updateData(d['path']);
+		}
+	}
+	
+	User.prototype.urlPath = function()
+	{
+		return 'user/{0}'.format(this.id());
 	}
 	
 	User.prototype.firstName = function(newValue)
@@ -6282,6 +6386,26 @@ cr.User = (function() {
 			}
 			return this;
 		}
+	}
+	
+	User.prototype.fullName = function()
+	{
+		var firstName = this.firstName();
+		var lastName = this.lastName();
+		if (firstName)
+		{
+			if (lastName)
+				return firstName + " " + lastName;
+			else
+				return firstName;
+		}
+		else 
+			return lastName;
+	}
+	
+	User.prototype.caption = function()
+	{
+		return this.fullName() || this.description();
 	}
 	
 	User.prototype.birthday = function(newValue)

@@ -886,80 +886,25 @@ class api:
                     recipient, terms['notification'], -1, 
                     notificationData, nameLists, userInfo, transactionState, instancecreator.checkCreateNotificationAccess)
 
-    def updateValues(user, data, hostURL):
+    def updateValues(user, path, data, hostURL):
         try:
             commandString = data.get('commands', "[]")
-            commands = json.loads(commandString)
+            changes = json.loads(commandString)
         
-            valueIDs = []
-            instanceIDs = []
-            nameLists = NameList()
-            descriptionQueue = []
+            language = data.get('language', 'en')
             
             with transaction.atomic():
-                transactionState = TransactionState(user)
-                userInfo = UserInfo(user)
-                for c in commands:
-                    instanceID = None
-                    if "id" in c:
-                        oldValue = Value.objects.get(pk=c["id"],deleteTransaction__isnull=True)
-                        oldValue.checkWriteAccess(userInfo)
-
-                        container = oldValue.instance
-
-                        api.checkForPath(c, user, "instance", "instanceID")
-                        
-                        if oldValue.isDescriptor:
-                            descriptionQueue.append(container)
-                        
-                        if oldValue.hasNewValue(c):
-                            container.checkWriteValueAccess(userInfo, oldValue.field, c["instanceID"] if "instanceID" in c else None)
-                            item = oldValue.updateValue(c, userInfo, transactionState)
-                            instanceID = item.referenceValue_id
-                        else:
-                            oldValue.deepDelete(transactionState)
-                            item = None
-                    elif "containerUUID" in c or "container" in c:
-                        api.checkForPath(c, user, "container", "containerUUID")
-                        container = Instance.objects.get(pk=c["containerUUID"],deleteTransaction__isnull=True)
-
-                        if "field" in c:
-                            field = terms[c["field"]]
-                        elif "fieldID" in c:
-                            field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
-                        else:
-                            raise ValueError("neither field nor fieldID was specified")
-                            
-                        if "index" in c:
-                            newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
-                        else:
-                            newIndex = container.getNextElementIndex(field)
-                        
-                        api.checkForPath(c, user, "instance", "instanceID")
-                        instanceID = c["instanceID"] if "instanceID" in c else None
-
-                        container.checkWriteValueAccess(userInfo, field, instanceID)
-
-                        if "ofKindID" in c:
-                            ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
-                            newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, userInfo, transactionState)
-                            instanceID = newInstance.id.hex
-                        else:
-                            item = container.addValue(field, c, newIndex, userInfo, transactionState)
-                            instanceID = item.referenceValue_id and item.referenceValue_id.hex
-                            # Handle special cases that should occur when adding a new value.
-                            api.valueAdded(item, nameLists, userInfo, transactionState, hostURL)
-
-                        if item.isDescriptor:
-                            descriptionQueue.append(container)
-                    else:
-                        raise ValueError("subject id was not specified")
-                    valueIDs.append(item.id.hex if item else None)
-                    instanceIDs.append(instanceID)
-                                
-                Instance.updateDescriptions(descriptionQueue, nameLists)
+                context = Context(language, user, hostURL=hostURL)
                 
-                results = {'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
+                tokens = cssparser.tokenizeHTML(path)
+                qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+                if qs.count() == 0:
+                    raise ValueError("path was not recognized")
+                else:
+                    root = qs[0]
+                    newIDs = {}
+                    root.update(changes, context, newIDs)
+                    results = {'new IDs': newIDs}
             
             return JsonResponse(results)
         
@@ -979,7 +924,7 @@ class api:
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
             
-            language = data.get('language', None)
+            language = data.get('language', 'en')
             context = Context(language, user)
             
             tokens = cssparser.tokenizeHTML(path)
@@ -1035,7 +980,7 @@ class api:
             
         return JsonResponse(results)
         
-def updateValues(request):
+def updateValues(request, urlPath):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
     
@@ -1043,7 +988,7 @@ def updateValues(request):
         raise PermissionDenied
     
     hostURL = ("https://" if request.is_secure() else "http://") + request.get_host();
-    return api.updateValues(request.user, request.POST, hostURL)
+    return api.updateValues(request.user, urlPath, request.POST, hostURL)
     
 def getUserID(request):
     if request.method != "GET":

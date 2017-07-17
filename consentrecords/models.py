@@ -65,6 +65,8 @@ def _orNoneForeignKey(data, key, context, resultClass, thisQS=None, thisQSType=N
             return qs2[0]
 
 def _getForeignKey(path, context, resultClass):
+    if not path:
+        return None
     tokens = cssparser.tokenizeHTML(path)
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
@@ -5627,9 +5629,11 @@ class Path(IInstance, dbmodels.Model):
             newIDs[data['clientID']] = newItem.id.hex
         
         if 'grant target' in data:
+            if 'primary administrator' not in data['grant target']:
+                data['grant target']['primary administrator'] = 'user/%s' % parent.id.hex
             newGrantTarget = GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
         else:
-            newGrantTarget = GrantTarget.create(newItem.id, {}, context, newIDs)
+            newGrantTarget = GrantTarget.create(newItem.id, {'primary administrator': 'user/%s' % parent.id.hex}, context, newIDs)
         
         if newItem.specialAccess == 'custom':
             newItem.grantTarget = newGrantTarget
@@ -5679,7 +5683,19 @@ class Path(IInstance, dbmodels.Model):
             self.canAnswerExperience = changes['can answer experience'] or None
         
         self.updateChildren(changes, 'experiences', context, Experience, self.experiences, newIDs)
-        # Grant Targets must be explicitly modified.
+
+        grantTargets = GrantTarget.objects.filter(pk=self.id)
+        if not grantTargets.exists():
+            raise RuntimeError('grant target for user does not exist')
+        gt = grantTargets[0]
+        if not gt.primaryAdministrator:
+            if not 'grant target' in changes:
+                changes['grant target'] = {'primary administrator': 'user/%s' % self.parent.id.hex}
+            elif 'primary administrator' not in changes['grant target']:
+                changes['grant target']['primary administrator'] = 'user/%s' % self.parent.id.hex
+                
+        if 'grant target' in changes:
+            gt.update(changes['grant target'], context, newIDs)
         
         if history:
             self.lastTransaction = context.transaction
@@ -6796,6 +6812,7 @@ class User(RootInstance, dbmodels.Model):
                                  lastName = _orNone(data, 'last name'),
                                  birthday = _orNone(data, 'birthday'),
                                 )
+        newItem.save()
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
         
@@ -6805,7 +6822,6 @@ class User(RootInstance, dbmodels.Model):
             GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
         else:
             GrantTarget.create(newItem.id, {'primary administrator': 'user/%s' % newItem.id.hex}, context, newIDs)
-        newItem.save()
         
         newItem.createChildren(data, 'emails', context, UserEmail, newIDs)
         if not context.user:
@@ -6849,7 +6865,11 @@ class User(RootInstance, dbmodels.Model):
         if 'path' in changes:
             self.paths.all()[0].update(changes['path'], context, newIDs)
         self.updateChildren(changes, 'user grant requests', context, UserUserGrantRequest, self.userGrantRequests, newIDs)
-        # Grant Targets must be explicitly modified.
+        if 'grant target' in changes:
+            grantTargets = GrantTarget.objects.filter(pk=self.id)
+            if not grantTargets.exists():
+                raise RuntimeError('grant target for user does not exist')
+            grantTargets[0].update(changes['grant target'], context, newIDs)
         
         if history:
             self.lastTransaction = context.transaction
@@ -7029,7 +7049,7 @@ class UserUserGrantRequestHistory(dbmodels.Model):
     grantee = dbmodels.ForeignKey(User, related_name='userUserGrantRequestHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
 class Context:
-    def __init__(self, languageCode, user, propertyList=None):
+    def __init__(self, languageCode, user, propertyList=None, hostURL=None):
         self.languageCode = languageCode
         self._transaction = None
         if user:
@@ -7045,13 +7065,13 @@ class Context:
                         self.user = User.select_related(qs)[0]
                     else:
                         self.user = self.createUserInstance(propertyList)
-                    print("Paths", self.user.paths.filter(deleteTransaction__isnull=True))
                     if not self.user.paths.filter(deleteTransaction__isnull=True).exists():
                         Path.create(self.user, {}, context)
         else:
             self.user = None
             self.authUser = AnonymousUser()
         self._privileges = {}
+        self._hostURL = hostURL
         
     def __str__(self):
         return "context: %s/%s" % (str(self.user), self.languageCode)
@@ -7092,6 +7112,10 @@ class Context:
     @property
     def is_staff(self):
         return self.authUser and self.authUser.is_staff
+        
+    @property
+    def hostURL(self):
+        return _hostURL
             
     def canRead(self, i):
         privilege = self.getPrivilege(i)

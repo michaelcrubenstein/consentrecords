@@ -25,7 +25,7 @@ var SearchPathsResultsView = (function () {
 				
 				var screenName = d.name();
 				var user = d.user();
-				var userName = user && (getUserName(user));
+				var userName = user && user.fullName();
 				var userDescription = user && user.description();
 				var ageCalculator = new AgeCalculator(d.birthday());
 				var ageDescription = ageCalculator.toString();			
