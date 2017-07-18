@@ -426,55 +426,6 @@
 			return undefined;
 		}
 		
-		function setMetaProperties(session, targetHRef)
-		{
-			var headDiv = d3.select("head");
-			headDiv.selectAll("meta").each(function()
-			{
-				var metaObj = d3.select(this);
-				if (metaObj.attr("property") &&
-					metaObj.attr("property").startsWith("og:"))
-					metaObj.remove();
-			});
-			var offering = session.getValue("Offering");
-			var organization = session.getValue("Organization");
-			var a = [{property: "og:url", content: targetHRef},
-					 {property: "og:type", content: "website" },
-					 {property: "og:title", content: offering.getDescription()},
-					 {property: "og:description", content: session.getDescription() + "\n" + organization.getDescription()}];
-			for (var i = 0; i < a.length; i++)
-			{
-				if (a[i].content)
-					headDiv.append("meta")
-						.attr("property", a[i].property)
-						.attr("content", a[i].content);
-			}
-		}
-		
-		function appendFacebookButton(shareDiv, service, session)
-		{
-			var targetHRef = window.location.origin+"/find/"+service.instanceID+"/"+session.instanceID;
-
-			setMetaProperties(session, targetHRef);
-			var fbDiv = shareDiv.div.append("div")
-				.classed("fb-share-button", true)
-				.attr("data-href", targetHRef)
-				.attr("data-layout", "button_count");
-			var fbImage = fbDiv.append("img")
-				.attr("src", "{% static "b/consentrecords/png/fb.png" %}")
-				.style("height", "22px")
-				.style("weight", "22px");
-			{% if facebookIntegration %}
-			fbDiv.on("click", function() {
-				FB.ui({
-					  method     : 'share',
-					  href       : targetHRef
-					  }, function(response){});
-				d3.event.preventDefault();
-			});
-			{% endif %}
-		}
-		
 		function compareSessions(a, b)
 		{
 			var aDate = a.getDatum("Start");

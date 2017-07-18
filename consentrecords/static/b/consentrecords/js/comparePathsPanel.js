@@ -369,7 +369,7 @@ var ComparePath = (function() {
 	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
 	{
 		return (cr.signedinUser && path == cr.signedinUser.path() && this.youName) ||
-			getPathDescription(path) ||
+			path.caption() ||
 			ageCalculator.toString();
 	}
 	
@@ -590,10 +590,10 @@ var ComparePath = (function() {
 				   fields: ["parents"],
 				   resultType: cr.Engagement});
 		var p2 = crp.promise({path: 'path/' + this.rightPath.id() + '/user/engagement/session/offering',
-							  fields: ['service'],
+							  fields: ['services'],
 							  resultType: cr.Offering});
 		var p3 = crp.promise({path: 'path/' + this.rightPath.id() + '/experience/offering',
-							  fields: ['service'],
+							  fields: ['services'],
 							  resultType: cr.Offering});
 		$.when(p1, p2, p3)
 		.then(function(engagements, r2, r3)

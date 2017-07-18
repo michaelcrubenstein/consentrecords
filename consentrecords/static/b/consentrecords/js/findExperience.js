@@ -3,11 +3,9 @@ function showSessionDetails(user, session, service, previousPanelNode)
 {
 	var _this = this;
 	
-	var organization = session.getValue("Organization");
-	var offering = session.getValue("Offering");
-	var site = session.getValue("Site");
-	
-	session.calculateDescription();
+	var organization = session.organization();
+	var offering = session.offering();
+	var site = session.site();
 	
 	var sitePanel = new SitePanel();
 	sitePanel.createRoot(session, offering.description(), "session");
@@ -41,7 +39,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				.text(site.description());
 		}
 		
-		site.promiseCellsFromCache()
+		site.promiseData()
 			.then(function()
 				{
 					var address = site.address();
@@ -49,13 +47,12 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				});
 	}
 	
-	function appendStringDatum(cellName)
+	function appendStringDatum(cellName, cellData)
 	{
-		var v = session.getDatum(cellName);
-		if (v)
+		if (cellData)
 		{
 			var deadlineDiv = panel2Div.append("section");
-			appendStringItem(deadlineDiv.node(), cellName, v);
+			appendStringItem(deadlineDiv.node(), cellName, cellData);
 			return deadlineDiv;
 		}
 		else
@@ -64,24 +61,23 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var firstDiv = null;
 	var nextDiv;
-	firstDiv = appendStringDatum("Registration Deadline");
+	firstDiv = appendStringDatum("Registration Deadline", session.registrationDeadline());
 	
-	nextDiv = appendStringDatum("Start");
+	nextDiv = appendStringDatum("Start", session.start());
 	if (!firstDiv)
 		firstDiv = nextDiv;
 		
-	nextDiv = appendStringDatum("End");
+	nextDiv = appendStringDatum("End", session.end());
 	if (!firstDiv)
 		firstDiv = nextDiv;
 
 	var cellDiv = panel2Div.append("section")
 		.classed("cell", true);
 	
-	offering.promiseCellsFromCache()
+	offering.promiseData()
 		.then(function()
 			{
 				var offeringServices = offering.offeringServices();
-				offeringServices.field.label = "Tags";
 				if (!service && offeringServices.length > 0)
 					service = offeringServices[0].service();
 				
@@ -94,50 +90,45 @@ function showSessionDetails(user, session, service, previousPanelNode)
 					appendFacebookButton(shareDiv, service, session);
 				}
 
-				if (serviceCell.data.length > 0)
+				if (offeringServices.length > 0)
 				{
-					serviceCell.appendLabel(cellDiv.node());
+					cellDiv.append('label').text("Tags")
 					var itemsDiv = crf.appendItemList(cellDiv);
 
-					var items = appendItems(itemsDiv, serviceCell.data);
+					var items = appendItems(itemsDiv, offeringServices);
 					appendButtonDescriptions(items);
 					cellDiv.append("div").classed("cell-border-below", true);
 				}
+				
+				var newText = offering.ageRange();
+				if (newText)
+				{
+					var agesDiv = panel2Div.append("section");
+					appendStringItem(agesDiv.node(), "Ages", newText);
+				}
+				
+				var newText = offering.gradeRange();
+				if (newText)
+				{
+					var gradesDiv = panel2Div.append("section");
+					appendStringItem(gradesDiv.node(), "Grades", newText);
+				}
+				
+				var newText = offering.webSite();
+				if (newText)
+				{
+					var webSiteDiv = panel2Div.append("section");
+					var labelDiv = webSiteDiv.append("div")
+						.classed("more-info", true);
+					var link = labelDiv
+						.append("a")
+						.classed("site-active-text", true)
+						.attr("href", newText)
+						.attr("target", "_blank")
+						.text("More Info");
+				}
 			},
 			cr.asyncFail);
-	
-	var agesDiv = panel2Div.append("section");
-	showAgeRange(offering, function(newText)
-		{
-			if (newText)
-			{
-				appendStringItem(agesDiv.node(), "Ages", newText);
-			}
-		});
-	var gradesDiv = panel2Div.append("section");
-	showGradeRange(offering, function(newText)
-		{
-			if (newText)
-			{
-				appendStringItem(gradesDiv.node(), "Grades", newText);
-			}
-		});
-	
-	var webSiteDiv = panel2Div.append("section");	
-	showWebSite(offering, function(newText)
-		{
-			if (newText)
-			{
-				var labelDiv = webSiteDiv.append("div")
-					.classed("more-info", true);
-				var link = labelDiv
-					.append("a")
-					.classed("site-active-text", true)
-					.attr("href", newText)
-					.attr("target", "_blank")
-					.text("More Info");
-			}
-		});
 
 	var inquiryValueID = null;
 	
@@ -207,7 +198,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getData({path: "{0}/Inquiries/user/{1}".format(session.id(), this.id())})
+				cr.getData({path: "session/{0}/inquiry/user/{1}".format(session.id(), this.id())})
 					.then(function(valueIDs)
 						{
 							if (valueIDs.length > 0)
@@ -274,7 +265,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		{
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
-		cr.getData({path: "{0}/Inquiries/user/{1}".format(session.id(), user.id())})
+		cr.getData({path: "session/{0}/inquiry/user/{1}".format(session.id(), user.id()),
+				    resultType: cr.User})
 					.then(done, cr.asyncFail);
 	}
 	else

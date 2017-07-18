@@ -1324,12 +1324,12 @@ var PathLines = (function() {
 		return cr.Service.servicesPromise()
 		.then(function() {
 			return crp.promise({path: "path/" + _this.path.id() + '/user/engagement/session/offering',
-			                    fields: ['service'],
+			                    fields: ['services'],
 			                    resultType: cr.Offering});
 			})
 		.then(function() {
 				return crp.promise({path: "path/" + _this.path.id() + '/experience/offering',
-			                        fields: ['service'],
+			                        fields: ['services'],
 			                        resultType: cr.Offering});
 			})
 		.then(function() {

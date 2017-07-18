@@ -8,9 +8,9 @@
 function appendAddress(address)
 {
 	var div = d3.select(this);
-	if (address && address.getInstanceID())
+	if (address && address.id())
 	{
-		address.promiseCellsFromCache()
+		address.promiseData()
 			.then(function()
 			{
 				var streets = address.streets();
@@ -19,11 +19,11 @@ function appendAddress(address)
 				var zip = address.zipCode();
 				if (streets)
 					$(streets).each(function() {
-						if (this.text && this.text.length > 0)
+						if (this.text() && this.text().length > 0)
 						{
 							div.append('div')
 								.classed("address-line", true)
-								.text(this.text);
+								.text(this.text());
 						}
 					});
 				line = "";
@@ -221,34 +221,6 @@ function appendStringItem(obj, label, text, addBorder)
 	items.append("div")
 		.classed("string-value-view growable unselectable", true)
 		.text(function(d) { return d; });
-}
-
-function showAgeRange(offering, successFunction)
-{
-	return offering.promiseCellsFromCache()
-		.then(function()
-			{
-				successFunction(offering.ageRange());
-			});
-}
-
-function showGradeRange(offering, successFunction)
-{
-	return offering.promiseCellsFromCache()
-		.then(function()
-			{
-				successFunction(offering.gradeRange());
-			});
-}
-
-function showWebSite(offering, successFunction)
-{
-	return offering.promiseCellsFromCache()
-		.then(function()
-			{
-				var newText = offering.webSite();
-				successFunction(newText);
-			});
 }
 
 function checkOfferingCells(experience)

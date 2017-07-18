@@ -2205,6 +2205,30 @@ cr.IInstance = (function() {
 		}
 	}
 	
+    IInstance.prototype.promiseData = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._dataPromise)
+        	return this._dataPromise;
+        else if (this._dataLoaded)
+        {
+        	result = $.Deferred();
+        	result.resolve(this);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._dataPromise = this.getData()
+        	.done(function()
+        		{
+        			_this._dataLoaded = true;
+        			return _this;
+        		});
+        return this._dataPromise;
+    }
+    
 	IInstance.prototype.setData = function(d)
 	{
 		if ('id' in d)
@@ -4605,6 +4629,11 @@ cr.Offering = (function() {
     Offering.prototype._organization = null;
     Offering.prototype._site = null;
 	
+	Offering.prototype.urlPath = function()
+	{
+		return 'offering/{0}'.format(this.id());
+	}
+	
 	Offering.prototype.names = cr.NamedInstance.prototype.names;
 	Offering.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
 	
@@ -4692,6 +4721,16 @@ cr.Offering = (function() {
 		}
 	}
 	
+    Offering.prototype.getData = function()
+    {
+    	return cr.getData(
+        	{
+        		path: this.urlPath(),
+        		fields: ['names', 'services'],
+        		resultType: cr.Offering
+        	});
+    }
+    
 	Offering.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -5288,7 +5327,7 @@ cr.Path = (function() {
         this._experiencesPromise = cr.getData(
         	{
         		path: 'path/{0}/experience'.format(this.id()),
-        		fields: ['service', 'custom service'],
+        		fields: ['services', 'custom services'],
         		resultType: cr.Experience
         	})
         	.done(function(experiences)
@@ -6081,9 +6120,15 @@ cr.Site = (function() {
 	Site.prototype._offerings = null;
 	Site.prototype._address = null;
 	Site.prototype._organization = null;
+	Site.prototype._dataPromise = null;
 
 	Site.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
 	Site.prototype.names = cr.NamedInstance.prototype.names;
+	
+	Site.prototype.urlPath = function()
+	{
+		return 'site/{0}'.format(this.id());
+	}
 	
 	Site.prototype.offerings = function(newValue)
 	{
@@ -6194,6 +6239,22 @@ cr.Site = (function() {
 		}
 	}
 	
+    Site.prototype.getData = function()
+    {
+    	var _this = this;
+    	return cr.getData(
+        	{
+        		path: this.urlPath(),
+        		fields: ['address'],
+        		resultType: cr.Site
+        	})
+        	.then(function()
+        	{
+        		_this.address()._dataLoaded = true;
+        		return _this;
+        	});
+    }
+    
 	function Site() {
 	    cr.IInstance.call(this);
 	};
@@ -6622,7 +6683,7 @@ cr.User = (function() {
         this._pathPromise = cr.getData(
         	{
         		path: 'user/{0}/path'.format(this.id()),
-        		fields: ['experience', 'experience/service', 'experience/custom service'],
+        		fields: ['experiences', 'experiences/services', 'experiences/custom services'],
         		resultType: cr.Path
         	})
         	.done(function(paths)
@@ -6721,7 +6782,7 @@ cr.User = (function() {
 			var jsonArray = {};
 			if (fields)
 				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
-			return $.getJSON(cr.urls.getData + "user/" + this.id() + "/", jsonArray)
+			return $.getJSON(cr.urls.getData + this.urlPath() + "/", jsonArray)
 				.then(function(json)
 					{
 						var r2 = $.Deferred();

@@ -372,8 +372,6 @@ class IInstance():
         if self.deleteTransaction_id:
             raise RuntimeError('%s is already deleted' % str(self))
         if not context.canWrite(self):
-            print(context.canWrite(self))
-            print(self.fetchPrivilege(context.user))
             raise PermissionDenied('Permission denied')
         self.deleteTransaction = context.transaction
         self.save()
@@ -3072,8 +3070,7 @@ class GrantTarget(IInstance, dbmodels.Model):
     def privilegeSource(self):
         return self
         
-    # fetchPrivilege for grant targets can only return None or "administer"            
-    def fetchPrivilege(self, user):
+    def grantablePrivilege(self, user):
         if not user:
             return None
         elif self.primaryAdministrator_id == user.id:
@@ -3084,8 +3081,12 @@ class GrantTarget(IInstance, dbmodels.Model):
                                                   grantee__deleteTransaction__isnull=True,
                                                   grantee__members__deleteTransaction__isnull=True).values('privilege'))
             
-            privilege = IInstance.reducePrivileges(f, self.publicAccess)
-            return privilege if privilege == "administer" else None
+            return IInstance.reducePrivileges(f, self.publicAccess)
+        
+    # fetchPrivilege for grant targets can only return None or "administer"            
+    def fetchPrivilege(self, user):
+        privilege = self.grantablePrivilege(user)
+        return privilege if privilege == "administer" else None
 
     def headData(self, context):
         data = {'id': self.id.hex
@@ -3323,7 +3324,7 @@ class Address(ChildInstance, dbmodels.Model):
                 data['state'] = self.state
             if self.zipCode:
                 data['zip code'] = self.zipCode
-            if 'street' in fields:
+            if 'streets' in fields:
                 data['streets'] = [i.getData([], context) for i in self.currentStreets]
             else:
                 data['streets'] = [i.headData(context) for i in self.currentStreets]
@@ -3930,16 +3931,16 @@ class Experience(ChildInstance, dbmodels.Model):
                        .select_related('site')\
                        .prefetch_related(Prefetch('customServices', 
                            queryset= (ExperienceCustomService.select_related(csqs)
-                               if 'custom service' in fields else \
+                               if 'custom services' in fields else \
                                ExperienceCustomService.select_head_related(csqs)).order_by('position'),
                            to_attr='currentCustomServices'))\
                        .prefetch_related(Prefetch('services', 
                            queryset=(ExperienceService.select_related(sqs)
-                               if 'service' in fields else \
+                               if 'services' in fields else \
                                ExperienceCustomService.select_head_related(sqs)).order_by('position'),
                            to_attr='currentServices'))
     
-    def getData(self, fieldNames, context):
+    def getData(self, fields, context):
         data = self.headData(context)
         if context.canRead(self):
             if self.customOrganization:
@@ -3949,25 +3950,25 @@ class Experience(ChildInstance, dbmodels.Model):
             if self.customOffering:
                 data['custom offering'] = self.customOffering
             if self.organization_id:
-                if 'organization' in fieldNames:
+                if 'organization' in fields:
                     data['organization'] = self.organization.getData([], context)
                 else:
                     data['organization'] = self.organization.headData(context)
             if self.site_id:
-                if 'site' in fieldNames:
+                if 'site' in fields:
                     data['site'] = self.site.getData([], context)
                 else:
                     data['site'] = self.site.headData(context)
             if self.offering_id:
-                if 'offering' in fieldNames:
+                if 'offering' in fields:
                     data['offering'] = self.offering.getData([], context)
                 else:
                     data['offering'] = self.offering.headData(context)
-            if 'service' in fieldNames:
+            if 'services' in fields:
                 data['services'] = [i.getData([], context) for i in self.currentServices]
             else:
                 data['services'] = [i.headData(context) for i in self.currentServices]
-            if 'custom service' in fieldNames:
+            if 'custom services' in fields:
                 data['custom services'] = [i.getData([], context) for i in self.currentCustomServices]
             else:
                 data['custom services'] = [i.headData(context) for i in self.currentCustomServices]
@@ -5063,12 +5064,12 @@ class Offering(ChildInstance, dbmodels.Model):
             if self.maximumGrade:
                 data['maximum grade'] = self.maximumGrade
         
-            if 'service' in fields:
+            if 'services' in fields:
                 data['services'] = [i.getData([], context) for i in self.currentServices]
             else:
                 data['services'] = [i.headData(context) for i in self.currentServices]
             
-            if 'session' in fields:
+            if 'sessions' in fields:
                 data['sessions'] = [i.getData([], context) for i in self.currentSessions]
             else:
                 data['sessions'] = [i.headData(context) for i in self.currentSessions]
@@ -5084,7 +5085,8 @@ class Offering(ChildInstance, dbmodels.Model):
                         data['site'] = self.parent.getData([], context)
                     else:
                         data['site'] = self.parent.headData(context)
-        
+        else:
+            raise PermissionDenied('this offering can not be read')
         return data
 
     def getSubClause(qs, user, accessType):
@@ -5354,7 +5356,7 @@ class Organization(RootInstance, dbmodels.Model):
         return data
         
     def fetchPrivilege(self, user):
-        return GrantTarget.objects.get(pk=self.id).fetchPrivilege(user)
+        return GrantTarget.objects.get(pk=self.id).grantablePrivilege(user)
     
     def getSubClause(qs, user, accessType):
         if accessType == Organization:
@@ -5508,7 +5510,7 @@ class Path(IInstance, dbmodels.Model):
         return self.grantTarget
         
     def fetchPrivilege(self, user):
-        return self.grantTarget.fetchPrivilege(user)
+        return self.grantTarget.grantablePrivilege(user)
 
     def headData(self, context):
         return {'id': self.id.hex, 
@@ -5535,7 +5537,7 @@ class Path(IInstance, dbmodels.Model):
                 else:
                     data['user'] = self.parent.headData(context)
         
-        if 'experience' in fields:
+        if 'experiences' in fields:
             experienceFields = list(map(lambda s: s[len('experience/'):], 
                 filter(lambda s: s.startswith('experience/'), fields)))
             data['experiences'] = [i.getData(experienceFields, context) for i in \
@@ -6433,7 +6435,7 @@ class SessionName(TranslationInstance, dbmodels.Model):
                 'language code': 'languageCode',
                }
                
-    elementMap = {}
+    elementMap = {'inquiry': ('inquiries__', 'Inquiry', 'parent'),}
                  
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '')
@@ -6659,7 +6661,7 @@ class Street(ChildInstance, dbmodels.Model):
         data['text'] = self.text
         return data
                
-    def getData(self, fieldNames, context):
+    def getData(self, fields, context):
         return self.headData(context)
         
     def getSubClause(qs, user, accessType):
@@ -6760,7 +6762,7 @@ class User(RootInstance, dbmodels.Model):
             qs = qs.prefetch_related(Prefetch('paths',
                                          queryset=Path.objects.filter(deleteTransaction__isnull=True),
                                          to_attr='currentPaths'))
-        if 'notification' in fields:
+        if 'notifications' in fields:
             qs = qs.prefetch_related(Prefetch('notifications',
                                          queryset=Notification.objects.filter(deleteTransaction__isnull=True),
                                          to_attr='currentNotifications'))
@@ -6776,7 +6778,7 @@ class User(RootInstance, dbmodels.Model):
         return GrantTarget.objects.get(pk=self.id)
         
     def fetchPrivilege(self, user):
-        return self.privilegeSource.fetchPrivilege(user)
+        return self.privilegeSource.grantablePrivilege(user)
     
     def getData(self, fields, context):
         data = self.headData(context)
@@ -6791,7 +6793,7 @@ class User(RootInstance, dbmodels.Model):
                 data['system access'] = 'write'
 
         emails = self.emails.filter(deleteTransaction__isnull=True).order_by('position')
-        if 'email' in fields: 
+        if 'emails' in fields: 
             data['emails'] = [i.getData([], context) for i in emails]
         else:
             data['emails'] = [i.headData(context) for i in emails]
@@ -6799,11 +6801,11 @@ class User(RootInstance, dbmodels.Model):
         if 'path' in fields: 
             data['path'] = self.currentPaths[0].getData([], context)
 
-        if 'notification' in fields: 
+        if 'notifications' in fields: 
             data['notifications'] = [i.getData([], context) for i in self.currentNotifications.order_by('transaction__creation_time')]
 
         if context.getPrivilege(self) == 'administer':
-            if 'user grant request' in fields: 
+            if 'user grant requests' in fields: 
                 data['user grant requests'] = [i.getData([], context) for i in \
                     UserUserGrantRequest.select_related(self.userGrantRequests.filter(deleteTransaction__isnull=True))]
 
@@ -6960,7 +6962,7 @@ class UserEmail(ChildInstance, dbmodels.Model):
         data['text'] = self.text
         return data
                
-    def getData(self, fieldNames, context):
+    def getData(self, fields, context):
         return self.headData(context)
         
     fieldMap = {'text': 'text',

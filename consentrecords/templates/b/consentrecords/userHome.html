@@ -840,12 +840,12 @@
 					metaObj.attr("property").startsWith("og:"))
 					metaObj.remove();
 			});
-			var offering = session.getValue("Offering");
-			var organization = session.getValue("Organization");
+			var offering = session.offering();
+			var organization = session.organization();
 			var a = [{property: "og:url", content: targetHRef},
 					 {property: "og:type", content: "website" },
-					 {property: "og:title", content: offering.getDescription()},
-					 {property: "og:description", content: session.getDescription() + "\n" + organization.getDescription()}];
+					 {property: "og:title", content: offering.description()},
+					 {property: "og:description", content: session.description() + "\n" + organization.description()}];
 			for (var i = 0; i < a.length; i++)
 			{
 				if (a[i].content)
@@ -857,7 +857,7 @@
 		
 		function appendFacebookButton(shareDiv, service, session)
 		{
-			var targetHRef = window.location.origin+"/find/"+service.instanceID+"/"+session.instanceID;
+			var targetHRef = window.location.origin+"/find/"+service.id()+"/"+session.id();
 
 			setMetaProperties(session, targetHRef);
 			var fbDiv = shareDiv.div.append("div")
