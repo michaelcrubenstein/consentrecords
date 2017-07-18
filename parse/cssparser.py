@@ -44,10 +44,6 @@ class parser:
                         lastString=c
                 else:
                     lastString = c
-            elif c in '#~^$|<>+/':
-                if len(lastString) > 0:
-                    a += [lastString]
-                lastString = c
             elif c in ')]':
                 if len(lastString) > 0:
                     a += [lastString]
@@ -56,14 +52,24 @@ class parser:
                 if len(lastString) > 0: 
                     a += [lastString]
                 lastString = c
-            elif c == '=':
-                if lastString in '~^*$|<>': # Check for characters that are combined with '='
+            elif c in '<>':
+                if lastString in '~': # Check for characters that are combined with '<>'
                     lastString += c
                 else:
                     if len(lastString) > 0: a += [lastString]
                     lastString = c
+            elif c == '=':
+                if lastString in '~^*$|<>~<~>': # Check for characters that are combined with '='
+                    lastString += c
+                else:
+                    if len(lastString) > 0: a += [lastString]
+                    lastString = c
+            elif c in '#~^$|+/':  # Check for characters that are always at the beginning of tokens
+                if len(lastString) > 0:
+                    a += [lastString]
+                lastString = c
             else:
-                if len(lastString) > 0 and lastString[-1] in ':#~^$|<>+[()]=/':
+                if len(lastString) > 0 and lastString[-1] in '~:#~^$|<>+[()]=/':
                     a += [lastString]
                     lastString = ""
                 lastString += c

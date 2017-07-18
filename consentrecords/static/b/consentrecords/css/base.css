@@ -283,9 +283,6 @@ button:hover {
 	background: #f8f8f8;
 	opacity: 1.0;
 }
-.cell.btn {
-	padding: 0px 0px;		/* To override btn style. */
-}
 ol.cell-items {
 	margin: 0;				/* To override bootstrap ol style */
 	font-size: 15px;

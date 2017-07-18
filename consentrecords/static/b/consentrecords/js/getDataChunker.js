@@ -51,12 +51,23 @@ var GetDataChunker = (function() {
 		this._clearScrollCheck();
 	}
 	
+	GetDataChunker.prototype.increment = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._increment;
+		else
+		{
+			this._increment = newValue;
+			return this;
+		}
+	}
+	
 	GetDataChunker.prototype._restart = function(instances, startVal)
 	{
 		if (!this._loadingMessage)
 			throw "loadingMessage is not set up";
 			
-		if (instances.length < this._increment)
+		if (instances.length < this.increment())
 		{
 			this.clearLoadingMessage();
 			if (this._onDoneSearch)
@@ -64,7 +75,7 @@ var GetDataChunker = (function() {
 		}
 		else
 		{
-			this._start += this._increment;
+			this._start += this.increment();
 			if (!this.isOverflowingY(this._loadingMessage.node()))
 				this._continue(startVal);
 			else
@@ -101,7 +112,7 @@ var GetDataChunker = (function() {
 		cr.getData({path: this.path, 
 		            resultType: this.resultType,
 					start: this._start,
-					end: this._start + this._increment,
+					end: this._start + this.increment(),
 					fields: this.fields})
 			.then(function(instances) 
 						{ 
@@ -208,7 +219,7 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype.hasShortResults = function()
 	{
-		return this.buttons().size() < this._increment &&
+		return this.buttons().size() < this.increment() &&
 			   this._curSearchID == 0 &&
 			   !this._isSpinning;
 	}

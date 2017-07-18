@@ -1436,15 +1436,14 @@ var OrganizationSearchView = (function() {
 		{
 			if (this.typeName === "Site")
 			{
-				path = 'site[name>text*="{1}"|organization>name>text*="{1}"]';
+				path = 'site[name>text*="{0}"|organization>name>text*="{0}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'organization[name>text*="{1}"]';
+				path = 'organization[name>text*="{0}"]';
 			}
-			var symbol = "*=";
 		
-			return path.format(symbol, encodeURIComponent(val));
+			return path.format(encodeURIComponent(val));
 		}
 		else
 			return '';

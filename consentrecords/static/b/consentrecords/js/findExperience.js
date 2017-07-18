@@ -10,7 +10,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	session.calculateDescription();
 	
 	var sitePanel = new SitePanel();
-	sitePanel.createRoot(session, offering.getDescription(), "session");
+	sitePanel.createRoot(session, offering.description(), "session");
 	var panel = sitePanel.node();
 	
 	var navContainer = sitePanel.appendNavContainer();
@@ -32,13 +32,13 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		orgDiv.classed("organization", true);
 
 		var labelDiv = orgDiv.append("label")
-			.text(organization.getDescription());
+			.text(organization.description());
 
-		if (site.getDescription() && (site.getDescription() !== organization.getDescription()))
+		if (site.description() && (site.description() !== organization.description()))
 		{
 			orgDiv.append('div')
 				.classed("address-line", true)
-				.text(site.getDescription());
+				.text(site.description());
 		}
 		
 		site.promiseCellsFromCache()
@@ -165,7 +165,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 					var initialData = [{
 							container: 'session/{0}/inquiry'.format(session.id()),
 							field: cr.fieldNames.user,
-							instanceID: user.getInstanceID(),
+							instanceID: user.id(),
 							description: user.caption(),
 						}];
 					var sourceObjects = [new cr.ObjectValue()];
@@ -196,7 +196,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var tryAddInquiry = function(user)
 	{
-		if (user.getInstanceID())
+		if (user.id())
 		{
 			addInquiry(user);
 			unblockClick();
@@ -207,15 +207,15 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getData({path: "{0}/Inquiries/user/{1}".format(session.getInstanceID(), this.getInstanceID())})
+				cr.getData({path: "{0}/Inquiries/user/{1}".format(session.id(), this.id())})
 					.then(function(valueIDs)
 						{
 							if (valueIDs.length > 0)
 							{
 								checkInquiryFunction(user, valueIDs[0].id);
-								bootstrap_alert.success(_this.getDescription() + 
+								bootstrap_alert.success(_this.description() + 
 													  " already signed up for " + 
-													  offering.getDescription() + "/" + session.getDescription(),
+													  offering.description() + "/" + session.description(),
 													  ".alert-container");
 							}
 							else
@@ -255,7 +255,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			var successFunction = function()
 			{
 				bootstrap_alert.success("You have backed out of " + 
-							  offering.getDescription() + "/" + session.getDescription() + ".",
+							  offering.description() + "/" + session.description() + ".",
 							  ".alert-container");
 				checkInquiryFunction(user, null);
 			}
@@ -268,13 +268,13 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		d3.event.preventDefault();
 	};
 	
-	if (user.getInstanceID())
+	if (user.id())
 	{
 		function done(values)
 		{
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
-		cr.getData({path: "{0}/Inquiries/user/{1}".format(session.getInstanceID(), user.getInstanceID())})
+		cr.getData({path: "{0}/Inquiries/user/{1}".format(session.id(), user.id())})
 					.then(done, cr.asyncFail);
 	}
 	else
@@ -297,10 +297,10 @@ var PickOfferingSearchView = (function () {
 		if (compareText.length === 0)
 			return true;
 			
-		return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
-			   d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
-			   d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
-			   d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+		return d.description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Offering").description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Site").description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Organization").description().toLocaleLowerCase().indexOf(compareText) >= 0;
 	}
 	
 	/* Overrides SearchView.searchPath */
@@ -308,25 +308,30 @@ var PickOfferingSearchView = (function () {
 	{
 		var currentDate = new Date();
 		var todayString = currentDate.toISOString().substring(0, 10);
-		var s = '{0}::reference(Offering)/Sessions/Session'.format(this.tag.getInstanceID());
-		s += ':not([Registration Deadline<"{0}"])'.format(todayString);
-		s += ':not([End<"{0}"])'.format(todayString);
+		var s = 'offering[service>service={0}]/session'.format(this.tag.id());
+		s += '[registration deadline~<"{0}"]'.format(todayString);
+		s += '[end~<"{0}"]'.format(todayString);
 		if (val.length == 0)
 			return s;
-		else if (val.length < 3)
-			return s + '[ancestor:name^="' + encodeURIComponent(val) + '"]';
 		else
-			return s + '[ancestor:name*="' + encodeURIComponent(val) + '"]';
+		{
+			return s + '[name*="{0}"]|[offering>name*="{0}"]|[offering>site>name*="{0}"]|[offering>site>organization>name*="{0}"]'
+				.format(encodeURIComponent(val));
+		}
+	}
+	
+	PickOfferingSearchView.prototype.resultType = function()
+	{
+		return cr.Session;
 	}
 	
 	PickOfferingSearchView.prototype.showObjects = function(foundObjects)
 	{
 		var _this = this;
-		var sections = this.appendButtonContainers(foundObjects);
-		var buttons = sections.append("button").classed("btn row-button", true)
+		var sections = this.appendButtonContainers(foundObjects)
 			.on("click", function(session)
 				{
-					if (prepareClick('click', 'show details: ' + session.getDescription()))
+					if (prepareClick('click', 'show details: ' + session.description()))
 					{
 						showClickFeedback(this);
 
@@ -337,10 +342,10 @@ var PickOfferingSearchView = (function () {
 					}
 				});
 
-		appendSessionDescriptions(buttons);
+		appendSessionDescriptions(sections);
 		
 		this.constrainFoundObjects();
-		return buttons;
+		return sections;
 	}
 	
 	PickOfferingSearchView.prototype.textCleared = function()
@@ -352,7 +357,7 @@ var PickOfferingSearchView = (function () {
 	
 	PickOfferingSearchView.prototype.noResultString = function()
 	{
-		return "There are no upcoming opportunities for {0}.".format(this.tag.getDescription());
+		return "There are no upcoming opportunities for {0}.".format(this.tag.description());
 	}
 	
 	function PickOfferingSearchView(sitePanel, user, tag)
@@ -401,7 +406,7 @@ var FindExperienceSearchView = (function () {
 	
 	/* Overrides SearchView.prototype.onClickButton */
 	FindExperienceSearchView.prototype.onClickButton = function(d, i, button) {
-		if (prepareClick('click', 'pick ' + d.constructor.name + ': ' + d.getDescription()))
+		if (prepareClick('click', 'pick ' + d.constructor.name + ': ' + d.description()))
 		{
 			showClickFeedback(button);
 			
@@ -418,7 +423,7 @@ var FindExperienceSearchView = (function () {
 	/* Overrides SearchView.searchPath */
 	FindExperienceSearchView.prototype.searchPath = function(val)
 	{
-		var s = "Service";
+		var s = "service";
 		if (val.length == 0)
 			return s;
 		else
@@ -430,12 +435,22 @@ var FindExperienceSearchView = (function () {
 		}
 	}
 	
+	FindExperienceSearchView.prototype.resultType = function()
+	{
+		return cr.Service;
+	}
+	
+	FindExperienceSearchView.prototype.increment = function()
+	{
+		return 1000;
+	}
+	
 	FindExperienceSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		if (compareText.length === 0)
 			return true;
 			
-		var i = d.getDescription().toLocaleLowerCase().indexOf(compareText);
+		var i = d.description().toLocaleLowerCase().indexOf(compareText);
 		if (compareText.length < 3)
 			return i == 0;
 		else

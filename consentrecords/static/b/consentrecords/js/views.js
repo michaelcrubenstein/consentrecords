@@ -1967,7 +1967,7 @@ var SitePanel = (function () {
 	SitePanel.prototype.appendActionButton = function(text, onClick)
 	{
 		var sectionDiv = this.mainDiv.append('section')
-			.classed('cell unique btn action', true)
+			.classed('cell unique action', true)
 			.on('click', onClick);
 		var itemsDiv = crf.appendItemList(sectionDiv)
 			.classed('hover-items', true);
@@ -2189,7 +2189,7 @@ var SearchOptionsView = (function () {
 	
 	SearchOptionsView.prototype.constrainFoundObjects = function()
 	{
-		var buttons = this.listElement.selectAll(".btn");
+		var buttons = this.listElement.selectAll("li");
 		var _this = this;
 		buttons.style("display", function(d) 
 			{ 
@@ -2223,6 +2223,11 @@ var SearchOptionsView = (function () {
 		return ["parents"];
 	}
 	
+	SearchOptionsView.prototype.increment = function()
+	{
+		return 20;
+	}
+	
 	SearchOptionsView.prototype.noResultString = function()
 	{
 		return "No Results";
@@ -2251,6 +2256,7 @@ var SearchOptionsView = (function () {
 			this.getDataChunker.path = searchPath;
 			this.getDataChunker.fields = this.fields();
 			this.getDataChunker.resultType = this.resultType(this._constrainCompareText);
+			this.getDataChunker.increment(this.increment());
 			this.getDataChunker.start(this._constrainCompareText);			
 		}
 		else

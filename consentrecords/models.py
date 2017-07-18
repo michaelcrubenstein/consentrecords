@@ -152,6 +152,14 @@ def getFieldQ(field, symbol, testValue):
         return Q((field + '__gt', testValue))
     elif symbol == '>=':
         return Q((field + '__gte', testValue))
+    elif symbol == '~<':
+        return ~Q((field + '__lt', testValue))
+    elif symbol == '~<=':
+        return ~Q((field + '__lte', testValue))
+    elif symbol == '~>':
+        return ~Q((field + '__gt', testValue))
+    elif symbol == '~>=':
+        return ~Q((field + '__gte', testValue))
     else:
         raise ValueError("unrecognized symbol: %s"%symbol)
 
@@ -281,6 +289,8 @@ def _parse(qs, tokens, user, qsType, accessType):
         return _parse(qs.filter(q), tokens[i:], user, qsType, accessType)
     elif tokens[0] == '/':
         return _subTypeParse(qs, tokens, user, qsType, accessType, qsType.elementMap)
+    elif tokens[0] == ':':
+        pass
     else:
         raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))
 
@@ -362,7 +372,9 @@ class IInstance():
         if self.deleteTransaction_id:
             raise RuntimeError('%s is already deleted' % str(self))
         if not context.canWrite(self):
-            raise PermissionDenied
+            print(context.canWrite(self))
+            print(self.fetchPrivilege(context.user))
+            raise PermissionDenied('Permission denied')
         self.deleteTransaction = context.transaction
         self.save()
     
@@ -643,15 +655,28 @@ class AccessInstance(ChildInstance):
     def select_related(querySet, fields=[]):
         return AccessInstance.select_head_related(querySet)
 
-    def getData(self, fieldNames, context):
+    def getData(self, fields, context):
         data = self.headData(context)
         data['grantee'] = self.grantee.headData(context)
         if 'privilege' in self.__dict__:
             data['privilege'] = self.privilege
+        
+        if 'parents' in fields:
+            if context.canRead(self.parent) and 'user' in fields:
+                data['user'] = self.parent.getData([], context)
+            else:
+                data['user'] = self.parent.headData(context)
+                
         return data
         
+    @property    
+    def privilegeSource(self):
+        return self
+        
     def fetchPrivilege(self, user):
-        return "administer" if self.parent.fetchPrivilege(user) == "administer" else None
+        return "administer" if self.parent.fetchPrivilege(user) == "administer" else \
+        "write" if self.grantee.id == user.id \
+        else None
     
 class ServiceLinkInstance(ChildInstance):
     @property
@@ -6269,6 +6294,20 @@ class Session(ChildInstance, dbmodels.Model):
             data['periods'] = [i.getData(context) for i in self.currentPeriods]
             data['periods'].sort(key=lambda s: s['description'])
                 
+        if 'parents' in fields:
+            if 'offering' in fields:
+                data['offering'] = self.parent.getData([], context)
+            else:
+                data['offering'] = self.parent.headData(context)
+            if 'site' in fields:
+                data['site'] = self.parent.getData([], context)
+            else:
+                data['site'] = self.parent.headData(context)
+            if 'organization' in fields:
+                data['organization'] = self.parent.getData([], context)
+            else:
+                data['organization'] = self.parent.headData(context)
+
         return data
         
     def getSubClause(qs, user, accessType):
@@ -6680,6 +6719,22 @@ class User(RootInstance, dbmodels.Model):
     lastName = dbmodels.CharField(max_length=255, db_index=True, null=True)
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
     
+    fieldMap = {'first name': 'firstName',
+                'last name': 'lastName',
+                'birthday': 'birthday',
+               }
+               
+    elementMap = {'email': ('emails__', 'UserEmail', 'parent'),
+                  'notification': ('notifications__', "Notification", 'parent'),
+                  'path': ('paths__', "Path", 'parent'),
+                  'user grant request': ('userGrantRequests__', "UserUserGrantRequest", 'parent'),
+                  'engagement': ('userEngagements__', "Engagement", 'user'),
+                 }
+
+    @property
+    def path(self):
+        return self.paths.filter(deleteTransaction__isnull=True)[0]
+    
     def __init__(self, *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
         self._authUser = None
@@ -6716,8 +6771,12 @@ class User(RootInstance, dbmodels.Model):
                                    emails__text=authUser.email, 
                                    emails__deleteTransaction__isnull=True)
     
+    @property
+    def privilegeSource(self):
+        return GrantTarget.objects.get(pk=self.id)
+        
     def fetchPrivilege(self, user):
-        return GrantTarget.objects.get(pk=self.id).fetchPrivilege(user)
+        return self.privilegeSource.fetchPrivilege(user)
     
     def getData(self, fields, context):
         data = self.headData(context)
@@ -6764,18 +6823,6 @@ class User(RootInstance, dbmodels.Model):
     def is_administrator(self):
         return self.authUser and self.authUser.is_superuser
             
-    fieldMap = {'first name': 'firstName',
-                'last name': 'lastName',
-                'birthday': 'birthday',
-               }
-               
-    elementMap = {'email': ('emails__', 'UserEmail', 'parent'),
-                  'notification': ('notifications__', "Notification", 'parent'),
-                  'path': ('paths__', "Path", 'parent'),
-                  'user grant request': ('userGrantRequests__', "UserUserGrantRequest", 'parent'),
-                  'engagement': ('userEngagements__', "Engagement", 'user'),
-                 }
-
     def getSubClause(qs, user, accessType):
         if accessType == User:
             return qs, accessType
@@ -6863,7 +6910,7 @@ class User(RootInstance, dbmodels.Model):
         
         self.updateChildren(changes, 'emails', context, UserEmail, self.emails, newIDs)
         if 'path' in changes:
-            self.paths.all()[0].update(changes['path'], context, newIDs)
+            self.path.update(changes['path'], context, newIDs)
         self.updateChildren(changes, 'user grant requests', context, UserUserGrantRequest, self.userGrantRequests, newIDs)
         if 'grant target' in changes:
             grantTargets = GrantTarget.objects.filter(pk=self.id)

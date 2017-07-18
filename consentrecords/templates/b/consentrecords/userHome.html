@@ -924,10 +924,9 @@
 						.enter()
 						.append("li").classed("consent-record", true);	// So that each button appears on its own row.
 	
-					var buttons = divs.append("button").classed("btn row-button", true)
-						.on("click", function(session)
+					divs.on("click", function(session)
 						{
-							if (prepareClick('click', 'session ' + session.getDescription()))
+							if (prepareClick('click', 'session ' + session.description()))
 							{
 								showClickFeedback(this);
 
@@ -937,7 +936,7 @@
 							}
 						});
 	
-					appendSessionDescriptions(buttons);
+					appendSessionDescriptions(divs);
 				}
 				else
 				{

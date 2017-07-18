@@ -116,8 +116,10 @@ def orgHome(request):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -143,8 +145,10 @@ def find(request):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     if request.user.is_authenticated:
-        args['userID'] = Instance.getUserInstance(request.user).id.hex
+        args['userID'] = context.user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -154,10 +158,10 @@ def find(request):
     args['state'] = "findNewExperience"
     
     if settings.FACEBOOK_SHOW:
-        offering = Instance.objects.get(pk=offeringid)
+        offering = Offering.objects.get(pk=offeringid)
         args['fbURL'] = request.build_absolute_uri()
-        args['fbTitle'] = offering._description
-        args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent._description
+        args['fbTitle'] = offering.description(languageCode=language)
+        args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent.description(languageCode=language)
 
     return HttpResponse(template.render(args))
 
@@ -209,8 +213,10 @@ def showPathway(request, email):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -219,10 +225,10 @@ def showPathway(request, email):
         args['facebookIntegration'] = True
     
     containerPath = 'user[email=%s]' % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-    if len(objs) > 0:
-        args['state'] = 'user/%s' % objs[0].id.hex
+    tokens = cssparser.tokenizeHTML(containerPath)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    if len(qs) > 0:
+        args['state'] = 'user/%s' % qs[0].id.hex
 
     return HttpResponse(template.render(args))
 
@@ -463,62 +469,60 @@ def requestAccess(request):
         raise Http404("requestAccess only responds to POST methods")
     
     try:    
-        language = None
         followingPath = request.POST["following"]
         followerPath = request.POST["follower"]
+        language = request.POST.get('language', 'en')
+        context = Context(language, request.user)
         
         if request.user.is_authenticated:
-            user = Instance.getUserInstance(request.user)
-            if not user:
+            if not context.user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
-                userInfo = UserInfo(request.user)
-                objs = pathparser.getQuerySet(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
-                    following = objs[0]
-                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
-                        follower = objs[0]
-                        fieldTerm = terms.accessRequest
-                        ars = following.value_set.filter(field=fieldTerm,
-                                                         deleteTransaction__isnull=True,
-                                                         referenceValue_id=follower.id)
+                qs, tokens, qsType, accessType = \
+                    RootInstance.parse(cssparser.tokenizeHTML(followingPath), context.user)
+                if len(qs) > 0 and type(qs[0]) == User:
+                    following = qs[0]
+                    qs, tokens, qsType, accessType = \
+                        RootInstance.parse(cssparser.tokenizeHTML(followerPath), context.user)
+                    if len(qs) > 0 and type(qs[0]) == User:
+                        follower = qs[0]
+                        ars = following.userGrantRequests.filter(deleteTransaction__isnull=True,
+                                                                 grantee=follower)
                         if ars.exists():
-                            if follower == user:
-                                error = 'You have already requested to follow %s.' % following.description.text
+                            if follower == context.user:
+                                error = 'You have already requested to follow %s.' % following.description(language)
                             else:
-                                error = 'There is already a request for %s to follow %s.' % (follower.description.text, following.description.text)
+                                error = 'There is already a request for %s to follow %s.' % (follower.description(language), following.description(language))
                             return HttpResponseBadRequest(reason=error)
-                        elif not follower.value_set.filter(field=terms.publicAccess,
-                                                              deleteTransaction__isnull=True).exists() and \
-                             not Value.objects.filter(field=terms.user,
-                                                      deleteTransaction__isnull=True,
-                                                      referenceValue__id=following.id,
-                                                      instance__typeID=terms.accessRecord,
-                                                      instance__referenceValues__instance_id=follower.id).exists():
-                            followerName = "you" if follower.id == user.id else ('"%s"' % follower.description.text)
-                            followerPossessive = "your" if follower.id == user.id else (('"%s"' + "'s") % follower.description.text)
-                            followingName = "You" if following.id == user.id else ('"%s"' % following.description.text)
+                        elif not follower.privilegeSource.publicAccess and \
+                             not follower.privilegeSource.userGrants.filter(deleteTransaction__isnull=True,
+                                 grantee=following).exists() and \
+                             not follower.privilegeSource.groupGrants.filter(deleteTransaction__isnull=True,
+                                 grantee__members__user=following,
+                                 grantee__members__deleteTransaction__isnull=True).exists():
+                            followerName = "you" if follower.id == context.user.id else ('"%s"' % follower.description(language))
+                            followerPossessive = "your" if follower.id == context.user.id else (('"%s"' + "'s") % follower.description(language))
+                            followingName = "You" if following.id == context.user.id else ('"%s"' % following.description(language))
                             error = "%s will not be able to accept your request because they can't find %s. You can either change %s Profile Visibility or share %s profile with them." % (followingName, followerName, followerPossessive, followerPossessive)
                             return HttpResponseBadRequest(reason=error)
                         else:
                             with transaction.atomic():
-                                transactionState = TransactionState(request.user)
-                                nameLists = NameList()
-                            
-                                v = following.addReferenceValue(fieldTerm, follower, following.getNextElementIndex(fieldTerm), transactionState)
-            
-                                data = v.getReferenceData(userInfo, language)
+                                v = UserUserGrantRequest.objects.create(transaction=context.transaction,
+                                    lastTransaction=context.transaction,
+                                    parent=following,
+                                    grantee=follower)
+
+                                data = v.headData(context)
                             
                                 # Send an email to the following user.
                                 protocol = "https://" if request.is_secure() else "http://"
-                                recipientEMail = following.getSubDatum(terms.email)
-                                path = following.getSubInstance(terms['Path'])
-                                salutation = (path and path.getSubDatum(terms.name)) or following.getSubDatum(terms.firstName)
+                                recipientEMail = following.emails.filter(deleteTransaction__isnull=True)[0].text
+                                path = following.path
+                                salutation = (path and path.name) or following.firstName
                                 
                                 Emailer.sendNewFollowerEmail(salutation,
                                     recipientEMail, 
-                                    follower.getDescription(),
+                                    follower.description(language),
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id.hex,
                                     protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id.hex)
                             
@@ -955,22 +959,18 @@ class api:
         
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
-    def delete(user, path):
+    def delete(user, path, data):
         try:
             if not path:
                 raise ValueError("path was not specified in delete")
 
+            languageCode = data.get('languageCode', 'en')
+            context = Context(languageCode, user)
             with transaction.atomic():
-                transactionState = TransactionState(user)
-                userInfo=UserInfo(user)
-                if path.startswith("value/"):
-                    valueID = path[6:6+32]
-                    ValueQuerySet(Value.objects.filter(pk=valueID, deleteTransaction__isnull=True))\
-                        .deleteObjects(user, NameList(), userInfo, transactionState)
-                else:
-                    descriptionCache = []
-                    nameLists = NameList()
-                    pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.administerFilter).deleteObjects(user, nameLists, userInfo, transactionState)
+                tokens = cssparser.tokenizeHTML(path)
+                qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+                for i in qs:
+                    i.markDeleted(context)
  
             results = {}
         except Exception as e:
@@ -1002,7 +1002,10 @@ def handleURL(request, urlPath=None):
     elif request.method == 'DELETE':
         if not request.user.is_authenticated:
             raise PermissionDenied
-        return api.delete(request.user, urlPath)
+        print(request)
+        print(request.POST)
+        print(request.GET)
+        return api.delete(request.user, urlPath, request.GET)
     elif request.method == 'POST':
         if not request.user.is_authenticated:
             raise PermissionDenied

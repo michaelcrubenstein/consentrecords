@@ -33,7 +33,7 @@ var RequestFollowPanel = (function() {
 					var done = function()
 					{
 						_this.followingPanel.showPendingObjects([
-							{text: email, getDescription: function() { return email; }}]);
+							{text: email, description: function() { return email; }}]);
 						_this.followingPanel._pendingSection.selectAll('li').sort(
 							function(a, b)
 							{
@@ -61,7 +61,7 @@ var RequestFollowPanel = (function() {
 						}
 						else
 						{
-							cr.requestAccess(user, 'user[email="{0}"]'.format(email), done, syncFailFunction);
+							cr.requestAccess(user, 'user[email>text="{0}"]'.format(email), done, syncFailFunction);
 						}
 					}
 					catch(err)
@@ -126,16 +126,16 @@ var FollowingPanel = (function() {
 					if (d.id)
 						path = 'user/' + d.id()
 					else
-						path = 'user[email__text={0}]'.format(d.description())
-					path += '/user grant request/{0}'.format(_this.grantRequest.id());
-					cr.getData({path: path})
-						.then(function(values)
+						path = 'user[email>text={0}]'.format(d.description())
+					path += '/user grant request[grantee={0}]'.format(_this.user.id());
+					cr.getData({path: path, fields: ['parents'], resultType: cr.UserUserGrantRequest})
+						.then(function(grantRequests)
 							{
-								if (values.length > 0)
+								if (grantRequests.length > 0)
 								{
-									values[0].deleteValue()
+									grantRequests[0].deleteData()
 										.then(
-										function(v)
+										function()
 										{
 											removeItem(_thisItem,
 												function()

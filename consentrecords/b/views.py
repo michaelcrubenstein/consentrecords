@@ -49,7 +49,7 @@ def home(request):
     }
     
     if request.user.is_authenticated:
-        languageCode = request.GET.get('languageCode', 'en')
+        languageCode = request.GET.get('language', 'en')
         context = Context(languageCode, request.user)
         user = context.user
         if not user:
@@ -128,8 +128,10 @@ def find(request):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     if request.user.is_authenticated:
-        args['userID'] = Instance.getUserInstance(request.user).id.hex
+        args['userID'] = context.user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -139,10 +141,10 @@ def find(request):
     args['state'] = "findNewExperience"
     
     if settings.FACEBOOK_SHOW:
-        offering = Instance.objects.get(pk=offeringid)
+        offering = Offering.objects.get(pk=offeringid)
         args['fbURL'] = request.build_absolute_uri()
-        args['fbTitle'] = offering._description
-        args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent._description
+        args['fbTitle'] = offering.description(languageCode=language)
+        args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent.description(languageCode=language)
 
     return HttpResponse(template.render(args))
 
@@ -194,8 +196,10 @@ def showPathway(request, email):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -204,10 +208,10 @@ def showPathway(request, email):
         args['facebookIntegration'] = True
     
     containerPath = 'user[email=%s]' % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo)
-    if len(objs) > 0:
-        args['state'] = 'user/%s' % objs[0].id.hex
+    tokens = cssparser.tokenizeHTML(containerPath)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    if len(qs) > 0:
+        args['state'] = 'user/%s' % qs[0].id.hex
 
     return HttpResponse(template.render(args))
 
@@ -223,8 +227,10 @@ def showExperience(request, id):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex

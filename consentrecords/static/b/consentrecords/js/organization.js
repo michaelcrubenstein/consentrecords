@@ -54,16 +54,16 @@ function appendSessionDescriptions(buttons)
 			return d.offering().description();
 		});
 
-	var rightText = buttons.append('span').classed("centered-right-2", true);
-
-	var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+	var leftText = buttons.append('div').classed("description-text growable", true);
 	
 	leftText.append('div').classed("sub-text", true)
 		.text(function(d) {
 			return d.description();
 		});
 	leftText.append('div').classed("sub-text", true)
-		.text(getDateRange);
+		.text(function(d) {
+			return d.dateRange();
+		});
 	leftText.append('div').classed("sub-text", true)
 		.text(function(d) {
 			var registrationDeadline = d.registrationDeadline();
