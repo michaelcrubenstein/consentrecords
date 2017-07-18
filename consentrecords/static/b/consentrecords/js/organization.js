@@ -49,22 +49,22 @@ function getMonthString(date)
 
 function appendSessionDescriptions(buttons)
 {
-	buttons.append('div')
+	var leftText = buttons.append('div').classed("growable", true);
+	
+	leftText.append('div')
 		.text(function(d) { 
 			return d.offering().description();
 		});
 
-	var leftText = buttons.append('div').classed("description-text growable", true);
-	
-	leftText.append('div').classed("sub-text", true)
+	leftText.append('div').classed("sub-text description-text", true)
 		.text(function(d) {
 			return d.description();
 		});
-	leftText.append('div').classed("sub-text", true)
+	leftText.append('div').classed("sub-text description-text", true)
 		.text(function(d) {
 			return d.dateRange();
 		});
-	leftText.append('div').classed("sub-text", true)
+	leftText.append('div').classed("sub-text description-text", true)
 		.text(function(d) {
 			var registrationDeadline = d.registrationDeadline();
 			if (registrationDeadline)
@@ -73,11 +73,11 @@ function appendSessionDescriptions(buttons)
 				return "";
 		});
 
-	leftText.append('div').classed("sub-text sub-paragraph", true)
+	leftText.append('div').classed("sub-text sub-paragraph description-text", true)
 		.text(function(d) {
 			return d.organization().description();
 		});
-	leftText.append('div').classed("sub-text", true)
+	leftText.append('div').classed("sub-text description-text", true)
 		.text(function(d) {
 			if (d.site().description() != d.organization().description())
 				return d.site().description();

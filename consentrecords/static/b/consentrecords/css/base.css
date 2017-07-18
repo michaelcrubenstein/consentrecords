@@ -327,6 +327,7 @@ section.cell {
 	background: white;
 	display: flex;
 	align-items: baseline;
+	-webkit-align-items: baseline;
 }
 
 .cell.unique.edit {
@@ -413,6 +414,9 @@ panel.list .description-text {
 }
 .site-chevron-right {
 	color: #777;
+	padding-left: 12px;
+	padding-right: 12px;
+	height: 14px;
 }
 .site-chevron-right+.description-text {
 	margin-right: 18px;
@@ -589,8 +593,8 @@ div.add-value>button {
 ol.cell-items>li {
 	display: flex;
 	position: relative;	/* Relative position is needed to set the left edge of the item. */
-	align-items: baseline;
-	-webkit-align-items: baseline;
+	align-items: center;
+	-webkit-align-items: center;
 	font-size: 15px;
 	min-height: 30px;
 	cursor: pointer;
@@ -653,26 +657,6 @@ ol.deletable-items>li>button:last-child:focus {
 	outline: none;
 }
 
-/** styles for the right chevron of the notification. */
-ol.cell-items>li>img {
-	position: relative;
-	top: 12px;
-	color: #777;
-	padding-left: 12px;
-	padding-right: 12px;
-	padding-bottom: 10px;
-	height: 24px;
-}
-
-.right-vertical-chevron {	/* A hack to get the chevrons in the correct vertical alignment in 
-								conjunction with right-fixed-width-div. */
-	line-height: 1.3em;
-	vertical-align: middle;
-/* 
-	margin-top: 3px;
-	margin-bottom: 3px;
- */
-}
 ol, ul {
 	list-style-type: none;
 	-webkit-padding-start: 0px;

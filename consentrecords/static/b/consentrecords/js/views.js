@@ -866,7 +866,7 @@ var crf = {
 	{
 		return items
 			.append("img")
-			.classed("site-chevron-right right-vertical-chevron", true)
+			.classed("site-chevron-right", true)
 			.attr("src", rightChevronPath)
 			.attr("height", "18px");
 	},
@@ -912,21 +912,6 @@ var crf = {
 		dials.parent().animate({left: -newLeft, width: newWidth}, duration);
 		dials.animate({opacity: 0}, duration);
 	}
-}
-
-/**
-	Appends a right-pointing chevron to the specified containers that floats to the right
-	edge of the buttons.
- */
-function appendRightChevrons(buttons, isFloat)
-{
-	var containers = buttons.append("div")
-		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron", true);
-	containers
-		.append("img")
-		.attr("src", rightChevronPath)
-		.attr("height", "18px");
-	return containers;
 }
 
 function appendLeftChevrons(buttons)
