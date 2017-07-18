@@ -6300,13 +6300,13 @@ class Session(ChildInstance, dbmodels.Model):
             else:
                 data['offering'] = self.parent.headData(context)
             if 'site' in fields:
-                data['site'] = self.parent.getData([], context)
+                data['site'] = self.parent.parent.getData([], context)
             else:
-                data['site'] = self.parent.headData(context)
+                data['site'] = self.parent.parent.headData(context)
             if 'organization' in fields:
-                data['organization'] = self.parent.getData([], context)
+                data['organization'] = self.parent.parent.parent.getData([], context)
             else:
-                data['organization'] = self.parent.headData(context)
+                data['organization'] = self.parent.parent.parent.headData(context)
 
         return data
         
