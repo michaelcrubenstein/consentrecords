@@ -64,7 +64,7 @@ var SharingPanel = (function() {
 		var _this = this;
 			
 		spans.on('click', function(d) {
-				if (prepareClick('click', 'accept access request {0}'.format(d.getDescription())))
+				if (prepareClick('click', 'accept access request {0}'.format(d.description())))
 				{
 					try
 					{
@@ -77,7 +77,7 @@ var SharingPanel = (function() {
 							unblockClick();
 						};
 					
-						_this.addAccess(accessorLevel, "{0}".format(d.getInstanceID()), done);
+						_this.addAccess(accessorLevel, d.urlPath(), done);
 					}
 					catch (err)
 					{
@@ -141,7 +141,7 @@ var SharingPanel = (function() {
 		var ignoreButtons = this.appendIgnoreButtons(itemButtonDivs);
 			
 		// Sort the access records by type.
-		var grants = user.grantTarget().userGrants().concat(user.grantTarget().groupGrants());
+		var grants = user.userGrants().concat(user.groupGrants());
 		for (var i = 0; i < grants.length; ++i)
 		{
 			var a = grants[i];
@@ -202,8 +202,8 @@ var SharingPanel = (function() {
 	{
 		var _this = this;
 
-		var userPath = "user/{0}".format(this.user.id());
-		cr.share(userPath, path, accessorLevel.id, function(newData)
+		var userPath = this.user.urlPath();
+		cr.share(userPath, path, cr.UserGrant, accessorLevel.id, function(newData)
 			{
 				var accessRecordCell = _this.user.getCell(cr.fieldNames.accessRecord);
 				accessRecordCell.addValue(newData);
@@ -213,7 +213,7 @@ var SharingPanel = (function() {
 					{
 						try
 						{
-							var newValue = newData.getValue(cr.fieldNames.user) || newData.getValue(cr.fieldNames.group);
+							var newValue = newData.grantee;
 							_this.onUserAdded(accessorLevel.itemsDiv, newValue);
 							done();
 						}
@@ -230,11 +230,11 @@ var SharingPanel = (function() {
 		var _this = this;
 
 		var ar = accessorLevel.accessRecords[0]
-		var userPath = "{0}".format(this.user.getInstanceID());
+		var userPath = this.user.urlPath();
 		ar.promiseCells()
 			.then(function()
 				{
-					cr.share(userPath, path, accessorLevel.id, function(newValue)
+					cr.share(userPath, path, cr.UserGrant, accessorLevel.id, function(newValue)
 						{
 							var cellName = newValue.getTypeName() == cr.fieldNames.user ? cr.fieldNames.user : cr.fieldNames.group;
 							var cell = ar.getCell(cellName);
@@ -271,7 +271,6 @@ var SharingPanel = (function() {
 		
 		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
 		{
-			var accessRecordCell = user.getCell(cr.fieldNames.accessRecord);
 			function onPick(path)
 			{
 				function done()
@@ -404,7 +403,7 @@ var PickSharingUserPanel = (function() {
 						}
 						else
 						{
-							done('user[email="{0}"]'.format(email), _this);
+							done('user[email>text="{0}"]'.format(email), _this);
 						}
 					}
 					catch(err)

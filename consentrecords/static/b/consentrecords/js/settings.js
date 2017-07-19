@@ -64,31 +64,25 @@ var Settings = (function () {
 						}
 						
 						var newUserPublicAccess = userPublicAccess(publicAccessDescription);
-						if (newUserPublicAccess != user.grantTarget().publicAccess())
+						if (newUserPublicAccess != user.publicAccess())
 						{
-							if (!('grant target' in changes))
-								changes['grant target'] = {}
-							changes['grant target']['public access'] = newUserPublicAccess;
+							changes['public access'] = newUserPublicAccess;
 						}
 						
 						var newPathPublicAccess = pathPublicAccess(publicAccessDescription);
-						if (newPathPublicAccess != (path.grantTarget() && path.grantTarget().publicAccess()))
+						if (newPathPublicAccess != (path.publicAccess()))
 						{
 							if (!('path' in changes))
 								changes['path'] = {}
-							if (!('grant target' in changes['path']))
-								changes['path']['grant target'] = {}
-							changes['path']['grant target']['public access'] = newPathPublicAccess;
+							changes['path']['public access'] = newPathPublicAccess;
 						}
 						
 						var newPathPrimaryAdministrator = pathPrimaryAdministrator(publicAccessDescription);
-						if (newPathPrimaryAdministrator != (path.grantTarget() && path.grantTarget().primaryAdministrator()))
+						if (newPathPrimaryAdministrator != (path.primaryAdministrator()))
 						{
 							if (!('path' in changes))
 								changes['path'] = {}
-							if (!('grant target' in changes['path']))
-								changes['path']['grant target'] = {}
-							changes['path']['grant target']['primary administrator'] = 
+							changes['path']['primary administrator'] = 
 								newPathPrimaryAdministrator && "user/{0}".format(newPathPrimaryAdministrator.id());
 						}
 					}
@@ -144,7 +138,7 @@ var Settings = (function () {
 		var pathPrimaryAdministrator = function(label)
 		{
 			if (label == _this.pathVisibleLabel)
-				return user.grantTarget().primaryAdministrator();
+				return user.primaryAdministrator();
 			else
 				return null;
 		}
@@ -212,7 +206,7 @@ var Settings = (function () {
 
 		if (user.privilege() === cr.privileges.administer)
 		{
-			$.when(user.promiseGrantTarget(), user.path().promiseGrantTarget())
+			user.promiseGrants()
 				.then(function()
 				{
 					publicAccessSection = panel2Div.append('section')

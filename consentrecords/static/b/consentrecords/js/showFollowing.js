@@ -335,7 +335,7 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._followingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
-		this._followingChunker.path = 'user[grant target>user grant>grantee={0}]'.format(this.user.id());
+		this._followingChunker.path = 'user[user grant>grantee={0}]'.format(this.user.id());
 		this._followingChunker.fields = ["none"];
 		this._followingChunker.resultType = cr.User;
 		

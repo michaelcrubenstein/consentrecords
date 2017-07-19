@@ -229,13 +229,22 @@ def _filterClause(tokens, user, qsType, accessType, prefix=''):
                 return Q((prefix+'pk', tokens[2]))
             else:
                 raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
-    elif fieldName == 'grant target':
+    elif fieldName == 'user grant':
         # This special case handles grant targets for items.
-        subType = GrantTarget
+        subType = UserGrant
         if tokens[1] == '>':
             return Q((prefix + 'id__in', 
-                      GrantTarget.objects.filter(\
-                         _filterClause(tokens[2:], user, subType, accessType, prefix=''))))
+                      UserGrant.objects.filter(\
+                         _filterClause(tokens[2:], user, subType, accessType, prefix='')).values('grantor_id')))
+        else:
+            raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
+    elif fieldName == 'group grant':
+        # This special case handles grant targets for items.
+        subType = GroupGrant
+        if tokens[1] == '>':
+            return Q((prefix + 'id__in', 
+                      GroupGrant.objects.filter(\
+                         _filterClause(tokens[2:], user, subType, accessType, prefix='')).values('grantor_id')))
         else:
             raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
     else:
@@ -254,9 +263,15 @@ def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
         return _parse(subType.objects.filter(Q((inClause, elementClause)),
                                              deleteTransaction__isnull=True), 
                       tokens[2:], user, subType, newAccessType)
-    elif tokens[1] == 'grant target':
-        subType = GrantTarget
-        inClause = 'id__in'
+    elif tokens[1] == 'user grant':
+        subType = UserGrant
+        inClause = 'grantor_id__in'
+        elementClause, newAccessType = qsType.getSubClause(qs, user, accessType)
+        return _parse(subType.objects.filter(Q((inClause, elementClause))), 
+                      tokens[2:], user, subType, None)
+    elif tokens[1] == 'group grant':
+        subType = GroupGrant
+        inClause = 'grantor_id__in'
         elementClause, newAccessType = qsType.getSubClause(qs, user, accessType)
         return _parse(subType.objects.filter(Q((inClause, elementClause))), 
                       tokens[2:], user, subType, None)
@@ -413,81 +428,6 @@ class IInstance():
             data['names'] = [i.getData([], context) for i in self.currentNamesQuerySet]
         return data
         
-# An instance that is a secure root: User and Organization
-class SecureRootInstance(IInstance):
-    ### Returns a query clause that limits a set of users to users that can be found 
-    ### without signing in.
-    def anonymousFindFilter(prefix=''):
-        return Q(((prefix + '__id__in') if prefix else 'id__in',
-                  GrantTarget.objects.filter(publicAccess__in=["find", "read"])))
-        
-    ### Returns a query clause that limits a set of users to users that can be found 
-    ### without signing in.
-    def anonymousReadFilter(prefix=''):
-        return Q(((prefix + '__id__in') if prefix else 'id__in',
-                  GrantTarget.objects.filter(publicAccess__id="read")))
-        
-    def findableQuerySet(qs, user, prefix=''):
-        if not user:
-            return qs.filter(SecureRootInstance.anonymousFindFilter(prefix))
-        elif user.is_administrator:
-            return qs
-        else:
-            privilegeIDs = ["find", "read", "register", "write", "administer"]
-            inClause = (prefix + '__id__in') if prefix else 'id__in'
-            elementClause = GrantTarget.objects.filter(\
-                                 Q(publicAccess__in=privilegeIDs) |\
-                                 Q(primaryAdministrator=user) |\
-                                 Q(userGrants__privilege__in=privilegeIDs,
-                                   userGrants__deleteTransaction__isnull=True,
-                                   userGrants__grantee=user) |\
-                                 Q(groupGrants__privilege__in=privilegeIDs,
-                                   groupGrants__deleteTransaction__isnull=True,
-                                   groupGrants__grantee__members__user=user,
-                                   groupGrants__grantee__members__deleteTransaction__isnull=True))
-            qClause = Q((inClause, elementClause))
-            return qs.filter(qClause)
-
-    def readableQuerySet(qs, user, prefix=''):
-        if not user:
-            return qs.filter(SecureRootInstance.anonymousReadFilter(prefix))
-        elif user.is_administrator:
-            return qs
-        else:
-            privilegeIDs = ["read", "write", "administer"]
-            inClause = (prefix + '__id__in') if prefix else 'id__in'
-            elementClause = GrantTarget.objects.filter(\
-                                 Q(publicAccess__in=privilegeIDs) |\
-                                 Q(primaryAdministrator=user) |\
-                                 Q(userGrants__privilege__in=privilegeIDs,
-                                   userGrants__deleteTransaction__isnull=True,
-                                   userGrants__grantee=user) |\
-                                 Q(groupGrants__privilege__in=privilegeIDs,
-                                   groupGrants__deleteTransaction__isnull=True,
-                                   groupGrants__grantee__members__user=user,
-                                   groupGrants__grantee__members__deleteTransaction__isnull=True))
-            qClause = Q((inClause, elementClause))
-            return qs.filter(qClause)
-
-    def administrableQuerySet(qs, user, prefix=''):
-        if not user:
-            return qs.none()
-        elif user.is_administrator:
-            return qs
-        else:
-            inClause = (prefix + '__id__in') if prefix else 'id__in'
-            elementClause = GrantTarget.objects.filter(\
-                                 Q(primaryAdministrator=user) |\
-                                 Q(userGrants__privilege="administer",
-                                   userGrants__deleteTransaction__isnull=True,
-                                   userGrants__grantee=user) |\
-                                 Q(groupGrants__privilege="administer",
-                                   groupGrants__deleteTransaction__isnull=True,
-                                   groupGrants__grantee__members__user=user,
-                                   groupGrants__grantee__members__deleteTransaction__isnull=True))
-            qClause = Q((inClause, elementClause))
-            return qs.filter(qClause)
-
 ### An Instance that has no parent
 class RootInstance(IInstance):
     def headData(self, context):
@@ -520,7 +460,6 @@ class RootInstance(IInstance):
              'experience prompt': ExperiencePrompt,
              'experience prompt service': ExperiencePromptService,
              'experience prompt translation': ExperiencePromptText,
-             'grant target': GrantTarget,
              'group': Group,
              'group grant': GroupGrant,
              'group name': GroupName,
@@ -557,6 +496,126 @@ class RootInstance(IInstance):
         else:
             raise ValueError("unrecognized root token: %s" % tokens[0])
     
+# An instance that is a secure root: User and Organization
+class SecureRootInstance(RootInstance):
+
+    @property
+    def userGrants(self):
+        return UserGrant.objects.filter(deleteTransaction__isnull=True, grantor_id=self.id)
+        
+    @property
+    def groupGrants(self):
+        return GroupGrant.objects.filter(deleteTransaction__isnull=True, grantor_id=self.id)
+        
+    def getData(self, fields, context):
+        data = super(SecureRootInstance, self).getData(fields, context)
+
+        if context.getPrivilege(self) == 'administer':
+            if self.publicAccess:
+                data['public access'] = self.publicAccess
+            if self.primaryAdministrator:
+                data['primary administrator'] = self.primaryAdministrator.headData(context)
+            data['user grants'] = [i.getData([], context) for i in self.userGrants]
+            data['group grants'] = [i.getData([], context) for i in self.groupGrants]
+
+        return data
+    
+    def markDeleted(self, context):
+        for i in self.userGrants:
+            i.markDeleted(context)
+        for i in self.groupGrants:
+            i.markDeleted(context)
+        super(SecureRootInstance, self).markDeleted(context)
+
+    def valueCheckPublicAccess(data, key):
+        validValues = ['find', 'read']
+        _validateEnumeration(data, key, validValues)
+    
+    def valueCheckPrimaryAdministrator(newValue):
+        pass
+        
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousFindFilter(prefix=''):
+        return Q(((prefix + '__publicAccess__in') if prefix else 'publicAccess__in',
+                  ["find", "read"]))
+        
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousReadFilter(prefix=''):
+        return Q(((prefix + '__publicAccess') if prefix else 'publicAccess',
+                  "read"))
+
+    # returns a querySet that enumerates the grantor_ids for grants
+    # for the specified user to have one of the specified privileges.
+    def grantorIDs(user, privileges):
+        return UserGrant.objects.filter(\
+				privilege__in=privileges,
+				deleteTransaction__isnull=True,
+				grantee=user,
+			).values('grantor_id').union(\
+			GroupGrant.objects.filter(\
+				privilege__in=privileges,
+				deleteTransaction__isnull=True,
+				grantee__deleteTransaction__isnull=True,
+				grantee__members__user=user,
+				grantee__members__deleteTransaction__isnull=True,
+			).values('grantor_id'))
+    
+    def privilegedQuerySet(qs, user, prefix, privileges):  
+        if prefix: prefix += '__'
+        publicAccessClause = prefix + 'publicAccess__in'
+        primaryAdministratorClause = prefix + 'primaryAdministrator'
+        inClause = prefix + 'id__in'
+        grantClause = SecureRootInstance.grantorIDs(user, privileges)
+        qClause = Q((publicAccessClause, privileges))|\
+                  Q((primaryAdministratorClause, user))|\
+                  Q((inClause, grantClause))
+        return qs.filter(qClause)
+    
+    def findableQuerySet(qs, user, prefix=''):
+        if not user:
+            return qs.filter(SecureRootInstance.anonymousFindFilter(prefix))
+        elif user.is_administrator:
+            return qs
+        else:
+            return SecureRootInstance.privilegedQuerySet(qs, user, prefix, 
+                        ["find", "read", "register", "write", "administer"])
+
+    def readableQuerySet(qs, user, prefix=''):
+        if not user:
+            return qs.filter(SecureRootInstance.anonymousReadFilter(prefix))
+        elif user.is_administrator:
+            return qs
+        else:
+            return SecureRootInstance.privilegedQuerySet(qs, user, prefix, 
+                        ["read", "write", "administer"])
+
+    def administrableQuerySet(qs, user, prefix=''):
+        if not user:
+            return qs.none()
+        elif user.is_administrator:
+            return qs
+        else:
+            return SecureRootInstance.privilegedQuerySet(qs, user, prefix, 
+                        ["administer"])
+
+    @property
+    def privilegeSource(self):
+        return self
+        
+    def fetchPrivilege(self, user):
+        if not user:
+            return None
+        elif self.primaryAdministrator_id == user.id:
+            return "administer"
+        else:
+            f = self.userGrants.filter(grantee=user, deleteTransaction__isnull=True).values('privilege')\
+                .union(self.groupGrants.filter(grantee__members__user=user, deleteTransaction__isnull=True,
+                                               grantee__deleteTransaction__isnull=True,
+                                               grantee__members__deleteTransaction__isnull=True).values('privilege'))
+            return IInstance.reducePrivileges(f, self.publicAccess)
+        
 ### An Instance that has a parent
 class ChildInstance(IInstance):
     def headData(self, context):
@@ -675,6 +734,31 @@ class AccessInstance(ChildInstance):
         return "administer" if self.parent.fetchPrivilege(user) == "administer" else \
         "write" if self.grantee.id == user.id \
         else None
+    
+    def administrableQuerySet(qs, user, prefix=''):   
+            inClause = (prefix + '__grantor_id__in') if prefix else 'grantor_id__in'
+            grantClause = UserGrant.objects.filter(\
+                                privilege="administer",
+                                deleteTransaction__isnull=True,
+                                grantee=user,
+                            ).values('grantor_id').union(\
+                            GroupGrant.objects.filter(\
+                                privilege="administer",
+                                deleteTransaction__isnull=True,
+                                grantee__deleteTransaction__isnull=True,
+                                grantee__members__user=user,
+                                grantee__members__deleteTransaction__isnull=True,
+                            ).values('grantor_id')).union(\
+                            User.objects.filter(\
+                                primaryAdministrator=user,\
+                                deleteTransaction__isnull=True,\
+                            ).values('id')).union(\
+                            Organization.objects.filter(\
+                                primaryAdministrator=user,\
+                                deleteTransaction__isnull=True,\
+                            ).values('id'))
+            qClause = Q((inClause, grantClause))
+            return qs.filter(qClause)
     
 class ServiceLinkInstance(ChildInstance):
     @property
@@ -3070,18 +3154,6 @@ class GrantTarget(IInstance, dbmodels.Model):
     def privilegeSource(self):
         return self
         
-    def grantablePrivilege(self, user):
-        if not user:
-            return None
-        elif self.primaryAdministrator_id == user.id:
-            return "administer"
-        else:
-            f = self.userGrants.filter(grantee=user, deleteTransaction__isnull=True).values('privilege')\
-                .union(self.groupGrants.filter(grantee__members__user=user, deleteTransaction__isnull=True,
-                                                  grantee__deleteTransaction__isnull=True,
-                                                  grantee__members__deleteTransaction__isnull=True).values('privilege'))
-            return IInstance.reducePrivileges(f, self.publicAccess)
-        
     # fetchPrivilege for grant targets can only return None or "administer"            
     def fetchPrivilege(self, user):
         privilege = self.grantablePrivilege(user)
@@ -3193,6 +3265,7 @@ class UserGrant(AccessInstance, dbmodels.Model):
     deleteTransaction = deleteTransactionField('deletedUserGrants')
 
     parent = parentField(GrantTarget, 'userGrants')
+    grantor_id = dbmodels.UUIDField(editable=False, db_index=True)
     grantee = dbmodels.ForeignKey('consentrecords.User', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
@@ -3205,10 +3278,14 @@ class UserGrant(AccessInstance, dbmodels.Model):
         return self.description()
     
     def getSubClause(qs, user, accessType):
-        if accessType == GrantTarget:
+        if accessType == UserGrant:
             return qs, accessType
+        elif not user:
+            return qs.none(), UserGrant
+        elif user.is_administrator:
+            return qs, UserGrant
         else:
-            return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
+            return AccessInstance.administrableQuerySet(qs, user, ''), UserGrant
 
     def filterForGetData(qs, user, accessType):
         return UserGrant.getSubClause(qs, user, accessType)[0]
@@ -3216,7 +3293,7 @@ class UserGrant(AccessInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         newItem = UserGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
-                                 parent=parent,
+                                 grantor_id=parent.id,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, User),
                                  privilege=_orNone(data, 'privilege'))
         if 'clientID' in data:
@@ -3240,6 +3317,7 @@ class GroupGrant(AccessInstance, dbmodels.Model):
     deleteTransaction = deleteTransactionField('deletedGroupGrants')
 
     parent = parentField(GrantTarget, 'groupGrants')
+    grantor_id = dbmodels.UUIDField(editable=False, db_index=True)
     grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
@@ -3252,10 +3330,14 @@ class GroupGrant(AccessInstance, dbmodels.Model):
         return self.description()
     
     def getSubClause(qs, user, accessType):
-        if accessType == GrantTarget:
+        if accessType == GroupGrant:
             return qs, accessType
+        elif not user:
+            return qs.none(), GroupGrant
+        elif user.is_administrator:
+            return qs, GroupGrant
         else:
-            return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
+            return AccessInstance.administrableQuerySet(qs, user, ''), GroupGrant
 
     def filterForGetData(qs, user, accessType):
         return GroupGrant.getSubClause(qs, user, accessType)[0]
@@ -3263,7 +3345,7 @@ class GroupGrant(AccessInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         newItem = GroupGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
-                                 parent=parent,
+                                 grantor_id=parent.id,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, Group),
                                  privilege=_orNone(data, 'privilege'))
         if 'clientID' in data:
@@ -5300,13 +5382,16 @@ class OfferingServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class Organization(RootInstance, dbmodels.Model):    
+class Organization(SecureRootInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdOrganizations')
     lastTransaction = lastTransactionField('changedOrganizations')
     deleteTransaction = deleteTransactionField('deletedOrganizations')
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
     inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='inquiryAccessGroupOrganizations', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredOrganizations', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
     fieldMap = {'web site': 'webSite',
                }
@@ -5354,9 +5439,6 @@ class Organization(RootInstance, dbmodels.Model):
 
         return data
         
-    def fetchPrivilege(self, user):
-        return GrantTarget.objects.get(pk=self.id).grantablePrivilege(user)
-    
     def getSubClause(qs, user, accessType):
         if accessType == Organization:
             return qs, accessType
@@ -5379,9 +5461,17 @@ class Organization(RootInstance, dbmodels.Model):
         if not context.is_administrator:
            raise PermissionDenied
            
+        # Handle special case for primary administrator when creating a new SecureRootInstance subclass.
+        if 'primary administrator' in data and data['primary administrator'] == 'user/%s' % id.hex:
+            primaryAdministrator = User.objects.get(pk=id)
+        else:
+            primaryAdministrator = _orNoneForeignKey(data, 'primary administrator', context, User)
+            
         newItem = Organization.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  webSite = _orNone(data, 'web site'),
+                                 publicAccess=_orNone(data, 'public access'),
+                                 primaryAdministrator=primaryAdministrator
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
@@ -5390,10 +5480,8 @@ class Organization(RootInstance, dbmodels.Model):
         newItem.createChildren(data, 'groups', context, Group, newIDs)
         newItem.createChildren(data, 'sites', context, Site, newIDs)
         
-        if 'grant target' in data:
-            GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
-        else:
-            GrantTarget.create(newItem.id, {}, context, newIDs)
+        newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
+        newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
         
         if 'inquiry access group' in data:
             newItem.inquiryAccessGroup = _orNoneForeignKey(data, 'inquiry access group', context, Group, Organization.objects.filter(pk=newItem.id),
@@ -5406,7 +5494,9 @@ class Organization(RootInstance, dbmodels.Model):
         return OrganizationHistory.objects.create(transaction=self.lastTransaction,
                                              instance=self,
                                              webSite=self.webSite,
-                                             inquiryAccessGroup=self.inquiryAccessGroup)
+                                             inquiryAccessGroup=self.inquiryAccessGroup,
+                                             publicAccess=self.publicAccess,
+                                             primaryAdministrator=self.primaryAdministrator)
         
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -5427,6 +5517,20 @@ class Organization(RootInstance, dbmodels.Model):
             if newInquiryAccessGroup != self.inquiryAccessGroup:
                 history = history or self.buildHistory(context)
                 self.inquiryAccessGroup = newInquiryAccessGroup
+        if 'public access' in changes and changes['public access'] != self.publicAccess:
+            SecureRootInstance.valueCheckPublicAccess(changes, 'public access')
+            history = history or self.buildHistory(context)
+            self.publicAccess = changes['public access'] or None
+        if 'primary administrator' in changes:
+            newValue = _getForeignKey(changes['primary administrator'], context, User)
+            if newValue != self.primaryAdministrator:
+                 SecureRootInstance.valueCheckPrimaryAdministrator(newValue)
+                 history = history or self.buildHistory(context)
+                 self.primaryAdministrator = newValue or None
+        
+        if context.canAdminister(self):
+            self.updateChildren(changes, 'user grants', context, UserGrant, self.userGrants, newIDs)
+            self.updateChildren(changes, 'group grants', context, GroupGrant, self.groupGrants, newIDs)
         
         if history:
             self.lastTransaction = context.transaction
@@ -5438,6 +5542,8 @@ class OrganizationHistory(dbmodels.Model):
     instance = historyInstanceField(Organization)
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='InquiryAccessGroupOrganizationHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+    publicAccess = dbmodels.CharField(max_length=10, null=True)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredOrganizationHistories', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
 class OrganizationName(TranslationInstance, dbmodels.Model):
     id = idField()
@@ -5492,6 +5598,7 @@ class Path(IInstance, dbmodels.Model):
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
     specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
     def __str__(self):
@@ -5510,7 +5617,7 @@ class Path(IInstance, dbmodels.Model):
     def fetchPrivilege(self, user):
         userPrivilege = self.parent.fetchPrivilege(user)
         if self.specialAccess == 'custom':
-            return IInstance.reducePrivileges([{'privilege': GrantTarget.objects.get(pk=self.id).publicAccess}], userPrivilege)
+            return IInstance.reducePrivileges([{'privilege': self.publicAccess}], userPrivilege)
         else:
             return userPrivilege
 
@@ -5540,8 +5647,8 @@ class Path(IInstance, dbmodels.Model):
                     data['user'] = self.parent.headData(context)
         
         if 'experiences' in fields:
-            experienceFields = list(map(lambda s: s[len('experience/'):], 
-                filter(lambda s: s.startswith('experience/'), fields)))
+            experienceFields = list(map(lambda s: s[len('experiences/'):], 
+                filter(lambda s: s.startswith('experiences/'), fields)))
             data['experiences'] = [i.getData(experienceFields, context) for i in \
                 Experience.select_related(self.experiences.filter(deleteTransaction__isnull=True), experienceFields)]
 
@@ -5550,34 +5657,31 @@ class Path(IInstance, dbmodels.Model):
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousFindFilter(prefix=''):
-        inClause = (prefix + '__id__in') if prefix else 'id__in'
-        userInClause = (prefix + '__parent__id__in') if prefix else 'parent__id__in'
-        return Q((inClause, GrantTarget.objects.filter(publicAccess__in=["find", "read"]))|\
-                 (userInClause, GrantTarget.objects.filter(publicAccess__in=["find", "read"])))
+        inClause = (prefix + '__publicAccess__in') if prefix else 'publicAccess__in'
+        userInClause = (prefix + '__parent__publicAccess__in') if prefix else 'parent__publicAccess__in'
+        return Q((inClause, ["find", "read"])|\
+                 (userInClause, ["find", "read"]))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
-        inClause = (prefix + '__id__in') if prefix else 'id__in'
-        userInClause = (prefix + '__parent__id__in') if prefix else 'parent__id__in'
-        return Q((inClause, GrantTarget.objects.filter(publicAccess__in=["read"]))|\
-                 (userInClause, GrantTarget.objects.filter(publicAccess__in=["read"])))
+        inClause = (prefix + '__publicAccess') if prefix else 'publicAccess'
+        userInClause = (prefix + '__parent__publicAccess') if prefix else 'parent__publicAccess'
+        return Q((inClause, "read")|\
+                 (userInClause, "read"))
     
     def privilegedQuerySet(qs, user, prefix, privileges):
-        inClause = (prefix + '__id__in') if prefix else 'id__in'
-        userInClause = (prefix + '__parent__id__in') if prefix else 'parent__id__in'
-        return qs.filter(Q((inClause,
-                            GrantTarget.objects.filter(publicAccess__in=privileges)))|\
-                         Q((userInClause, GrantTarget.objects.filter(\
-                             Q(publicAccess__in=privileges) |\
-                             Q(primaryAdministrator=user) |\
-                             Q(userGrants__privilege__in=privileges,
-                               userGrants__deleteTransaction__isnull=True,
-                               userGrants__grantee=user) |\
-                             Q(groupGrants__privilege__in=privileges,
-                               groupGrants__deleteTransaction__isnull=True,
-                               groupGrants__grantee__members__user=user,
-                               groupGrants__grantee__members__deleteTransaction__isnull=True)))))
+        if prefix: prefix += '__'
+        inClause = prefix + 'publicAccess'
+        userPublicAccessClause = prefix + 'parent__publicAccess__in'
+        userPrimaryAdministratorClause = prefix + 'parent__primaryAdministrator'
+        userInClause = prefix + 'parent_id__in'
+        grantClause = SecureRootInstance.grantorIDs(user, privileges)
+        qClause = Q((inClause, privileges))|\
+                  Q((userPublicAccessClause, privileges))|\
+                  Q((userPrimaryAdministratorClause, user))|\
+                  Q((userInClause, grantClause))
+        return qs.filter(qClause)
     
     def findableQuerySet(qs, user, prefix=''):
         if not user:
@@ -5617,8 +5721,6 @@ class Path(IInstance, dbmodels.Model):
     def markDeleted(self, context):
         for i in self.experiences.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
-        for i in GrantTarget.objects.filter(pk=self.id):
-            i.markDeleted(context)
         super(Path, self).markDeleted(context)
 
     def validateBirthday(data, key):
@@ -5648,17 +5750,11 @@ class Path(IInstance, dbmodels.Model):
                                  name = _orNone(data, 'screen name'),
                                  birthday = birthday,
                                  specialAccess = _orNone(data, 'special access'),
+                                 publicAccess = _orNone(data, 'public access'),
                                  canAnswerExperience = _orNone(data, 'can answer experience'),
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
-        
-        if 'grant target' in data:
-            if 'primary administrator' not in data['grant target']:
-                data['grant target']['primary administrator'] = 'user/%s' % parent.id.hex
-            newGrantTarget = GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
-        else:
-            newGrantTarget = GrantTarget.create(newItem.id, {'primary administrator': 'user/%s' % parent.id.hex}, context, newIDs)
         
         newItem.save()
         
@@ -5672,13 +5768,14 @@ class Path(IInstance, dbmodels.Model):
                                              birthday=self.birthday,
                                              name=self.name,
                                              specialAccess=self.specialAccess,
+                                             publicAccess=self.publicAccess,
                                              canAnswerExperience=self.canAnswerExperience)
         
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
         
-            Path.validateCanAnswerExperience(changes, 'can answer experience')
+        Path.validateCanAnswerExperience(changes, 'can answer experience')
         
         history = None
         if 'birthday' in changes and changes['birthday'] != self.birthday:
@@ -5688,11 +5785,16 @@ class Path(IInstance, dbmodels.Model):
         if 'screen name' in changes and changes['screen name'] != self.name:
             history = history or self.buildHistory(context)
             self.name = changes['screen name'] or None
-        if context.canAdminister(self) and 'special access' in changes and changes['special access'] != self.specialAccess:
-            Path.validateSpecialAccess(changes, 'special access')
-            history = history or self.buildHistory(context)
-            self.specialAccess = changes['special access'] or None
-            # Special behavior: Only change special access if the current user can administer
+        if context.canAdminister(self):
+            if 'special access' in changes and changes['special access'] != self.specialAccess:
+                Path.validateSpecialAccess(changes, 'special access')
+                history = history or self.buildHistory(context)
+                self.specialAccess = changes['special access'] or None
+                # Special behavior: Only change special access if the current user can administer
+            if 'public access' in changes and changes['public access'] != self.publicAccess:
+                SecureRootInstance.valueCheckPublicAccess(changes, 'public access')
+                history = history or self.buildHistory(context)
+                self.publicAccess = changes['public access'] or None
         if 'can answer experience' in changes and changes['can answer experience'] != self.canAnswerExperience:
             Path.validateCanAnswerExperience(changes, 'can answer experience')
             history = history or self.buildHistory(context)
@@ -5700,19 +5802,6 @@ class Path(IInstance, dbmodels.Model):
         
         self.updateChildren(changes, 'experiences', context, Experience, self.experiences, newIDs)
 
-        grantTargets = GrantTarget.objects.filter(pk=self.id)
-        if not grantTargets.exists():
-            raise RuntimeError('grant target for user does not exist')
-        gt = grantTargets[0]
-        if not gt.primaryAdministrator:
-            if not 'grant target' in changes:
-                changes['grant target'] = {'primary administrator': 'user/%s' % self.parent.id.hex}
-            elif 'primary administrator' not in changes['grant target']:
-                changes['grant target']['primary administrator'] = 'user/%s' % self.parent.id.hex
-                
-        if 'grant target' in changes:
-            gt.update(changes['grant target'], context, newIDs)
-        
         if history:
             self.lastTransaction = context.transaction
             self.save()
@@ -5725,6 +5814,7 @@ class PathHistory(dbmodels.Model):
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
 class Period(ChildInstance, dbmodels.Model):
@@ -6700,7 +6790,7 @@ class StreetHistory(dbmodels.Model):
     position = dbmodels.IntegerField(editable=False)
     text = dbmodels.CharField(max_length=255, null=True, editable=False)
 
-class User(RootInstance, dbmodels.Model):
+class User(SecureRootInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdUsers')
     lastTransaction = lastTransactionField('changedUsers')
@@ -6710,6 +6800,9 @@ class User(RootInstance, dbmodels.Model):
     lastName = dbmodels.CharField(max_length=255, db_index=True, null=True)
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
     
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredUsers', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+
     fieldMap = {'first name': 'firstName',
                 'last name': 'lastName',
                 'birthday': 'birthday',
@@ -6749,11 +6842,11 @@ class User(RootInstance, dbmodels.Model):
         qs = User.select_head_related(querySet)
         if 'path' in fields:
             qs = qs.prefetch_related(Prefetch('paths',
-                                         queryset=Path.objects.filter(deleteTransaction__isnull=True),
+                                         queryset=Path.select_related(Path.objects.filter(deleteTransaction__isnull=True), []),
                                          to_attr='currentPaths'))
         if 'notifications' in fields:
             qs = qs.prefetch_related(Prefetch('notifications',
-                                         queryset=Notification.objects.filter(deleteTransaction__isnull=True),
+                                         queryset=Notification.select_related(Notification.objects.filter(deleteTransaction__isnull=True).order_by('transaction__creation_time'), []),
                                          to_attr='currentNotifications'))
         return qs
         
@@ -6762,15 +6855,8 @@ class User(RootInstance, dbmodels.Model):
                                    emails__text=authUser.email, 
                                    emails__deleteTransaction__isnull=True)
     
-    @property
-    def privilegeSource(self):
-        return self
-        
-    def fetchPrivilege(self, user):
-        return GrantTarget.objects.get(pk=self.id).grantablePrivilege(user)
-    
     def getData(self, fields, context):
-        data = self.headData(context)
+        data = super(User, self).getData(fields, context)
         
         if self.birthday: data['birthday'] = self.birthday
         if self.firstName: data['first name'] = self.firstName
@@ -6791,7 +6877,7 @@ class User(RootInstance, dbmodels.Model):
             data['path'] = self.currentPaths[0].getData([], context)
 
         if 'notifications' in fields: 
-            data['notifications'] = [i.getData([], context) for i in self.currentNotifications.order_by('transaction__creation_time')]
+            data['notifications'] = [i.getData([], context) for i in self.currentNotifications]
 
         if context.getPrivilege(self) == 'administer':
             if 'user grant requests' in fields: 
@@ -6832,8 +6918,6 @@ class User(RootInstance, dbmodels.Model):
             i.markDeleted(context)
         for i in self.userGrantRequests.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
-        for i in GrantTarget.objects.filter(pk=self.id, deleteTransaction__isnull=True):
-            i.markDeleted(context)
         super(User, self).markDeleted(context)
 
     def validateBirthday(data, key):
@@ -6844,22 +6928,26 @@ class User(RootInstance, dbmodels.Model):
     def create(data, context, newIDs={}):
         User.validateBirthday(data, 'birthday')
         
+        # Handle special case for primary administrator when creating a new SecureRootInstance subclass.
+        if 'primary administrator' in data and data['primary administrator'] == 'user/%s' % id.hex:
+            primaryAdministrator = User.objects.get(pk=id)
+        else:
+            primaryAdministrator = _orNoneForeignKey(data, 'primary administrator', context, User)
+            
         newItem = User.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  firstName = _orNone(data, 'first name'),
                                  lastName = _orNone(data, 'last name'),
                                  birthday = _orNone(data, 'birthday'),
+                                 publicAccess=_orNone(data, 'public access'),
+                                 primaryAdministrator=primaryAdministrator,
                                 )
         newItem.save()
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
         
-        if 'grant target' in data:
-            if 'primary administrator' not in data['grant target']:
-                data['grant target']['primary administrator'] = 'user/%s' % newItem.id.hex
-            GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
-        else:
-            GrantTarget.create(newItem.id, {'primary administrator': 'user/%s' % newItem.id.hex}, context, newIDs)
+        newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
+        newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
         
         newItem.createChildren(data, 'emails', context, UserEmail, newIDs)
         if not context.user:
@@ -6879,7 +6967,9 @@ class User(RootInstance, dbmodels.Model):
                                              instance=self,
                                              firstName=self.firstName,
                                              lastName=self.lastName,
-                                             birthday=self.birthday)
+                                             birthday=self.birthday,
+                                             publicAccess=self.publicAccess,
+                                             primaryAdministrator=self.primaryAdministrator)
     
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -6903,11 +6993,20 @@ class User(RootInstance, dbmodels.Model):
         if 'path' in changes:
             self.path.update(changes['path'], context, newIDs)
         self.updateChildren(changes, 'user grant requests', context, UserUserGrantRequest, self.userGrantRequests, newIDs)
-        if 'grant target' in changes:
-            grantTargets = GrantTarget.objects.filter(pk=self.id)
-            if not grantTargets.exists():
-                raise RuntimeError('grant target for user does not exist')
-            grantTargets[0].update(changes['grant target'], context, newIDs)
+        if 'public access' in changes and changes['public access'] != self.publicAccess:
+            SecureRootInstance.valueCheckPublicAccess(changes, 'public access')
+            history = history or self.buildHistory(context)
+            self.publicAccess = changes['public access'] or None
+        if 'primary administrator' in changes:
+            newValue = _getForeignKey(changes['primary administrator'], context, User)
+            if newValue != self.primaryAdministrator:
+                 SecureRootInstance.valueCheckPrimaryAdministrator(newValue)
+                 history = history or self.buildHistory(context)
+                 self.primaryAdministrator = newValue or None
+        if context.canAdminister(self):
+            self.updateChildren(changes, 'user grants', context, UserGrant, self.userGrants, newIDs)
+            self.updateChildren(changes, 'group grants', context, GroupGrant, self.groupGrants, newIDs)
+        
         
         if history:
             self.lastTransaction = context.transaction
@@ -6921,6 +7020,8 @@ class UserHistory(dbmodels.Model):
     firstName = dbmodels.CharField(max_length=255, null=True, editable=False)
     lastName = dbmodels.CharField(max_length=255, null=True, editable=False)
     birthday = dbmodels.CharField(max_length=10, null=True, editable=False)
+    publicAccess = dbmodels.CharField(max_length=10, null=True, editable=False)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredUserHistories', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
 ### A Multiple String Value containing an email associated with the specified user.
 class UserEmail(ChildInstance, dbmodels.Model):

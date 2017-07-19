@@ -549,33 +549,21 @@
 					{
 						function clearAccessRequests(newValue)
 						{
-							var cell = cr.signedinUser.getCell("access request");
-							for (var i = 0; i < cell.data.length; ++i)
+							var data = cr.signedinUser.userGrantRequests();
+							for (var i = 0; i < data.length; ++i)
 							{
-								var d = cell.data[i];
-								if (d.id() == newValue.id())
-									d.triggerDeleteValue();
+								var d = data[i];
+								if (d.grantee().id() == newValue.id())
+									$(d).trigger("deleted.cr");
 							}
 						}
 						
-						cr.share(null, "{{follower}}", "{{privilege}}", function(newValue)
+						cr.share(null, "{{follower}}", cr.UserGrant, "{{privilege}}", function(newValue)
 							{
 								// Remove any access request with this name.
-								if (newValue.getTypeName() == cr.fieldNames.accessRecord)
-								{
-									newValue.promiseCells().then(function()
-										{
-											newValue = newValue.getCell("{{cell}}").data[0];
-											clearAccessRequests(newValue);
-											bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
-										},
-										asyncFailFunction);
-								}
-								else
-								{
-									clearAccessRequests(newValue);
-									bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
-								}
+								newValue = newValue.grantee();
+								clearAccessRequests(newValue);
+								bootstrap_alert.success("{0} is now following you.".format(newValue.description()), '.alert-container');
 							}, asyncFailFunction);
 					}
 					needsSignin = true;
@@ -687,10 +675,6 @@
 				{
 					var handleState = function(pathwayPanel)
 					{
-						cr.signedinUser.promiseCellsFromCache()
-							.then(function() {
-								},
-							cr.asyncFail);
 					}
 					needsSignin = true;
 				}

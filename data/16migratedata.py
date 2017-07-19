@@ -239,7 +239,10 @@ def buildOrganizations(instances, sourceType):
     for u in instances:
         defaults={'transaction': u.transaction,
                   'deleteTransaction': u.deleteTransaction,
-                  'webSite': getUniqueDatum(u, 'Web Site')}
+                  'webSite': getUniqueDatum(u, 'Web Site'),
+                  'publicAccess': str(u.publicAccess) if u.publicAccess else None,
+                  'primaryAdministrator': User.objects.get(pk=u.primaryAdministrator.id) if u.primaryAdministrator else None,
+                 }
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
 
@@ -312,7 +315,6 @@ def buildSessionCanRegister(sessions, targetType):
 
 def buildGrants(instances):
     for u in instances:
-        parent = GrantTarget.objects.get(pk=u.id)
         children = u.children.filter(typeID=terms.accessRecord)
         for i in children:
             privilege = getUniqueReferenceDescription(i, 'privilege')
@@ -324,7 +326,7 @@ def buildGrants(instances):
                         defaults={'transaction': j.transaction,
                                   'lastTransaction': j.transaction,
                                   'deleteTransaction': j.deleteTransaction,
-                                  'parent': parent,
+                                  'grantor_id': u.id,
                                   'grantee': gs[0],
                                   'privilege': privilege})
                 else:
@@ -334,7 +336,7 @@ def buildGrants(instances):
                             defaults={'transaction': j.transaction,
                                       'lastTransaction': j.transaction,
                                       'deleteTransaction': j.deleteTransaction,
-                                      'parent': parent,
+                                      'grantor_id': u.id,
                                       'grantee': us[0],
                                       'privilege': privilege})
 
@@ -411,9 +413,18 @@ if __name__ == "__main__":
                             'deleteTransaction': u.deleteTransaction,
                             'firstName': firstName,
                             'lastName': lastName,
-                            'birthday': birthday}
+                            'birthday': birthday,
+                            'publicAccess': str(publicAccess),
+                           }
                 newUser, created = User.objects.get_or_create(pk=u.id,
                    defaults=defaults)
+            
+            # Set the primary administrator for all users.
+            for u in users:
+                if u.primaryAdministrator:
+                    target = User.objects.get(pk=u.id)
+                    target.primaryAdministrator = User.objects.get(pk=u.primaryAdministrator.id)
+                    target.save()
                 
             # Create the user history
             uniqueTerms = {terms['first name']: {'dbField': 'firstName', 'f': lambda v: v.stringValue},
@@ -425,25 +436,11 @@ if __name__ == "__main__":
             uniqueTerms = {terms['email']: StringValueTranslator('text')}
             buildPositionedElements(users, User, UserEmail, UserEmailHistory, uniqueTerms)
         
-            # Create the user access source records
-            uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
-                           terms['primary administrator']: 
-                               {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
-                          }
-            buildRootInstances(users, GrantTarget, GrantTargetHistory, uniqueTerms)
-        
             orgs = Instance.objects.filter(typeID=terms['Organization'])
             buildOrganizations(orgs, Organization)
         
             uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
             buildNameElements(orgs, Organization, OrganizationName, OrganizationNameHistory, uniqueTerms)
-        
-            # Create the user access source records
-            uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
-                           terms['primary administrator']: 
-                               {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
-                          }
-            buildRootInstances(orgs, GrantTarget, GrantTargetHistory, uniqueTerms)
         
             groups = Instance.objects.filter(typeID=terms['group'], parent__typeID=terms['Organization'])
             buildGroups(groups, Organization, Group)
@@ -622,15 +619,9 @@ if __name__ == "__main__":
                            terms['name']: StringValueTranslator('name'),
                            terms['special access']: EnumerationTranslator('specialAccess'),
                            terms['can be asked about experience']: EnumerationTranslator('canAnswerExperience'),
+                           terms['public access']: EnumerationTranslator('publicAccess'),
                           }
             buildChildren(paths, User, Path, PathHistory, uniqueTerms, lambda i: i.parent.id)
-        
-            # Create the user access source records
-            uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
-                           terms['primary administrator']: 
-                               {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
-                          }
-            buildRootInstances(paths, GrantTarget, GrantTargetHistory, uniqueTerms)
         
             buildGrants(paths)
         

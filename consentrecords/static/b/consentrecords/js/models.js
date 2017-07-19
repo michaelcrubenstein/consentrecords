@@ -2018,7 +2018,7 @@ cr.updatePassword = function(username, oldPassword, newPassword)
 				.fail(cr.thenFail);
 	}
 
-cr.share = function(userPath, path, privilegeID, done, fail)
+cr.share = function(userPath, path, resultType, privilegeID, done, fail)
 	{
 		var url = cr.urls.acceptFollower;
 		if (userPath)
@@ -2027,11 +2027,8 @@ cr.share = function(userPath, path, privilegeID, done, fail)
 					 privilege: privilegeID
 					})
 		.done(function(json){
-				/* Copy the data from json object into a new value so that 
-					any functions are properly initialized.
-				 */
-				var newValue = new cr.ObjectValue();
-				newValue.loadData(json.object);
+				var newValue = new resultType();
+				newValue.setData(json.object);
 				done(newValue);
 		})
 		.fail(function(jqXHR, textStatus, errorThrown)
@@ -2665,53 +2662,151 @@ cr.UserLinkInstance = (function() {
 	
 cr.Grantable = (function() {
 	Grantable.prototype = new cr.IInstance();
-	Grantable.prototype._grantTarget = null;
-	Grantable.prototype._grantTargetPromise = null;
+	Grantable.prototype._publicAccess = null;
+	Grantable.prototype._primaryAdministrator = null;
+	Grantable.prototype._userGrants = null;
+	Grantable.prototype._groupGrants = null;
+	Grantable.prototype._grantsPromise = null;
 
-	Grantable.prototype.grantTarget = function()
+	Grantable.prototype.userGrants = function(newValue)
 	{
-		return this._grantTarget;
+		if (newValue === undefined)
+			return this._userGrants;
+		else
+		{
+			this._userGrants = newValue;
+			return this;
+		}
+	}
+	
+	Grantable.prototype.groupGrants = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._groupGrants;
+		else
+		{
+			this._groupGrants = newValue;
+			return this;
+		}
 	}
 	
 	Grantable.prototype.publicAccess = function(newValue)
 	{
-		return this.grantTarget().publicAccess(newValue);
+		if (newValue === undefined)
+			return this._publicAccess;
+		else
+		{
+			if (this._publicAccess != newValue)
+			{
+				this._publicAccess = newValue;
+			}
+			return this;
+		}
 	}
 	
 	Grantable.prototype.primaryAdministrator = function(newValue)
 	{
-		return this.grantTarget().primaryAdministrator(newValue);
+		if (newValue === undefined)
+			return this._primaryAdministrator;
+		else
+		{
+			if (this._primaryAdministrator != newValue)
+			{
+				this._primaryAdministrator = newValue;
+			}
+			return this;
+		}
 	}
 	
-    Grantable.prototype.promiseGrantTarget = function()
+	Grantable.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		this._publicAccess = 'public access' in d ? d['public access'] : "";
+		if ('primary administrator' in d)
+		{
+		    this._primaryAdministrator = new cr.User();
+		    this._primaryAdministrator.setData(d['primary administrator']);
+		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator);
+		}
+		if ('user grants' in d)
+			this._userGrants = d['user grants'].map(function(d) {
+								var i = new cr.UserGrant();
+								i.setData(d);
+								return i;
+							});
+		if ('group grants' in d)
+			this._groupGrants = d['group grants'].map(function(d) {
+								var i = new cr.GroupGrant();
+								i.setData(d);
+								return i;
+							});
+    }
+    
+    /** Merge the contents of the specified source into this Grantable for
+    	values that are not specified herein.
+     */
+	Grantable.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._publicAccess) this._publicAccess = source._publicAccess;
+		if (!this._primaryAdministrator) this._primaryAdministrator = source._primaryAdministrator;
+		if (!this._userGrants && source._userGrants)
+			this._userGrants = source._userGrants;
+		if (!this._groupGrants && source._groupGrants)
+			this._groupGrants = source._groupGrants;
+		return this;
+	}
+	
+	/** Called after the contents of the Grantable have been updated on the server. */
+	Grantable.prototype.updateData = function(d)
+	{
+		cr.IInstance.prototype.updateData.call(this, d);
+		if ('public access' in d)
+			this._publicAccess = d['public access'];
+		if ('primary administrator' in d)
+		{
+		    this._primaryAdministrator = new cr.User();
+		    this._primaryAdministrator.setData(d['primary administrator']);
+		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator);
+		}
+		if ('user grants' in d)
+		{
+			updateList(this.userGrants, d['user grants'], cr.UserGrant, "userGrantAdded.cr", "userGrantDeleted.cr");
+		}
+		if ('group grants' in d)
+		{
+			updateList(this.groupGrants, d['group grants'], cr.GroupGrant, "groupGrantAdded.cr", "groupGrantDeleted.cr");
+		}
+	}
+	
+    Grantable.prototype.promiseGrants = function()
     {
     	p = this.administerCheckPromise();
     	if (p) return p;
 
-        if (this._grantTargetPromise)
-        	return this._grantTargetPromise;
-        else if (this.grantTarget())
+        if (this._grantsPromise)
+        	return this._grantsPromise;
+        else if (this.userGrants())
         {
         	result = $.Deferred();
-        	result.resolve(this.grantTarget());
+        	result.resolve(this);
         	return result;
         }
         
         var _this = this;	
-        this._grantTargetPromise = cr.getData(
+        this._grantsPromise = cr.getData(
         	{
-        		path: this.grantTargetPath(),
-        		fields: [],
-        		resultType: cr.GrantTarget
+        		path: this.urlPath(),
+        		fields: ['user grants', 'group grants'],
+        		resultType: cr.User
         	})
-        	.done(function(grantTargets)
+        	.done(function(users)
         		{
-        			_this._grantTarget = grantTargets[0];
         			result = $.Deferred();
-        			result.resolve(_this._grantTarget);
+        			result.resolve(users[0]);
         			return result;
         		});
-        return this._grantTargetPromise;
+        return this._grantsPromise;
     }
     
     function Grantable() {
@@ -4247,142 +4342,6 @@ cr.ExperiencePromptText = (function() {
 
 })();
 	
-cr.GrantTarget = (function() {
-	GrantTarget.prototype = new cr.IInstance();
-	GrantTarget.prototype._publicAccess = null;
-	GrantTarget.prototype._primaryAdministrator = null;
-	GrantTarget.prototype._userGrants = null;
-	GrantTarget.prototype._groupGrants = null;
-	
-	GrantTarget.prototype.publicAccess = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._publicAccess;
-		else
-		{
-			if (this._publicAccess != newValue)
-			{
-				this._publicAccess = newValue;
-			}
-			return this;
-		}
-	}
-	
-	GrantTarget.prototype.primaryAdministrator = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._primaryAdministrator;
-		else
-		{
-			if (this._primaryAdministrator != newValue)
-			{
-				this._primaryAdministrator = newValue;
-			}
-			return this;
-		}
-	}
-	
-	GrantTarget.prototype.userGrants = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._userGrants;
-		else
-		{
-			this._userGrants = newValue;
-			return this;
-		}
-	}
-	
-	GrantTarget.prototype.groupGrants = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._groupGrants;
-		else
-		{
-			this._groupGrants = newValue;
-			return this;
-		}
-	}
-	
-	GrantTarget.prototype.setData = function(d)
-	{
-		cr.IInstance.prototype.setData.call(this, d);
-		this._publicAccess = 'public access' in d ? d['public access'] : "";
-		if ('primary administrator' in d)
-		{
-		    this._primaryAdministrator = new cr.User();
-		    this._primaryAdministrator.setData(d['primary administrator']);
-		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator);
-		}
-		if ('user grants' in d)
-			this._userGrants = d['user grants'].map(function(d) {
-								var i = new cr.UserGrant();
-								i.setData(d);
-								return i;
-							});
-		if ('group grants' in d)
-			this._groupGrants = d['group grants'].map(function(d) {
-								var i = new cr.GroupGrant();
-								i.setData(d);
-								return i;
-							});
-    }
-    
-    /** Merge the contents of the specified source into this GrantTarget for
-    	values that are not specified herein.
-     */
-	GrantTarget.prototype.mergeData = function(source)
-	{
-		cr.IInstance.prototype.mergeData.call(this, source);
-		if (!this._publicAccess) this._publicAccess = source._publicAccess;
-		if (!this._primaryAdministrator) this._primaryAdministrator = source._primaryAdministrator;
-		if (!this._userGrants && source._userGrants)
-			this._userGrants = source._userGrants;
-		if (!this._groupGrants && source._groupGrants)
-			this._groupGrants = source._groupGrants;
-		return this;
-	}
-	
-	/** Called after the contents of the GrantTarget have been updated on the server. */
-	GrantTarget.prototype.updateData = function(d)
-	{
-		cr.IInstance.prototype.updateData.call(this, d);
-		if ('public access' in d)
-			this._publicAccess = d['public access'];
-		if ('primary administrator' in d)
-		{
-		    this._primaryAdministrator = new cr.User();
-		    this._primaryAdministrator.setData(d['primary administrator']);
-		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator);
-		}
-		if ('user grants' in d)
-		{
-			updateList(this.userGrants, d['user grants'], cr.UserGrant, "userGrantAdded.cr", "userGrantDeleted.cr");
-		}
-		if ('group grants' in d)
-		{
-			updateList(this.groupGrants, d['group grants'], cr.GroupGrant, "groupGrantAdded.cr", "groupGrantDeleted.cr");
-		}
-	}
-	
-	/** Returns whether or not this object can be stored in the global
-		instance cache.
-	 */
-	GrantTarget.prototype.canCache = function()
-	{
-		/* Don't cache these, because they have the same IDs as their grantables. */
-		return false;
-	}
-	
-
-	function GrantTarget() {
-	    cr.IInstance.call(this);
-	};
-	
-	return GrantTarget;
-
-})();
-	
 cr.Group = (function() {
 	Group.prototype = new cr.IInstance();
 	Group.prototype._names = null;
@@ -4957,11 +4916,6 @@ cr.Organization = (function() {
 		}
 	}
 	
-    Organization.prototype.grantTargetPath = function()
-    {
-        return 'organization/{0}/grant target'.format(this.id());
-    }
-    
 	/** Sets the data for this Organization based on a dictionary of data that
 		came from the server.
 	 */
@@ -5209,14 +5163,6 @@ cr.Path = (function() {
         return this._userPromise;
     }
     
-    Path.prototype.grantTargetPath = function()
-    {
-        if (this.specialAccess() == 'custom')
-            return 'path/{0}/grant target'.format(this.id());
-        else
-        	return 'path/{0}/user/grant target'.format(this.id());
-    }
-    
 	Path.prototype.setData = function(d)
 	{
 		cr.Grantable.prototype.setData.call(this, d);
@@ -5245,7 +5191,7 @@ cr.Path = (function() {
      */
 	Path.prototype.mergeData = function(source)
 	{
-		cr.IInstance.prototype.mergeData.call(this, source);
+		cr.Grantable.prototype.mergeData.call(this, source);
 		if (this._name === null) this._name = source._name;
 		if (!this._experiences) 
 		{
@@ -5261,7 +5207,7 @@ cr.Path = (function() {
 	/** Called after the contents of the Path have been updated on the server. */
 	Path.prototype.updateData = function(d)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.Grantable.prototype.updateData.call(this, d);
 		var changed = false;
 		if ('screen name' in d)
 		{
@@ -5284,9 +5230,6 @@ cr.Path = (function() {
 		{
 			$(this).trigger("pathChanged.cr");
 		}
-		
-		if ('grant target' in d && this.grantTarget())
-			this.grantTarget().updateData(d['grant target']);
 		
 		if ('experiences' in d)
 		{
@@ -6396,11 +6339,6 @@ cr.User = (function() {
 		this._userGrantRequests = [];
 	}
 	
-    User.prototype.grantTargetPath = function()
-    {
-        return 'user/{0}/grant target'.format(this.id());
-    }
-    
 	User.prototype.setData = function(d)
 	{
 		cr.Grantable.prototype.setData.call(this, d);
@@ -6466,9 +6404,6 @@ cr.User = (function() {
 		{
 			$(this).trigger("userChanged.cr");
 		}
-		
-		if ('grant target' in d && this.grantTarget())
-			this.grantTarget().updateData(d['grant target']);
 		
 		if ('path' in d)
 		{
@@ -6954,7 +6889,8 @@ cr.UserUserGrantRequest = (function() {
 			return this._grantee;
 		else
 		{
-		    if (newValue.id() != this._grantee.id())
+			var oldID = this._grantee && this._grantee.id();
+		    if (newValue.id() != oldID)
 		    {
 				this._grantee = newValue;
 			}
@@ -6968,7 +6904,8 @@ cr.UserUserGrantRequest = (function() {
 			return this._user;
 		else
 		{
-		    if (newValue.id() != this._user.id())
+			var oldID = this._user && this._user.id();
+		    if (newValue.id() != oldID)
 		    {
 				this._user = newValue;
 			}
@@ -7018,7 +6955,7 @@ cr.createSignedinUser = function(id, description)
 {
 	cr.signedinUser.id(id)
 	               .description(description)
-	               .promiseDataLoaded(['path', cr.fieldNames.systemAccess])
+	               .promiseDataLoaded(['path', cr.fieldNames.systemAccess, 'user grant requests', 'notifications'])
 		.then(function()
 			{
 				$(cr.signedinUser).trigger("signin.cr");

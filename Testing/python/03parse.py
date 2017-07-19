@@ -247,14 +247,11 @@ qs2 = Comment.select_related(qs2.distinct())
 data = [i.getData([], anoncontext) for i in qs2]
 print(data)
 
-data = showData('grant target/%s' % userID, context, GrantTarget)
+data = showData('user/%s' % userID, context, User)
 userAccessID = data[0]['user grants'][0]['id']
 groupAccessID = data[0]['group grants'][0]['id']
 data = showData('user grant/%s' % userAccessID, context, UserGrant)
 data = showData('group grant/%s' % groupAccessID, context, GroupGrant)
-
-data = showData('grant target/%s' % userID, anoncontext, GrantTarget)
-data = showData('grant target/%s' % userID, escontext, GrantTarget)
 
 data = getData('service', anoncontext, Service)
 data.sort(key=lambda i: i['description'])

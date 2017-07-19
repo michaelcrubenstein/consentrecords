@@ -384,75 +384,74 @@ def acceptFollower(request, userPath=None):
         raise Http404("acceptFollower only responds to POST methods")
     
     try:    
-        language = None
         followerPath = request.POST["follower"]
-        privilegeID = request.POST["privilege"]
+        privilege = request.POST["privilege"]
         
         if not request.user.is_authenticated:
             return HttpResponseBadRequest(reason="user is not authenticated")
             
-        userInfo = UserInfo(request.user)
+        language = request.POST.get('language', 'en')
+        context = Context(language, request.user)
+        
         if userPath:
-            users = pathparser.getQuerySet(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
-            if len(users):
-                user = users[0]
-                if user.typeID_id != terms.user.id:
+            qs, tokens, qsType, accessType = \
+                    RootInstance.parse(cssparser.tokenizeHTML(userPath), context.user)
+            if qs.exists():
+                user = qs[0]
+                if qsType != User:
                     return HttpResponseBadRequest(reason="item to accept follower is not a user: %s" % userPath)
             else:
                 return HttpResponseBadRequest(reason="user is not recognized: %s" % userPath)
         else:
-            user = Instance.getUserInstance(request.user)
+            user = context.user
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-        if len(objs) > 0:
-            follower = objs[0]
-            if follower.typeID_id == terms.user.id:
-                followerField = terms.user
+        if not context.canAdminister(user):
+            return PermissionDenied("you do not have permission to accept this user")
+        
+        qs, tokens, qsType, accessType = \
+                    RootInstance.parse(cssparser.tokenizeHTML(followerPath), context.user)    
+        if qs.exists():
+            grantee = qs[0]
+            grantTarget = GrantTarget.objects.get(pk=user.id)
+            if qsType == User:
+                grants = grantTarget.userGrants
             else:
-                followerField = terms.group
-            ars = user.value_set.filter(field=terms.accessRecord,
-                                  deleteTransaction__isnull=True) \
-                          .filter(referenceValue__value__field=followerField,
-                                  referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__referenceValue_id=follower.id)
+                grants = grantTarget.groupGrants
+            ars = grants.filter(deleteTransaction__isnull=True,
+                                grantee_id=user.id)
             if ars.exists():
                 return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
             else:
                 with transaction.atomic():
-                    transactionState = TransactionState(request.user)
-                    nameLists = NameList()
-                    try:
-                        ar = user.value_set.filter(field=terms.accessRecord,
-                                                   deleteTransaction__isnull=True) \
-                                     .get(referenceValue__value__field=terms.privilege,
-                                          referenceValue__value__deleteTransaction__isnull=True,
-                                          referenceValue__value__referenceValue_id=privilegeID).referenceValue
-                        newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
-                    except Value.DoesNotExist:
-                        ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
-                            {TermNames.privilege: [{'instanceID': privilegeID}],
-                             followerField.getDescription(): [{'instanceID': follower.id.hex}]}, nameLists, userInfo, transactionState)
+                    if qsType == User:
+                        grantClass = UserGrant
+                    else:
+                        grantClass = GroupGrant
+                    newValue = grantClass.objects.create(transaction=context.transaction,
+                        lastTransaction=context.transaction,
+                        parent=grantTarget, privilege=privilege, grantee=grantee)
     
                     # Remove any corresponding access requests.
-                    vs = user.value_set.filter(field=terms.accessRequest,
-                                           deleteTransaction__isnull=True,
-                                           referenceValue_id=follower.id)
+                    vs = user.userGrantRequests.filter(deleteTransaction__isnull=True,
+                                           grantee_id=grantee.id)
                     for v in vs:
-                        v.deepDelete(transactionState)
+                        v.markDeleted(context)
                 
-                    if follower.typeID_id == terms.user.id:
-                        propertyList = {\
-                                'name': 'crn.FollowerAccept',
-                                'argument': [{'instanceID': user.id.hex}],
-                                'is fresh': 'yes'
-                            }
-                        item, v = instancecreator.create(terms['notification'], 
-                            follower, terms['notification'], -1, 
-                            propertyList, nameLists, userInfo, transactionState, instancecreator.checkCreateNotificationAccess)
+                    if qsType == User:
+                        n = Notification.objects.create(transaction=context.transaction,
+                            lastTransaction=context.transaction,
+                            parent=grantee,
+                            name='crn.FollowerAccept',
+                            isFresh='yes')
+                        na=NotificationArgument.objects.create(transaction=context.transaction,
+                            lastTransaction=context.transaction,
+                            parent=n,
+                            position=0,
+                            argument=user.id.hex)
 
-                    data = newValue.getReferenceData(userInfo, language)
+                    data = newValue.getData([], context)
                     results = {'object': data} 
         else:
             raise RuntimeError('the user or group is unrecognized')

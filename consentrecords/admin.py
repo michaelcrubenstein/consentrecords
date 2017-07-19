@@ -1340,18 +1340,6 @@ class StreetAdmin(ModelAdmin):
         
 admin.site.register(Street, StreetAdmin)
 
-class GrantTargetHistoryInline(TabularInline):
-    model = GrantTargetHistory
-    list_display = ('id', 't_creationTime', 'publicAccess', 'primaryAdministrator')
-    fieldsets = (
-        (None, {'fields': ('id', 't_creationTime', 'publicAccess', 'primaryAdministrator')}),
-    )
-    readonly_fields = ('id', 't_creationTime', 'publicAccess', 'primaryAdministrator')
-
-    ordering = ['transaction__creation_time']
-    show_change_link = True
-    fk_name = 'instance'
-
 class UserGrantInline(TabularInline):
     model = UserGrant
     list_display = ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')
@@ -1369,18 +1357,6 @@ class GroupGrantInline(TabularInline):
     )
     readonly_fields = ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'grantee', 'privilege', 'transaction__id', 'deleteTransaction__id')
-
-class GrantTargetAdmin(ModelAdmin):
-    list_display = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
-
-    inlines = [GrantTargetHistoryInline, UserGrantInline, GroupGrantInline]
-        
-admin.site.register(GrantTarget, GrantTargetAdmin)
 
 class UserGrantHistoryInline(TabularInline):
     model = UserGrantHistory
@@ -2226,33 +2202,6 @@ class TransactionCommentHistoryInline(CommentHistoryInline):
     verbose_name = 'Comment History'
     verbose_name_plural = 'Comment Histories'
 
-class LastModifiedGrantTargetInline(TabularInline):
-    model = GrantTarget
-
-    list_display = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
-    
-    fk_name = 'lastTransaction'
-    verbose_name = 'Last Modified Grant Target'
-    verbose_name_plural = 'Last Modified Grant Targets'
-
-class CreatedGrantTargetInline(LastModifiedGrantTargetInline):
-    fk_name = 'transaction'
-    verbose_name = 'Created Grant Target'
-    verbose_name_plural = 'Created Grant Targets'
-
-class DeletedGrantTargetInline(LastModifiedGrantTargetInline):
-    fk_name = 'deleteTransaction'
-    verbose_name = 'Deleted Grant Target'
-    verbose_name_plural = 'Deleted Grant Targets'
-
-class TransactionGrantTargetHistoryInline(GrantTargetHistoryInline):
-    fk_name = 'transaction'
- 
 class CreatedUserGrantInline(UserGrantInline):
     fk_name = 'transaction'
     verbose_name = 'Created User Grant'
@@ -2344,7 +2293,6 @@ class TransactionAdmin(admin.ModelAdmin):
                DeletedExperienceServiceInline, 
                DeletedExperienceCustomServiceInline, 
                DeletedCommentInline, 
-               DeletedGrantTargetInline, 
                DeletedUserGrantInline, 
                DeletedGroupGrantInline, 
                CreatedCommentPromptInline, LastModifiedCommentPromptInline,
@@ -2387,7 +2335,6 @@ class TransactionAdmin(admin.ModelAdmin):
                CreatedExperienceServiceInline, LastModifiedExperienceServiceInline, TransactionExperienceServiceHistoryInline,
                CreatedExperienceCustomServiceInline, LastModifiedExperienceCustomServiceInline, TransactionExperienceCustomServiceHistoryInline,
                CreatedCommentInline, LastModifiedCommentInline, TransactionCommentHistoryInline,
-               CreatedGrantTargetInline, LastModifiedGrantTargetInline, TransactionGrantTargetHistoryInline,
                CreatedUserGrantInline, LastModifiedUserGrantInline, TransactionUserGrantHistoryInline,
                CreatedGroupGrantInline, LastModifiedGroupGrantInline, TransactionGroupGrantHistoryInline,
                InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
