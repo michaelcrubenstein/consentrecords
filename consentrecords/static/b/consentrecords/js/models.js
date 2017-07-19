@@ -3328,7 +3328,7 @@ cr.Comment = (function() {
 		{
 			this._asker = new cr.Path();
 			this._asker.setData(d['asker']);
-			this._asker = crp.pushInstance(d['asker']);
+			this._asker = crp.pushInstance(this._asker);
 		}
 		this._text = 'text' in d ? d['text'] : "";
 		this._question = 'question' in d ? d['question'] : "";
