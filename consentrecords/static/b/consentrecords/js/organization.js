@@ -226,27 +226,10 @@ function appendStringItem(obj, label, text, addBorder)
 function checkOfferingCells(experience)
 {
 	offering = experience.offering();
-	if (offering && offering.id() && !offering.services)
-	{
-		var storedI = crp.getInstance(offering.id());
-		if (storedI && storedI.getCells())
-		{
-			offering.importCells(storedI.getCells());
-			r = $.Deferred();
-			r.resolve();
-			return r;
-		}
-		else
-		{
-			return offering.promiseCells();
-		}
-	}
-	else
-	{
-		r = $.Deferred();
-		r.resolve();
-		return r;
-	}
+	console.assert(!offering || !offering.id() || offering.offeringServices());
+	r = $.Deferred();
+	r.resolve();
+	return r;
 }
 
 function getNamedInstance(data, name)
