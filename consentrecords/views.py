@@ -224,7 +224,7 @@ def showPathway(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = 'user[email=%s]' % email
+    containerPath = 'user[email>text=%s]' % email
     tokens = cssparser.tokenizeHTML(containerPath)
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     if len(qs) > 0:
@@ -936,10 +936,9 @@ class api:
             if qs.count() == 0:
                 p = []
             else:
-                resultClass = type(qs[0])
-                qs2 = resultClass.filterForGetData(qs, context.user, accessType)
-                qs2 = resultClass.select_related(qs2.distinct(), fields)
-                qs2 = resultClass.order_by(qs2, context)
+                qs2 = qsType.filterForGetData(qs, context.user, accessType)
+                qs2 = qsType.select_related(qs2.distinct(), fields)
+                qs2 = qsType.order_by(qs2, context)
                 if end > 0:
                     qs2 = qs2[start:end]
                 elif start > 0:

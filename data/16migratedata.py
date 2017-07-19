@@ -632,11 +632,6 @@ if __name__ == "__main__":
                           }
             buildRootInstances(paths, GrantTarget, GrantTargetHistory, uniqueTerms)
         
-            newPaths = Path.objects.all()
-            for p in newPaths:
-                p.grantTarget = GrantTarget.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
-                p.save()
-        
             buildGrants(paths)
         
             experiences = Instance.objects.filter(typeID=terms['More Experience'])

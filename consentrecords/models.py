@@ -3080,7 +3080,6 @@ class GrantTarget(IInstance, dbmodels.Model):
                 .union(self.groupGrants.filter(grantee__members__user=user, deleteTransaction__isnull=True,
                                                   grantee__deleteTransaction__isnull=True,
                                                   grantee__members__deleteTransaction__isnull=True).values('privilege'))
-            
             return IInstance.reducePrivileges(f, self.publicAccess)
         
     # fetchPrivilege for grant targets can only return None or "administer"            
@@ -3919,7 +3918,8 @@ class Experience(ChildInstance, dbmodels.Model):
         return self.description(None)
     
     def select_head_related(querySet):
-        return querySet.select_related('offering')\
+        return querySet.select_related('parent')\
+                       .select_related('offering')\
                        .prefetch_related(Prefetch('offering__names',
                                                   queryset=OfferingName.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentNames'))
@@ -3932,12 +3932,12 @@ class Experience(ChildInstance, dbmodels.Model):
                        .prefetch_related(Prefetch('customServices', 
                            queryset= (ExperienceCustomService.select_related(csqs)
                                if 'custom services' in fields else \
-                               ExperienceCustomService.select_head_related(csqs)).order_by('position'),
+                               ExperienceCustomService.select_head_related(csqs)),
                            to_attr='currentCustomServices'))\
                        .prefetch_related(Prefetch('services', 
                            queryset=(ExperienceService.select_related(sqs)
                                if 'services' in fields else \
-                               ExperienceCustomService.select_head_related(sqs)).order_by('position'),
+                               ExperienceCustomService.select_head_related(sqs)),
                            to_attr='currentServices'))
     
     def getData(self, fields, context):
@@ -3978,7 +3978,6 @@ class Experience(ChildInstance, dbmodels.Model):
                 data['end'] = self.end
             if self.timeframe:
                 data['timeframe'] = self.timeframe
-        
         return data
 
     def getSubClause(qs, user, accessType):
@@ -5493,7 +5492,6 @@ class Path(IInstance, dbmodels.Model):
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
     specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    grantTarget = dbmodels.ForeignKey('consentrecords.GrantTarget', related_name='paths', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
     def __str__(self):
@@ -5507,10 +5505,14 @@ class Path(IInstance, dbmodels.Model):
         
     @property    
     def privilegeSource(self):
-        return self.grantTarget
+        return self
         
     def fetchPrivilege(self, user):
-        return self.grantTarget.grantablePrivilege(user)
+        userPrivilege = self.parent.fetchPrivilege(user)
+        if self.specialAccess == 'custom':
+            return IInstance.reducePrivileges([{'privilege': GrantTarget.objects.get(pk=self.id).publicAccess}], userPrivilege)
+        else:
+            return userPrivilege
 
     def headData(self, context):
         return {'id': self.id.hex, 
@@ -5548,34 +5550,42 @@ class Path(IInstance, dbmodels.Model):
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousFindFilter(prefix=''):
-        inClause = (prefix + '__grantTarget__in') if prefix else 'grantTarget__in'
-        return Q((inClause, GrantTarget.objects.filter(publicAccess__in=["find", "read"])))
+        inClause = (prefix + '__id__in') if prefix else 'id__in'
+        userInClause = (prefix + '__parent__id__in') if prefix else 'parent__id__in'
+        return Q((inClause, GrantTarget.objects.filter(publicAccess__in=["find", "read"]))|\
+                 (userInClause, GrantTarget.objects.filter(publicAccess__in=["find", "read"])))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
-        inClause = (prefix + '__grantTarget__in') if prefix else 'grantTarget__in'
-        return Q((inClause, GrantTarget.objects.filter(publicAccess__id="read")))
-        
+        inClause = (prefix + '__id__in') if prefix else 'id__in'
+        userInClause = (prefix + '__parent__id__in') if prefix else 'parent__id__in'
+        return Q((inClause, GrantTarget.objects.filter(publicAccess__in=["read"]))|\
+                 (userInClause, GrantTarget.objects.filter(publicAccess__in=["read"])))
+    
+    def privilegedQuerySet(qs, user, prefix, privileges):
+        inClause = (prefix + '__id__in') if prefix else 'id__in'
+        userInClause = (prefix + '__parent__id__in') if prefix else 'parent__id__in'
+        return qs.filter(Q((inClause,
+                            GrantTarget.objects.filter(publicAccess__in=privileges)))|\
+                         Q((userInClause, GrantTarget.objects.filter(\
+                             Q(publicAccess__in=privileges) |\
+                             Q(primaryAdministrator=user) |\
+                             Q(userGrants__privilege__in=privileges,
+                               userGrants__deleteTransaction__isnull=True,
+                               userGrants__grantee=user) |\
+                             Q(groupGrants__privilege__in=privileges,
+                               groupGrants__deleteTransaction__isnull=True,
+                               groupGrants__grantee__members__user=user,
+                               groupGrants__grantee__members__deleteTransaction__isnull=True)))))
+    
     def findableQuerySet(qs, user, prefix=''):
         if not user:
             return qs.filter(Path.anonymousFindFilter(prefix))
         elif user.is_administrator:
             return qs
         else:
-            privilegeIDs = ["find", "read", "register", "write", "administer"]
-            inClause = (prefix + '__grantTarget__in') if prefix else 'grantTarget__in'
-            return qs.filter(Q((inClause,
-                                GrantTarget.objects.filter(\
-                             Q(publicAccess__in=privilegeIDs) |\
-                             Q(primaryAdministrator=user) |\
-                             Q(userGrants__privilege__in=privilegeIDs,
-                               userGrants__deleteTransaction__isnull=True,
-                               userGrants__grantee=user) |\
-                             Q(groupGrants__privilege__in=privilegeIDs,
-                               groupGrants__deleteTransaction__isnull=True,
-                               groupGrants__grantee__members__user=user,
-                               groupGrants__grantee__members__deleteTransaction__isnull=True)))))
+            return Path.privilegedQuerySet(qs, user, prefix, ["find", "read", "register", "write", "administer"])
 
     def readableQuerySet(qs, user, prefix=''):
         if not user:
@@ -5583,19 +5593,7 @@ class Path(IInstance, dbmodels.Model):
         elif user.is_administrator:
             return qs
         else:
-            privilegeIDs = ["read", "write", "administer"]
-            inClause = (prefix + '__grantTarget__in') if prefix else 'grantTarget__in'
-            return qs.filter(Q((inClause,
-                                GrantTarget.objects.filter(\
-                             Q(publicAccess__in=privilegeIDs) |\
-                             Q(primaryAdministrator=user) |\
-                             Q(userGrants__privilege__in=privilegeIDs,
-                               userGrants__deleteTransaction__isnull=True,
-                               userGrants__grantee=user) |\
-                             Q(groupGrants__privilege__in=privilegeIDs,
-                               groupGrants__deleteTransaction__isnull=True,
-                               groupGrants__grantee__members__user=user,
-                               groupGrants__grantee__members__deleteTransaction__isnull=True)))))
+            return Path.privilegedQuerySet(qs, user, prefix, ["read", "write", "administer"])
 
     fieldMap = {'screen name': 'name',
                 'birthday': 'birthday',
@@ -5662,10 +5660,6 @@ class Path(IInstance, dbmodels.Model):
         else:
             newGrantTarget = GrantTarget.create(newItem.id, {'primary administrator': 'user/%s' % parent.id.hex}, context, newIDs)
         
-        if newItem.specialAccess == 'custom':
-            newItem.grantTarget = newGrantTarget
-        else:
-            newItem.grantTarget = GrantTarget.objects.get(pk=parent.id)
         newItem.save()
         
         newItem.createChildren(data, 'experiences', context, Experience, newIDs)
@@ -5699,11 +5693,6 @@ class Path(IInstance, dbmodels.Model):
             history = history or self.buildHistory(context)
             self.specialAccess = changes['special access'] or None
             # Special behavior: Only change special access if the current user can administer
-            # Special behavior: If the specialAccess changes, then change the grantTarget.
-            if self.specialAccess == 'custom':
-                self.grantTarget = GrantTarget.objects.get(pk=self.id)
-            else:
-                self.grantTarget = GrantTarget.objects.get(pk=self.parent.id)
         if 'can answer experience' in changes and changes['can answer experience'] != self.canAnswerExperience:
             Path.validateCanAnswerExperience(changes, 'can answer experience')
             history = history or self.buildHistory(context)
@@ -6775,10 +6764,10 @@ class User(RootInstance, dbmodels.Model):
     
     @property
     def privilegeSource(self):
-        return GrantTarget.objects.get(pk=self.id)
+        return self
         
     def fetchPrivilege(self, user):
-        return self.privilegeSource.grantablePrivilege(user)
+        return GrantTarget.objects.get(pk=self.id).grantablePrivilege(user)
     
     def getData(self, fields, context):
         data = self.headData(context)
