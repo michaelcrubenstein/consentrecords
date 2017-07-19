@@ -3120,143 +3120,6 @@ def wrapInstanceQuerySet(t, qs=None):
         
     return ReadInstanceQuerySet(qs) if isGlobal else InstanceQuerySet(qs)
 
-class GrantTarget(IInstance, dbmodels.Model):
-    id = idField()
-    transaction = createTransactionField('createdGrantTargets')
-    lastTransaction = lastTransactionField('changedGrantTargets')
-    deleteTransaction = deleteTransactionField('deletedGrantTargets')
-
-    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administered', db_index=True, null=True, on_delete=dbmodels.CASCADE)
-
-    fieldMap = {'public access': 'publicAccess',
-                'primary administrator': 'primaryAdministrator',
-               }
-               
-    elementMap = {'user grant': ('userGrants__', 'UserGrant', 'parent'),
-                  'group grant': ('groupGrants__', 'GroupGrant', 'parent'),
-                 }
-                 
-    def select_head_related(querySet):
-        return querySet
-    
-    def select_related(querySet, fields=[]):
-        return querySet.select_related('primaryAdministrator')\
-                       .prefetch_related(Prefetch('userGrants',
-                                          queryset=UserGrant.select_related(UserGrant.objects.filter(deleteTransaction__isnull=True)),
-                                          to_attr='currentUserGrant'))\
-                       .prefetch_related(Prefetch('groupGrants',
-                                          queryset=GroupGrant.select_related(GroupGrant.objects.filter(deleteTransaction__isnull=True)),
-                                          to_attr='currentGroupGrant'))
-                                          
-    
-    @property    
-    def privilegeSource(self):
-        return self
-        
-    # fetchPrivilege for grant targets can only return None or "administer"            
-    def fetchPrivilege(self, user):
-        privilege = self.grantablePrivilege(user)
-        return privilege if privilege == "administer" else None
-
-    def headData(self, context):
-        data = {'id': self.id.hex
-               }
-        return data
-               
-    def getData(self, fields, context):
-        data = self.headData(context)
-        if context.canRead(self):
-            if self.publicAccess:
-                data['public access'] = self.publicAccess
-            if self.primaryAdministrator:
-                data['primary administrator'] = self.primaryAdministrator.headData(context)
-            data['user grants'] = [i.getData([], context) for i in self.currentUserGrant]
-            data['group grants'] = [i.getData([], context) for i in self.currentGroupGrant]
-        
-        return data
-    
-    def getSubClause(qs, user, accessType):
-        if accessType == GrantTarget:
-            return qs, accessType
-        else:
-            return SecureRootInstance.administrableQuerySet(qs, user), GrantTarget
-            
-    def filterForGetData(qs, user, accessType):
-        return GrantTarget.getSubClause(qs, user, accessType)[0]
-            
-    def markDeleted(self, context):
-        for i in self.userGrants.filter(deleteTransaction__isnull=True):
-            i.markDeleted(context)
-        for i in self.groupGrants.filter(deleteTransaction__isnull=True):
-            i.markDeleted(context)
-        super(GrantTarget, self).markDeleted(context)
-    
-    def create(id, data, context, newIDs={}):
-        # Handle special case for primary administrator when creating a new GrantTarget.
-        if 'primary administrator' in data and data['primary administrator'] == 'user/%s' % id.hex:
-            primaryAdministrator = User.objects.get(pk=id)
-        else:
-            primaryAdministrator = _orNoneForeignKey(data, 'primary administrator', context, User)
-            
-        newItem = GrantTarget.objects.create(transaction=context.transaction,
-                                 lastTransaction=context.transaction,
-                                 id=id,
-                                 publicAccess=_orNone(data, 'public access'),
-                                 primaryAdministrator=primaryAdministrator
-                                )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
-        
-        newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
-        newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
-        
-        return newItem
-    
-    def valueCheckPublicAccess(self, data, key):
-        validValues = ['find', 'read']
-        _validateEnumeration(data, key, validValues)
-    
-    def valueCheckPrimaryAdministrator(self, newValue):
-        pass
-        
-    def buildHistory(self, context):
-        return GrantTargetHistory.objects.create(transaction=self.lastTransaction,
-                                             instance=self,
-                                             publicAccess=self.publicAccess,
-                                             primaryAdministrator=self.primaryAdministrator)
-        
-    def update(self, changes, context, newIDs={}):
-        if not context.canAdminister(self):
-            raise RuntimeError('you do not have permission to complete this update')
-        
-        history = None
-        if 'public access' in changes and changes['public access'] != self.publicAccess:
-            self.valueCheckPublicAccess(changes, 'public access')
-            history = history or self.buildHistory(context)
-            self.publicAccess = changes['public access'] or None
-        if 'primary administrator' in changes:
-            newValue = _getForeignKey(changes['primary administrator'], context, User)
-            if newValue != self.primaryAdministrator:
-                 self.valueCheckPrimaryAdministrator(newValue)
-                 history = history or self.buildHistory(context)
-                 self.primaryAdministrator = newValue or None
-        
-        self.updateChildren(changes, 'user grants', context, UserGrant, self.userGrants, newIDs)
-        self.updateChildren(changes, 'group grants', context, GroupGrant, self.groupGrants, newIDs)
-        
-        if history:
-            self.lastTransaction = context.transaction
-            self.save()
-            
-class GrantTargetHistory(dbmodels.Model):
-    id = idField()
-    transaction = createTransactionField('grantTargetHistories')
-    instance = historyInstanceField(GrantTarget)
-
-    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredHistories', db_index=True, null=True, on_delete=dbmodels.CASCADE)
-
 ### A Multiple Picked Value
 class UserGrant(AccessInstance, dbmodels.Model):
     id = idField()
@@ -3264,7 +3127,6 @@ class UserGrant(AccessInstance, dbmodels.Model):
     lastTransaction = lastTransactionField('changedUserGrants')
     deleteTransaction = deleteTransactionField('deletedUserGrants')
 
-    parent = parentField(GrantTarget, 'userGrants')
     grantor_id = dbmodels.UUIDField(editable=False, db_index=True)
     grantee = dbmodels.ForeignKey('consentrecords.User', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
@@ -3316,7 +3178,6 @@ class GroupGrant(AccessInstance, dbmodels.Model):
     lastTransaction = lastTransactionField('changedGroupGrants')
     deleteTransaction = deleteTransactionField('deletedGroupGrants')
 
-    parent = parentField(GrantTarget, 'groupGrants')
     grantor_id = dbmodels.UUIDField(editable=False, db_index=True)
     grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
