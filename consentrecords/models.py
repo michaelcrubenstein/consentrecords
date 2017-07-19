@@ -702,7 +702,7 @@ class TranslationInstance(ChildInstance):
         return newItem                         
 
 ### An instance that contains access information.
-class AccessInstance(ChildInstance):
+class AccessInstance(IInstance):
     def description(self, languageCode=None):
         return self.grantee.description(languageCode)
         
@@ -712,6 +712,12 @@ class AccessInstance(ChildInstance):
     def select_related(querySet, fields=[]):
         return AccessInstance.select_head_related(querySet)
 
+    def headData(self, context):
+        data = {'id': self.id.hex, 
+                'description': self.description(context.languageCode), 
+               }
+        return data
+        
     def getData(self, fields, context):
         data = self.headData(context)
         data['grantee'] = self.grantee.headData(context)
