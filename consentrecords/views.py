@@ -414,11 +414,10 @@ def acceptFollower(request, userPath=None):
                     RootInstance.parse(cssparser.tokenizeHTML(followerPath), context.user)    
         if qs.exists():
             grantee = qs[0]
-            grantTarget = GrantTarget.objects.get(pk=user.id)
             if qsType == User:
-                grants = grantTarget.userGrants
+                grants = user.userGrants
             else:
-                grants = grantTarget.groupGrants
+                grants = user.groupGrants
             ars = grants.filter(deleteTransaction__isnull=True,
                                 grantee_id=user.id)
             if ars.exists():
