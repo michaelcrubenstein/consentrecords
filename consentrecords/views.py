@@ -814,33 +814,24 @@ class api:
             indexString = data.get('index', "-1")
             index = int(indexString)
         
-            # The client time zone offset, stored with the transaction.
-            languageID = None
-            language = None
-            
-            userInfo = UserInfo(user)
+            language = data.get('language', 'en')
             
             with transaction.atomic():
-                transactionState = TransactionState(user)
+                context = Context(language, user)
+                newIDs = {}
                 if path:
-                    instances = pathparser.getQuerySet(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(instances) > 0:
-                        containerObject = instances[0]
+                    tokens = cssparser.tokenizeHTML(path)
+                    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+                    if not qs.exists():
+                        raise ValueError("path was not recognized: %s" % path)
                     else:
-                        raise RuntimeError("%s is not recognized" % path)
+                        item = qs[0].createElement(elementName, propertyList, context, newIDs) 
                 else:
-                    containerObject = None
-
-                nameLists = NameList()
-                item, newValue = instancecreator.create(ofKindObject, containerObject, field, index, propertyList, nameLists, userInfo, transactionState)
+                    item = RootInstance.createInstance(elementName, propertyList, context, newIDs)
+                if 'add' in propertyList:
+                    newIDs[propertyList['add']] = item.id()
     
-                if newValue and newValue.isDescriptor:
-                    Instance.updateDescriptions([item], nameLists)
-    
-                if containerObject:
-                    results = {'object': newValue.getReferenceData(userInfo, language)}
-                else:    
-                    results = {'object': item.getReferenceData(userInfo, language)}
+                results = {'new IDs': newIDs}
             
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -901,7 +892,7 @@ class api:
                 tokens = cssparser.tokenizeHTML(path)
                 qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
                 if qs.count() == 0:
-                    raise ValueError("path was not recognized")
+                    raise ValueError("path was not recognized: %s" % path)
                 else:
                     root = qs[0]
                     newIDs = {}

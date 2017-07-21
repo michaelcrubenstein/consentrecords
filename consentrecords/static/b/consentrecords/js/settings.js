@@ -76,15 +76,6 @@ var Settings = (function () {
 								changes['path'] = {}
 							changes['path']['public access'] = newPathPublicAccess;
 						}
-						
-						var newPathPrimaryAdministrator = pathPrimaryAdministrator(publicAccessDescription);
-						if (newPathPrimaryAdministrator != (path.primaryAdministrator()))
-						{
-							if (!('path' in changes))
-								changes['path'] = {}
-							changes['path']['primary administrator'] = 
-								newPathPrimaryAdministrator && "user/{0}".format(newPathPrimaryAdministrator.id());
-						}
 					}
 					
 					
@@ -133,14 +124,6 @@ var Settings = (function () {
 				return cr.privileges.read;
 			else
 				return "";
-		}
-		
-		var pathPrimaryAdministrator = function(label)
-		{
-			if (label == _this.pathVisibleLabel)
-				return user.primaryAdministrator();
-			else
-				return null;
 		}
 		
 		var firstNameSection = this.mainDiv.append('section')
@@ -961,7 +944,7 @@ var NotificationsPanel = (function () {
 							var v = d.isFresh();
 							if (v == cr.booleans.yes)
 							{
-								v.appendUpdateIsFreshCommand("no", updateData, sourceObjects);
+								d.appendUpdateIsFreshCommand(cr.booleans.no, updateData, sourceObjects);
 							}
 						}
 					});

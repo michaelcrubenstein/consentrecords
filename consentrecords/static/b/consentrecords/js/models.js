@@ -327,7 +327,7 @@ cr.Cell = (function()
 			if (this.hasPersistentValues())
 			{
 				oldData.id = null;
-				oldData.clearValue();
+				/* oldData.clearValue(); */
 			}
 			else
 			{
@@ -624,11 +624,6 @@ cr.Value = (function() {
 		throw new Error("isEmpty must be overwritten");
 	}
 	
-	Value.prototype.clearValue = function()
-	{
-		throw new Error("clearValue must be overwritten");
-	};
-	
 	Value.prototype.updateFromChangeData = function()
 	{
 		throw new Error("updateFromChangeData must be overwritten");
@@ -702,7 +697,6 @@ cr.StringValue = (function() {
 	{
 		return this.text === null || this.text === undefined || this.text === "";
 	}
-	StringValue.prototype.clearValue = function() { this.text = null; }
 
 	StringValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
@@ -748,8 +742,6 @@ cr.StringValue = (function() {
 cr.TranslationValue = (function() {
 	TranslationValue.prototype = new cr.StringValue();
 	
-	TranslationValue.prototype.clearValue = function() { this.text = null; this.languageCode = null; }
-
 	TranslationValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
 		if (newValue.text === "")
@@ -923,14 +915,6 @@ cr.Instance = (function() {
 		return !this.getInstanceID() && !this.getCells();
 	}
 
-	Instance.prototype.clearValue = function()
-	{
-		this._instanceID = null; 
-		this._description="None";
-		this._privilege = null;
-		this._cells = null;
-	}
-	
 	Instance.prototype.calculateDescription = function()
 	{
 		if (!this.getCells())
@@ -1470,17 +1454,6 @@ cr.ObjectValue = (function() {
 		return !this._instance || this._instance.isEmpty();
 	}
 
-	ObjectValue.prototype.clearValue = function()
-	{
-		if (this._instance)
-		{
-			this._instance.off("dataChanged.cr", this._instanceDataChanged);
-			this._instanceDataChanged = null;
-			this._instance = null;
-		}
-		this.instance(new cr.Instance());
-	}
-	
 	ObjectValue.prototype.calculateDescription = function()
 	{
 		this._instance.calculateDescription();
@@ -2342,7 +2315,50 @@ cr.IInstance = (function() {
 		}
 	}
 	
-	IInstance.prototype.updateData = function(d)
+	IInstance.prototype.updateList = function(items, data, newIDs, resultType, addEventType, deletedEventType)
+	{
+		if (items())
+		{
+			data.forEach(function(d)
+				{
+					if ('delete' in d)
+					{
+						var item = items().find(function(i)
+							{
+								return i.id() == d['delete'];
+							});
+						if (item)
+						{
+							$(item).trigger(deletedEventType, item);
+						}
+					}
+					else if ('add' in d)
+					{
+						var item = items().find(function(i)
+							{
+								return i.clientID() == d['add'];
+							});
+						if (item)
+						{
+							item.id(newIDs[d['add']]);
+						}
+					}
+					else
+					{
+						var item = items().find(function(i)
+							{
+								return i.id() == d['id'];
+							});
+						if (item)
+						{
+							item.updateData(d, newIDs);
+						}
+					}
+				});
+		}
+	}
+	
+	IInstance.prototype.updateData = function(d, newIDs)
 	{
 		if ('id' in d)
 			this._id = d['id'];
@@ -2464,9 +2480,9 @@ cr.TranslationInstance = (function() {
 	}
 	
 	/** Called after the contents of the TranslationInstance have been updated on the server. */
-	TranslationInstance.prototype.updateData = function(d)
+	TranslationInstance.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('text' in d)
 			this._text = d['text'];
 		if ('languageCode' in d)
@@ -2543,9 +2559,9 @@ cr.ServiceLinkInstance = (function() {
 	}
 	
 	/** Called after the contents of the ServiceLinkInstance have been updated on the server. */
-	ServiceLinkInstance.prototype.updateData = function(d)
+	ServiceLinkInstance.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('service' in d)
 			this._serviceID = d['service']['id'];
 	}
@@ -2598,9 +2614,9 @@ cr.OrderedServiceLinkInstance = (function() {
 	}
 	
 	/** Called after the contents of the OrderedServiceLinkInstance have been updated on the server. */
-	OrderedServiceLinkInstance.prototype.updateData = function(d)
+	OrderedServiceLinkInstance.prototype.updateData = function(d, newIDs)
 	{
-		cr.ServiceLinkInstance.prototype.updateData.call(this, d);
+		cr.ServiceLinkInstance.prototype.updateData.call(this, d, newIDs);
 		if ('position' in d)
 			this._position = d['position'];
 	}
@@ -2758,9 +2774,9 @@ cr.Grantable = (function() {
 	}
 	
 	/** Called after the contents of the Grantable have been updated on the server. */
-	Grantable.prototype.updateData = function(d)
+	Grantable.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('public access' in d)
 			this._publicAccess = d['public access'];
 		if ('primary administrator' in d)
@@ -2771,11 +2787,11 @@ cr.Grantable = (function() {
 		}
 		if ('user grants' in d)
 		{
-			updateList(this.userGrants, d['user grants'], cr.UserGrant, "userGrantAdded.cr", "userGrantDeleted.cr");
+			this.updateList(this.userGrants, d['user grants'], newIDs, cr.UserGrant, "userGrantAdded.cr", "userGrantDeleted.cr");
 		}
 		if ('group grants' in d)
 		{
-			updateList(this.groupGrants, d['group grants'], cr.GroupGrant, "groupGrantAdded.cr", "groupGrantDeleted.cr");
+			this.updateList(this.groupGrants, d['group grants'], newIDs, cr.GroupGrant, "groupGrantAdded.cr", "groupGrantDeleted.cr");
 		}
 	}
 	
@@ -2959,7 +2975,7 @@ cr.OrganizationLinkInstance = (function() {
 		return this;
 	}
 	
-	OrganizationLinkInstance.prototype.updateData = function(d)
+	OrganizationLinkInstance.prototype.updateData = function(d, newIDs)
 	{
 		if ('organization' in d) {
 			this._organization = crp.getInstance(d['organization']['id']);
@@ -3004,7 +3020,7 @@ cr.SiteLinkInstance = (function() {
 		return this;
 	}
 	
-	SiteLinkInstance.prototype.updateData = function(d)
+	SiteLinkInstance.prototype.updateData = function(d, newIDs)
 	{
 		if ('site' in d) {
 			this._site = crp.getInstance(d['site']['id']);
@@ -3049,7 +3065,7 @@ cr.OfferingLinkInstance = (function() {
 		return this;
 	}
 	
-	OfferingLinkInstance.prototype.updateData = function(d)
+	OfferingLinkInstance.prototype.updateData = function(d, newIDs)
 	{
 		if ('offering' in d) {
 			this._offering = crp.getInstance(d['offering']['id']);
@@ -3115,7 +3131,7 @@ cr.DateRangeInstance = (function() {
 		if (!this._end) this._end = source._end;
 	}
 	
-	DateRangeInstance.prototype.updateData = function(d)
+	DateRangeInstance.prototype.updateData = function(d, newIDs)
 	{
 		if ('start' in d)
 			this._start = d['start'];
@@ -3238,9 +3254,9 @@ cr.Address = (function() {
 	}
 	
 	/** Called after the contents of the Address have been updated on the server. */
-	Address.prototype.updateData = function(d)
+	Address.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('city' in d)
 			this._city = d['city'];
 		if ('state' in d)
@@ -3249,7 +3265,7 @@ cr.Address = (function() {
 			this._zipCode = d['zip code'];
 		if ('streets' in d)
 		{
-			updateList(this.streets, d['streets'], cr.Street, "streetAdded.cr", "streetDeleted.cr");
+			this.updateList(this.streets, d['streets'], newIDs, cr.Street, "streetAdded.cr", "streetDeleted.cr");
 		}
 	}
 	
@@ -3395,12 +3411,12 @@ cr.CommentPrompt = (function() {
     }
     
 	/** Called after the contents of the CommentPrompt have been updated on the server. */
-	CommentPrompt.prototype.updateData = function(d)
+	CommentPrompt.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('translations' in d)
 		{
-			updateList(this.translations, d['translations'], cr.CommentPromptText, "translationAdded.cr", "translationDeleted.cr");
+			this.updateList(this.translations, d['translations'], newIDs, cr.CommentPromptText, "translationAdded.cr", "translationDeleted.cr");
 		}
 	}
 	
@@ -3829,13 +3845,13 @@ cr.Experience = (function() {
 	}
 	
 	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
-	Experience.prototype.updateData = function(d)
+	Experience.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
-		cr.OrganizationLinkInstance.prototype.updateData.call(this, d);
-		cr.SiteLinkInstance.prototype.updateData.call(this, d);
-		cr.OfferingLinkInstance.prototype.updateData.call(this, d);
-		cr.DateRangeInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		cr.OrganizationLinkInstance.prototype.updateData.call(this, d, newIDs);
+		cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs);
+		cr.OfferingLinkInstance.prototype.updateData.call(this, d, newIDs);
+		cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs);
 		if ('custom organization' in d)
 			this._customOrganization = d['custom organization'];
 		if ('custom site' in d)
@@ -3846,19 +3862,19 @@ cr.Experience = (function() {
 			this._timeframe = d['timeframe'];
 		if ('translations' in d)
 		{
-			updateList(this.translations, d['translations'], cr.ExperiencePromptText, "translationAdded.cr", "translationDeleted.cr");
+			this.updateList(this.translations, d['translations'], newIDs, cr.ExperiencePromptText, "translationAdded.cr", "translationDeleted.cr");
 		}
 		if ('services' in d)
 		{
-			updateList(this.experienceServices, d['services'], cr.ExperienceService, "experienceServiceAdded.cr", "experienceServiceDeleted.cr");
+			this.updateList(this.experienceServices, d['services'], newIDs, cr.ExperienceService, "experienceServiceAdded.cr", "experienceServiceDeleted.cr");
 		}
 		if ('custom services' in d)
 		{
-			updateList(this.customServices, d['custom services'], cr.ExperienceCustomService, "customServiceAdded.cr", "customServiceDeleted.cr");
+			this.updateList(this.customServices, d['custom services'], newIDs, cr.ExperienceCustomService, "customServiceAdded.cr", "customServiceDeleted.cr");
 		}
 		if ('comments' in d)
 		{
-			updateList(this.comments, d['comments'], cr.Comment, "commentAdded.cr", "commentDeleted.cr");
+			this.updateList(this.comments, d['comments'], newIDs, cr.Comment, "commentAdded.cr", "commentDeleted.cr");
 		}
 	}
 	
@@ -4286,12 +4302,12 @@ cr.ExperiencePrompt = (function() {
 	}
 	
 	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
-	ExperiencePrompt.prototype.updateData = function(d)
+	ExperiencePrompt.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
-		cr.OrganizationLinkInstance.prototype.updateData.call(this, d);
-		cr.SiteLinkInstance.prototype.updateData.call(this, d);
-		cr.OfferingLinkInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		cr.OrganizationLinkInstance.prototype.updateData.call(this, d, newIDs);
+		cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs);
+		cr.OfferingLinkInstance.prototype.updateData.call(this, d, newIDs);
 		if ('domain' in d)
 			this._domainID = d['domain']['id'];
 		if ('stage' in d)
@@ -4300,15 +4316,15 @@ cr.ExperiencePrompt = (function() {
 			this._timeframe = d['timeframe'];
 		if ('translations' in d)
 		{
-			updateList(this.translations, d['translations'], cr.ExperiencePromptText, "translationAdded.cr", "translationDeleted.cr");
+			this.updateList(this.translations, d['translations'], newIDs, cr.ExperiencePromptText, "translationAdded.cr", "translationDeleted.cr");
 		}
 		if ('services' in d)
 		{
-			updateList(this.services, d['services'], cr.ExperiencePromptService, "serviceAdded.cr", "serviceDeleted.cr");
+			this.updateList(this.services, d['services'], newIDs, cr.ExperiencePromptService, "serviceAdded.cr", "serviceDeleted.cr");
 		}
 		if ('disqualifyingTags' in d)
 		{
-			updateList(this.disqualifyingTags, d['disqualifyingTags'], cr.DisqualifyingTag, "disqualifyingTagAdded.cr", "disqualifyingTagDeleted.cr");
+			this.updateList(this.disqualifyingTags, d['disqualifyingTags'], newIDs, cr.DisqualifyingTag, "disqualifyingTagAdded.cr", "disqualifyingTagDeleted.cr");
 		}
 	}
 	
@@ -4346,6 +4362,12 @@ cr.Group = (function() {
 	Group.prototype = new cr.IInstance();
 	Group.prototype._names = null;
 	Group.prototype._members = null;
+	
+	Group.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'user grant/{0}'.format(this.id());
+	}
 	
 	Group.prototype.names = cr.NamedInstance.prototype.names;
 	
@@ -4402,16 +4424,16 @@ cr.Group = (function() {
 	}
 	
 	/** Called after the contents of the Group have been updated on the server. */
-	Group.prototype.updateData = function(d)
+	Group.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('names' in d)
 		{
-			updateList(this.names, d['names'], cr.GroupName, "nameAdded.cr", "nameDeleted.cr");
+			this.updateList(this.names, d['names'], newIDs, cr.GroupName, "nameAdded.cr", "nameDeleted.cr");
 		}
 		if ('members' in d)
 		{
-			updateList(this.members, d['members'], cr.GroupMember, "memberAdded.cr", "memberDeleted.cr");
+			this.updateList(this.members, d['members'], newIDs, cr.GroupMember, "memberAdded.cr", "memberDeleted.cr");
 		}
 	}
 	
@@ -4425,6 +4447,12 @@ cr.Group = (function() {
 	
 cr.GroupGrant = (function() {
 	GroupGrant.prototype = new cr.Grant();
+	
+	GroupGrant.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'user grant/{0}'.format(this.id());
+	}
 	
 	GroupGrant.prototype.granteeType = function()
 	{
@@ -4587,9 +4615,11 @@ cr.Offering = (function() {
     Offering.prototype._sessions = null;
     Offering.prototype._organization = null;
     Offering.prototype._site = null;
+    Offering.prototype._sessionsPromise = null;
 	
 	Offering.prototype.urlPath = function()
 	{
+		console.assert(this.id());
 		return 'offering/{0}'.format(this.id());
 	}
 	
@@ -4757,12 +4787,12 @@ cr.Offering = (function() {
 	}
 	
 	/** Called after the contents of the Offering have been updated on the server. */
-	Offering.prototype.updateData = function(d)
+	Offering.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('names' in d)
 		{
-			updateList(this.names, d['names'], cr.OfferingName, "nameAdded.cr", "nameDeleted.cr");
+			this.updateList(this.names, d['names'], newIDs, cr.OfferingName, "nameAdded.cr", "nameDeleted.cr");
 		}
 		if ('web site' in d)
 			this._city = d['web site'];
@@ -4776,11 +4806,11 @@ cr.Offering = (function() {
 			this._maximumGrade = d['maximum grade'];
 		if ('services' in d)
 		{
-			updateList(this.experienceServices, d['services'], cr.ExperienceService, "experienceServiceAdded.cr", "experienceServiceDeleted.cr");
+			this.updateList(this.experienceServices, d['services'], newIDs, cr.ExperienceService, "experienceServiceAdded.cr", "experienceServiceDeleted.cr");
 		}
 		if ('sessions' in d)
 		{
-			updateList(this.sessions, d['sessions'], cr.Session, "sessionAdded.cr", "sessionDeleted.cr");
+			this.updateList(this.sessions, d['sessions'], newIDs, cr.Session, "sessionAdded.cr", "sessionDeleted.cr");
 		}
 	}
 	
@@ -4832,6 +4862,37 @@ cr.Offering = (function() {
 			return "";
 	}
 
+    Offering.prototype.promiseSessions = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._sessionsPromise)
+        	return this._sessionsPromise;
+        else if (this._sessions)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._sessions);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._sessionsPromise = cr.getData(
+        	{
+        		path: this.urlPath() + "/session",
+        		fields: ['parents'],
+        		resultType: cr.Session
+        	})
+        	.done(function(sessions)
+        		{
+        			_this._sessions = sessions;
+        			result = $.Deferred();
+        			result.resolve(sessions);
+        			return result;
+        		});
+        return this._sessionsPromise;
+    }
+    
 	function Offering() {
 	    cr.IInstance.call(this);
 	};
@@ -4872,6 +4933,11 @@ cr.Organization = (function() {
 	
 	Organization.prototype.names = cr.NamedInstance.prototype.names;
 	Organization.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
+	
+	Organization.prototype.urlPath = function()
+	{
+		return 'organization/{0}'.format(this.id());
+	}
 	
 	Organization.prototype.inquiryAccessGroup = function(newValue)
 	{
@@ -4941,7 +5007,7 @@ cr.Organization = (function() {
 								i.setData(d);
 								return crp.pushInstance(i);
 							});
-		if ('inquiry access group' in d && this_groups)
+		if ('inquiry access group' in d && this._groups)
 			this._inquiryAccessGroup = this._groups.find(function(group)
 				{
 					return group.id() == d['inquiry access group']['id'];
@@ -4983,22 +5049,22 @@ cr.Organization = (function() {
 	}
 	
 	/** Called after the contents of the Organization have been updated on the server. */
-	Organization.prototype.updateData = function(d)
+	Organization.prototype.updateData = function(d, newIDs)
 	{
-		cr.Grantable.prototype.updateData.call(this, d);
+		cr.Grantable.prototype.updateData.call(this, d, newIDs);
 		if ('web site' in d)
-			this._city = d['web site'];
+			this._webSite = d['web site'];
 		if ('names' in d)
 		{
-			updateList(this.names, d['names'], cr.OrganizationName, "nameAdded.cr", "nameDeleted.cr");
+			this.updateList(this.names, d['names'], newIDs, cr.OrganizationName, "nameAdded.cr", "nameDeleted.cr");
 		}
 		if ('groups' in d)
 		{
-			updateList(this.groups, d['groups'], cr.Group, "groupAdded.cr", "groupDeleted.cr");
+			this.updateList(this.groups, d['groups'], newIDs, cr.Group, "groupAdded.cr", "groupDeleted.cr");
 		}
 		if ('sites' in d)
 		{
-			updateList(this.sites, d['sites'], cr.Site, "siteAdded.cr", "siteDeleted.cr");
+			this.updateList(this.sites, d['sites'], newIDs, cr.Site, "siteAdded.cr", "siteDeleted.cr");
 		}
 		if ('inquiry access group' in d)
 			this._inquiryAccessGroup = this.groups().find(function(group)
@@ -5007,6 +5073,25 @@ cr.Organization = (function() {
 				});
 	}
 	
+    Organization.prototype.getData = function()
+    {
+    	var _this = this;
+    	return cr.getData(
+        	{
+        		path: this.urlPath(),
+        		fields: ['sites', 'groups'],
+        		resultType: cr.Organization
+        	})
+        	.then(function()
+        	{
+        		_this.sites().forEach(function(site)
+        			{
+        				site.organization(_this);
+        			});
+        		return _this;
+        	});
+    }
+    
 	function Organization() {
 	    cr.Grantable.call(this);
 	};
@@ -5037,6 +5122,11 @@ cr.Path = (function() {
 	Path.prototype._user = null;
 	Path.prototype._userPromise = null;
 	Path.prototype.someoneString = "Someone";
+	
+	Path.prototype.urlPath = function()
+	{
+		return 'path/{0}'.format(this.id());
+	}
 	
 	Path.prototype.birthday = function(newValue)
 	{
@@ -5205,9 +5295,9 @@ cr.Path = (function() {
 	}
 	
 	/** Called after the contents of the Path have been updated on the server. */
-	Path.prototype.updateData = function(d)
+	Path.prototype.updateData = function(d, newIDs)
 	{
-		cr.Grantable.prototype.updateData.call(this, d);
+		cr.Grantable.prototype.updateData.call(this, d, newIDs);
 		var changed = false;
 		if ('screen name' in d)
 		{
@@ -5233,7 +5323,7 @@ cr.Path = (function() {
 		
 		if ('experiences' in d)
 		{
-			updateList(this.experiences, d['experiences'], cr.Experience, "experienceAdded.cr", "experienceDeleted.cr");
+			this.updateList(this.experiences, d['experiences'], newIDs, cr.Experience, "experienceAdded.cr", "experienceDeleted.cr");
 		}
 	}
 	
@@ -5376,9 +5466,9 @@ cr.Period = (function() {
 	}
 	
 	/** Called after the contents of the Period have been updated on the server. */
-	Period.prototype.updateData = function(d)
+	Period.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('weekday' in d)
 			this._weekday = d['weekday'];
 		if ('start time' in d)
@@ -5403,6 +5493,11 @@ cr.Service = (function() {
 	Service.prototype._siteLabels = null;
 	Service.prototype._offeringLabels = null;
 	Service.prototype._services = null;
+	
+	Service.prototype.urlPath = function()
+	{
+		return 'service/{0}'.format(this.id());
+	}
 	
 	Service.prototype.stage = function(newValue)
 	{
@@ -5700,22 +5795,17 @@ cr.Session = (function() {
 	Session.prototype._site = null;
 	Session.prototype._offering = null;
 	
-	Session.prototype.names = function(newData)
+	Session.prototype.urlPath = function()
 	{
-		if (newData === undefined)
-			return this._names;
-		else
-		{
-			this._names = newData.map(function(d)
-				{
-					var i = new cr.SessionName();
-					i.setData(d);
-					return i;
-				});
-			return this;
-		}
+		console.assert(this.id());
+		return 'session/{0}'.format(this.id());
 	}
 	
+	Session.prototype.names = cr.NamedInstance.prototype.names;
+	Session.prototype.start = cr.DateRangeInstance.prototype.start;
+	Session.prototype.end = cr.DateRangeInstance.prototype.end;
+	Session.prototype.dateRange = cr.DateRangeInstance.prototype.dateRange;
+
 	Session.prototype.registrationDeadline = function(newValue)
 	{
 		if (newValue === undefined)
@@ -5730,10 +5820,6 @@ cr.Session = (function() {
 		}
 	}
 	
-	Session.prototype.start = cr.DateRangeInstance.prototype.start;
-	Session.prototype.end = cr.DateRangeInstance.prototype.end;
-	Session.prototype.dateRange = cr.DateRangeInstance.prototype.dateRange;
-
 	Session.prototype.canRegister = function(newValue)
 	{
 		if (newValue === undefined)
@@ -6037,6 +6123,53 @@ cr.Session = (function() {
 		return this;
     }
     
+	Session.prototype.updateData = function(d, newIDs)
+	{
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs);
+		
+		var changed = false;
+		if ('web site' in d)
+		{
+			this._webSite = d['web site'];
+			changed = true;
+		}
+		if ('registration deadline' in d)
+		{
+			this._registrationDeadline = d['registration deadline'];
+			changed = true;
+		}
+		if ('can register' in d)
+		{
+			this._canRegister = d['can register'];
+			changed = true;
+		}
+		if (changed)
+		{
+			$(this).trigger("sessionChanged.cr");
+		}
+		
+		if ('inquiries' in d)
+		{
+			this.updateList(this.inquiries, d['inquiries'], newIDs, cr.Inquiry, "inquiryAdded.cr", "inquiryDeleted.cr");
+		}
+		
+		if ('enrollments' in d)
+		{
+			this.updateList(this.enrollments, d['enrollments'], newIDs, cr.Enrollment, "enrollmentAdded.cr", "enrollmentDeleted.cr");
+		}
+		
+		if ('engagements' in d)
+		{
+			this.updateList(this.engagements, d['engagements'], newIDs, cr.Engagement, "engagementAdded.cr", "engagementDeleted.cr");
+		}
+		
+		if ('periods' in d)
+		{
+			this.updateList(this.periods, d['periods'], newIDs, cr.Period, "periodAdded.cr", "periodDeleted.cr");
+		}
+	}
+	
 	function Session() {
 	    cr.IInstance.call(this);
 	};
@@ -6163,22 +6296,24 @@ cr.Site = (function() {
 	}
 	
 	/** Called after the contents of the Site have been updated on the server. */
-	Site.prototype.updateData = function(d)
+	Site.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('web site' in d)
 			this._city = d['web site'];
 		if ('address' in d)
-			this._address.updateData(d['address']);
+		{
+			this._address.updateData(d['address'], newIDs);
+		}
 		if ('zip code' in d)
 			this._zipCode = d['zip code'];
 		if ('names' in d)
 		{
-			updateList(this.names, d['names'], cr.SiteName, "nameAdded.cr", "nameDeleted.cr");
+			this.updateList(this.names, d['names'], newIDs, cr.SiteName, "nameAdded.cr", "nameDeleted.cr");
 		}
 		if ('offerings' in d)
 		{
-			updateList(this.offerings, d['offerings'], cr.Offering, "offeringAdded.cr", "offeringDeleted.cr");
+			this.updateList(this.offerings, d['offerings'], newIDs, cr.Offering, "offeringAdded.cr", "offeringDeleted.cr");
 		}
 	}
 	
@@ -6188,7 +6323,7 @@ cr.Site = (function() {
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: ['address'],
+        		fields: ['address', 'offerings'],
         		resultType: cr.Site
         	})
         	.then(function()
@@ -6221,6 +6356,12 @@ cr.Street = (function() {
 	Street.prototype = new cr.IInstance();
 	Street.prototype._position = null;
 	Street.prototype._text = null;
+	
+	Street.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'street/{0}'.format(this.id());
+	}
 	
 	Street.prototype.position = function(newValue)
 	{
@@ -6280,9 +6421,9 @@ cr.Street = (function() {
 	}
 	
 	/** Called after the contents of the Street have been updated on the server. */
-	Street.prototype.updateData = function(d)
+	Street.prototype.updateData = function(d, newIDs)
 	{
-		cr.IInstance.prototype.updateData.call(this, d);
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('position' in d)
 			this._position = d['position'];
 		if ('text' in d)
@@ -6379,9 +6520,9 @@ cr.User = (function() {
 		return this;
 	}
 	
-	User.prototype.updateData = function(d)
+	User.prototype.updateData = function(d, newIDs)
 	{
-		cr.Grantable.prototype.updateData.call(this, d);
+		cr.Grantable.prototype.updateData.call(this, d, newIDs);
 		
 		var changed = false;
 		if ('first name' in d)
@@ -6407,12 +6548,12 @@ cr.User = (function() {
 		
 		if ('path' in d)
 		{
-			this.path().updateData(d['path']);
+			this.path().updateData(d['path'], newIDs);
 		}
 		
 		if ('user grant requests' in d)
 		{
-			updateList(this.userGrantRequests, d['user grant requests'], cr.UserGrantRequest, "userGrantRequestAdded.cr", "userGrantRequestDeleted.cr");
+			this.updateList(this.userGrantRequests, d['user grant requests'], newIDs, cr.UserGrantRequest, "userGrantRequestAdded.cr", "userGrantRequestDeleted.cr");
 		}
 	}
 	
@@ -6854,6 +6995,12 @@ cr.UserEmail = (function() {
 	
 cr.UserGrant = (function() {
 	UserGrant.prototype = new cr.Grant();
+	
+	UserGrant.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'user grant/{0}'.format(this.id());
+	}
 	
 	UserGrant.prototype.granteeType = function()
 	{

@@ -1,7 +1,7 @@
 Pathways Panel
 	Experience Comments Panel
-	More Experiences Panels
-	Edit Experience Panel
+	More Ideas Panels
+	Edit Experience Panel (Also used to add an experience)
 	Search Panel
 	Settings Panel
 		Pick Public Visibility Panel
@@ -17,11 +17,9 @@ Pathways Panel
 		Other Path Panel
 		Experience Comment Panel
 
-View Root Objects Panel
-Edit Root Objects Panel
-View Object Panel
-Edit Object Panel
-Pick Object Panel
+/find/ URL
+Find a New Experience Panel
+	Sign Up/Back Out Panel
 
 Org home
 	Pick Action Panel
@@ -36,6 +34,9 @@ Org home
 	Record Participation Panel
 	Manage Participation Panel
 
-Find a New Experience Panel
-	Sign Up/Back Out Panel
+View Root Objects Panel
+Edit Root Objects Panel
+View Object Panel
+Edit Object Panel
+Pick Object Panel
 

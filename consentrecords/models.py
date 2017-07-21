@@ -387,7 +387,7 @@ class IInstance():
         if self.deleteTransaction_id:
             raise RuntimeError('%s is already deleted' % str(self))
         if not context.canWrite(self):
-            raise PermissionDenied('Permission denied')
+            raise PermissionDenied('you do not have sufficient write privileges for this operation')
         self.deleteTransaction = context.transaction
         self.save()
     
@@ -397,20 +397,25 @@ class IInstance():
                 raise ValueError('%s element of data is not a list: %s' % (key, data[key]))
             for subData in data[key]:
                 subClass.create(self, subData, context, newIDs=newIDs)
+                newIDs[subChanges['add']] = subItem.id.hex
     
     def updateChildren(self, changes, key, context, subClass, children, newIDs={}):
         if key in changes:
             if not isinstance(changes[key], list):
                 raise ValueError('%s element of changes is not a list: %s' % (key, changes[key]))
             for subChanges in changes[key]:
+                if 'delete' in subChanges:
+                    subItem = children.get(pk=subChanges['delete'])
+                    subItem.markDeleted(context)
                 if 'id' in subChanges:
                     subItem = children.get(pk=subChanges['id'])
-                    if 'delete' in subChanges and subChanges['delete'] == 'delete':
-                        subItem.markDeleted(context)
-                    else:
-                        subItem.update(subChanges, context, newIDs)
-                elif 'clientID' in subChanges:
+                    subItem.update(subChanges, context, newIDs)
+                elif 'add' in subChanges:
+                    print('add', subChanges)
                     subItem = subClass.create(self, subChanges, context, newIDs=newIDs)
+                    newIDs[subChanges['add']] = subItem.id.hex
+                else:
+                    raise ValueError('subChange has no action key (delete, id or add): %s' % subChange) 
     
     @property
     def currentNamesQuerySet(self):
@@ -697,8 +702,6 @@ class TranslationInstance(ChildInstance):
                                  text=_orNone(data, 'text'),
                                  languageCode=_orNone(data, 'languageCode'),
                                  )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         return newItem                         
 
 ### An instance that contains access information.
@@ -3164,8 +3167,6 @@ class UserGrant(AccessInstance, dbmodels.Model):
                                  grantor_id=parent.id,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, User),
                                  privilege=_orNone(data, 'privilege'))
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -3215,8 +3216,6 @@ class GroupGrant(AccessInstance, dbmodels.Model):
                                  grantor_id=parent.id,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, Group),
                                  privilege=_orNone(data, 'privilege'))
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -3318,8 +3317,6 @@ class Address(ChildInstance, dbmodels.Model):
                                  state=_orNone(data, 'state'),
                                  zipCode=_orNone(data, 'zip code'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'streets', context, Street, newIDs)
         
@@ -3434,8 +3431,6 @@ class Comment(ChildInstance, dbmodels.Model):
                                  question = _orNone(data, 'question'),
                                  asker = _orNoneForeignKey(data, 'asker', context, Path),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem
 
@@ -3519,8 +3514,6 @@ class CommentPrompt(RootInstance, PublicInstance, dbmodels.Model):
         newItem = CommentPrompt.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'translations', context, CommentPromptText, newIDs)
         
@@ -3597,8 +3590,6 @@ class DisqualifyingTag(ServiceLinkInstance, PublicInstance, dbmodels.Model):
                                  parent=parent,
                                  service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -3692,8 +3683,6 @@ class Engagement(ChildInstance, dbmodels.Model):
                                  start=_orNone(data, 'start'),
                                  end=_orNone(data, 'end'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -3785,8 +3774,6 @@ class Enrollment(ChildInstance, dbmodels.Model):
                                  parent=parent,
                                  user=_orNoneForeignKey(data, 'user', context, User),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -3976,8 +3963,6 @@ class Experience(ChildInstance, dbmodels.Model):
                                  start = _orNone(data, 'start'),
                                  end = _orNone(data, 'end'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'services', context, ExperienceService, newIDs)
         newItem.createChildren(data, 'custom services', context, ExperienceCustomService, newIDs)
@@ -4150,8 +4135,6 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
                                  position=_newPosition(parent.services, data, 'position'),
                                  name=data['name'],
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -4221,8 +4204,6 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
                                  position=_newPosition(parent.services, data, 'position'),
                                  service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -4342,8 +4323,6 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
                                  stage = _orNone(data, 'stage'),
                                  timeframe = _orNone(data, 'timeframe'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'translations', context, ExperiencePromptText, newIDs)
         newItem.createChildren(data, 'services', context, ExperiencePromptService, newIDs)
@@ -4452,8 +4431,6 @@ class ExperiencePromptService(OrderedServiceLinkInstance, PublicInstance, dbmode
                                  position=_newPosition(parent.services, data, 'position'),
                                  service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -4513,6 +4490,7 @@ class Group(ChildInstance, dbmodels.Model):
                
     elementMap = {'name': ('names__', "GroupName", 'parent'),
                   'member': ('members__', "GroupMember", 'parent'),
+                  'organization': ('parent__', 'Organization', 'groups'),
                  }
 
     def __str__(self):
@@ -4559,8 +4537,6 @@ class Group(ChildInstance, dbmodels.Model):
         newItem = Group.objects.create(transaction=context.transaction,
                                  parent=parent,
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'names', context, GroupName, newIDs)
         newItem.createChildren(data, 'members', context, GroupMember, newIDs)
@@ -4629,6 +4605,7 @@ class GroupMember(ChildInstance, dbmodels.Model):
     fieldMap = {}
                
     elementMap = {'user': ('user__', 'User', 'groupMembers'),
+                  'group': ('parent__', 'Group', 'members'),
                  }
                  
     def description(self, languageCode=None):
@@ -4669,8 +4646,6 @@ class GroupMember(ChildInstance, dbmodels.Model):
                                  parent=parent,
                                  user=_orNoneForeignKey(data, 'user', context, User),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -4750,8 +4725,6 @@ class Inquiry(ChildInstance, dbmodels.Model):
                                  parent=parent,
                                  user=_orNoneForeignKey(data, 'user', context, User),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -4863,8 +4836,6 @@ class Notification(ChildInstance, dbmodels.Model):
                                  name = data['name'],
                                  isFresh = _orNone(data, 'is fresh'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         types = newItem.getArgumentTypes()
         for position in range(0, len(types)):
@@ -5090,8 +5061,6 @@ class Offering(ChildInstance, dbmodels.Model):
                                  minimumGrade=_orNone(data, 'minimum grade'),
                                  maximumGrade=_orNone(data, 'maximum grade'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'names', context, OfferingName, newIDs)
         newItem.createChildren(data, 'services', context, OfferingService, newIDs)
@@ -5233,8 +5202,6 @@ class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
                                  position=_newPosition(parent.services, data, 'position'),
                                  service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -5340,8 +5307,6 @@ class Organization(SecureRootInstance, dbmodels.Model):
                                  publicAccess=_orNone(data, 'public access'),
                                  primaryAdministrator=primaryAdministrator
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'names', context, OrganizationName, newIDs)
         newItem.createChildren(data, 'groups', context, Group, newIDs)
@@ -5620,8 +5585,6 @@ class Path(IInstance, dbmodels.Model):
                                  publicAccess = _orNone(data, 'public access'),
                                  canAnswerExperience = _orNone(data, 'can answer experience'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.save()
         
@@ -5753,8 +5716,6 @@ class Period(ChildInstance, dbmodels.Model):
                                  startTime=_orNone(data, 'start time'),
                                  endTime=_orNone(data, 'end time'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -5907,8 +5868,6 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
                                  lastTransaction=context.transaction,
                                  stage = _orNone(data, 'stage'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'names', context, ServiceName, newIDs)
         newItem.createChildren(data, 'organization labels', context, ServiceOrganizationLabel, newIDs)
@@ -5916,8 +5875,16 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
         newItem.createChildren(data, 'offering labels', context, ServiceOfferingLabel, newIDs)
         newItem.createChildren(data, 'services', context, ServiceImplication, newIDs)
         
-        return newItem                          
-        
+        return newItem
+    
+    def createElement(elementName, data, context, newIDs):
+        if not context.canWrite(self):
+            raise PermissionDenied('you do not have sufficient write privileges for this operation')
+        if elementName == 'inquiry':
+            return Inquiry.create(self, data, context, newIDs) 
+        else:
+            raise ValueError('you cannot create %s elements within session "%s"' % (elementName, self.description()))
+    
     def buildHistory(self, context):
         return ServiceHistory.objects.create(transaction=self.lastTransaction,
                                              instance=self,
@@ -6135,8 +6102,6 @@ class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
                                  parent=parent,
                                  impliedService=_orNoneForeignKey(data, 'service', context, Service),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -6229,15 +6194,18 @@ class Session(ChildInstance, dbmodels.Model):
                 data['end'] = self.end
             if self.canRegister:
                 data['can register'] = self.canRegister
-                
-            data['engagements'] = [i.headData(context) for i in self.currentEngagements]
-            data['engagements'].sort(key=lambda s: s['description'])
             
-            data['enrollments'] = [i.headData(context) for i in self.currentEnrollments]
-            data['enrollments'].sort(key=lambda s: s['description'])
+            if 'engagements' in fields:    
+                data['engagements'] = [i.headData(context) for i in self.currentEngagements]
+                data['engagements'].sort(key=lambda s: s['description'])
             
-            data['inquiries'] = [i.headData(context) for i in self.currentInquiries]
-            data['inquiries'].sort(key=lambda s: s['description'])
+            if 'enrollments' in fields:
+                data['enrollments'] = [i.headData(context) for i in self.currentEnrollments]
+                data['enrollments'].sort(key=lambda s: s['description'])
+            
+            if 'inquiries' in fields:
+                data['inquiries'] = [i.headData(context) for i in self.currentInquiries]
+                data['inquiries'].sort(key=lambda s: s['description'])
             
             data['periods'] = [i.getData(context) for i in self.currentPeriods]
             data['periods'].sort(key=lambda s: s['description'])
@@ -6306,8 +6274,6 @@ class Session(ChildInstance, dbmodels.Model):
                                  end=_orNone(data, 'end'),
                                  canRegister=_orNone(data, 'can register'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'names', context, SessionName, newIDs)
         newItem.createChildren(data, 'engagements', context, Engagement, newIDs)
@@ -6327,7 +6293,8 @@ class Session(ChildInstance, dbmodels.Model):
         
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+            raise PermissionDenied('you do not have permission to complete this update')
+        print(changes)
         
         history = None
         if 'registration deadline' in changes and changes['registration deadline'] != self.registrationDeadline:
@@ -6491,8 +6458,6 @@ class Site(ChildInstance, dbmodels.Model):
                                  parent=parent,
                                  webSite=_orNone(data, 'web site'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'names', context, SiteName, newIDs)
         newItem.createChildren(data, 'offerings', context, Offering, newIDs)
@@ -6626,8 +6591,6 @@ class Street(ChildInstance, dbmodels.Model):
                                  position=_newPosition(parent.streets, data, 'position'),
                                  text=_orNone(data, 'text'),
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -6680,6 +6643,7 @@ class User(SecureRootInstance, dbmodels.Model):
                   'path': ('paths__', "Path", 'parent'),
                   'user grant request': ('userGrantRequests__', "UserUserGrantRequest", 'parent'),
                   'engagement': ('userEngagements__', "Engagement", 'user'),
+                  'group':('groupMembers__parent__', 'Group', 'members__user'),
                  }
 
     @property
@@ -6810,8 +6774,6 @@ class User(SecureRootInstance, dbmodels.Model):
                                  primaryAdministrator=primaryAdministrator,
                                 )
         newItem.save()
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
         newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
@@ -6955,8 +6917,6 @@ class UserEmail(ChildInstance, dbmodels.Model):
                                  position=_newPosition(parent.emails, data, 'position'),
                                  text=data['text'],
                                 )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
@@ -7022,8 +6982,6 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
                                  parent=parent,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, User),
                                  )
-        if 'clientID' in data:
-            newIDs[data['clientID']] = newItem.id.hex
         
         return newItem                          
         
