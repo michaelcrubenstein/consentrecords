@@ -2199,16 +2199,28 @@ cr.IInstance = (function() {
         return this._dataPromise;
     }
     
+	IInstance.prototype.setChildren = function(d, key, childType, children)
+	{
+		if (key in d)
+			children.call(this, 
+						  d[key].map(function(d) {
+								var i = new childType();
+								i.setData(d);
+								return i;
+							}));
+	}
+
 	IInstance.prototype.setData = function(d)
 	{
 		if ('id' in d)
-			this.id(d['id'])
+			this.id(d['id']);
 		if ('description' in d)
-			this.description(d['description'])
+			this.description(d['description']);
 		if ('privilege' in d)
 			this.privilege(d['privilege']);
 		if ('parentID' in d)
-		    this.parentID(d['parentID'])
+		    this.parentID(d['parentID']);
+		return this;
 	}
 	
 	IInstance.prototype.setDefaultValues = function()
@@ -2918,6 +2930,11 @@ cr.NamedInstance = (function() {
 		}
 	}
 	
+	NamedInstance.prototype.setData = function(d, nameType)
+	{
+		cr.IInstance.prototype.setChildren.call(this, d, 'names', nameType, NamedInstance.prototype.names);
+	}
+
 	function NamedInstance() {};
 	return NamedInstance;
 })();
@@ -4388,12 +4405,7 @@ cr.Group = (function() {
 	Group.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		if ('names' in d)
-			this._names = d['names'].map(function(d) {
-					var i = new cr.GroupName();
-					i.setData(d);
-					return i;
-				});
+		cr.NamedInstance.prototype.setData.call(this, d, cr.GroupName);
 		if ('members' in d)
 			this._members = d['members'].map(function(d) {
 								var i = new cr.GroupMember();
@@ -4723,12 +4735,8 @@ cr.Offering = (function() {
 	Offering.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		if ('names' in d)
-			this._names = d['names'].map(function(d) {
-					var i = new cr.OfferingName();
-					i.setData(d);
-					return i;
-				});
+		cr.NamedInstance.prototype.setData.call(this, d, cr.OfferingName);
+
 		this._webSite = 'web site' in d ? d['web site'] : "";
 		this._minimumAge = 'minimum age' in d ? d['minimum age'] : "";
 		this._maximumAge = 'maximum age' in d ? d['maximum age'] : "";
@@ -4988,13 +4996,10 @@ cr.Organization = (function() {
 	Organization.prototype.setData = function(d)
 	{
 		cr.Grantable.prototype.setData.call(this, d);
+		cr.NamedInstance.prototype.setData.call(this, d, cr.OrganizationName);
+
 		this._webSite = 'web site' in d ? d['web site'] : "";
-		if ('names' in d)
-			this._names = d['names'].map(function(d) {
-								var i = new cr.OrganizationName();
-								i.setData(d);
-								return i;
-							});
+
 		if ('groups' in d)
 			this._groups = d['groups'].map(function(d) {
 								var i = new cr.Group();
@@ -5582,14 +5587,10 @@ cr.Service = (function() {
 	Service.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
+		cr.NamedInstance.prototype.setData.call(this, d, cr.ServiceName);
+
 		this._stage = 'stage' in d ? d['stage'] : "";
-		if ('names' in d)
-			this._names = d['names'].map(function(d)
-				{
-					var i = new cr.ServiceName();
-					i.setData(d);
-					return i;
-				});
+
 		if ('organization labels' in d)
 			this.organizationLabels(d['organization labels']);
 		if ('site labels' in d)
@@ -6049,13 +6050,8 @@ cr.Session = (function() {
 	{
 		cr.IInstance.prototype.setData.call(this, d);
 		cr.DateRangeInstance.prototype.setData.call(this, d);
-		if ('name' in d)
-			this._names = d['name'].map(function(d)
-				{
-					var i = new cr.SessionName();
-					i.setData(d);
-					return i;
-				});
+		cr.NamedInstance.prototype.setData.call(this, d, cr.SessionName);
+
 		this._registrationDeadline = 'registration deadline' in d ? d['registration deadline'] : "";
 		this._canRegister = 'can register' in d ? d['can register'] : "";
 		if ('inquiries' in d)
@@ -6149,6 +6145,10 @@ cr.Session = (function() {
 			$(this).trigger("sessionChanged.cr");
 		}
 		
+		if ('names' in d)
+		{
+			this.updateList(this.names, d['names'], newIDs, cr.SessionName, "nameAdded.cr", "nameDeleted.cr");
+		}
 		if ('inquiries' in d)
 		{
 			this.updateList(this.inquiries, d['inquiries'], newIDs, cr.Inquiry, "inquiryAdded.cr", "inquiryDeleted.cr");
@@ -6170,6 +6170,22 @@ cr.Session = (function() {
 		}
 	}
 	
+    Session.prototype.getData = function()
+    {
+    	/* Do not get the inquiries, enrollments or engagements, as these may number in the thousands. */
+    	var _this = this;
+    	return cr.getData(
+        	{
+        		path: this.urlPath(),
+        		fields: ['periods'],
+        		resultType: cr.Session
+        	})
+        	.then(function()
+        	{
+        		return _this;
+        	});
+    }
+    
 	function Session() {
 	    cr.IInstance.call(this);
 	};
@@ -6242,13 +6258,9 @@ cr.Site = (function() {
 	Site.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
+		cr.NamedInstance.prototype.setData.call(this, d, cr.SiteName);
+		
 		this._webSite = 'web site' in d ? d['web site'] : "";
-		if ('names' in d)
-			this._names = d['names'].map(function(d) {
-								var i = new cr.SiteName();
-								i.setData(d);
-								return i;
-							});
 		if ('address' in d)
 		{
 			this._address = new cr.Address();

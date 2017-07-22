@@ -606,9 +606,6 @@ class SecureRootInstance(RootInstance):
                         ["administer"])
 
     @property
-    def privilegeSource(self):
-        return self
-        
     def fetchPrivilege(self, user):
         if not user:
             return None
@@ -6181,6 +6178,19 @@ class Session(ChildInstance, dbmodels.Model):
                                          queryset=Period.select_related(Period.objects.filter(deleteTransaction__isnull=True)),
                                          to_attr='currentPeriods'))
         
+    @property    
+    def privilegeSource(self):
+        return self
+        
+    def fetchPrivilege(self, user):
+        parentPrivilege = self.parent.privilegeSource.fetchPrivilege(user)
+        if parentPrivilege:
+            return parentPrivilege
+        elif self.canRegister == 'yes':
+            return "register"
+        else:
+            return None
+
     def getData(self, fields, context):
         data = super(Session, self).getData(fields, context)
         

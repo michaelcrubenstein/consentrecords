@@ -448,10 +448,11 @@ li>span.glyphicon.glyphicon-ok:first-child {
 	flex-grow: 100;
 }
 
-/* If there is a label for a unique string item, right-align the input. */
-.cell.unique.edit.string label+ol input {
+/* If there is a label for a unique input item, right-align the input. */
+.cell.unique.edit>label+ol input {
 	text-align: right;
 }
+
 .cell.edit input[type=text],
 .cell.edit input[type=number],
 .cell.edit input[type=month],
