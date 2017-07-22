@@ -167,7 +167,7 @@ def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerm
         parent = parentType.objects.get(pk=u.id)
         d = defaultdict(list)
         for v in u.value_set.filter(field__in=uniqueTerms.keys()):
-            d[v.languageCode].append(v)
+            d[(v.languageCode or 'en')].append(v)
         for languageCode in d.keys():
             # Produce a valueSet that contains values at the minimum position for this languageCode,
             # Sorted by transaction creation time.
