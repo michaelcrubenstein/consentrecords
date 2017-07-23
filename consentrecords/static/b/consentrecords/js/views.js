@@ -29,7 +29,7 @@ $.fn.getFillHeight = function()
 	var n = this.get(0);
 	var newHeight = parent.children().toArray().reduce(function(h, childNode) {
 			var child = $(childNode);
-			if (child.css("display") != "none" && 
+			if (child.css('display') != 'none' && 
 				child.css("position") != "absolute" &&
 				childNode != n)
 				return h - child.outerHeight(true);
@@ -147,10 +147,10 @@ closealert = bootstrap_alert.close;
 
 var crv = {
 	/* Reference https://www.loc.gov/standards/iso639-2/php/code_list.php */
-	defaultLanguageCode: "en",
-	languages: [{code: "en", name: "English"}, 
-			    {code: "sp", name: "Spanish"},
-			    {code: "zh", name: "Chinese"}],
+	defaultLanguageCode: 'en',
+	languages: [{code: 'en', name: "English"}, 
+			    {code: 'sp', name: "Spanish"},
+			    {code: 'zh', name: "Chinese"}],
 			    
 	buttonTexts: {
 		done: "Done",
@@ -207,8 +207,8 @@ var crv = {
 	appendAddButton: function(sectionObj, name, done)
 	{
 		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div").classed('add-value', true)
-			.append("button").classed("btn row-button site-active-text", true)
+		var buttonDiv = sectionObj.append("div")
+			.classed('add-value site-active-text', true)
 			.on("click", function(cell) {
 				if (prepareClick('click', "add {0}".format(name)))
 				{
@@ -223,9 +223,10 @@ var crv = {
 					}
 				}
 				d3.event.preventDefault();
-			})
-			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").text("Add {0}".format(name));
+			});
+		buttonDiv.append('div')
+			.classed('overlined', !sectionObj.classed('first'))
+			.text("Add {0}".format(name));
 	},
 };
 
@@ -341,11 +342,11 @@ function _getDataDescription(d) { return d.description() }
 function checkItemsDisplay(node)
 {
 	var classList = node.parentNode.classList;
-	var isUnique = classList.contains("unique");
-	var isEdit = classList.contains("edit");
+	var isUnique = classList.contains('unique');
+	var isEdit = classList.contains('edit');
 	
 	var itemsDiv = d3.select(node);
-	var items = itemsDiv.selectAll("li");
+	var items = itemsDiv.selectAll('li');
 	
 	var isVisible;
 	
@@ -356,13 +357,13 @@ function checkItemsDisplay(node)
 		isVisible = false;
 		items.each(function(d)
 		{
-			isVisible |= !d.isEmpty();
+			isVisible |= $(this).css('display') != 'none';
 		});
 	}
 		
-	itemsDiv.style("display", (isUnique || isVisible) ? null : "none");
+	itemsDiv.style('display', (isUnique || isVisible) ? null : 'none');
 	/* In addition to the itemsDiv, hide the section if we are in view mode. */
-	d3.select(node.parentNode).style("display", (isEdit || isVisible) ? null : "none");
+	d3.select(node.parentNode).style('display', (isEdit || isVisible) ? null : 'none');
 }
 
 function setupOnViewEventHandler(source, events, data, handler)
@@ -392,6 +393,19 @@ function setupOneViewEventHandler(source, events, data, handler)
 	$(data).on("clearTriggers.cr remove", null, source, function(eventObject)
 	{
 		eventObject.data.off(events, handler);
+	});
+}
+
+function hideItem(itemNode, done)
+{
+	$(itemNode).animate({height: "0px"}, 400, 'swing', function()
+	{
+		var parentNode = this.parentNode;
+		$(this).css('display', 'none');
+		
+		/* Now that the item is removed, check whether its container should be visible. */
+		checkItemsDisplay(parentNode);
+		if (done) done();
 	});
 }
 
@@ -522,7 +536,7 @@ function _showEditStringCell(obj, cell, inputType)
 				var div = appendItem(d3.select(eventObject.data), newValue);
 				
 				appendControls(div, this);
-				$(eventObject.data).css("display", "");	
+				$(eventObject.data).css('display', "");	
 			}
 		setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), appendNewValue);
 		sitePanel.setupItemsDivHandlers(itemsDiv, cell);
@@ -583,7 +597,7 @@ function _showEditDateStampDayOptionalCell(obj)
 				var div = appendItem(d3.select(eventObject.data), newValue);
 				
 				appendControls(div, this);	
-				$(eventObject.data).css("display", "");	
+				$(eventObject.data).css('display', "");	
 			}
 		setupOnViewEventHandler(this, "valueAdded.cr", itemsDiv.node(), appendNewValue);
 		sitePanel.setupItemsDivHandlers(itemsDiv, this);
@@ -604,7 +618,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 	
 	function appendInputControls(items)
 	{
-		var languageSelect = items.append("select");
+		var languageSelect = items.append('select');
 		languageSelect.selectAll('option')
 			.data(crv.languages)
 			.enter()
@@ -655,7 +669,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 				var item = appendItem(d3.select(eventObject.data), newValue);
 				
 				appendControls(item, this);	
-				$(eventObject.data).css("display", "");	
+				$(eventObject.data).css('display', "");	
 			}
 		setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), appendNewValue);
 		sitePanel.setupItemsDivHandlers(itemsDiv, cell);
@@ -682,16 +696,16 @@ function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 		var item = appendItem(itemsDiv, newValue);
 		checkItemsDisplay(eventObject.data);
 	
-		/* Hide the new button if it is blank, and then show it if the data changes. */
-		item.style("display", 
-				   (cell.isUnique() || !newValue.isEmpty()) ? null : "none");
+		/* Hide the new item if it is blank, and then show it if the data changes. */
+		item.style('display', 
+				   (cell.isUnique() || !newValue.isEmpty()) ? null : 'none');
 			   
 		if (!cell.isUnique())
 		{
 			function checkVisible(eventObject)
 			{
-				d3.select(eventObject.data).style("display", 
-					   !this.isEmpty() ? null : "none");
+				d3.select(eventObject.data).style('display', 
+					   !this.isEmpty() ? null : 'none');
 			}
 			setupOnViewEventHandler(newValue, "dataChanged.cr", item.node(), checkVisible);
 		}
@@ -1827,12 +1841,12 @@ var SitePanel = (function () {
 			var section = d3.select(sectionNode);
 			var itemsDiv = section.select("ol");
 			cell.show(sectionNode, _this.headerText);
-			$(sectionNode).css("display", _thisPanel2Div.isEmptyItems(itemsDiv) ? "none" : "");
+			$(sectionNode).css('display', _thisPanel2Div.isEmptyItems(itemsDiv) ? 'none' : "");
 			
 			/* Make sure the section gets shown if a value is added to it. */
 			var checkDisplay = function(eventObject, newValue)
 			{
-				$(eventObject.data).css("display", _thisPanel2Div.isEmptyItems(itemsDiv) ? "none" : "");
+				$(eventObject.data).css('display', _thisPanel2Div.isEmptyItems(itemsDiv) ? 'none' : "");
 			}
 			setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", sectionNode, checkDisplay);
 			sitePanel.setupItemsDivHandlers(itemsDiv, cell);
@@ -2163,12 +2177,12 @@ var SearchOptionsView = (function () {
 	{
 		var buttons = this.listElement.selectAll("li");
 		var _this = this;
-		buttons.style("display", function(d) 
+		buttons.style('display', function(d) 
 			{ 
 				if (_this.isButtonVisible(this, d, _this._constrainCompareText))
 					return null;
 				else
-					return "none";
+					return 'none';
 			});
 	}
 	
@@ -2645,6 +2659,7 @@ function promiseCreateObjectFromCells(containerCell, objectData, cells)
 var EditPanel = (function() {
 	EditPanel.prototype = new SitePanel();
 	EditPanel.prototype.navContainer = null;
+	EditPanel.prototype.lastNewIDKey = 1;
 	
 	/** Sets up event handles that ensure that the specified itemsDiv is properly hidden
 		or shown depending on the specified changes.
@@ -2728,6 +2743,14 @@ var EditPanel = (function() {
 		return this;
 	}
 	
+	EditPanel.prototype.appendDateChanges = function(dateEditor, oldValue, changes, key)
+	{
+		var newValue = dateEditor.dateWheel.value();
+		if (newValue != oldValue)
+			changes[key] = newValue;
+		return this;
+	}
+	
 	EditPanel.prototype.appendTextEditor = function(section, placeholder, value, inputType)
 	{
 		var itemsDiv = crf.appendItemList(section);
@@ -2739,6 +2762,126 @@ var EditPanel = (function() {
 			.attr("placeholder", placeholder)
 			.property("value", value);
 	}
+	
+	EditPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)
+	{
+		/* If minDate is not defined, set it to January 1, 50 years ago. */
+		if (minDate === undefined)
+		{
+			minDate = new Date();
+			minDate.setUTCFullYear(minDate.getUTCFullYear() - 50);
+			minDate.setMonth(0);
+			minDate.setDate(1);
+		}
+		/* If maxDate is not defined, set it to December 31, 50 years hence. */
+		if (maxDate === undefined)
+		{
+			maxDate = new Date();
+			maxDate.setUTCFullYear(minDate.getUTCFullYear() + 50);
+			maxDate.setMonth(11);
+			maxDate.setDate(31);
+		}
+		
+		var _this = this;
+		var itemsDiv = crf.appendItemList(section)
+			.classed('overlined', true);
+		var itemDiv = itemsDiv.append('li');
+		var dateSpan = itemDiv.append('span')
+			.classed('growable', true);
+		var dateWheel = new DateWheel(section.node().parentNode, function(newDate)
+			{
+				if (newDate)
+					dateSpan.text(getLocaleDateString(newDate));
+				else
+					dateSpan.text(placeholder);
+			}, minDate, maxDate);
+
+		var reveal = new VerticalReveal(dateWheel.node());
+		reveal.hide();
+		
+		dateSpan.on('click', function()
+			{
+				if (!reveal.isVisible())
+				{
+					try
+					{
+						var done = function()
+						{
+							dateSpan.classed('site-active-text', true);
+							reveal.show({}, 200, undefined, function()
+								{
+									dateWheel.onShowing();
+								});
+							notSureReveal.show({duration: 200});
+						}
+						if (!_this.onFocusInOtherInput(reveal, done))
+						{
+							done();
+						}
+					}
+					catch (err)
+					{
+						cr.asyncFail(err);
+					}
+				}
+				else
+				{
+					hideWheel();
+				}
+			});
+		
+		var notSureButton = d3.select(section.node().parentNode).append('div')
+				.classed('not-sure-button site-active-text', true)
+				.on('click', function()
+					{
+						if (prepareClick('click', placeholder))
+						{
+							hideWheel();
+							dateWheel.clear();
+							dateSpan.text(placeholder);
+							unblockClick();
+						}
+					});
+		notSureButton.append('div').text(placeholder);
+		var notSureReveal = new VerticalReveal(notSureButton.node());
+		notSureReveal.hide();
+			
+		var hideWheel = function(done)
+		{
+			dateSpan.classed('site-active-text', false);
+			dateWheel.onHiding();
+			reveal.hide({duration: 200,
+						 before: function()
+						 	{
+						 		notSureReveal.hide({duration: 200,  before: done});
+						 	}});
+		}
+		
+		var showWheel = function(done)
+		{
+			dateSpan.classed('site-active-text', true);
+			reveal.show({}, 200, undefined,
+				function()
+				{
+					notSureReveal.show({done: done});
+				});
+			
+		}
+		
+		if (value)
+			dateWheel.value(value);
+		else
+			dateWheel.clear();
+
+		return {dateWheel: dateWheel, 
+		    wheelReveal: reveal,
+			notSureReveal: notSureReveal,
+			hideWheel: hideWheel,
+			showWheel: showWheel,
+		};
+	}
+	
+
 
 	EditPanel.prototype.appendDateStampDayOptionalEditor = function(section, placeholder, value, inputType)
 	{
@@ -2756,7 +2899,7 @@ var EditPanel = (function() {
 		});
 	}
 	
-	EditPanel.prototype.appendTranslationEditor = function(section, container, sectionLabel, placeholder, addEventType, deleteEventType, changedEventType, translations)
+	EditPanel.prototype.appendTranslationEditor = function(section, container, sectionLabel, placeholder, addEventType, deleteEventType, changedEventType, translations, nameType)
 	{
 		section.classed("string translation", true);
 		var itemsDiv = crf.appendItemList(section);
@@ -2780,7 +2923,7 @@ var EditPanel = (function() {
 			{
 				for (var i = 0; i < crv.languages.length; ++i)
 				{
-					if (crv.languages[i].code == d.languageCode)
+					if (crv.languages[i].code == d.language())
 					{
 						this.selectedIndex = i;
 						break;
@@ -2790,32 +2933,49 @@ var EditPanel = (function() {
 		}
 	
 		itemsDiv.classed('deletable-items', true);
-		var divs = appendItems(itemsDiv, translations);
+		var items = appendItems(itemsDiv, translations);
+		
+		var onConfirmDelete = function(d)
+			{
+				var _thisItem = $(this).parents('li')[0];
+
+				/* Test case: Delete an existing value in a cell that has multiple values. */
+				if (prepareClick('click', 'confirm delete: ' + d.description()))
+				{
+					try {
+					    d3.select(_thisItem).isDeleted = true;
+					    hideItem(_thisItem, unblockClick);
+					} catch(err) { cr.syncFail(err); }
+				}
+			}
 	
-		var appendControls = function(items)
-		{	
+		function appendItemControls(items)
+		{
 			crf.appendDeleteControls(items);
 			appendInputControls(items);
-			crf.appendConfirmDeleteControls(items);
+			crf.appendConfirmDeleteControls(items, onConfirmDelete);
 			var dials = $(itemsDiv.node()).find('li>button:first-of-type');
 			crf.showDeleteControls(dials, 0);
+			items.each(function(d)
+				{
+					$(d).on(deleteEventType, this, function(eventObject)
+						{
+							var item = d3.select(eventObject.data);
+							item.remove();
+						});
+				});
 		}
-	
-		appendControls(divs);
+		appendItemControls(items);
 
-		function appendNewValue(eventObject, newValue)
-			{
-				var item = appendItem(d3.select(eventObject.data), newValue);
-			
-				appendControls(item, this);	
-				$(eventObject.data).css("display", "");	
-			}
-		setupOnViewEventHandler(container, addEventType, itemsDiv.node(), appendNewValue);
-		this.setupItemsDivHandlers(itemsDiv, container, changedEventType);
-		
 		crv.appendAddButton(section, placeholder, function()
 			{
-				var newValue = cell.addNewValue();
+				var newValue = new cr.SessionName();
+				newValue.setDefaultValues();
+				
+				var item = itemsDiv.append('li')
+					.datum(newValue);
+				appendItemControls(item);
+				itemsDiv.style('display', null);
 				unblockClick();
 			});
 	}
@@ -2823,8 +2983,50 @@ var EditPanel = (function() {
 	EditPanel.prototype.appendTranslationChanges = function(section, translations, changes, key)
 	{
 		var subChanges = [];
+		var _this = this;
 		
-		/* TODO: appendTranslationChanges. */
+		var items = section.selectAll('li');
+		items.each(function(d)
+			{
+				var item = d3.select(this);
+				var newText = item.selectAll('input').node().value;
+				var newLanguageCode = crv.languages[item.selectAll('select').node().selectedIndex].code;
+				if (d.id() && item.isDeleted)
+				{
+					subChanges.push({'delete': d.id()});
+				}
+				else if (!d.id())
+				{
+					
+					if (newText)
+					{
+						_this.lastNewIDKey += 1;
+						subChanges.push({'add': _this.lastNewIDKey, 
+										 'text': newText,
+										 'languageCode': newLanguageCode});
+					}
+				}
+				else
+				{
+					var itemChanges = {};
+					var foundChange = false;
+					if (newText != d.text())
+					{
+						itemChanges['text'] = newText;
+						foundChange = true;
+					}
+					if (newLanguageCode != d.language())
+					{
+						itemChanges['languageCode'] = newLanguageCode;
+						foundChange = true;
+					}
+					if (foundChange)
+					{
+						itemChanges['id'] = d.id();
+						subChanges.push(itemChanges);
+					}
+				}
+			});
 		
 		if (subChanges.length > 0)
 			changes[key] = subChanges;
@@ -3062,18 +3264,18 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
-					.style("display", null);
+					.style('display', null);
 			}
 			else
 			{
 				/* Show the items whose description is this.value */
 				panel2Div.selectAll("li")
-					.style("display", function(d)
+					.style('display', function(d)
 						{
 							if (d.description().toLocaleLowerCase().indexOf(val) >= 0)
 								return null;
 							else
-								return "none";
+								return 'none';
 						});
 			}
 		}
@@ -3168,18 +3370,18 @@ function showEditRootObjectsPanel(cell, header, sortFunction)
 		{
 			/* Show all of the items. */
 			panel2Div.selectAll("li")
-				.style("display", null);
+				.style('display', null);
 		}
 		else
 		{
 			/* Show the items whose description is this.value */
 			panel2Div.selectAll("li")
-				.style("display", function(d)
+				.style('display', function(d)
 					{
 						if (d.description().toLocaleLowerCase().indexOf(val) >= 0)
 							return null;
 						else
-							return "none";
+							return 'none';
 					});
 		}
 	}
@@ -3325,18 +3527,18 @@ function showPickObjectPanel(cell, oldData) {
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
-					.style("display", null);
+					.style('display', null);
 			}
 			else
 			{
 				/* Show the items whose description is this.value */
 				panel2Div.selectAll("li")
-					.style("display", function(d)
+					.style('display', function(d)
 						{
 							if (d.description().toLocaleLowerCase().indexOf(val) >= 0)
 								return null;
 							else
-								return "none";
+								return 'none';
 						});
 			}
 		}
@@ -3499,6 +3701,7 @@ var SessionPanel = (function () {
 	SessionPanel.prototype.panelTitle = "Session";
 	SessionPanel.prototype.namesLabel = "Names";
 	SessionPanel.prototype.nameLabel = "Name";
+	SessionPanel.prototype.datePlaceholder = "(None)";
 	SessionPanel.prototype.registrationDeadlineLabel = "Registration Deadline";
 	SessionPanel.prototype.startLabel = "Start";
 	SessionPanel.prototype.endLabel = "End";
@@ -3523,11 +3726,11 @@ var SessionPanel = (function () {
 				return "";
 		}
 		
-		this.appendTextChanges(this.registrationDeadlineSection, this.session.registrationDeadline(), 
+		this.appendDateChanges(this.registrationDeadlineEditor, this.session.registrationDeadline(), 
 								changes, 'registration deadline')
-			.appendTextChanges(this.startSection, this.session.start(),
+			.appendDateChanges(this.startEditor, this.session.start(),
 							   changes, 'start')
-			.appendTextChanges(this.endSection, this.session.end(),
+			.appendDateChanges(this.endEditor, this.session.end(),
 							   changes, 'end')
 			.appendEnumerationChanges(this.canRegisterSection, getCanRegisterValue, 
 									  this.session.canRegister(),
@@ -3544,6 +3747,31 @@ var SessionPanel = (function () {
     		return this.noLabel;
     }
     
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	SessionPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		if (newReveal != this.registrationDeadlineEditor.wheelReveal &&
+			this.registrationDeadlineEditor.wheelReveal.isVisible())
+		{
+			this.registrationDeadlineEditor.hideWheel(done);
+			return true;
+		}
+		else if (newReveal != this.startEditor.wheelReveal &&
+			this.startEditor.wheelReveal.isVisible())
+		{
+			this.startEditor.hideWheel(done);
+			return true;
+		}
+		else if (newReveal != this.endEditor.wheelReveal &&
+			this.endEditor.wheelReveal.isVisible())
+		{
+			this.endEditor.hideWheel(done);
+			return true;
+		}
+		else
+			return false;
+	}
+	
 	function SessionPanel(session, onShow) {
 		var _this = this;
 		this.session = session;
@@ -3560,10 +3788,14 @@ var SessionPanel = (function () {
 				{
 					showClickFeedback(this);
 		
-					/* Build up an update for initialData. */
-					_this.promiseUpdateChanges()
-						.then(function() { _this.hide(); },
-						      cr.syncFail)
+					try
+					{
+						/* Build up an update for initialData. */
+						_this.promiseUpdateChanges()
+							.then(function() { _this.hide(); },
+								  cr.syncFail)
+					}
+					catch(err) { cr.syncFail(err); }
 				}
 			})
 		.append("span").text(crv.buttonTexts.done);
@@ -3574,32 +3806,38 @@ var SessionPanel = (function () {
 		this.namesSection.append('label')
 			.text(this.namesLabel);
 		this.appendTranslationEditor(this.namesSection, this.session, this.namesLabel, this.nameLabel, 
-									 "addName.cr", "deleteName.cr", "addName.cr deleteName.cr nameChanged.cr", 
-									 this.session.names());
+									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr nameChanged.cr", 
+									 this.session.names(),
+									 cr.SessionName);
 
 		this.registrationDeadlineSection = this.mainDiv.append('section')
 			.datum(this.session)
 			.classed('cell edit unique first', true);
 		this.registrationDeadlineSection.append('label')
 			.text(this.registrationDeadlineLabel);
-		this.appendTextEditor(this.registrationDeadlineSection, this.registrationDeadlineLabel, 
-							  this.session.registrationDeadline(), 'date');
+		this.registrationDeadlineEditor = this.appendDateEditor(this.registrationDeadlineSection, 
+							  this.datePlaceholder,
+							  this.session.registrationDeadline());
 				 
 		this.startSection = this.mainDiv.append('section')
 			.datum(this.session)
 			.classed('cell edit unique', true);
 		this.startSection.append('label')
+			.classed('overlined', true)
 			.text(this.startLabel);
-		this.appendTextEditor(this.startSection, this.startLabel, 
-							  this.session.start(), 'date');
+		this.startEditor = this.appendDateEditor(this.startSection,
+												 this.datePlaceholder,
+												 this.session.start());
 				 
 		this.endSection = this.mainDiv.append('section')
 			.datum(this.session)
 			.classed('cell edit unique', true);
 		this.endSection.append('label')
+			.classed('overlined', true)
 			.text(this.endLabel);
-		this.appendTextEditor(this.endSection, this.endLabel, 
-							  this.session.end(), 'date');
+		this.endEditor = this.appendDateEditor(this.endSection,
+												 this.datePlaceholder,
+												 this.session.end());
 				 
 		var canRegisterSectionTextContainer = null;
 		

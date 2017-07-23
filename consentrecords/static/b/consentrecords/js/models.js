@@ -2491,6 +2491,13 @@ cr.TranslationInstance = (function() {
 		return this;
 	}
 	
+	/** For a newly created DateRangeInstance, set its contents to valid values. */
+	TranslationInstance.prototype.setDefaultValues = function()
+	{
+		this._text = "";
+		this._language = "en";
+	}
+	
 	/** Called after the contents of the TranslationInstance have been updated on the server. */
 	TranslationInstance.prototype.updateData = function(d, newIDs)
 	{
@@ -3146,6 +3153,13 @@ cr.DateRangeInstance = (function() {
 	{
 		if (!this._start) this._start = source._start;
 		if (!this._end) this._end = source._end;
+	}
+	
+	/** For a newly created DateRangeInstance, set its contents to valid values. */
+	DateRangeInstance.prototype.setDefaultValues = function()
+	{
+		this._start = "";
+		this._end = "";
 	}
 	
 	DateRangeInstance.prototype.updateData = function(d, newIDs)
@@ -6119,6 +6133,21 @@ cr.Session = (function() {
 		return this;
     }
     
+	/** For a newly created Session, set its contents to valid values. */
+	Session.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		cr.DateRangeInstance.prototype.setDefaultValues.call(this);
+		this._webSite = "";
+		this._registrationDeadline = "";
+		this._canRegister = 'no';
+		this._names = [];
+		this._inquiries = [];
+		this._enrollments = [];
+		this._engagements = [];
+		this._periods = [];
+	}
+	
 	Session.prototype.updateData = function(d, newIDs)
 	{
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);

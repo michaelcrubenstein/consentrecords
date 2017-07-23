@@ -314,6 +314,17 @@ section.cell {
 	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
 	padding-right: 0px;
 }
+.cell>label {
+    color: #222;
+	font-size: 13px;
+	font-weight: normal; 
+	
+	/* The following margin and padding allow for overlines. */
+	margin: 0;
+	padding: 6px 0px;
+	margin-left: 12px;
+}
+
 .cell-border-below {
 	margin-left: 12px;
 	border-bottom: 1px solid #eee;
@@ -326,28 +337,22 @@ section.cell {
 .cell.unique {
 	background: white;
 	display: flex;
-	align-items: baseline;
-	-webkit-align-items: baseline;
+	align-items: center;	/* Items should be aligned to the center because the label font is different from the data font. */
+	-webkit-align-items: center;
 }
 
-.cell.unique.edit {
+.cell.unique>label {
+	line-height: 1.5em;	/* The same as .cell.unique>ol */
+}
+
+.cell.unique.edit:last-of-type {
 	border-bottom: 1px solid #eee;
 }
-.cell.unique.edit>label {
-	line-height: 1.5em;	/* The same as .cell.unique.view>label and .cell.unique>ol */
+*.overlined {
+	border-top: 1px solid #eee;
 }
 
-.cell label {
-    color: #222;
-	font-size: 13px;
-	font-weight: normal; 
-	
-	/* The following margin and padding allow for overlines. */
-	margin: 0;
-	padding: 6px 0px;
-	margin-left: 12px;
-}
-.cell.unique>label.overlined-items {
+.cell.unique>label.overlined {
     padding-top: 9px;	/* Extra padding on the top is needed for overlined items. */
 }
 
@@ -370,7 +375,6 @@ section.cell {
 	margin-right: auto;
 	padding-left: 0px;
 	padding-bottom: 7px;	/* An extra pixel so that borders line up properly. */
-	line-height: 1.5em; 
 	vertical-align: middle;
 }
 .cell.unique>ol {
@@ -506,15 +510,20 @@ li>span.glyphicon.glyphicon-ok:first-child {
 	float: right;
 }
 div.add-value {
-	border-top: 1px solid #eee;
-	border-bottom: 1px solid #eee;
-}
-div.add-value>button {
 	overflow: hidden;
 	display: block;
 	width: 100%;
-	padding: 6px 12px;
+	padding-left: 12px;
+	border-bottom: 1px solid #eee;
 	text-align: left;
+	align-items: center;
+	-webkit-align-items: center;
+	background-color: white;
+}
+
+div.add-value>div {
+	padding-top: 6px;
+	padding-bottom: 6px;
 }
 
 .searchbar {

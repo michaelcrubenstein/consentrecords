@@ -2546,7 +2546,7 @@ var NewExperiencePanel = (function () {
 	{
 		var _this = this;
 		var itemsDiv = crf.appendItemList(dateContainer)
-			.classed('overlined-items', true);
+			.classed('overlined', true);
 		var itemDiv = itemsDiv.append('li');
 		var dateSpan = itemDiv.append('span')
 			.classed('growable', true);
@@ -3462,7 +3462,7 @@ var NewExperiencePanel = (function () {
 			.classed('cell unique date-container', true);
 
 		startDateContainer.append('label')
-			.classed('overlined-items', true)
+			.classed('overlined', true)
 			.text("Start");
 		this.startHidable = this.appendHidableDateInput(startDateContainer, new Date(birthday));
 		var startDateWheel = this.startHidable.dateWheel;
@@ -3508,7 +3508,7 @@ var NewExperiencePanel = (function () {
 		var endDateContainer = panel2Div.append('section')
 			.classed('cell unique date-container', true);
 		var endLabel = endDateContainer.append('label')
-			.classed('overlined-items', true)
+			.classed('overlined', true)
 			.text("End");
 			
 		this.endHidable = this.appendHidableDateInput(endDateContainer, new Date(birthday));
