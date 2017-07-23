@@ -314,7 +314,11 @@ section.cell {
 	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
 	padding-right: 0px;
 }
-.cell>label {
+
+/* Display a label in a cell. Note that the label may or may not be contained in the
+	top level of the cell. For example, see newExperiencePanel.css tag cells.
+ */
+.cell label {
     color: #222;
 	font-size: 13px;
 	font-weight: normal; 
