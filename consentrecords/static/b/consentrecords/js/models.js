@@ -2390,6 +2390,13 @@ cr.IInstance = (function() {
 	IInstance.prototype.update = function(changes)
 	{
 		var _this = this;
+		if (Object.keys(changes).length == 0)
+		{
+			var r2 = $.Deferred();
+			r2.resolve();
+			return r2;
+		}
+		
 		return $.post(cr.urls.updateValues + this.urlPath() + '/', 
 			{ commands: JSON.stringify(changes)
 			})

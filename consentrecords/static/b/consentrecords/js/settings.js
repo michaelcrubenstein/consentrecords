@@ -1,11 +1,12 @@
 var Settings = (function () {
-	Settings.prototype = new SitePanel();
+	Settings.prototype = new EditPanel();
 	Settings.prototype.panelTitle = "Settings";
 	Settings.prototype.firstNameLabel = "First Name";
 	Settings.prototype.lastNameLabel = "Last Name";
 	Settings.prototype.userPublicAccessLabel = "Profile Visibility";
 	Settings.prototype.accessRequestLabel = "Access Requests";
 	Settings.prototype.screenNameLabel = "Screen Name";
+	Settings.prototype.birthdayLabel = "Birthday";
 	Settings.prototype.pathPublicAccessLabel = "Path Visiblity";
 	Settings.prototype.pathSameAccessLabel = "Same As Profile";
 	Settings.prototype.pathAlwaysPublicAccessLabel = "Public";
@@ -18,17 +19,27 @@ var Settings = (function () {
 	Settings.prototype.pathVisibleDocumentation = "Your path may be found by others, identified only by your screen name. Others can request access to your profile if they know your email address.";
 	Settings.prototype.allVisibleDocumentation = "Others can look at your profile and path (except for information you hide from view).";
 
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	Settings.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		if (newReveal != this.birthdayEditor.wheelReveal &&
+			this.birthdayEditor.wheelReveal.isVisible())
+		{
+			this.birthdayEditor.hideWheel(done);
+			return true;
+		}
+		else
+			return false;
+	}
+	
 	function Settings(user) {
 		var _this = this;
-		this.createRoot(null, "Settings", "edit settings", revealPanelUp);
+		this.createRoot(user, "Settings", revealPanelUp);
+		this.panelDiv.classed("settings", true);
 
-		var navContainer = this.appendNavContainer();
-
-		var doneButton = navContainer.appendRightButton();
+		var doneButton = this.navContainer.appendRightButton();
 			
-		navContainer.appendTitle(this.panelTitle);
-		
-		var panel2Div = this.appendScrollArea();
+		this.navContainer.appendTitle(this.panelTitle);
 		
 		var path = user.path();
 		doneButton.on("click", function()
@@ -39,43 +50,21 @@ var Settings = (function () {
 		
 					/* Build up an update for initialData. */
 					var changes = {}
-					var newFirstName = firstNameSection.selectAll('input').node().value;
-					if (newFirstName != user.firstName())
-						changes['first name'] = newFirstName;
-					var newLastName = lastNameSection.selectAll('input').node().value;
-					if (newLastName != user.lastName())
-						changes['last name'] = newLastName;
+					_this.appendTextChanges(firstNameSection, user.firstName(), changes, 'first name');
+					_this.appendTextChanges(lastNameSection, user.lastName(), changes, 'last name');
 					var newScreenName = screenNameSection.selectAll('input').node().value;
 					if (newScreenName != path.name())
 					    changes['path'] = {'screen name': newScreenName};
-					var newBirthday = getUniqueDateStampDayOptionalValue(birthdaySection);
-					if (newBirthday != user.birthday())
-						changes['birthday'] = newBirthday();
+					_this.appendDateChanges(_this.birthdayEditor, user.birthday(), changes, 'birthday')
 					
 					if (user.privilege() === cr.privileges.administer)
 					{
-						var publicAccessDescription = publicAccessSectionTextContainer.text();
-						var newPathSpecialAccess = pathSpecialAccess(publicAccessDescription);
-						if (newPathSpecialAccess != path.specialAccess())
-						{
-							if (!('path' in changes))
-								changes['path'] = {}
-							changes['path']['special access'] = newPathSpecialAccess;
-						}
-						
-						var newUserPublicAccess = userPublicAccess(publicAccessDescription);
-						if (newUserPublicAccess != user.publicAccess())
-						{
-							changes['public access'] = newUserPublicAccess;
-						}
-						
-						var newPathPublicAccess = pathPublicAccess(publicAccessDescription);
-						if (newPathPublicAccess != (path.publicAccess()))
-						{
-							if (!('path' in changes))
-								changes['path'] = {}
-							changes['path']['public access'] = newPathPublicAccess;
-						}
+						var pathChanges = {};
+						_this.appendEnumerationChanges(publicAccessSection, pathSpecialAccess, path.specialAccess(), pathChanges, 'special access');
+						_this.appendEnumerationChanges(publicAccessSection, userPublicAccess, user.publicAccess(), changes, 'public access');
+						_this.appendEnumerationChanges(publicAccessSection, pathPublicAccess, path.publicAccess(), pathChanges, 'public access');
+						if (Object.keys(pathChanges).length)
+							changes['path'] = pathChanges;
 					}
 					
 					
@@ -129,25 +118,30 @@ var Settings = (function () {
 		var firstNameSection = this.mainDiv.append('section')
 			.datum(user)
 			.classed('cell edit unique', true);
-		editUniqueString(firstNameSection, user, this.firstNameLabel, user.firstName(), 'text');
+		this.appendTextEditor(firstNameSection, this.firstNameLabel, user.firstName(), 'text');
 				 
 		var lastNameSection = this.mainDiv.append('section')
 			.datum(user)
 			.classed('cell edit unique first', true);
-		editUniqueString(lastNameSection, user, this.lastNameLabel, user.lastName(), 'text');
+		this.appendTextEditor(lastNameSection, this.lastNameLabel, user.lastName(), 'text');
 				 
 		var screenNameSection = this.mainDiv.append('section')
 			.datum(path)
 			.classed('cell edit unique first', true);
-		editUniqueString(screenNameSection, user, this.screenNameLabel, path.name(), 'text');
+		this.appendTextEditor(screenNameSection, this.screenNameLabel, path.name(), 'text');
 				 
 		var birthdaySection = this.mainDiv.append('section')
 			.datum(user)
 			.classed('cell edit unique first', true);
 		birthdaySection.append('label')
-			.text('Birthday');
+			.text(this.birthdayLabel);
+		
+		var minDate = new Date();
+		minDate.setUTCFullYear(minDate.getUTCFullYear() - 100);
+		minDate.setMonth(0);
+		minDate.setDate(1);
 			
-		editUniqueDateStampDayOptional(birthdaySection, 'Birthday', user.birthday(), 'date');
+		this.birthdayEditor = this.appendDateEditor(birthdaySection, this.birthdayLabel, user.birthday(), minDate, new Date());
 
 		var publicAccessSection = null;
 		var publicAccessSectionTextContainer = null;
@@ -192,7 +186,7 @@ var Settings = (function () {
 			user.promiseGrants()
 				.then(function()
 				{
-					publicAccessSection = panel2Div.append('section')
+					publicAccessSection = _this.mainDiv.append('section')
 						.classed('cell edit unique first', true)
 						.datum(user)
 						.on("click", 
@@ -235,7 +229,7 @@ var Settings = (function () {
 				
 					crf.appendRightChevrons(items);	
 			
-					var docSection = panel2Div.append('section')
+					var docSection = _this.mainDiv.append('section')
 						.classed('cell documentation', true);
 			
 					var docDiv = docSection.append('div');
@@ -266,7 +260,7 @@ var Settings = (function () {
 						sharingButton.selectAll("span.badge").text(badgeCount);
 					}
 			
-					var urlSection = panel2Div.append('section')
+					var urlSection = _this.mainDiv.append('section')
 						.classed('cell edit unique', true)
 						.datum(user.emails()[0].text());
 				
