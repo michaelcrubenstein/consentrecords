@@ -3032,85 +3032,14 @@ var EditPanel = (function() {
 			changes[key] = subChanges;
 	}
 	
-	EditPanel.prototype.createRoot = function(objectData, cells, header, onShow)
+	EditPanel.prototype.createRoot = function(objectData, header, onShow)
 	{
 		SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
 		this.navContainer = this.appendNavContainer();
-		var panel2Div = this.appendScrollArea();
-
-		$(this.node()).on('dragover',
-			function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-			}
-		)
-		$(this.node()).on('dragenter',
-			function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-			}
-		)
-		$(this.node()).on('drop', function(e)
-		{
-			if (e.originalEvent.dataTransfer) {
-				if (e.originalEvent.dataTransfer.files.length) {
-					e.preventDefault();
-					e.stopPropagation();
-					jQuery.each( e.originalEvent.dataTransfer.files, function(index, file){
-							var fileReader = new FileReader();
-								fileReader.onload = function(e) {
-									 if (e.target.result.startsWith("data:application/json") &&
-									 	 e.target.result.indexOf("base64,") > 0)
-									 {
-									 	var start = e.target.result.indexOf("base64,") + "base64,".length;
-									 	var s = e.target.result.substring(start);
-									 	try
-									 	{
-									 		var data = JSON.parse(_b64_to_utf8(s));
-									 		for (var j = 0; j < data.length; ++j)
-									 		{
-									 			var d = data[j];
-									 			for (var name in d)
-									 			{
-													for (var i = 0; i < cells.length; ++i)
-													{
-														var cell = cells[i];
-														if (cell.field.name === name)
-														{
-															if (objectData && objectData.id())
-															{
-																$.when(cr.createInstance(cell.field, objectData.id(), d[name]))
-																 .then(function(newData)
-																	{
-																		cell.addValue(newData);
-																	},
-																	cr.asyncFail);
-															}
-															else
-															{
-																/* In this case, we are dropping onto an item that hasn't been saved. */
-																throw new Error("drop not supported for new items");
-															}
-															break;
-														}
-													}
-												}
-											}
-									 	}
-									 	catch(err)
-									 	{
-									 		bootstrap_alert.warning(err.message, '.alert-container');
-									 	}
-									 }
-								};
-							fileReader.readAsDataURL(file);
-						  });
-				} 
-			}  
-		});
+		this.appendScrollArea();
 	}
 
-	function EditPanel(objectData, cells, header, onShow)
+	function EditPanel(objectData, header, onShow)
 	{
 	}
 	
@@ -3128,7 +3057,7 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 			header = crv.buttonTexts.edit;
 		else
 			header = "New " + containerCell.field.name;
-		var sitePanel = new EditPanel(objectData, cells, header, onShow);
+		var sitePanel = new EditPanel(objectData, header, onShow);
 
 		var doneButton;
 		if (objectData && objectData.id())
@@ -3191,7 +3120,7 @@ function showAddRootPanel(containerCell, onShow) {
 	{
 		var header = "New " + containerCell.field.name;
 			
-		var sitePanel = new EditPanel(null, cells, header, onShow);
+		var sitePanel = new EditPanel(null, header, onShow);
 
 		var doneButton = sitePanel.appendAddButton(promiseCreateObjectFromCells, containerCell, null, cells);
 		

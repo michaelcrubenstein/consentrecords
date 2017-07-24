@@ -207,8 +207,12 @@ var SessionPanel = (function () {
 				if (prepareClick('click', 'Enrollments'))
 				{
 					showClickFeedback(this);
-					/* TODO: Edit the enrollments list */
-					unblockClick();
+					try
+					{
+						var panel = new EnrollmentsPanel(session, revealPanelLeft);
+						panel.showLeft().then(unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
 				}
 			})
 			.classed('first', true);
@@ -219,8 +223,12 @@ var SessionPanel = (function () {
 				if (prepareClick('click', 'Engagements'))
 				{
 					showClickFeedback(this);
-					/* TODO: Edit the engagements list */
-					unblockClick();
+					try
+					{
+						var panel = new EngagementsPanel(session, revealPanelLeft);
+						panel.showLeft().then(unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
 				}
 			})
 			.classed('first', true);
@@ -231,8 +239,12 @@ var SessionPanel = (function () {
 				if (prepareClick('click', 'Periods'))
 				{
 					showClickFeedback(this);
-					/* TODO: Edit the periods list */
-					unblockClick();
+					try
+					{
+						var panel = new PeriodsPanel(session, revealPanelLeft);
+						panel.showLeft().then(unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
 				}
 			})
 			.classed('first', true);
@@ -243,31 +255,14 @@ var SessionPanel = (function () {
 	return SessionPanel;
 })();
 
-var InquirySearchView = (function () {
-	InquirySearchView.prototype = new PanelSearchView();
-	InquirySearchView.prototype.session = null;
-	
-	/* Overrides SearchView.prototype.onClickButton */
-	InquirySearchView.prototype.onClickButton = function(d, i, button) {
-		if (prepareClick('click', 'pick ' + d.constructor.name + ': ' + d.description()))
-		{
-			showClickFeedback(button);
-			
-			var panel = new InquiryPanel(this.session, d);
-			panel.showLeft().then(unblockClick);
-		}
-		d3.event.preventDefault();
-	}
-	
-	InquirySearchView.prototype.fields = function()
-	{
-		return ["parents"];
-	}
+var SessionChildSearchView = (function () {
+	SessionChildSearchView.prototype = new PanelSearchView();
+	SessionChildSearchView.prototype.session = null;
 	
 	/* Overrides SearchView.searchPath */
-	InquirySearchView.prototype.searchPath = function(val)
+	SessionChildSearchView.prototype.searchPath = function(val)
 	{
-		var s = "inquiry";
+		var s = this.pathType;
 		if (val.length == 0)
 			return s;
 		else
@@ -279,17 +274,24 @@ var InquirySearchView = (function () {
 		}
 	}
 	
-	InquirySearchView.prototype.resultType = function()
-	{
-		return cr.Inquiry;
-	}
-	
-	InquirySearchView.prototype.increment = function()
+	SessionChildSearchView.prototype.increment = function()
 	{
 		return 10;
 	}
 	
-	InquirySearchView.prototype.isButtonVisible = function(button, d, compareText)
+	SessionChildSearchView.prototype.fields = function()
+	{
+		return ["parents"];
+	}
+	
+	SessionChildSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	SessionChildSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		if (compareText.length === 0)
 			return true;
@@ -301,32 +303,39 @@ var InquirySearchView = (function () {
 			return i >= 0;
 	}
 	
-	InquirySearchView.prototype.textCleared = function()
-	{
-		SearchView.prototype.textCleared.call(this);
-		
-		this.startSearchTimeout("");
+	/* Overrides SearchView.prototype.onClickButton */
+	SessionChildSearchView.prototype.onClickButton = function(d, i, button) {
+		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
+		{
+			try
+			{
+				showClickFeedback(button);
+			
+				var panel = new (this.childPanelType())(this.session, d);
+				panel.showLeft().then(unblockClick);
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+		d3.event.preventDefault();
 	}
 	
-	function InquirySearchView(sitePanel, session) {
+	function SessionChildSearchView(sitePanel, session) {
 		this.session = session;
 		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
 	}
 	
-	return InquirySearchView;
+	return SessionChildSearchView;
 })();
 
-var InquiriesPanel = (function () {
-	InquiriesPanel.prototype = new EditPanel();
-	InquiriesPanel.prototype.session = null;
-	InquiriesPanel.prototype.panelTitle = "Inquiries";
+var SessionChildrenPanel = (function () {
+	SessionChildrenPanel.prototype = new EditPanel();
+	SessionChildrenPanel.prototype.session = null;
+	
+	SessionChildrenPanel.prototype.createRoot = function(objectData, header, onShow)
+	{
+		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
 
-	function InquiriesPanel(session, onShow) {
 		var _this = this;
-		this.session = session;
-
-		this.createRoot(session, this.panelTitle, "list", onShow);
-
 		var backButton = this.navContainer.appendLeftButton()
 			.on("click", function()
 			{
@@ -355,28 +364,48 @@ var InquiriesPanel = (function () {
 		addButton.append("span").text("+");
 		
 		this.navContainer.appendTitle(this.panelTitle);
-				
-		var textChanged = function(){
-			var val = this.value.toLocaleLowerCase();
-			if (val.length === 0)
-			{
-				/* Show all of the items. */
-				panel2Div.selectAll("li")
-					.style('display', null);
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				panel2Div.selectAll("li")
-					.style('display', function(d)
-						{
-							if (d.description().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
-							else
-								return 'none';
-						});
-			}
-		}
+	}
+	
+	function SessionChildrenPanel(session, onShow)
+	{
+		EditPanel.call(this);
+		this.session = session;
+	}
+	
+	return SessionChildrenPanel;
+	
+})();
+
+var InquirySearchView = (function () {
+	InquirySearchView.prototype = new SessionChildSearchView();
+	InquirySearchView.prototype.pathType = "inquiry";
+	
+	InquirySearchView.prototype.resultType = function()
+	{
+		return cr.Inquiry;
+	}
+	
+	InquirySearchView.prototype.childPanelType = function()
+	{
+		return InquiryPanel;
+	}
+	
+	function InquirySearchView(sitePanel, session) {
+		SessionChildSearchView.call(this, sitePanel, session);
+	}
+	
+	return InquirySearchView;
+})();
+
+var InquiriesPanel = (function () {
+	InquiriesPanel.prototype = new SessionChildrenPanel();
+	InquiriesPanel.prototype.panelTitle = "Inquiries";
+
+	function InquiriesPanel(session, onShow) {
+		SessionChildrenPanel.call(this, session, onShow);
+		var _this = this;
+
+		this.createRoot(session, this.panelTitle, "list", onShow);
 
 		var searchView = new InquirySearchView(this, session);
 		$(this.node()).one("revealing.cr", function() { 
@@ -386,5 +415,128 @@ var InquiriesPanel = (function () {
 	}
 	
 	return InquiriesPanel;
+})();
+
+var EnrollmentSearchView = (function () {
+	EnrollmentSearchView.prototype = new SessionChildSearchView();
+	EnrollmentSearchView.prototype.pathType = "enrollment";
+	
+	EnrollmentSearchView.prototype.resultType = function()
+	{
+		return cr.Enrollment;
+	}
+	
+	EnrollmentSearchView.prototype.childPanelType = function()
+	{
+		return EnrollmentPanel;
+	}
+	
+	function EnrollmentSearchView(sitePanel, session) {
+		SessionChildSearchView.call(this, sitePanel, session);
+	}
+	
+	return EnrollmentSearchView;
+})();
+
+var EnrollmentsPanel = (function () {
+	EnrollmentsPanel.prototype = new SessionChildrenPanel();
+	EnrollmentsPanel.prototype.panelTitle = "Enrollments";
+
+	function EnrollmentsPanel(session, onShow) {
+		SessionChildrenPanel.call(this, session, onShow);
+		var _this = this;
+
+		this.createRoot(session, this.panelTitle, "list", onShow);
+
+		var searchView = new EnrollmentSearchView(this, session);
+		$(this.node()).one("revealing.cr", function() { 
+				searchView.search(""); 
+				searchView.inputBox.focus();
+			});
+	}
+	
+	return EnrollmentsPanel;
+})();
+
+var EngagementSearchView = (function () {
+	EngagementSearchView.prototype = new SessionChildSearchView();
+	EngagementSearchView.prototype.pathType = "engagement";
+	
+	EngagementSearchView.prototype.resultType = function()
+	{
+		return cr.Engagement;
+	}
+	
+	EngagementSearchView.prototype.childPanelType = function()
+	{
+		return EngagementPanel;
+	}
+	
+	function EngagementSearchView(sitePanel, session) {
+		SessionChildSearchView.call(this, sitePanel, session);
+	}
+	
+	return EngagementSearchView;
+})();
+
+var EngagementsPanel = (function () {
+	EngagementsPanel.prototype = new SessionChildrenPanel();
+	EngagementsPanel.prototype.panelTitle = "Engagements";
+
+	function EngagementsPanel(session, onShow) {
+		SessionChildrenPanel.call(this, session, onShow);
+		var _this = this;
+
+		this.createRoot(session, this.panelTitle, "list", onShow);
+
+		var searchView = new EngagementSearchView(this, session);
+		$(this.node()).one("revealing.cr", function() { 
+				searchView.search(""); 
+				searchView.inputBox.focus();
+			});
+	}
+	
+	return EngagementsPanel;
+})();
+
+var PeriodSearchView = (function () {
+	PeriodSearchView.prototype = new SessionChildSearchView();
+	PeriodSearchView.prototype.pathType = "period";
+	
+	PeriodSearchView.prototype.resultType = function()
+	{
+		return cr.Period;
+	}
+	
+	PeriodSearchView.prototype.childPanelType = function()
+	{
+		return PeriodPanel;
+	}
+	
+	function PeriodSearchView(sitePanel, session) {
+		SessionChildSearchView.call(this, sitePanel, session);
+	}
+	
+	return PeriodSearchView;
+})();
+
+var PeriodsPanel = (function () {
+	PeriodsPanel.prototype = new SessionChildrenPanel();
+	PeriodsPanel.prototype.panelTitle = "Periods";
+
+	function PeriodsPanel(session, onShow) {
+		SessionChildrenPanel.call(this, session, onShow);
+		var _this = this;
+
+		this.createRoot(session, this.panelTitle, "list", onShow);
+
+		var searchView = new PeriodSearchView(this, session);
+		$(this.node()).one("revealing.cr", function() { 
+				searchView.search(""); 
+				searchView.inputBox.focus();
+			});
+	}
+	
+	return PeriodsPanel;
 })();
 

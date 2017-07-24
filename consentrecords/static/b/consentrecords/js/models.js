@@ -3534,7 +3534,7 @@ cr.Engagement = (function() {
     
     Engagement.prototype.mergeData = function(source)
     {
-		cr.UserLinkInstance.prototype.setData.call(this, source);
+		cr.UserLinkInstance.prototype.mergeData.call(this, source);
 		if (!this._start) this._start = source._start;
 		if (!this._end) this._end = source._end;
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);

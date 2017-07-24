@@ -501,16 +501,6 @@
 					.classed('first', true);
 				
 				sitePanel.appendActionButton(
-					"Manage Inquiries",
-					function(organization)
-					{
-						if (prepareClick('click', 'Manage Inquiries'))
-						{
-							manage_inquiry(organization, sitePanel.node());
-						}
-					});
-					
-				sitePanel.appendActionButton(
 					"Enroll an Inquiry",
 					function(d)
 					{
@@ -532,16 +522,6 @@
 					});
 					
 				sitePanel.appendActionButton(
-					"Manage Enrollment",
-					function(d)
-					{
-						if (prepareClick('click', 'Manage Enrollment'))
-						{
-							manage_enrollment(d, sitePanel.node());
-						}
-					});
-					
-				sitePanel.appendActionButton(
 					"Record Participation",
 					function(d)
 					{
@@ -553,14 +533,15 @@
 					.classed('first', true);
 					
 				sitePanel.appendActionButton(
-					"Manage Participation",
-					function(d)
+					"Manage Sessions",
+					function(organization)
 					{
-						if (prepareClick('click', 'manage participation'))
+						if (prepareClick('click', 'Manage Sessions'))
 						{
-							manage_participation(d, sitePanel.node());
+							manage_inquiry(organization, sitePanel.node());
 						}
-					});
+					})
+					.classed('first', true);
 			}
 	
 			objectData.promiseData().then(successFunction, cr.asyncFail)

@@ -27,12 +27,18 @@ Org home
 	Pick Offering Panel
 	Pick Session Panel
 	Record Inquiry Panel
-	Manage Inquiries Panel
+	Manage Session Panel
+		Inquiries Panel
+			Inquiry Panel
+		Enrollments Panel
+			Enrollment Panel
+		Engagements Panel
+			Engagement Panel
+		Periods Panel
+			Period Panel
 	Record Enrollment Panel
 	Record Enrollment from Inquiry Panel
-	Manage Enrollments Panel
 	Record Participation Panel
-	Manage Participation Panel
 
 View Root Objects Panel
 Edit Root Objects Panel

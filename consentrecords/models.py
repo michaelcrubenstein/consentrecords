@@ -3672,6 +3672,11 @@ class Engagement(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, prefix='parent__parent__parent__parent')
             
+    def order_by(queryset, context):
+        return queryset.filter(Q(user__emails__deleteTransaction__isnull=True)& 
+                               Q(user__emails__position=0))\
+                       .order_by('user__emails__text')
+    
     def create(parent, data, context, newIDs={}):
         newItem = Engagement.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -3765,6 +3770,11 @@ class Enrollment(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, prefix='parent__parent__parent__parent')
             
+    def order_by(queryset, context):
+        return queryset.filter(Q(user__emails__deleteTransaction__isnull=True)& 
+                               Q(user__emails__position=0))\
+                       .order_by('user__emails__text')
+    
     def create(parent, data, context, newIDs={}):
         newItem = Enrollment.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -5701,6 +5711,9 @@ class Period(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent__parent')
 
+    def order_by(queryset, context):
+        return queryset.order_by('weekday', 'startTime', 'endTime')
+    
     def validateWeekday(data, key):
         if key not in data or re.search('^[0-6]$', data[key]):
             return
