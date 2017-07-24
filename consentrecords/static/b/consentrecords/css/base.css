@@ -366,9 +366,7 @@ section.cell {
 }
 
 .string-value-view {
-	position: relative;
 	overflow: hidden;
-	width: auto;
 }
 .cell.unique.view>* {
 	border-bottom: 1px solid #eee;

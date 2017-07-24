@@ -441,7 +441,7 @@ var ExperienceController = (function() {
 					.classed('cell view unique', true);
 				crf.appendItemList(section)
 					.append('li')
-					.append('div').classed('growable string-value-view', true)
+					.append('div').classed('string-value-view growable', true)
 					.text(t);
 			}
 		}

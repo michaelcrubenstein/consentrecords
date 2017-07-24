@@ -226,7 +226,7 @@ var Settings = (function () {
 					var items = itemsDiv.append('li');
 	
 					var divs = items.append('div')
-						.classed('description-text string-value-view growable', true)
+						.classed('description-text growable', true)
 						.text(getAccessDescription())
 						.classed('unselectable', true)
 						.each(_pushTextChanged);

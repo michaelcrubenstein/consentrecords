@@ -4716,6 +4716,11 @@ class Inquiry(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent__parent')
 
+    def order_by(queryset, context):
+        return queryset.filter(Q(user__emails__deleteTransaction__isnull=True)& 
+                               Q(user__emails__position=0))\
+                       .order_by('user__emails__text')
+    
     def create(parent, data, context, newIDs={}):
         newItem = Inquiry.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
