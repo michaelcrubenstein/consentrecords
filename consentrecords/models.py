@@ -491,8 +491,8 @@ class RootInstance(IInstance):
              'site name': SiteName,
              'street': Street,
              'user': User,
-             'user grant': UserGrant,
              'user email': UserEmail,
+             'user grant': UserGrant,
              'user user grant request': UserUserGrantRequest,
             }
         if tokens[0] in d:

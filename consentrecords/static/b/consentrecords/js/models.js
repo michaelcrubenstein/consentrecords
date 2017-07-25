@@ -3189,6 +3189,12 @@ cr.Address = (function() {
 	Address.prototype._zipCode = null;
 	Address.prototype._streets = null;
 	
+	Address.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'address/{0}'.format(this.id());
+	}
+	
 	Address.prototype.city = function(newValue)
 	{
 		if (newValue === undefined)
@@ -3321,6 +3327,12 @@ cr.Comment = (function() {
 	Comment.prototype._question = null;
 	Comment.prototype._asker = null;
 	
+	Comment.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'comment/{0}'.format(this.id());
+	}
+	
 	Comment.prototype.text = function(newValue)
 	{
 		if (newValue === undefined)
@@ -3409,6 +3421,12 @@ cr.CommentPrompt = (function() {
 	CommentPrompt.prototype = new cr.IInstance();
 	CommentPrompt.prototype._translations = null;
 	
+	CommentPrompt.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'comment prompt/{0}'.format(this.id());
+	}
+	
 	CommentPrompt.prototype.translations = function(newValue)
 	{
 		if (newValue === undefined)
@@ -3469,6 +3487,12 @@ cr.CommentPrompt = (function() {
 cr.CommentPromptText = (function() {
 	CommentPromptText.prototype = new cr.TranslationInstance();
 	
+	CommentPromptText.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'comment prompt translation/{0}'.format(this.id());
+	}
+	
 	function CommentPromptText() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -3479,6 +3503,12 @@ cr.CommentPromptText = (function() {
 	
 cr.DisqualifyingTag = (function() {
 	DisqualifyingTag.prototype = new cr.ServiceLinkInstance();
+	
+	DisqualifyingTag.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'disqualifying tag/{0}'.format(this.id());
+	}
 	
 	function DisqualifyingTag() {
 	    cr.ServiceLinkInstance.call(this);
@@ -3496,6 +3526,12 @@ cr.Engagement = (function() {
 	Engagement.prototype._organization = null;
 	Engagement.prototype._site = null;
 	Engagement.prototype._offering = null;
+	
+	Engagement.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'engagement/{0}'.format(this.id());
+	}
 	
 	Engagement.prototype.start = function(newValue)
 	{
@@ -3562,6 +3598,12 @@ cr.Enrollment = (function() {
 	Enrollment.prototype = new cr.UserLinkInstance();
 	Enrollment.prototype._session = null;
 	
+	Enrollment.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'enrollment/{0}'.format(this.id());
+	}
+	
 	Enrollment.prototype.session = function(newValue)
 	{
 		if (newValue === undefined)
@@ -3600,6 +3642,12 @@ cr.Experience = (function() {
 	Experience.prototype._customServices = null;
 	Experience.prototype._comments = null;
 	Experience.prototype._commentsPromise = null;
+	
+	Experience.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'experience/{0}'.format(this.id());
+	}
 	
 	Experience.prototype.path = function(newValue)
 	{
@@ -4098,6 +4146,12 @@ cr.ExperienceCustomService = (function() {
 	ExperienceCustomService.prototype._name = null;
 	ExperienceCustomService.prototype._position = null;
 	
+	ExperienceCustomService.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'experience custom service/{0}'.format(this.id());
+	}
+	
 	ExperienceCustomService.prototype.position = function(newValue)
 	{
 		if (newValue === undefined)
@@ -4159,6 +4213,12 @@ cr.ExperienceCustomService = (function() {
 cr.ExperienceService = (function() {
 	ExperienceService.prototype = new cr.OrderedServiceLinkInstance();
 	
+	ExperienceService.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'experience service/{0}'.format(this.id());
+	}
+	
 	function ExperienceService() {
 	    cr.OrderedServiceLinkInstance.call(this);
 	};
@@ -4179,6 +4239,12 @@ cr.ExperiencePrompt = (function() {
 	ExperiencePrompt.prototype._translations = null;
 	ExperiencePrompt.prototype._services = null;
 	ExperiencePrompt.prototype._disqualifyingTags = null;
+	
+	ExperiencePrompt.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'experience prompt/{0}'.format(this.id());
+	}
 	
 	ExperiencePrompt.prototype.name = function(newValue)
 	{
@@ -4392,6 +4458,12 @@ cr.ExperiencePrompt = (function() {
 cr.ExperiencePromptService = (function() {
 	ExperiencePromptService.prototype = new cr.OrderedServiceLinkInstance();
 	
+	ExperiencePromptService.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'experience prompt service/{0}'.format(this.id());
+	}
+	
 	function ExperiencePromptService() {
 	    cr.OrderedServiceLinkInstance.call(this);
 	};
@@ -4402,6 +4474,12 @@ cr.ExperiencePromptService = (function() {
 	
 cr.ExperiencePromptText = (function() {
 	ExperiencePromptText.prototype = new cr.TranslationInstance();
+	
+	ExperiencePromptText.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'experience prompt text/{0}'.format(this.id());
+	}
 	
 	function ExperiencePromptText() {
 	    cr.TranslationInstance.call(this);
@@ -4419,7 +4497,7 @@ cr.Group = (function() {
 	Group.prototype.urlPath = function()
 	{
 		console.assert(this.id());
-		return 'user grant/{0}'.format(this.id());
+		return 'group/{0}'.format(this.id());
 	}
 	
 	Group.prototype.names = cr.NamedInstance.prototype.names;
@@ -4499,7 +4577,7 @@ cr.GroupGrant = (function() {
 	GroupGrant.prototype.urlPath = function()
 	{
 		console.assert(this.id());
-		return 'user grant/{0}'.format(this.id());
+		return 'group grant/{0}'.format(this.id());
 	}
 	
 	GroupGrant.prototype.granteeType = function()
@@ -4518,6 +4596,12 @@ cr.GroupGrant = (function() {
 cr.GroupName = (function() {
 	GroupName.prototype = new cr.TranslationInstance();
 	
+	GroupName.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'group name/{0}'.format(this.id());
+	}
+	
 	function GroupName() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -4528,6 +4612,12 @@ cr.GroupName = (function() {
 	
 cr.GroupMember = (function() {
 	GroupMember.prototype = new cr.UserLinkInstance();
+	
+	GroupMember.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'group member/{0}'.format(this.id());
+	}
 	
 	function GroupMember() {
 	    cr.UserLinkInstance.call(this);
@@ -4540,6 +4630,12 @@ cr.GroupMember = (function() {
 cr.Inquiry = (function() {
 	Inquiry.prototype = new cr.UserLinkInstance();
 	Inquiry.prototype._session = null;
+	
+	Inquiry.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'inquiry/{0}'.format(this.id());
+	}
 	
 	Inquiry.prototype.session = function(newValue)
 	{
@@ -4568,6 +4664,12 @@ cr.Notification = (function() {
 	Notification.prototype._name = null;
 	Notification.prototype._isFresh = null;
 	Notification.prototype._arguments = null;
+	
+	Notification.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'notification/{0}'.format(this.id());
+	}
 	
 	Notification.prototype.name = function(newValue)
 	{
@@ -4963,6 +5065,12 @@ cr.Offering = (function() {
 cr.OfferingName = (function() {
 	OfferingName.prototype = new cr.TranslationInstance();
 	
+	OfferingName.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'offering name/{0}'.format(this.id());
+	}
+	
 	function OfferingName() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -4973,6 +5081,12 @@ cr.OfferingName = (function() {
 	
 cr.OfferingService = (function() {
 	OfferingService.prototype = new cr.OrderedServiceLinkInstance();
+	
+	OfferingService.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'offering service/{0}'.format(this.id());
+	}
 	
 	function OfferingService() {
 	    cr.OrderedServiceLinkInstance.call(this);
@@ -4995,6 +5109,7 @@ cr.Organization = (function() {
 	
 	Organization.prototype.urlPath = function()
 	{
+		console.assert(this.id());
 		return 'organization/{0}'.format(this.id());
 	}
 	
@@ -5159,6 +5274,12 @@ cr.Organization = (function() {
 cr.OrganizationName = (function() {
 	OrganizationName.prototype = new cr.TranslationInstance();
 	
+	OrganizationName.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'organization name/{0}'.format(this.id());
+	}
+	
 	function OrganizationName() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -5181,6 +5302,7 @@ cr.Path = (function() {
 	
 	Path.prototype.urlPath = function()
 	{
+		console.assert(this.id());
 		return 'path/{0}'.format(this.id());
 	}
 	
@@ -5447,6 +5569,12 @@ cr.Period = (function() {
     Period.prototype._startTime = null;
     Period.prototype._endTime = null;
 	
+	Period.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'period/{0}'.format(this.id());
+	}
+	
 	Period.prototype.weekday = function(newValue)
 	{
 		if (newValue === undefined)
@@ -5552,6 +5680,7 @@ cr.Service = (function() {
 	
 	Service.prototype.urlPath = function()
 	{
+		console.assert(this.id());
 		return 'service/{0}'.format(this.id());
 	}
 	
@@ -5777,6 +5906,12 @@ cr.Service.clearPromises = function()
 cr.ServiceName = (function() {
 	ServiceName.prototype = new cr.TranslationInstance();
 	
+	ServiceName.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'service name/{0}'.format(this.id());
+	}
+	
 	function ServiceName() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -5787,6 +5922,12 @@ cr.ServiceName = (function() {
 	
 cr.ServiceOrganizationLabel = (function() {
 	ServiceOrganizationLabel.prototype = new cr.TranslationInstance();
+	
+	ServiceOrganizationLabel.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'service organization label/{0}'.format(this.id());
+	}
 	
 	function ServiceOrganizationLabel() {
 	    cr.TranslationInstance.call(this);
@@ -5799,6 +5940,12 @@ cr.ServiceOrganizationLabel = (function() {
 cr.ServiceSiteLabel = (function() {
 	ServiceSiteLabel.prototype = new cr.TranslationInstance();
 	
+	ServiceSiteLabel.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'service site label/{0}'.format(this.id());
+	}
+	
 	function ServiceSiteLabel() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -5810,6 +5957,12 @@ cr.ServiceSiteLabel = (function() {
 cr.ServiceOfferingLabel = (function() {
 	ServiceOfferingLabel.prototype = new cr.TranslationInstance();
 	
+	ServiceOfferingLabel.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'service offering label/{0}'.format(this.id());
+	}
+	
 	function ServiceOfferingLabel() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -5820,6 +5973,12 @@ cr.ServiceOfferingLabel = (function() {
 	
 cr.ServiceImplication = (function() {
 	ServiceImplication.prototype = new cr.ServiceLinkInstance();
+	
+	ServiceImplication.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'service implication/{0}'.format(this.id());
+	}
 	
 	function ServiceImplication() {
 	    cr.ServiceLinkInstance.call(this);
@@ -6264,6 +6423,12 @@ cr.Session = (function() {
 cr.SessionName = (function() {
 	SessionName.prototype = new cr.TranslationInstance();
 	
+	SessionName.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'session name/{0}'.format(this.id());
+	}
+	
 	function SessionName() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -6286,6 +6451,7 @@ cr.Site = (function() {
 	
 	Site.prototype.urlPath = function()
 	{
+		console.assert(this.id());
 		return 'site/{0}'.format(this.id());
 	}
 	
@@ -6423,6 +6589,12 @@ cr.Site = (function() {
 cr.SiteName = (function() {
 	SiteName.prototype = new cr.TranslationInstance();
 	
+	SiteName.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'site name/{0}'.format(this.id());
+	}
+	
 	function SiteName() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -6531,6 +6703,12 @@ cr.User = (function() {
 	User.prototype._userGrantRequests = null;
 	User.prototype._userGrantRequestsPromise = null;
 	
+	User.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'user/{0}'.format(this.id());
+	}
+	
 	User.prototype.clear = function()
 	{
 		cr.IInstance.prototype.clear.call(this);
@@ -6634,11 +6812,6 @@ cr.User = (function() {
 		{
 			this.updateList(this.userGrantRequests, d['user grant requests'], newIDs, cr.UserGrantRequest, "userGrantRequestAdded.cr", "userGrantRequestDeleted.cr");
 		}
-	}
-	
-	User.prototype.urlPath = function()
-	{
-		return 'user/{0}'.format(this.id());
 	}
 	
 	User.prototype.firstName = function(newValue)
@@ -7038,6 +7211,12 @@ cr.UserEmail = (function() {
 	UserEmail.prototype._text = null;
 	UserEmail.prototype._position = null;
 	
+	UserEmail.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'user email/{0}'.format(this.id());
+	}
+	
 	UserEmail.prototype.text = function(newValue)
 	{
 		if (newValue === undefined)
@@ -7101,6 +7280,7 @@ cr.UserUserGrantRequest = (function() {
 	
 	UserUserGrantRequest.prototype.urlPath = function()
 	{
+		console.assert(this.id());
 		return 'user user grant request/{0}'.format(this.id());
 	}
 	
