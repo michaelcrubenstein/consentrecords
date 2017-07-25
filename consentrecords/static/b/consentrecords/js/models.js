@@ -3560,6 +3560,21 @@ cr.Engagement = (function() {
 	
 cr.Enrollment = (function() {
 	Enrollment.prototype = new cr.UserLinkInstance();
+	Enrollment.prototype._session = null;
+	
+	Enrollment.prototype.session = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._session;
+		else
+		{
+		    if (newValue != this._session)
+		    {
+				this._session = newValue;
+			}
+			return this;
+		}
+	}
 	
 	function Enrollment() {
 	    cr.UserLinkInstance.call(this);
@@ -4524,6 +4539,21 @@ cr.GroupMember = (function() {
 	
 cr.Inquiry = (function() {
 	Inquiry.prototype = new cr.UserLinkInstance();
+	Inquiry.prototype._session = null;
+	
+	Inquiry.prototype.session = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._session;
+		else
+		{
+		    if (newValue != this._session)
+		    {
+				this._session = newValue;
+			}
+			return this;
+		}
+	}
 	
 	function Inquiry() {
 	    cr.UserLinkInstance.call(this);
@@ -5810,6 +5840,7 @@ cr.Session = (function() {
 	Session.prototype._enrollments = null;
 	Session.prototype._engagements = null;
 	Session.prototype._periods = null;
+	Session.prototype._inquiriesPromise = null;
 	Session.prototype._enrollmentsPromise = null;
 	Session.prototype._engagementsPromise = null;
 	Session.prototype._periodsPromise = null;

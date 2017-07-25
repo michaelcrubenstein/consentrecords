@@ -28,6 +28,7 @@ Org home
 	Pick Session Panel
 	Record Inquiry Panel
 	Manage Session Panel
+	    Pick Can Register Panel
 		Inquiries Panel
 			Inquiry Panel
 		Enrollments Panel

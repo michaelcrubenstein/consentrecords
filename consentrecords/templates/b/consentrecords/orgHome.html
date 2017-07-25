@@ -672,54 +672,50 @@
 			pickSessionFromOrganization(organization, previousPanelNode,
 				function(session, currentPanelNode)
 				{
-					var inquiries = session.inquiries();
-					inquiryCell = inquiriesInstance.getCell("user");
-			
-					var sitePanel = new SitePanel();
-					sitePanel.createRoot(session, "Pick User", "list");
-
-					var navContainer = sitePanel.appendNavContainer();
-
-					var backButton = navContainer.appendLeftButton()
-						.on("click", function() { sitePanel.hideRightEvent(); });
-					backButton.append("span").text(crv.buttonTexts.done);
-					var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
-			
-					sitePanel.appendSearchBar(show_matching_descriptions);
-
-					var panel2Div = sitePanel.appendScrollArea();
-
-					sitePanel.showLeft().then(unblockClick);
-			
-					var sections = panel2Div.appendSections([inquiryCell])
-						.classed('cell view multiple', true);
-					var itemsDiv = sections.append('ol')
-						.classed('cell-items hover-items', true);
-					var items = appendItems(itemsDiv, inquiryCell.data)
-						.on("click", function(user)
+					session.promiseInquiries().then(function()
 						{
-							if (prepareClick('click', 'add enrollment'))
-							{
-								getAddEnrollmentFunction(session, user, unblockClick)();
-							}
-						});
-					items.sort(compareUsers);
-					appendDescriptions(items);
+							var inquiries = session.inquiries();
+			
+							var sitePanel = new SitePanel();
+							sitePanel.createRoot(session, "Pick User", "list");
+
+							var navContainer = sitePanel.appendNavContainer();
+
+							var backButton = navContainer.appendLeftButton()
+								.on("click", function() { sitePanel.hideRightEvent(); });
+							backButton.append("span").text(crv.buttonTexts.done);
+							var centerButton = navContainer.appendTitle("Inquiries (" + inquiries.length + ")");
+			
+							sitePanel.appendSearchBar(show_matching_descriptions);
+
+							var panel2Div = sitePanel.appendScrollArea();
+
+							sitePanel.showLeft().then(unblockClick);
+		
+							var items = appendButtons(panel2Div, session.inquiries(), function(inquiry)
+								{
+									if (prepareClick('click', 'add enrollment'))
+									{
+										getAddEnrollmentFunction(session, inquiry.user(), unblockClick)();
+									}
+								});
 							
-					appendInfoButtons(items)
-						.on("click", function(inquiry) {
-							if (prepareClick('click', 'show user info'))
-							{
-								checkUserByInquiry(inquiry,
-									function(user) {
-										showUser(user, sitePanel.node());
-									},
-									syncFailFunction);
-							}
-							d3.event.preventDefault();
-						});
+							appendInfoButtons(items)
+								.on("click", function(inquiry) {
+									if (prepareClick('click', 'show user info'))
+									{
+										checkUserByInquiry(inquiry,
+											function(user) {
+												showUser(user, sitePanel.node());
+											},
+											syncFailFunction);
+									}
+									d3.event.preventDefault();
+								});
+						},
+						cr.syncFail)
 				},
-				syncFailFunction);
+				cr.syncFail);
 		}
 		
 		function checkUserByInquiry(inquiry, successFunction, failFunction)
@@ -862,10 +858,9 @@
 									  offering.description() + "/" + session.description());
 								else
 								{
-									var enrollment = new cr.Enrollment();
-									enrollment.session(session)
-										.user(user);
-									enrollment.createInstance()
+									changes = {'enrollments':
+										[{'add': '1', 'user': user.urlPath()}]};
+									session.update(changes)
 										.then(function()
 											{
 												bootstrap_alert.success(user.description() + 
