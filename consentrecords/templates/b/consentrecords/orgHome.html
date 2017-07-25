@@ -600,15 +600,7 @@
 			sitePanel.appendSearchBar(show_matching_descriptions);
 
 			var panel2Div = sitePanel.appendScrollArea();
-			var itemsDiv = panel2Div.append('section')
-				.classed('cell multiple', true)
-				.append('ol')
-				.classed('cell-items hover-items', true);
-				
-			var items = appendItems(itemsDiv, data);
-
-			appendViewButtons(items)
-				.on("click", function(d) {
+			appendButtons(panel2Div, data, function(d) {
 					if (prepareClick('click', 'header: ' + d.description()))
 					{
 						try
@@ -811,9 +803,8 @@
 						if (inputBox.value.toLocaleLowerCase() == startVal)
 						{
 							panel2Div.selectAll("section").remove();
-							var sections = panel2Div.appendSections(userObjects);
-							var buttons = appendViewButtons(sections)
-								.on("click", function(user) {
+							var buttons = appendButtons(panel2Div, userObjects, 
+								function(user) {
 									pickedUser = user;
 									if (prepareClick('click', 'organization: ' + organization.description()))
 									{
@@ -821,8 +812,8 @@
 									}
 									d3.event.preventDefault();
 								});
-							var infoButtons =  buttons.insert("div", ":first-child")
-								.classed("info-button right-fixed-width-div", true)
+							var infoButtons =  buttons.append("div", ":first-child")
+								.classed("info-button", true)
 								.on("click", function(user) {
 									if (prepareClick('click', 'user: ' + user.description()))
 									{
@@ -978,7 +969,7 @@
 									{
 										itemList.selectAll('li').remove();
 										var items = appendItems(itemList, userObjects);
-										var buttons = appendViewButtons(items)
+										appendViewButtons(items)
 											.on("click", function(user) {
 												pickedUser = user;
 												var _thisButton = this;

@@ -6779,6 +6779,11 @@ class User(SecureRootInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, '')
 
+    def order_by(queryset, context):
+        return queryset.filter(Q(emails__deleteTransaction__isnull=True)& 
+                               Q(emails__position=0))\
+                       .order_by('emails__text')
+    
     def markDeleted(self, context):
         for i in self.emails.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
