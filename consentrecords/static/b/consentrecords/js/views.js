@@ -3070,6 +3070,45 @@ var EditPanel = (function() {
 /* 
 	Displays a panel for editing the specified object. 
  */
+var PickFromListPanel = (function () {
+	PickFromListPanel.prototype = new SitePanel();
+	
+	PickFromListPanel.prototype.createRoot = function(datum, headerText, panelClass)
+	{
+		SitePanel.prototype.createRoot.call(this, datum, headerText, "list " + panelClass, revealPanelLeft);
+		var _this = this;
+		
+		var navContainer = this.appendNavContainer();
+
+		var backButton = navContainer.appendLeftButton()
+			.on("click", function()
+			{
+				if (prepareClick('click', 'pick from list panel: Cancel'))
+				{
+					_this.hideRight(unblockClick);
+				}
+				d3.event.preventDefault();
+			});
+		backButton.append("span").text("Cancel");
+	
+		navContainer.appendTitle(this.title);
+
+		var section = this.appendScrollArea().append("section")
+			.classed("cell multiple", true);
+		crf.appendItemList(section)
+			.classed('hover-items', true);
+			
+		return this;
+	}
+
+	function PickFromListPanel() {
+		SitePanel.call(this);
+	}
+	
+	return PickFromListPanel;
+
+})();
+
 function showEditObjectPanel(containerCell, objectData, backText, onShow, getSavePromise) {
 	var successFunction = function(cells)
 	{

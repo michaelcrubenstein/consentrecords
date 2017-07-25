@@ -153,7 +153,7 @@ var SessionPanel = (function () {
 					{
 						try
 						{
-							var panel = new PickUserAccessPanel();
+							var panel = new PickCanRegisterPanel();
 							panel.createRoot(_this.session, canRegisterSectionTextContainer.text())
 								 .showLeft().then(unblockClick);
 						
@@ -253,6 +253,70 @@ var SessionPanel = (function () {
 	}
 	
 	return SessionPanel;
+})();
+
+/* When the user picks an access that includes a special access for the path, 
+	the _special access value is set. Otherwise, it is cleared. Currently, there is 
+	no check for whether there are access records on the path because there is no such
+	functionality.
+ */ 
+var PickCanRegisterPanel = (function () {
+	PickCanRegisterPanel.prototype = new PickFromListPanel();
+	PickCanRegisterPanel.prototype.title = SessionPanel.prototype.canRegisterLabel;
+	PickCanRegisterPanel.prototype.buttonData = [{description: SessionPanel.prototype.yesLabel
+						  },
+						  {description: SessionPanel.prototype.noLabel
+						  }
+						 ];
+	
+	PickCanRegisterPanel.prototype.createRoot = function(user, path, oldDescription)
+	{
+		PickFromListPanel.prototype.createRoot(null, this.title, "");
+		var _this = this;
+
+		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
+	
+		var items = itemsDiv.selectAll('li')
+			.data(this.buttonData)
+			.enter()
+			.append('li');
+		
+		items.append("div")
+			.classed("description-text growable unselectable", true)
+			.text(function(d) { return d.description; });
+				
+		items.filter(function(d, i)
+			{
+				return d.description === oldDescription;
+			})
+			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
+				
+		items.on('click', function(d, i)
+				{
+					if (d.description === oldDescription)
+						return;
+					
+					if (prepareClick('click', d.description))
+					{
+						try
+						{
+							$(_this.node()).trigger('itemPicked.cr', d.description);
+							_this.hideRight(unblockClick);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+				});
+		return this;
+	}
+	
+	function PickCanRegisterPanel() {
+		PickFromListPanel.call(this);
+	}
+	
+	return PickCanRegisterPanel;
 })();
 
 var SessionChildSearchView = (function () {
