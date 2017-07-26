@@ -3586,6 +3586,16 @@ cr.Engagement = (function() {
 		return this;
     }
     
+    Engagement.prototype.getData = function()
+    {
+    	return cr.getData(
+        	{
+        		path: this.urlPath(),
+        		fields: ['user'],
+        		resultType: cr.Engagement
+        	});
+    }
+    
 	function Engagement() {
 	    cr.UserLinkInstance.call(this);
 	};
@@ -3618,6 +3628,16 @@ cr.Enrollment = (function() {
 		}
 	}
 	
+    Enrollment.prototype.getData = function()
+    {
+    	return cr.getData(
+        	{
+        		path: this.urlPath(),
+        		fields: ['user'],
+        		resultType: cr.Enrollment
+        	});
+    }
+    
 	function Enrollment() {
 	    cr.UserLinkInstance.call(this);
 	};

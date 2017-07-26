@@ -879,15 +879,20 @@
 							})
 				  .then(function(engagements)
 				  		{
-				  			if (engagements.length)
-				  				showEditObjectPanel(engagements[0], previousPanel, revealPanelUp);
-				  			else
+				  			try
 				  			{
-				  				var engagement = new cr.Engagement();
-				  				engagement.session(session)
-				  					.user(user);
-				  				showEditObjectPanel(engagement, previousPanel, revealPanelUp);
+				  				var engagement;
+								if (engagements.length)
+									engagement = engagements[0];
+								else
+								{
+									engagement = new cr.Engagement();
+									engagement.user(user);
+								}
+								var panel = new EngagementPanel(session, engagement, revealPanelLeft);
+								revealPanelLeft(panel.node());
 				  			}
+				  			catch(err) { cr.syncFail(err); }
 				  		},
 				  		cr.syncFail);
 			}
@@ -1080,53 +1085,51 @@
 			pickSessionFromOrganization(organization, previousNode, 
 				function(session, previousPanel)
 				{
-					var sitePanel = new SitePanel();
-					sitePanel.createRoot(session, "Record Participation", "list");
+					session.promiseEnrollments().then(
+						function()
+						{
+							var sitePanel = new SitePanel();
+							sitePanel.createRoot(session, "Record Participation", "list");
 
-					var navContainer = sitePanel.appendNavContainer();
+							var navContainer = sitePanel.appendNavContainer();
 
-					var backButton = navContainer.appendLeftButton()
-						.on("click", function() { sitePanel.hideRightEvent(); });
-					backButton.append("span").text("Done");
-					var centerButton = navContainer.appendTitle("Record Participation");
+							var backButton = navContainer.appendLeftButton()
+								.on("click", function() { sitePanel.hideRightEvent(); });
+							backButton.append("span").text("Done");
+							var centerButton = navContainer.appendTitle("Record Participation");
 			
-					sitePanel.appendSearchBar(show_matching_descriptions);
+							sitePanel.appendSearchBar(show_matching_descriptions);
 
-					var panel2Div = sitePanel.appendScrollArea();
+							var panel2Div = sitePanel.appendScrollArea();
 
-					var sections = panel2Div.appendSections([session])
-						.classed('cell view multiple', true);
-					var itemsDiv = sections.append('ol')
-						.classed('cell-items hover-items', true);
-					var items = appendItems(itemsDiv, session.enrollments())
-						.on("click", function(enrollment)
-							{
-								if (prepareClick('click', 'add Experience by enrollment'))
-								{
-									enrollment.promiseData()
-										.then(function()
+							var items = appendButtons(panel2Div, session.enrollments(), 
+								function(enrollment)
+									{
+										if (prepareClick('click', 'add Experience by enrollment'))
 										{
-											addExperienceByEnrollment(session, enrollment, sitePanel.node());
-										}, 
-										syncFailFunction);
-								}
-							});
-					items.sort(compareEnrollments);
-					appendDescriptions(items);
-					var infoButtons = appendInfoButtons(items)
-						.on("click", function(enrollment) {
-							if (prepareClick('click', 'show enrollment info: ' + enrollment.description()))
-							{
-								checkUserByEnrollment(enrollment,
-									function(user) {
-										showUser(user, sitePanel.node());
-									},
-									syncFailFunction);
-							}
-							d3.event.preventDefault();
-						});
+											enrollment.promiseData()
+												.then(function()
+												{
+													addExperienceByEnrollment(session, enrollment, sitePanel.node());
+												}, 
+												syncFailFunction);
+										}
+									});
+							var infoButtons = appendInfoButtons(items, function(enrollment) { return enrollment.user(); })
+								.on("click", function(enrollment) {
+									if (prepareClick('click', 'show enrollment info: ' + enrollment.description()))
+									{
+										checkUserByEnrollment(enrollment,
+											function(user) {
+												showUser(user, sitePanel.node());
+											},
+											syncFailFunction);
+									}
+									d3.event.preventDefault();
+								});
 					
-					sitePanel.showLeft().then(unblockClick);
+							sitePanel.showLeft().then(unblockClick);
+						}, cr.syncFail);
 				});
 		}
 		

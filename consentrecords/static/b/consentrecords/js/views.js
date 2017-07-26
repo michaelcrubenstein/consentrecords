@@ -2999,6 +2999,19 @@ var EditPanel = (function() {
 			});
 	}
 	
+	EditPanel.prototype.appendEnumerationEditor = function(section, newValue)
+	{
+		var itemsDiv = crf.appendItemList(section);
+
+		var items = itemsDiv.append('li');
+
+		var divs = items.append('div')
+			.classed('description-text growable', true)
+			.text(newValue)
+			.classed('unselectable', true)
+			.each(_pushTextChanged);
+	}
+	
 	EditPanel.prototype.appendTranslationChanges = function(section, translations, changes, key)
 	{
 		var subChanges = [];

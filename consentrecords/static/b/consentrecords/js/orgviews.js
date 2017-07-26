@@ -171,18 +171,10 @@ var SessionPanel = (function () {
 	
 		this.canRegisterSection.append('label')
 			.text(_this.canRegisterLabel);
-
-		var itemsDiv = crf.appendItemList(this.canRegisterSection);
-
-		var items = itemsDiv.append('li');
-
-		var divs = items.append('div')
-			.classed('description-text growable', true)
-			.text(this.canRegisterDescription())
-			.classed('unselectable', true)
-			.each(_pushTextChanged);
 			
-		canRegisterSectionTextContainer = this.canRegisterSection.selectAll('div.description-text');
+		var items = this.appendEnumerationEditor(this.canRegisterSection, this.canRegisterDescription());
+			
+		canRegisterSectionTextContainer = items.selectAll('div.description-text');
 	
 		crf.appendRightChevrons(items);	
 
@@ -602,5 +594,151 @@ var PeriodsPanel = (function () {
 	}
 	
 	return PeriodsPanel;
+})();
+
+var EngagementPanel = (function () {
+	EngagementPanel.prototype = new EditPanel();
+	EngagementPanel.prototype.session = null;
+	EngagementPanel.prototype.engagement = null;
+	EngagementPanel.prototype.panelTitle = "Participation";
+	EngagementPanel.prototype.userLabel = "Participant";
+	EngagementPanel.prototype.startLabel = "Start";
+	EngagementPanel.prototype.endLabel = "End";
+	EngagementPanel.prototype.deleteLabel = "Delete Participant";
+	EngagementPanel.prototype.startPlaceholder = "Not Sure";
+	EngagementPanel.prototype.endPlaceholder = "Not Sure or Current";
+
+    EngagementPanel.prototype.promiseUpdateChanges = function()
+    {
+		var changes = {};
+		
+		this.appendDateChanges(this.startEditor, this.engagement.start(),
+							   changes, 'start')
+			.appendDateChanges(this.endEditor, this.engagement.end(),
+							   changes, 'end');
+		if (this.engagement.id())
+		{
+			return this.engagement.update(changes);
+		}
+		else
+		{
+			if (Object.keys(changes).length == 0)
+			{
+				r2 = $.Deferred();
+				r2.resolve();
+				return r2;
+			}
+			else
+			{
+				changes['add'] = 1;
+				changes['user'] = this.engagement.user().urlPath();
+				var sessionChanges = {'engagements': [changes]};
+				return this.session.update(sessionChanges);
+			}
+		}
+    }
+    
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	EngagementPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		if (newReveal != this.startEditor.wheelReveal &&
+			this.startEditor.wheelReveal.isVisible())
+		{
+			this.startEditor.hideWheel(done);
+			return true;
+		}
+		else if (newReveal != this.endEditor.wheelReveal &&
+			this.endEditor.wheelReveal.isVisible())
+		{
+			this.endEditor.hideWheel(done);
+			return true;
+		}
+		else
+			return false;
+	}
+	
+	function EngagementPanel(session, engagement, onShow) {
+		var _this = this;
+		this.session = session;
+		this.engagement = engagement;
+
+		this.createRoot(session, this.panelTitle, "edit", onShow);
+
+		var doneButton = this.navContainer.appendRightButton();
+			
+		this.navContainer.appendTitle(this.panelTitle);
+		
+		doneButton.on("click", function()
+			{
+				if (prepareClick('click', _this.panelTitle + ' done'))
+				{
+					showClickFeedback(this);
+		
+					try
+					{
+						/* Build up an update for initialData. */
+						_this.promiseUpdateChanges()
+							.then(function() { _this.hide(); },
+								  cr.syncFail)
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+		.append("span").text(crv.buttonTexts.done);
+		
+		this.userSection = this.mainDiv.append('section')
+			.datum(this.session)
+			.classed('cell edit unique first', true);
+		this.userSection.append('label')
+			.text(this.userLabel);
+		var items = this.appendEnumerationEditor(this.userSection, this.engagement.user().description());
+				 
+		this.startSection = this.mainDiv.append('section')
+			.datum(this.session)
+			.classed('cell edit unique', true);
+		this.startSection.append('label')
+			.classed('overlined', true)
+			.text(this.startLabel);
+		this.startEditor = this.appendDateEditor(this.startSection,
+												 this.startPlaceholder,
+												 this.engagement.start());
+				 
+		this.endSection = this.mainDiv.append('section')
+			.datum(this.session)
+			.classed('cell edit unique', true);
+		this.endSection.append('label')
+			.classed('overlined', true)
+			.text(this.endLabel);
+		this.endEditor = this.appendDateEditor(this.endSection,
+												 this.endPlaceholder,
+												 this.engagement.end());
+		
+		if (this.engagement.id())	
+		{	 
+			childrenButton = this.appendActionButton(this.deleteLabel, function() {
+				if (prepareClick('click', this.deleteLabel))
+				{
+					showClickFeedback(this);
+					try
+					{
+						new ConfirmDeleteAlert(_this.node(), _this.deleteLabel, 
+							function() { 
+								_this.engagement.deleteData()
+									.then(function() { _this.hide() },
+										  cr.syncFail);
+							}, 
+							unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+			childrenButton.selectAll('li>div')
+				.classed('site-active-text', false)
+				.classed('text-danger', true);
+		}
+	}
+	
+	return EngagementPanel;
 })();
 

@@ -990,7 +990,7 @@ def handleURL(request, urlPath=None):
     elif request.method == 'DELETE':
         if not request.user.is_authenticated:
             raise PermissionDenied
-        print(request)
+        print(str(request))
         print(request.POST)
         print(request.GET)
         return api.delete(request.user, urlPath, request.GET)
