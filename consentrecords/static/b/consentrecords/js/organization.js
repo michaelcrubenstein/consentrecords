@@ -107,7 +107,7 @@ function getUserName(user)
  */				
 function showPath(path)
 {
-	return path.promiseCells(["More Experience", "parents", cr.fieldNames.user])
+	return path.promiseExperiences(['parents', cr.fieldNames.user])
 			   .then(function()
 				{
 					var panel = new OtherPathPanel(path, true);

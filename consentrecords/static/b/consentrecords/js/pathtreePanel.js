@@ -2256,8 +2256,8 @@ var OtherPathPanel = (function () {
 		}
 
 		var title;
-		var screenName = path.getDatum(cr.fieldNames.name);
-		var user = path.getValue(cr.fieldNames.user);
+		var screenName = path.name();
+		var user = path.user();
 		
 		if (screenName)
 			title = screenName;

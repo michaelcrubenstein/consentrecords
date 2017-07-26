@@ -39,35 +39,35 @@ var SearchPathsResultsView = (function () {
 	}
 	
 	SearchPathsResultsView.prototype.containsQuery = function(fc, queryFlags) {
-		var offering = fc.experience.getValue("Offering");
-		if (offering && offering.getInstanceID())
+		var offering = fc.experience.offering();
+		if (offering && offering.id())
 		{
 			if (!offering.areCellsLoaded())
 				throw ("Runtime error: offering data is not loaded");
 				
-			var services = offering.getCell("Service");
-			if (services.data.findIndex(function(s)
+			var services = offering.offeringServices();
+			if (services.findIndex(function(s)
 				{
 					return queryFlags.findIndex(function(qf)
 						{
-							return s.getCell("Service").data.findIndex(function(s2)
+							return s.services().findIndex(function(s2)
 								{
-									return qf.service.getInstanceID() == s2.getInstanceID();
+									return qf.service.id() == s2.id();
 								}) >= 0;
 						}) >= 0;
 				}) >= 0)
 				return true;
 		}
 		
-		var serviceCell = fc.experience.getCell("Service");
-		if (serviceCell)
+		var services = fc.experience.experienceServices();
+		if (services)
 		{
-			if (serviceCell.data.findIndex(function(s) {
+			if (services.findIndex(function(s) {
 					return queryFlags.findIndex(function(qf)
 					{
-						return s.getCell("Service").data.findIndex(function(s2)
+						return s.service().serviceImplications().findIndex(function(s2)
 							{
-								return qf.service.getInstanceID() == s2.getInstanceID();
+								return qf.service.id() == s2.service().id();
 							}) >= 0;
 					}) >= 0;
 				}) >= 0)
