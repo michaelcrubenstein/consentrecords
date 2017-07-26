@@ -767,3 +767,129 @@ var EngagementPanel = (function () {
 	return EngagementPanel;
 })();
 
+var PickUserSearchView = (function () {
+	PickUserSearchView.prototype = new PanelSearchView();
+	PickUserSearchView.prototype.session = null;
+	
+	/* Overrides SearchView.searchPath */
+	PickUserSearchView.prototype.searchPath = function(val)
+	{
+		var s = "user";
+		if (val.length == 0)
+			return "";
+		else
+		{
+			return s + '[email>text^="' + encodeURIComponent(val) + '"]';
+		}
+	}
+	
+	PickUserSearchView.prototype.increment = function()
+	{
+		return 10;
+	}
+	
+	PickUserSearchView.prototype.fields = function()
+	{
+		return [];
+	}
+	
+	PickUserSearchView.prototype.resultType = function()
+	{
+		return cr.User;
+	}
+	
+	PickUserSearchView.prototype.fillItems = function(items)
+	{
+		PanelSearchView.prototype.fillItems.call(this, items);
+		appendInfoButtons(items);
+	}
+	
+	PickUserSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (compareText.length === 0)
+			return true;
+			
+		var i = d.description().toLocaleLowerCase().indexOf(compareText);
+		return i == 0;
+	}
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	PickUserSearchView.prototype.onClickButton = function(user, i, button) {
+		if (prepareClick('click', 'user: ' + user.description()))
+		{
+			try
+			{
+				var _this = this;
+				showClickFeedback(button);
+				cr.getData({path: this.session.urlPath() + "/inquiry[user={0}]".format(user.id()),
+							resultType: cr.Inquiry,
+							})
+				  .then(function(inquiries)
+						{
+							try
+							{
+								var offering = _this.session.offering();
+								if (inquiries.length)
+									cr.syncFail(user.description() + 
+									  " already inquired into " + 
+									  offering.description() + "/" + _this.session.description());
+								else
+								{
+									changes = {'inquiries':
+										[{'add': '1', 'user': user.urlPath()}]};
+									_this.session.update(changes)
+										.then(function()
+											{
+												bootstrap_alert.success(user.description() + 
+													  " inquiry added to " + 
+													  offering.description() + "/" + _this.session.description(),
+													  ".alert-container");
+												unblockClick();
+											},
+											cr.syncFail);
+								}
+							}
+							catch(err) { cr.syncFail(err); }
+						});
+				
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+		d3.event.preventDefault();
+	}
+	
+	function PickUserSearchView(sitePanel, session) {
+		this.session = session;
+		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return PickUserSearchView;
+})();
+
+var AddInquiryPanel = (function()
+{
+	AddInquiryPanel.prototype = new SitePanel();
+	AddInquiryPanel.prototype.session = null;
+	function AddInquiryPanel(session, title)
+	{
+		SitePanel.call(this);
+		this.createRoot(session, title, 'list');
+
+		var navContainer = this.appendNavContainer();
+
+		var _this = this;
+		var backButton = navContainer.appendLeftButton()
+			.on('click', function() { _this.hide(); });
+		backButton.append('span').text(crv.buttonTexts.done);
+
+		var centerButton = navContainer.appendTitle(title);
+
+		var searchView = new PickUserSearchView(this, session);
+		$(this.node()).one('revealing.cr', function() { 
+				searchView.textCleared(); 
+				searchView.inputBox.focus();
+			});
+	}
+	
+	return AddInquiryPanel;
+})();

@@ -934,90 +934,15 @@
 				{
 					function pickSessionSuccess(session, previousPanel)
 					{
-						var addInquiryPanelDiv = new SitePanel();
-						addInquiryPanelDiv.createRoot(session, "Add Inquiry", "list");
-
-						var navContainer = addInquiryPanelDiv.appendNavContainer();
-
-						var backButton = navContainer.appendLeftButton()
-							.on("click", function() { addInquiryPanelDiv.hideRightEvent(); });
-						backButton.append("span").text("Done");
-				
-						var centerButton = navContainer.appendTitle("Record Inquiry");
-
-						addInquiryPanelDiv.appendSearchBar(show_users);
-
-						var panel2Div = addInquiryPanelDiv.appendScrollArea();
-						var section = panel2Div.append('section')
-							.classed('cell view multiple', true);
-							
-						var itemList = crf.appendItemList(section)
-							.classed('hover-items', true);
-				
-						function show_users()
+						try
 						{
-							var val = this.value.toLocaleLowerCase();
-							var inputBox = this;
-				
-							if (val.length == 0)
-							{
-								itemList.selectAll('li').remove();
-							}
-							else
-							{
-								var startVal = val;
-								var pickedUser = null;
-					
-								var selectAllSuccess = function(userObjects)
-								{
-									if (inputBox.value.toLocaleLowerCase() == startVal)
-									{
-										itemList.selectAll('li').remove();
-										var items = appendItems(itemList, userObjects);
-										appendViewButtons(items)
-											.on("click", function(user) {
-												pickedUser = user;
-												var _thisButton = this;
-												if (prepareClick('click', 'user: ' + user.description()))
-												{
-													var offering = session.offering();
-													cr.getData({path: session.urlPath() + "/inquiry[user={0}]".format(user.id()),
-																resultType: cr.Inquiry,
-																})
-													  .then(function(inquiries)
-															{
-																if (inquiries.length)
-																	cr.syncFail(user.description() + 
-																	  " already inquired into " + 
-																	  offering.description() + "/" + session.description());
-																else
-																{
-																	changes = {'inquiries':
-																		[{'add': '1', 'user': user.urlPath()}]};
-																	session.update(changes)
-																		.then(function()
-																			{
-																				bootstrap_alert.success(user.description() + 
-																					  " inquiry added to " + 
-																					  offering.description() + "/" + session.description(),
-																					  ".alert-container");
-																				unblockClick();
-																			},
-																			cr.syncFail);
-																}
-															});
-												}
-												d3.event.preventDefault();
-											});
-										appendInfoButtons(items);
-									}
-								}
-					
-								cr.getData({path: 'user[email>text^="'+val+'"]', resultType: cr.User, fields: ['none'], end: 50})
-									.then(selectAllSuccess, cr.asyncFail);
-							}
+							var panel = new AddInquiryPanel(session, "Record Inquiry");
+							panel.showLeft().then(unblockClick);
 						}
-						addInquiryPanelDiv.showLeft().then(unblockClick);
+						catch(err) 
+						{
+							cr.syncFail(err);
+						}
 					}
 					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
 				}
