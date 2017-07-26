@@ -3,6 +3,7 @@ Pathways Panel
 	More Ideas Panels
 	Edit Experience Panel (Also used to add an experience)
 	Search Panel
+		Other Path Panel
 	Settings Panel
 		Pick Public Visibility Panel
 		Sharing Panel

@@ -828,7 +828,7 @@ var crf = {
 				if (prepareClick('click', 'confirm delete: ' + d.description()))
 				{
 					try {
-						d.deleteValue()
+						d.deleteData()
 							.then(unblockClick, cr.syncFail);
 					} catch(err) { cr.syncFail(err); }
 				}

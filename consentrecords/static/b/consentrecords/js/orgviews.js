@@ -347,6 +347,15 @@ var SessionChildSearchView = (function () {
 		this.startSearchTimeout("");
 	}
 	
+	SessionChildSearchView.prototype.fillItems = function(items)
+	{
+		var deleteControls = crf.appendDeleteControls(items);
+		PanelSearchView.prototype.fillItems.call(this, items);
+		crf.appendConfirmDeleteControls(items);
+
+		crf.showDeleteControls($(deleteControls[0]), 0);
+	}
+	
 	SessionChildSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		if (compareText.length === 0)
@@ -373,6 +382,12 @@ var SessionChildSearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+	}
+	
+	SessionChildSearchView.prototype.appendSearchArea = function()
+	{
+		return PanelSearchView.prototype.appendSearchArea.call(this)
+			.classed('deletable-items', true);
 	}
 	
 	function SessionChildSearchView(sitePanel, session) {
