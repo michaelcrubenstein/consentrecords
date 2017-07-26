@@ -354,6 +354,14 @@ var SessionChildSearchView = (function () {
 		crf.appendConfirmDeleteControls(items);
 
 		crf.showDeleteControls($(deleteControls[0]), 0);
+		
+		items.each(function(d)
+			{
+				d.on("deleted.cr", this, function(eventObject)
+					{
+						removeItem(eventObject.data)
+					});
+			});
 	}
 	
 	SessionChildSearchView.prototype.isButtonVisible = function(button, d, compareText)
