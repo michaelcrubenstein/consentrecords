@@ -224,6 +224,12 @@ var GetDataChunker = (function() {
 			   !this._isSpinning;
 	}
 	
+	/* Called when one of the items that had been found is deleted. */
+	GetDataChunker.prototype.onItemDeleted = function()
+	{
+		this._start -= 1;
+	}
+	
 	GetDataChunker.prototype.hasButtons = function()
 	{
 		return this.buttons().size() > 0;

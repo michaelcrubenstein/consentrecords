@@ -355,11 +355,13 @@ var SessionChildSearchView = (function () {
 
 		crf.showDeleteControls($(deleteControls[0]), 0);
 		
+		var _this = this;
 		items.each(function(d)
 			{
 				d.on("deleted.cr", this, function(eventObject)
 					{
-						removeItem(eventObject.data)
+						_this.getDataChunker.onItemDeleted();
+						removeItem(eventObject.data);
 					});
 			});
 	}
