@@ -377,7 +377,7 @@ var SessionChildSearchView = (function () {
 	
 	function SessionChildSearchView(sitePanel, session) {
 		this.session = session;
-		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
+		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
 	}
 	
 	return SessionChildSearchView;

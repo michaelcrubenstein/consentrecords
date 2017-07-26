@@ -14,7 +14,7 @@ var SearchPathsResultsView = (function () {
 		}
 	}
 	
-	SearchPathsResultsView.prototype.appendDescriptions = function(buttons)
+	SearchPathsResultsView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
@@ -164,8 +164,7 @@ var SearchPathsResultsView = (function () {
 		var _this = this;
 
 		this.searchPathsPanel = searchPathsPanel;
-		SearchOptionsView.call(this, searchPathsPanel.resultContainerNode, 
-			function(buttons) { _this.appendDescriptions(buttons); });
+		SearchOptionsView.call(this, searchPathsPanel.resultContainerNode);
 
 		this.inputBox = searchPathsPanel.searchInput;
 	}

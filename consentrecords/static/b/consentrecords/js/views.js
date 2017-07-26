@@ -2084,7 +2084,6 @@ var SitePanel = (function () {
 var SearchOptionsView = (function () {
 	SearchOptionsView.prototype.listElement = null;
 	SearchOptionsView.prototype.getDataChunker = null;
-	SearchOptionsView.prototype._fill = null;
 	SearchOptionsView.prototype._foundCompareText = null;
 	SearchOptionsView.prototype._constrainCompareText = null;
 	SearchOptionsView.prototype._searchTimeout = null;
@@ -2092,9 +2091,8 @@ var SearchOptionsView = (function () {
 	/* containerNode is the node that contains the noResults Div and the list 
 		containing the results.
 	 */
-	function SearchOptionsView(containerNode, fill, chunkerType)
+	function SearchOptionsView(containerNode, chunkerType)
 	{
-		this._fill = fill;
 		if (containerNode)
 		{
 			var _this = this;
@@ -2186,6 +2184,11 @@ var SearchOptionsView = (function () {
 			});
 	}
 	
+	SearchOptionsView.prototype.fillItems = function(items)
+	{
+		appendDescriptions(items);
+	}
+	
 	/* Show the objects that have been found. In this implementation, the objects appear as a list of buttons. */
 	SearchOptionsView.prototype.showObjects = function(foundObjects)
 	{
@@ -2194,9 +2197,9 @@ var SearchOptionsView = (function () {
 			.on("click", function(d, i) {
 				_this.onClickButton(d, i, this);
 			});
+			
+		this.fillItems(items);
 
-		appendViewButtons(items, this._fill);
-		
 		this.constrainFoundObjects();
 		return items;
 	}
@@ -2365,7 +2368,7 @@ var SearchView = (function () {
 	SearchView.prototype = new SearchOptionsView;
 	SearchView.prototype.inputBox = null;
 	
-	function SearchView(containerNode, placeholder, fill, chunkerType) {
+	function SearchView(containerNode, placeholder, chunkerType) {
 		if (containerNode)
 		{
 			var _this = this;
@@ -2375,7 +2378,7 @@ var SearchView = (function () {
 			$(this.inputBox).on("input", function() { _this.textChanged() });
 		}
 		
-		SearchOptionsView.call(this, containerNode, fill, chunkerType);
+		SearchOptionsView.call(this, containerNode, chunkerType);
 		if (containerNode)
 		{
 			/* Call setupInputBox at the end because it may trigger an input event. */
@@ -2420,12 +2423,12 @@ var PanelSearchView = (function() {
 	PanelSearchView.prototype = new SearchView();
 	PanelSearchView.prototype.sitePanel = undefined
 	
-	function PanelSearchView(sitePanel, placeholder, fill, chunkerType) {
+	function PanelSearchView(sitePanel, placeholder, chunkerType) {
 		if (sitePanel)
 		{
 			/* Set sitePanel first for call to appendSearchArea */
 			this.sitePanel = sitePanel;
-			SearchView.call(this, sitePanel.node(), placeholder, fill, chunkerType);
+			SearchView.call(this, sitePanel.node(), placeholder, chunkerType);
 			
 			var _this = this;
 			
@@ -3010,6 +3013,8 @@ var EditPanel = (function() {
 			.text(newValue)
 			.classed('unselectable', true)
 			.each(_pushTextChanged);
+			
+		return items;
 	}
 	
 	EditPanel.prototype.appendTranslationChanges = function(section, translations, changes, key)

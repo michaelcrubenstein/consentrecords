@@ -441,7 +441,7 @@ var ExperienceController = (function() {
 					.classed('cell view unique', true);
 				crf.appendItemList(section)
 					.append('li')
-					.append('div').classed('string-value-view growable', true)
+					.append('div').classed('text-fill growable', true)
 					.text(t);
 			}
 		}
@@ -793,7 +793,7 @@ var MultiTypeOptionView = (function() {
 
 			this.experience = experience;
 		}
-		SearchOptionsView.call(this, containerNode, appendDescriptions, GetDataChunker)
+		SearchOptionsView.call(this, containerNode, GetDataChunker)
 	}
 	
 	return MultiTypeOptionView;
@@ -3218,9 +3218,7 @@ var NewExperiencePanel = (function () {
 						.then(function() { _this.hideDown(unblockClick) },
 							  cr.syncFail);
 				}, 
-				function() { 
-					unblockClick();
-				});
+				unblockClick);
 		}
 	}
 	

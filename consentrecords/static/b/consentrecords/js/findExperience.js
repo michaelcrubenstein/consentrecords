@@ -356,7 +356,7 @@ var PickOfferingSearchView = (function () {
 	{
 		this.tag = tag;
 		this.user = user;
-		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
+		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
 	}
 	
 	return PickOfferingSearchView;
@@ -459,7 +459,7 @@ var FindExperienceSearchView = (function () {
 	function FindExperienceSearchView(sitePanel, user, offeringID) {
 		this.offeringID = offeringID;
 		this.user = user;
-		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
+		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
 	}
 	
 	return FindExperienceSearchView;
