@@ -2711,6 +2711,20 @@ cr.UserLinkInstance = (function() {
 		return this;
 	}
 	
+	UserLinkInstance.prototype.updateData = function(d, newIDs)
+	{
+		if ('user' in d) {
+			var id;
+			if (typeof(d['user']) == "object")
+				id = d['user']['id'];
+			else if (d['user'].startsWith("user/"))
+				id = d['user'].substring(5);
+			else
+				throw new Error("Unrecognized user id: {0}".format(d['user']));
+			this._user = crp.getInstance(id);
+		}
+	}
+
 	function UserLinkInstance() {
 	    cr.IInstance.call(this);
 	};
@@ -3594,8 +3608,7 @@ cr.Engagement = (function() {
     Engagement.prototype.mergeData = function(source)
     {
 		cr.UserLinkInstance.prototype.mergeData.call(this, source);
-		if (!this._start) this._start = source._start;
-		if (!this._end) this._end = source._end;
+		cr.DateRangeInstance.prototype.mergeData.call(this, source);
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
 		cr.OfferingLinkInstance.prototype.mergeData.call(this, source);
@@ -3612,6 +3625,18 @@ cr.Engagement = (function() {
         	});
     }
     
+	Engagement.prototype.updateData = function(d, newIDs)
+	{
+		cr.UserLinkInstance.prototype.updateData.call(this, d, newIDs);
+		if ('user' in d)
+		{
+			this.description(this.user().description());
+			$(this).trigger("userChanged.cr");
+		}
+
+		cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs);
+	}
+
 	function Engagement() {
 	    cr.UserLinkInstance.call(this);
 	};

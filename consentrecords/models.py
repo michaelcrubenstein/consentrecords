@@ -3689,7 +3689,7 @@ class Engagement(ChildInstance, dbmodels.Model):
         return newItem                          
         
     def buildHistory(self, context):
-        return EnrollmentHistory.objects.create(transaction=self.lastTransaction,
+        return EngagementHistory.objects.create(transaction=self.lastTransaction,
                                              instance=self,
                                              user=self.user,
                                              start=self.start,

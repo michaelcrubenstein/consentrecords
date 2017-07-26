@@ -1653,6 +1653,23 @@ var SitePanel = (function () {
     	return n;
     }
 	
+	SitePanel.prototype.appendBackButton = function()
+	{
+		var _this = this;
+		var backButton = this.navContainer.appendLeftButton()
+			.on('click', function()
+			{
+				if (prepareClick('click', 'Cancel'))
+				{
+					try {
+						_this.hide();
+					} catch(err) { cr.syncFail(err); }
+				}
+				d3.event.preventDefault();
+			});
+		backButton.append('span').text(crv.buttonTexts.cancel);
+	}
+	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
 	{
 		var searchBar = this.panelDiv.append("div").classed("searchbar", true);
@@ -2187,7 +2204,8 @@ var SearchOptionsView = (function () {
 	
 	SearchOptionsView.prototype.fillItems = function(items)
 	{
-		appendDescriptions(items);
+		appendDescriptions(items)
+			.classed('unselectable', true);
 	}
 	
 	/* Show the objects that have been found. In this implementation, the objects appear as a list of buttons. */
@@ -2679,23 +2697,6 @@ var EditPanel = (function() {
 		checkItemsDisplay(node);
 	}
 
-	EditPanel.prototype.appendBackButton = function()
-	{
-		var _this = this;
-		var backButton = this.navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'edit object panel: Cancel'))
-				{
-					try {
-						_this.hide();
-					} catch(err) { cr.syncFail(err); }
-				}
-				d3.event.preventDefault();
-			});
-		backButton.append("span").text(crv.buttonTexts.cancel);
-	}
-	
 	EditPanel.prototype.appendAddButton = function(promise, containerCell, objectData, cells)
 	{
 		var doneButton;
@@ -3010,10 +3011,8 @@ var EditPanel = (function() {
 		var items = itemsDiv.append('li');
 
 		var divs = items.append('div')
-			.classed('description-text growable', true)
-			.text(newValue)
-			.classed('unselectable', true)
-			.each(_pushTextChanged);
+			.classed('description-text growable unselectable', true)
+			.text(newValue);
 			
 		return items;
 	}
