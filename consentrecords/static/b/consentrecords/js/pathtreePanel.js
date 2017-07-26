@@ -1835,7 +1835,7 @@ var ShareOptions = (function () {
 				
 		$(confirmButton.node()).on('blur', onCancel);
 		var cancelButton = div.append('button')
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.classed("site-active-text", true);
 		
 		$(cancelButton.node()).click(onCancel);

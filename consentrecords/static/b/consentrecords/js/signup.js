@@ -642,7 +642,7 @@ var SigninPanel = (function()
 			
 		buttonContainer.append('span')
 			.classed('signin-cancel-button site-trio-clipped site-active-text', true)
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'hide panel button'))
@@ -848,7 +848,7 @@ var ForgotPasswordPanel = (function()
 			
 		buttonContainer.append('span')
 			.classed('done-button site-trio-clipped site-active-text', true)
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'hide panel button'))

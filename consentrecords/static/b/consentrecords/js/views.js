@@ -154,7 +154,8 @@ var crv = {
 			    
 	buttonTexts: {
 		done: "Done",
-		edit: "Edit"
+		edit: "Edit",
+		cancel: "Cancel",
 	},
 
 	appendLoadingMessage: function(node)
@@ -1658,7 +1659,7 @@ var SitePanel = (function () {
 	
 		var searchCancelButton = searchBar.append("span")
 			.classed("search-cancel-button site-active-text", true);
-		searchCancelButton.append("span").text("Cancel");
+		searchCancelButton.append('span').text(crv.buttonTexts.cancel);
 	
 		var searchCancelButtonWidth = 0;
 		var oldPaddingLeft = searchCancelButton.style("padding-left");
@@ -1685,7 +1686,7 @@ var SitePanel = (function () {
 			})
 			.on("focusin", function(e)
 			{
-				searchCancelButton.selectAll('span').text("Cancel");
+				searchCancelButton.selectAll('span').text(crv.buttonTexts.cancel);
 				$(searchCancelButton.node()).animate({width: searchCancelButtonWidth,
 													  "padding-left": oldPaddingLeft,
 													  "padding-right": oldPaddingRight}, 400, "swing");
@@ -2692,7 +2693,7 @@ var EditPanel = (function() {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append("span").text(crv.buttonTexts.cancel);
 	}
 	
 	EditPanel.prototype.appendAddButton = function(promise, containerCell, objectData, cells)
@@ -3105,7 +3106,7 @@ var PickFromListPanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append("span").text(crv.buttonTexts.cancel);
 	
 		navContainer.appendTitle(this.title);
 
@@ -3522,7 +3523,7 @@ function showPickObjectPanel(cell, oldData) {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append("span").text(crv.buttonTexts.cancel);
 		
 		navContainer.appendTitle(cell.field.name);
 

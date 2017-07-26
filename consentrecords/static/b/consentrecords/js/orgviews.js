@@ -418,22 +418,22 @@ var SessionChildrenPanel = (function () {
 
 		var _this = this;
 		var backButton = this.navContainer.appendLeftButton()
-			.on("click", function()
+			.on('click', function()
 			{
 				_this.hide();
 			});
-		appendLeftChevronSVG(backButton).classed("chevron-left", true);
-		backButton.append("span").text("Back");
+		appendLeftChevronSVG(backButton).classed('chevron-left', true);
+		backButton.append('span').text("Back");
 
 		var addButton = this.navContainer.appendRightButton()
 				.classed('add-button', true)
-				.on("click", function(d) {
+				.on('click', function(d) {
 					if (prepareClick('click', 'edit root objects: add'))
 					{
 						try
 						{
 							showClickFeedback(this);
-							/* TODO: showAddInquiryPanel */
+							_this.showAddPanel()
 						}
 						catch(err)
 						{
@@ -442,7 +442,7 @@ var SessionChildrenPanel = (function () {
 					}
 					d3.event.preventDefault();
 				});
-		addButton.append("span").text("+");
+		addButton.append('span').text("+");
 		
 		this.navContainer.appendTitle(this.panelTitle);
 	}
@@ -481,17 +481,29 @@ var InquirySearchView = (function () {
 var InquiriesPanel = (function () {
 	InquiriesPanel.prototype = new SessionChildrenPanel();
 	InquiriesPanel.prototype.panelTitle = "Inquiries";
+	InquiriesPanel.prototype.addPanelTitle = "Add Inquiry";
+	
+	InquiriesPanel.prototype.showAddPanel = function()
+	{
+		var _this = this;
+		var panel = new AddInquiryPanel(this.session, this.addPanelTitle);
+		this.session.on('inquiryAdded.cr', panel.node(), function(eventObject)
+			{
+				_this.searchView.restartSearchTimeout("");
+			}); 
+		panel.showLeft().then(unblockClick);
+	}
 
 	function InquiriesPanel(session, onShow) {
 		SessionChildrenPanel.call(this, session, onShow);
 		var _this = this;
 
-		this.createRoot(session, this.panelTitle, "list", onShow);
+		this.createRoot(session, this.panelTitle, 'list', onShow);
 
-		var searchView = new InquirySearchView(this, session);
-		$(this.node()).one("revealing.cr", function() { 
-				searchView.search(""); 
-				searchView.inputBox.focus();
+		this.searchView = new InquirySearchView(this, session);
+		$(this.node()).one('revealing.cr', function() { 
+				_this.searchView.search(""); 
+				_this.searchView.inputBox.focus();
 			});
 	}
 	
@@ -522,17 +534,29 @@ var EnrollmentSearchView = (function () {
 var EnrollmentsPanel = (function () {
 	EnrollmentsPanel.prototype = new SessionChildrenPanel();
 	EnrollmentsPanel.prototype.panelTitle = "Enrollments";
+	EnrollmentsPanel.prototype.addPanelTitle = "Add Enrollment";
+
+	EnrollmentsPanel.prototype.showAddPanel = function()
+	{
+		var _this = this;
+		var panel = new AddEnrollmentPanel(this.session, this.addPanelTitle);
+		this.session.on('enrollmentAdded.cr', panel.node(), function(eventObject)
+			{
+				_this.searchView.restartSearchTimeout("");
+			}); 
+		panel.showLeft().then(unblockClick);
+	}
 
 	function EnrollmentsPanel(session, onShow) {
 		SessionChildrenPanel.call(this, session, onShow);
 		var _this = this;
 
-		this.createRoot(session, this.panelTitle, "list", onShow);
+		this.createRoot(session, this.panelTitle, 'list', onShow);
 
-		var searchView = new EnrollmentSearchView(this, session);
-		$(this.node()).one("revealing.cr", function() { 
-				searchView.search(""); 
-				searchView.inputBox.focus();
+		this.searchView = new EnrollmentSearchView(this, session);
+		$(this.node()).one('revealing.cr', function() { 
+				_this.searchView.search(""); 
+				_this.searchView.inputBox.focus();
 			});
 	}
 	
@@ -785,7 +809,7 @@ var PickUserSearchView = (function () {
 	
 	PickUserSearchView.prototype.increment = function()
 	{
-		return 10;
+		return 20;
 	}
 	
 	PickUserSearchView.prototype.fields = function()
@@ -813,8 +837,20 @@ var PickUserSearchView = (function () {
 		return i == 0;
 	}
 	
+	function PickUserSearchView(sitePanel, session) {
+		this.session = session;
+		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return PickUserSearchView;
+})();
+
+var AddInquirySearchView = (function()
+{
+	AddInquirySearchView.prototype = new PickUserSearchView();
+	
 	/* Overrides SearchView.prototype.onClickButton */
-	PickUserSearchView.prototype.onClickButton = function(user, i, button) {
+	AddInquirySearchView.prototype.onClickButton = function(user, i, button) {
 		if (prepareClick('click', 'user: ' + user.description()))
 		{
 			try
@@ -830,9 +866,8 @@ var PickUserSearchView = (function () {
 							{
 								var offering = _this.session.offering();
 								if (inquiries.length)
-									cr.syncFail(user.description() + 
-									  " already inquired into " + 
-									  offering.description() + "/" + _this.session.description());
+									cr.syncFail("{0} already inquired into {1}/{2}"
+										.format(user.description(), offering.description(), _this.session.description()));
 								else
 								{
 									changes = {'inquiries':
@@ -840,10 +875,10 @@ var PickUserSearchView = (function () {
 									_this.session.update(changes)
 										.then(function()
 											{
-												bootstrap_alert.success(user.description() + 
-													  " inquiry added to " + 
-													  offering.description() + "/" + _this.session.description(),
-													  ".alert-container");
+												bootstrap_alert.success(
+													"{0} inquiry added to {1}/{2}"
+														.format(user.description(), offering.description(), _this.session.description()),
+													".alert-container");
 												unblockClick();
 											},
 											cr.syncFail);
@@ -858,12 +893,12 @@ var PickUserSearchView = (function () {
 		d3.event.preventDefault();
 	}
 	
-	function PickUserSearchView(sitePanel, session) {
-		this.session = session;
-		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	function AddInquirySearchView(sitePanel, session)
+	{
+		PickUserSearchView.call(this, sitePanel, session);
 	}
 	
-	return PickUserSearchView;
+	return AddInquirySearchView;
 })();
 
 var AddInquiryPanel = (function()
@@ -884,7 +919,7 @@ var AddInquiryPanel = (function()
 
 		var centerButton = navContainer.appendTitle(title);
 
-		var searchView = new PickUserSearchView(this, session);
+		var searchView = new AddInquirySearchView(this, session);
 		$(this.node()).one('revealing.cr', function() { 
 				searchView.textCleared(); 
 				searchView.inputBox.focus();
@@ -893,3 +928,88 @@ var AddInquiryPanel = (function()
 	
 	return AddInquiryPanel;
 })();
+
+var AddEnrollmentSearchView = (function()
+{
+	AddEnrollmentSearchView.prototype = new PickUserSearchView();
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	AddEnrollmentSearchView.prototype.onClickButton = function(user, i, button) {
+		if (prepareClick('click', 'user: ' + user.description()))
+		{
+			try
+			{
+				var _this = this;
+				showClickFeedback(button);
+				cr.getData({path: this.session.urlPath() + "/enrollment[user={0}]".format(user.id()),
+							resultType: cr.Enrollment,
+							})
+				  .then(function(enrollments)
+						{
+							try
+							{
+								var offering = _this.session.offering();
+								if (enrollments.length)
+									cr.syncFail("{0} already enrolled in {1}/{2}"
+										.format(user.description(), offering.description(), _this.session.description()));
+								else
+								{
+									changes = {'enrollments':
+										[{'add': '1', 'user': user.urlPath()}]};
+									_this.session.update(changes)
+										.then(function()
+											{
+												bootstrap_alert.success(
+													"{0} enrolled in {1}/{2}"
+														.format(user.description(), offering.description(), _this.session.description()),
+													".alert-container");
+												_this.sitePanel.hide();
+											},
+											cr.syncFail);
+								}
+							}
+							catch(err) { cr.syncFail(err); }
+						});
+				
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+		d3.event.preventDefault();
+	}
+	
+	function AddEnrollmentSearchView(sitePanel, session)
+	{
+		PickUserSearchView.call(this, sitePanel, session);
+	}
+	
+	return AddEnrollmentSearchView;
+})();
+
+var AddEnrollmentPanel = (function()
+{
+	AddEnrollmentPanel.prototype = new SitePanel();
+	AddEnrollmentPanel.prototype.session = null;
+	function AddEnrollmentPanel(session, title)
+	{
+		SitePanel.call(this);
+		this.createRoot(session, title, 'list');
+
+		var navContainer = this.appendNavContainer();
+
+		var _this = this;
+		var backButton = navContainer.appendLeftButton()
+			.on('click', function() { _this.hide(); });
+		backButton.append('span').text(crv.buttonTexts.done);
+
+		var centerButton = navContainer.appendTitle(title);
+
+		var searchView = new AddEnrollmentSearchView(this, session);
+		$(this.node()).one('revealing.cr', function() { 
+				searchView.textCleared(); 
+				searchView.inputBox.focus();
+			});
+	}
+	
+	return AddEnrollmentPanel;
+})();
+

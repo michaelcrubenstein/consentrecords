@@ -16,7 +16,7 @@ var UpdatePasswordPanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append('span').text(crv.buttonTexts.cancel);
 	
 		var addButton = navContainer.appendRightButton()
 			.on("click", function()
@@ -110,7 +110,7 @@ var UpdateUsernamePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append("span").text(crv.buttonTexts.cancel);
 	
 		function onChange()
 			{

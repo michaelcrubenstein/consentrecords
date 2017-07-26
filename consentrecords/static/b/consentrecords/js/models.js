@@ -2329,6 +2329,7 @@ cr.IInstance = (function() {
 	
 	IInstance.prototype.updateList = function(items, data, newIDs, resultType, addEventType, deletedEventType)
 	{
+		var _this = this;
 		if (items())
 		{
 			data.forEach(function(d)
@@ -2353,6 +2354,11 @@ cr.IInstance = (function() {
 						if (item)
 						{
 							item.id(newIDs[d['add']]);
+							$(_this).trigger(addEventType, item);
+						}
+						else
+						{
+							$(_this).trigger(addEventType, d);
 						}
 					}
 					else
@@ -2365,6 +2371,16 @@ cr.IInstance = (function() {
 						{
 							item.updateData(d, newIDs);
 						}
+					}
+				});
+		}
+		else
+		{
+			data.forEach(function(d)
+				{
+					if ('add' in d)
+					{
+						$(_this).trigger(addEventType, d);
 					}
 				});
 		}

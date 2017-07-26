@@ -2391,7 +2391,7 @@ var ConfirmDeleteAlert = (function () {
 			}
 			
 		div.append('button')
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.on("click", onCancel);
 		
 		dimmer.show();
@@ -2491,7 +2491,7 @@ var ExperienceShareOptions = (function () {
 		$(emailAddExperienceButton.node()).on('blur', onCancel);
 		
 		var cancelButton = div.append('button')
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.classed("site-active-text", true);
 		
 		$(cancelButton.node()).click(onCancel);
@@ -3258,7 +3258,7 @@ var NewExperiencePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append('span').text(crv.buttonTexts.cancel);
 		
 		if (experienceController.instance)
 		{
