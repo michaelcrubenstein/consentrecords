@@ -219,7 +219,7 @@ function appendStringItem(obj, label, text, addBorder)
 
 	var items = appendItems(itemsDiv, [text]);
 	items.append("div")
-		.classed("string-value-view growable unselectable", true)
+		.classed("text-fill growable unselectable", true)
 		.text(function(d) { return d; });
 }
 

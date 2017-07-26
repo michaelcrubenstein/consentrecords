@@ -365,8 +365,9 @@ section.cell {
 	text-align: left;
 }
 
-.string-value-view {
-	overflow: hidden;
+.text-fill {
+	overflow-x: hidden;
+	text-overflow: ellipsis;
 }
 .cell.unique.view>* {
 	border-bottom: 1px solid #eee;

@@ -1961,7 +1961,7 @@ var SitePanel = (function () {
 		var item = itemsDiv.append('li');
 			
 		item.append('div')
-			.classed("string-value-view site-active-text growable", true)
+			.classed("text-fill site-active-text growable unselectable", true)
 			.text(text);
 				
 		return sectionDiv;	
@@ -2902,8 +2902,6 @@ var EditPanel = (function() {
 		};
 	}
 	
-
-
 	EditPanel.prototype.appendDateStampDayOptionalEditor = function(section, placeholder, value, inputType)
 	{
 		var itemsDiv = crf.appendItemList(section);
