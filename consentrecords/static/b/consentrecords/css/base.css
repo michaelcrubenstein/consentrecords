@@ -465,6 +465,7 @@ li>span.glyphicon.glyphicon-ok:first-child {
 .cell.edit input[type=month],
 .cell.edit input[type=email],
 .cell.edit input[type=url],
+.cell.edit input[type=time],
 .cell.edit input[type=date] {
 	-webkit-appearance:none;
 	-moz-appearance:none;
@@ -477,6 +478,7 @@ li>span.glyphicon.glyphicon-ok:first-child {
 .cell.edit input[type=month]:focus,
 .cell.edit input[type=email]:focus,
 .cell.edit input[type=url]:focus,
+.cell.edit input[type=time]:focus,
 .cell.edit input[type=date]:focus {
 	outline: none;
 }

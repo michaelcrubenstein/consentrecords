@@ -1521,7 +1521,7 @@ var NotificationsButton = (function() {
 						_this.button.node(), function() { _this.checkBadge(); });
 					_this.user.notifications().forEach(function(d)
 						{
-							d.on("dataChanged.cr", _this.button.node(),
+							setupOnViewEventHandler(d, "dataChanged.cr", _this.button.node(),
 								 function() { _this.checkBadge(); });
 						})
 		

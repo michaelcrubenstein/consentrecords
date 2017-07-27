@@ -5710,16 +5710,41 @@ cr.Period = (function() {
 		this._endTime = "";
 	}
 	
+	Period.prototype.weekdayDescription = function()
+	{
+		return this._weekday == null ? "any day" :
+			Date.CultureInfo.dayNames[parseInt(this._weekday)];
+	}
+	
 	/** Called after the contents of the Period have been updated on the server. */
 	Period.prototype.updateData = function(d, newIDs)
 	{
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		var changed = false;
 		if ('weekday' in d)
+		{
 			this._weekday = d['weekday'];
+			changed = true;
+		}
 		if ('start time' in d)
+		{
 			this._startTime = d['start time'];
+			changed = true;
+		}
 		if ('end time' in d)
+		{
 			this._endTime = d['end time'];
+			changed = true;
+		}
+		if (changed)
+		{
+			this.description("{0}: {1}-{2}".format(
+					this.weekdayDescription(),
+					this._startTime,
+					this._endTime
+				));
+			$(this).trigger("periodChanged.cr");
+		}
 	}
 	
 	function Period() {

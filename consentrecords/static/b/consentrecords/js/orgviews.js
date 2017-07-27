@@ -247,11 +247,6 @@ var SessionPanel = (function () {
 	return SessionPanel;
 })();
 
-/* When the user picks an access that includes a special access for the path, 
-	the _special access value is set. Otherwise, it is cleared. Currently, there is 
-	no check for whether there are access records on the path because there is no such
-	functionality.
- */ 
 var PickCanRegisterPanel = (function () {
 	PickCanRegisterPanel.prototype = new PickFromListPanel();
 	PickCanRegisterPanel.prototype.title = SessionPanel.prototype.canRegisterLabel;
@@ -263,7 +258,7 @@ var PickCanRegisterPanel = (function () {
 	
 	PickCanRegisterPanel.prototype.createRoot = function(user, path, oldDescription)
 	{
-		PickFromListPanel.prototype.createRoot(null, this.title, "");
+		PickFromListPanel.prototype.createRoot.call(this, null, this.title, "");
 		var _this = this;
 
 		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
@@ -358,12 +353,15 @@ var SessionChildSearchView = (function () {
 		var _this = this;
 		items.each(function(d)
 			{
-				d.on('deleted.cr', this, function(eventObject)
+				setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
 					{
 						_this.getDataChunker.onItemDeleted();
-						removeItem(eventObject.data);
+						$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
+						{
+							$(this).remove();
+						});
 					});
-				d.on('userChanged.cr', this, function(eventObject)
+				setupOnViewEventHandler(d, 'userChanged.cr', this, function(eventObject)
 					{
 						d3.select(eventObject.data).selectAll('div.description-text')
 							.text(d.description());
@@ -492,7 +490,7 @@ var InquiriesPanel = (function () {
 	{
 		var _this = this;
 		var panel = new NewInquiryPanel(this.session, this.addPanelTitle);
-		this.session.on('inquiryAdded.cr', panel.node(), function(eventObject)
+		setupOnViewEventHandler(this.session, 'inquiryAdded.cr', panel.node(), function(eventObject)
 			{
 				_this.searchView.restartSearchTimeout("");
 			}); 
@@ -545,7 +543,7 @@ var EnrollmentsPanel = (function () {
 	{
 		var _this = this;
 		var panel = new NewEnrollmentPanel(this.session, this.addPanelTitle);
-		this.session.on('enrollmentAdded.cr', panel.node(), function(eventObject)
+		setupOnViewEventHandler(this.session, 'enrollmentAdded.cr', panel.node(), function(eventObject)
 			{
 				_this.searchView.restartSearchTimeout("");
 			}); 
@@ -598,7 +596,7 @@ var EngagementsPanel = (function () {
 		var _this = this;
 		var engagement = new cr.Engagement();
 		var panel = new EngagementPanel(this.session, engagement, revealPanelUp);
-		this.session.on('engagementAdded.cr', panel.node(), function(eventObject)
+		setupOnViewEventHandler(this.session, 'engagementAdded.cr', panel.node(), function(eventObject)
 			{
 				_this.searchView.restartSearchTimeout("");
 			}); 
@@ -635,6 +633,21 @@ var PeriodSearchView = (function () {
 		return PeriodPanel;
 	}
 	
+	PeriodSearchView.prototype.fillItems = function(items)
+	{
+		SessionChildSearchView.prototype.fillItems.call(this, items);
+		
+		var _this = this;
+		items.each(function(d)
+			{
+				setupOnViewEventHandler(d, 'periodChanged.cr', this, function(eventObject)
+					{
+						d3.select(eventObject.data).selectAll('div.description-text')
+							.text(d.description());
+					});
+			});
+	}
+	
 	function PeriodSearchView(sitePanel, session) {
 		SessionChildSearchView.call(this, sitePanel, session);
 	}
@@ -645,6 +658,13 @@ var PeriodSearchView = (function () {
 var PeriodsPanel = (function () {
 	PeriodsPanel.prototype = new SessionChildrenPanel();
 	PeriodsPanel.prototype.panelTitle = "Periods";
+
+	PeriodsPanel.prototype.showAddPanel = function()
+	{
+		var period = new cr.Period();
+		var panel = new PeriodPanel(this.session, period, revealPanelUp);
+		panel.showLeft().then(unblockClick);
+	}
 
 	function PeriodsPanel(session, onShow) {
 		SessionChildrenPanel.call(this, session, onShow);
@@ -657,6 +677,10 @@ var PeriodsPanel = (function () {
 				_this.searchView.search(""); 
 				_this.searchView.inputBox.focus();
 			});
+		setupOnViewEventHandler(this.session, 'periodAdded.cr', this.node(), function(eventObject)
+			{
+				_this.searchView.restartSearchTimeout("");
+			}); 
 	}
 	
 	return PeriodsPanel;
@@ -847,6 +871,201 @@ var EngagementPanel = (function () {
 	}
 	
 	return EngagementPanel;
+})();
+
+var PeriodPanel = (function () {
+	PeriodPanel.prototype = new EditPanel();
+	PeriodPanel.prototype.session = null;
+	PeriodPanel.prototype.period = null;
+	PeriodPanel.prototype.panelTitle = "Participation";
+	PeriodPanel.prototype.weekdayLabel = "Weekday";
+	PeriodPanel.prototype.startTimeLabel = "Start Time";
+	PeriodPanel.prototype.endTimeLabel = "End Time";
+	PeriodPanel.prototype.deleteLabel = "Delete Period";
+	PeriodPanel.prototype.weekdayDescriptions = {
+			'0': "Sunday",
+			'1': "Monday",
+			'2': "Tuesday",
+			'3': "Wednesday",
+			'4': "Thursday",
+			'5': "Friday",
+			'6': "Saturday",
+		};
+
+    PeriodPanel.prototype.promiseUpdateChanges = function()
+    {
+		var changes = {};
+		
+		var _this = this;
+		
+		var getWeekdayValue = function(enumValue)
+		{
+			if (enumValue == null)
+				return null;
+			else
+				return Date.CultureInfo.dayNames.indexOf(enumValue);
+		}
+
+		this.appendEnumerationChanges(this.weekdaySection, getWeekdayValue, 
+									  this.period.weekday(), changes, 'weekday')
+			.appendTimeChanges(this.startTimeSection, this.period.startTime(),
+							   changes, 'start time')
+			.appendTimeChanges(this.endTimeSection, this.period.endTime(),
+							   changes, 'end time');
+		
+		if (!('weekday' in changes) && !this.period.weekday())
+		{
+			r2 = $.Deferred();
+			r2.reject("Please specify a weekday.");
+			return r2;
+		}
+
+		if (this.period.id())
+		{
+			return this.period.update(changes);
+		}
+		else
+		{
+			if (Object.keys(changes).length == 0)
+			{
+				r2 = $.Deferred();
+				r2.resolve();
+				return r2;
+			}
+			else
+			{
+				changes['add'] = 1;
+				var sessionChanges = {'periods': [changes]};
+				return this.session.update(sessionChanges);
+			}
+		}
+    }
+    
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	PeriodPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		return false;
+	}
+	
+	function PeriodPanel(session, period, onShow) {
+		var _this = this;
+		this.session = session;
+		this.period = period;
+
+		this.createRoot(session, this.panelTitle, "edit", onShow);
+		
+		this.appendBackButton();
+
+		var doneButton = this.navContainer.appendRightButton();
+			
+		this.navContainer.appendTitle(this.panelTitle);
+		
+		doneButton.on("click", function()
+			{
+				if (prepareClick('click', _this.panelTitle + ' done'))
+				{
+					showClickFeedback(this);
+		
+					try
+					{
+						/* Build up an update for initialData. */
+						_this.promiseUpdateChanges()
+							.then(function() { _this.hide(); },
+								  cr.syncFail)
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+		.append("span").text(crv.buttonTexts.done);
+		
+		this.weekdaySection = this.mainDiv.append('section')
+			.datum(this.period)
+			.classed('cell edit unique first', true)
+			.on('click', 
+				function(cell) {
+					if (prepareClick('click', 'pick weekday'))
+					{
+						try
+						{
+							var panel = new PickWeekdayPanel(weekdayTextContainer.text(), "Pick Weekday");
+							panel.showLeft().then(unblockClick);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
+								{
+									weekdayTextContainer.text(newDescription);
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+			
+		function getWeekdayDescription(weekday)
+		{
+			if (weekday == null)
+				return "";
+			var i = parseInt(weekday);
+			if (i >= 0 && i <= 6)
+				return Date.CultureInfo.dayNames[i];
+			else
+				return "";
+		}
+
+		this.weekdaySection.append('label')
+			.text(this.weekdayLabel);
+		var items = this.appendEnumerationEditor(this.weekdaySection, getWeekdayDescription(period.weekday()));
+		weekdayTextContainer = items.selectAll('div.description-text');
+		crf.appendRightChevrons(items);	
+				 
+		this.startTimeSection = this.mainDiv.append('section')
+			.datum(this.period)
+			.classed('cell edit unique first', true);
+		this.startTimeSection.append('label')
+			.text(this.startTimeLabel);
+		this.appendTextEditor(this.startTimeSection,
+												 this.startTimeLabel,
+												 this.period.startTime(),
+												 'time');
+				 
+		this.endTimeSection = this.mainDiv.append('section')
+			.datum(this.period)
+			.classed('cell edit unique first', true);
+		this.endTimeSection.append('label')
+			.text(this.endTimeLabel);
+		this.appendTextEditor(this.endTimeSection,
+												 this.endTimeLabel,
+												 this.period.endTime(),
+												 'time');
+		
+		if (this.period.id())	
+		{	 
+			childrenButton = this.appendActionButton(this.deleteLabel, function() {
+				if (prepareClick('click', this.deleteLabel))
+				{
+					showClickFeedback(this);
+					try
+					{
+						new ConfirmDeleteAlert(_this.node(), _this.deleteLabel, 
+							function() { 
+								_this.period.deleteData()
+									.then(function() { _this.hide() },
+										  cr.syncFail);
+							}, 
+							unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+			childrenButton.selectAll('li>div')
+				.classed('site-active-text', false)
+				.classed('text-danger', true);
+		}
+	}
+	
+	return PeriodPanel;
 })();
 
 var PickUserSearchView = (function () {
@@ -1144,5 +1363,66 @@ var PickEngagementUserPanel = (function()
 	}
 	
 	return PickEngagementUserPanel;
+})();
+
+var PickWeekdayPanel = (function () {
+	PickWeekdayPanel.prototype = new PickFromListPanel();
+	PickWeekdayPanel.prototype.title = PeriodPanel.prototype.weekdayLabel;
+	PickWeekdayPanel.prototype.buttonData = ["0", "1", "2", "3", "4", "5", "6"];
+	
+	PickWeekdayPanel.prototype.createRoot = function(oldDescription)
+	{
+		PickFromListPanel.prototype.createRoot.call(this, null, this.title, "");
+		var _this = this;
+
+		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
+	
+		var getDescription = function(d)
+		{
+			return PeriodPanel.prototype.weekdayDescriptions[d];
+		}
+		
+		var items = itemsDiv.selectAll('li')
+			.data(this.buttonData)
+			.enter()
+			.append('li');
+		
+		items.append("div")
+			.classed("description-text growable unselectable", true)
+			.text(function(d) { return getDescription(d); });
+				
+		items.filter(function(d, i)
+			{
+				return getDescription(d) === oldDescription;
+			})
+			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
+				
+		items.on('click', function(d, i)
+				{
+					if (getDescription(d) === oldDescription)
+						return;
+					
+					if (prepareClick('click', getDescription(d)))
+					{
+						try
+						{
+							$(_this.node()).trigger('itemPicked.cr', getDescription(d));
+							_this.hideRight(unblockClick);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+				});
+		return this;
+	}
+	
+	function PickWeekdayPanel(oldDescription) {
+		PickFromListPanel.call(this);
+		this.createRoot(oldDescription);
+	}
+	
+	return PickWeekdayPanel;
 })();
 

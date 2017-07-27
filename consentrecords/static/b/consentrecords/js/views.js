@@ -2740,6 +2740,25 @@ var EditPanel = (function() {
 		return this;
 	}
 	
+	EditPanel.prototype.appendTimeChanges = function(section, oldValue, changes, key)
+	{
+		var newValue = section.selectAll('input').node().value;
+		try
+		{
+			if (!newValue)
+				newValue = null;
+			else
+				newValue = Date.parse(newValue).toString("HH:mm");
+		}
+		catch(err)
+		{
+			newValue = null;
+		}
+		if (newValue != oldValue)
+			changes[key] = newValue;
+		return this;
+	}
+	
 	EditPanel.prototype.appendEnumerationChanges = function(section, getValue, oldValue, changes, key)
 	{
 		var newValue = getValue(section.selectAll('.description-text').text());
@@ -2786,7 +2805,6 @@ var EditPanel = (function() {
 					}
 				});
 		}
-
 	}
 	
 	EditPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)

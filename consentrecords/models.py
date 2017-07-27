@@ -411,7 +411,6 @@ class IInstance():
                     subItem = children.get(pk=subChanges['id'])
                     subItem.update(subChanges, context, newIDs)
                 elif 'add' in subChanges:
-                    print('add', subChanges)
                     subItem = subClass.create(self, subChanges, context, newIDs=newIDs)
                     newIDs[subChanges['add']] = subItem.id.hex
                 else:
@@ -5681,8 +5680,13 @@ class Period(ChildInstance, dbmodels.Model):
                }
     elementMap = {}
     
+    weekdays = {'en': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    			'sp': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    		   }
+    
     def description(self, languageCode=None):
-        return self.user.description('%s: %s-%s' % (weekday or 'any day', startTime or '', endTime or ''))
+        return '%s: %s-%s' % ('any day' if (self.weekday == None) else Period.weekdays[languageCode][self.weekday], 
+                              self.startTime or '', self.endTime or '')
         
     def select_head_related(querySet):
         return querySet
@@ -5695,9 +5699,9 @@ class Period(ChildInstance, dbmodels.Model):
         if context.canRead(self):
             if self.weekday:
                 data['weekday'] = self.weekday
-            if self.start:
+            if self.startTime:
                 data['start time'] = self.startTime
-            if self.end:
+            if self.endTime:
                 data['end time'] = self.endTime
         
         return data
@@ -5715,7 +5719,7 @@ class Period(ChildInstance, dbmodels.Model):
         return queryset.order_by('weekday', 'startTime', 'endTime')
     
     def validateWeekday(data, key):
-        if key not in data or re.search('^[0-6]$', data[key]):
+        if key not in data or re.search('^[0-6]$', str(data[key])):
             return
         raise ValueError('the specified weekday is not valid: %s' % data[key])
     
@@ -6241,7 +6245,7 @@ class Session(ChildInstance, dbmodels.Model):
                 data['inquiries'] = [i.headData(context) for i in self.currentInquiries]
                 data['inquiries'].sort(key=lambda s: s['description'])
             
-            data['periods'] = [i.getData(context) for i in self.currentPeriods]
+            data['periods'] = [i.getData([], context) for i in self.currentPeriods]
             data['periods'].sort(key=lambda s: s['description'])
                 
         if 'parents' in fields:
@@ -6333,7 +6337,6 @@ class Session(ChildInstance, dbmodels.Model):
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise PermissionDenied('you do not have permission to complete this update')
-        print(changes)
         
         history = None
         if 'registration deadline' in changes and changes['registration deadline'] != self.registrationDeadline:

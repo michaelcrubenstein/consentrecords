@@ -215,18 +215,8 @@ var Settings = (function () {
 					publicAccessSection.append('label')
 						.text(_this.userPublicAccessLabel);
 			
-					var itemsDiv = crf.appendItemList(publicAccessSection);
-
-					var items = itemsDiv.append('li');
-	
-					var divs = items.append('div')
-						.classed('description-text growable', true)
-						.text(getAccessDescription())
-						.classed('unselectable', true)
-						.each(_pushTextChanged);
-						
+					var items = _this.appendEnumerationEditor(publicAccessSection, getAccessDescription());
 					publicAccessSectionTextContainer = publicAccessSection.selectAll('div.description-text');
-				
 					crf.appendRightChevrons(items);	
 			
 					var docSection = _this.mainDiv.append('section')
@@ -368,7 +358,7 @@ var PickUserAccessPanel = (function () {
 	
 	PickUserAccessPanel.prototype.createRoot = function(user, path, oldDescription)
 	{
-		PickFromListPanel.prototype.createRoot(null, this.title, "");
+		PickFromListPanel.prototype.createRoot.call(this, null, this.title, "");
 		var _this = this;
 
 		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
