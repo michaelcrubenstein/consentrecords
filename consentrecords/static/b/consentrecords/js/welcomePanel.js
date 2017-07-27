@@ -610,6 +610,7 @@ var WelcomePanel = (function () {
 									onPathwayCreated(pathwayPanel);
 								$(_this.node()).remove();
 							});
+						return promise;
 					})
 				.then(function()
 					{
