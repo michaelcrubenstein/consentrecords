@@ -103,7 +103,24 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getTimeframe = function()
 	{
-		return this.experience.timeframe();
+		if (this.experience instanceof cr.Engagement)
+		{
+			var end = this.experience.end();
+			if (end && end < getUTCTodayDate().toISOString().substr(0, 10))
+			{
+				return "Previous";
+			}
+			else
+			{
+				var start = this.experience.start();
+				if (start && start < getUTCTodayDate().toISOString().substr(0, 10))
+					return "Current";
+				else
+					return "Goal";
+			}
+		}
+		else
+			return this.experience.timeframe();
 	}
 	
 	FlagController.prototype.getEndDate = function()
@@ -111,7 +128,7 @@ var FlagController = (function() {
 		var s = this.experience.end();
 		if (s) return s;
 		
-		var timeframe = this.experience.timeframe();
+		var timeframe = this.getTimeframe();
 		s = this.experience.start();
 		if (s)
 		{
