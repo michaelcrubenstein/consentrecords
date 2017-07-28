@@ -384,7 +384,7 @@ var FlagController = (function() {
 	FlagController.prototype.setupChangeEventHandler = function(data, handler)
 	{
 		var experience = this.experience;
-		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", data, handler);
+		setupOnViewEventHandler(this.experience, "changed.cr", data, handler);
 	}
 	
 	FlagController.prototype.selected = function(newValue)
@@ -396,7 +396,7 @@ var FlagController = (function() {
 			if (this._selected != newValue)
 			{
 				this._selected = newValue;
-				$(this).trigger("selectedChanged.cr");
+				$(this).trigger("changed.cr");
 			}
 		}
 	}
@@ -443,7 +443,7 @@ var PathView = (function() {
 							  
 	PathView.prototype.handleChangedExperience = function(r, fd)
 	{
-		setupOnViewEventHandler(fd.experience, "dataChanged.cr", r, function(eventObject)
+		setupOnViewEventHandler(fd.experience, "changed.cr", r, function(eventObject)
 		{
 			fd.colorElement(eventObject.data);
 		});
@@ -460,8 +460,8 @@ var PathView = (function() {
 					handler(eventObject, v);
 			}
 			
-			setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
-			setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
+			setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr changed.cr", r, f);
+			setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr changed.cr", r, f);
 		}
 	
 	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
@@ -474,7 +474,7 @@ var PathView = (function() {
 				fd.colorElement(eventObject.data);
 			}
 		
-		setupOneViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
+		setupOneViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr changed.cr", r, f);
 		this.setupServiceTriggers(r, fd, f);
 	}
 	
@@ -595,10 +595,8 @@ var PathView = (function() {
 		}
 	
 		var node = this.sitePanel.node();
-		setupOnViewEventHandler(experience, "dataChanged.cr", node, handleDataChanged);
-		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
-		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
-		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
+		setupOnViewEventHandler(experience, "changed.cr", node, handleDataChanged);
+		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr changed.cr", node, handleExperienceDateChanged);
 	}
 	
 	PathView.prototype._setFlagText = function(node)
@@ -647,7 +645,7 @@ var PathView = (function() {
 						});	
 			}
 						
-		setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, flagDataChanged);
+		setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr changed.cr", node, flagDataChanged);
 	}
 	
 	PathView.prototype.compareDates = function (d1, d2)
@@ -741,7 +739,7 @@ var PathView = (function() {
 			.attr('fill', function(d) { return d.fontColor(); })
 			.each(function(d)
 				{
-					setupOnViewEventHandler(d.experience, "dataChanged.cr", this, function(eventObject)
+					setupOnViewEventHandler(d.experience, "changed.cr", this, function(eventObject)
 					{
 						d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
 					});
@@ -756,7 +754,7 @@ var PathView = (function() {
 			.attr('fill', function(d) { return d.fontColor(); })
 			.each(function(d)
 				{
-					setupOnViewEventHandler(d.experience, "dataChanged.cr", this, function(eventObject)
+					setupOnViewEventHandler(d.experience, "changed.cr", this, function(eventObject)
 					{
 						d3.select(eventObject.data).attr('fill', d.fontColor());
 					});
@@ -1460,7 +1458,7 @@ var SettingsButton = (function() {
 		this.user.promiseUserGrantRequests()
 			.then(function()
 				{
-					setupOnViewEventHandler(_this.user, "valueDeleted.cr valueAdded.cr", 
+					setupOnViewEventHandler(_this.user, "userGrantRequestDeleted.cr userGrantRequestAdded.cr", 
 						_this.button.node(), function() { _this.checkBadge(); });
 					_this.checkBadge();
 				});
@@ -1517,11 +1515,11 @@ var NotificationsButton = (function() {
 			.then(function()
 				{
 					var cell = _this.user;
-					cell.on("valueDeleted.cr valueAdded.cr dataChanged.cr", 
+					cell.on("valueDeleted.cr valueAdded.cr changed.cr", 
 						_this.button.node(), function() { _this.checkBadge(); });
 					_this.user.notifications().forEach(function(d)
 						{
-							setupOnViewEventHandler(d, "dataChanged.cr", _this.button.node(),
+							setupOnViewEventHandler(d, "changed.cr", _this.button.node(),
 								 function() { _this.checkBadge(); });
 						})
 		
@@ -1765,7 +1763,7 @@ var PathlinesPanel = (function () {
 					_this.notificationsAlertButton.setup();
 				}
 				
-				setupOnViewEventHandler(user, "userChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user, "changed.cr", _this.node(), checkTitle);
 				
 // 				findButton.style("display", user.privilege() === cr.privileges.administer ? null : "none");
 				

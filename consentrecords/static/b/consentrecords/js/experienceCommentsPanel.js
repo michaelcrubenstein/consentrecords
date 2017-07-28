@@ -623,7 +623,7 @@ var ExperienceCommentsPanel = (function() {
 			_this.loadComments(experience.comments());
 		}
 		
-		setupOnViewEventHandler(fd.experience, 'dataChanged.cr', commentsDiv.node(), 
+		setupOnViewEventHandler(fd.experience, 'changed.cr', commentsDiv.node(), 
 			function (eventObject, changeTarget)
 			{
 				if (changeTarget instanceof cr.Experience)

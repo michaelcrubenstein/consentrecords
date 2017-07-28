@@ -285,7 +285,7 @@ var Settings = (function () {
 						urlItem.text("{0}/for/{1}"
 							.format(window.location.origin, user.emails()[0].text()));
 					}
-					setupOnViewEventHandler(user, 'emailChanged.cr', urlItem.node(), 
+					setupOnViewEventHandler(user, 'changed.cr', urlItem.node(), 
 						function()
 						{
 							urlItem.text("{0}/for/{1}"

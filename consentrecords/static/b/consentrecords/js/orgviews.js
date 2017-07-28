@@ -109,7 +109,7 @@ var SessionPanel = (function () {
 		this.namesSection.append('label')
 			.text(this.namesLabel);
 		this.appendTranslationEditor(this.namesSection, this.session, this.namesLabel, this.nameLabel, 
-									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr nameChanged.cr", 
+									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr changed.cr", 
 									 this.session.names(),
 									 cr.SessionName);
 
@@ -361,7 +361,7 @@ var SessionChildSearchView = (function () {
 							$(this).remove();
 						});
 					});
-				setupOnViewEventHandler(d, 'userChanged.cr', this, function(eventObject)
+				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
 					{
 						d3.select(eventObject.data).selectAll('div.description-text')
 							.text(d.description());
@@ -640,7 +640,7 @@ var PeriodSearchView = (function () {
 		var _this = this;
 		items.each(function(d)
 			{
-				setupOnViewEventHandler(d, 'periodChanged.cr', this, function(eventObject)
+				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
 					{
 						d3.select(eventObject.data).selectAll('div.description-text')
 							.text(d.description());

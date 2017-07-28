@@ -329,7 +329,7 @@ function _pushTextChanged(d) {
 		d3.select(eventObject.data).text(this.description());
 	}
 	
-	setupOnViewEventHandler(d, "dataChanged.cr", this, f);
+	setupOnViewEventHandler(d, "changed.cr", this, f);
 	
 	if (d.cell && d.cell.isUnique())
 	{
@@ -708,7 +708,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 				d3.select(eventObject.data).style('display', 
 					   !this.isEmpty() ? null : 'none');
 			}
-			setupOnViewEventHandler(newValue, "dataChanged.cr", item.node(), checkVisible);
+			setupOnViewEventHandler(newValue, "changed.cr", item.node(), checkVisible);
 		}
 
 		item.on("click", function(d) {
@@ -1866,7 +1866,7 @@ var SitePanel = (function () {
 			{
 				$(eventObject.data).css('display', _thisPanel2Div.isEmptyItems(itemsDiv) ? 'none' : "");
 			}
-			setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", sectionNode, checkDisplay);
+			setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr changed.cr", sectionNode, checkDisplay);
 			sitePanel.setupItemsDivHandlers(itemsDiv, cell);
 		}
 		
@@ -2610,10 +2610,10 @@ function showViewObjectPanel(cell, objectData, backText, showFunction) {
 					sitePanel.panelDiv.attr("headerText", newText);
 					d3.select(eventObject.data).text(newText);
 				}
-				objectData.on("dataChanged.cr", headerDiv.node(), updateHeader);
+				objectData.on("changed.cr", headerDiv.node(), updateHeader);
 				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
 				{
-					eventObject.data.off("dataChanged.cr", updateHeader);
+					eventObject.data.off("changed.cr", updateHeader);
 				});
 
 				panel2Div.append("div").classed("cell-border-below", true);
@@ -3335,7 +3335,7 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 		}
 
 		setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), addedFunctionWithSort);
-		setupOnViewEventHandler(cell, "dataChanged.cr", itemsDiv.node(), dataChangedFunction);
+		setupOnViewEventHandler(cell, "changed.cr", itemsDiv.node(), dataChangedFunction);
 	
 		appendViewCellItems(itemsDiv, cell, 
 			function(d) {
@@ -3434,7 +3434,7 @@ function showEditRootObjectsPanel(cell, header, sortFunction)
 	}
 
 	setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), addedFunctionWithSort);
-	setupOnViewEventHandler(cell, "dataChanged.cr", itemsDiv.node(), dataChangedFunction);
+	setupOnViewEventHandler(cell, "changed.cr", itemsDiv.node(), dataChangedFunction);
 
 	appendEditCellItems(itemsDiv, cell, 
 		function(d) {

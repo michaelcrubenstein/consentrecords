@@ -2065,7 +2065,7 @@ cr.requestExperienceComment = function(experience, followerPath, question)
 									commentsValue = newComments;
 								}
 
-								$(commentsValue).trigger('dataChanged.cr', commentsValue);
+								$(commentsValue).trigger('changed.cr', commentsValue);
 								newData = commentsValue.getValue('Comment');
 							}
 							else
@@ -3744,7 +3744,7 @@ cr.Engagement = (function() {
 		if ('user' in d)
 		{
 			this.description(this.user().description());
-			$(this).trigger("userChanged.cr");
+			$(this).trigger("changed.cr", this);
 		}
 
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
@@ -5762,7 +5762,7 @@ cr.Path = (function() {
 
 		if (changed)
 		{
-			$(this).trigger("pathChanged.cr");
+			$(this).trigger("changed.cr", this);
 		}
 		
 		if ('experiences' in d)
@@ -5953,7 +5953,7 @@ cr.Period = (function() {
 					this._startTime,
 					this._endTime
 				));
-			$(this).trigger("periodChanged.cr");
+			$(this).trigger("changed.cr", this);
 		}
 		
 		return changed;
@@ -6697,7 +6697,7 @@ cr.Session = (function() {
 		
 		if (changed)
 		{
-			$(this).trigger("sessionChanged.cr");
+			$(this).trigger("changed.cr", this);
 		}
 		
 		return changed;
@@ -7139,7 +7139,7 @@ cr.User = (function() {
 		
 		if (changed)
 		{
-			$(this).trigger("userChanged.cr");
+			$(this).trigger("changed.cr", this);
 		}
 		
 		return changed;
