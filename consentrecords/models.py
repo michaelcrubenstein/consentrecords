@@ -396,8 +396,8 @@ class IInstance():
             if not isinstance(data[key], list):
                 raise ValueError('%s element of data is not a list: %s' % (key, data[key]))
             for subData in data[key]:
-                subClass.create(self, subData, context, newIDs=newIDs)
-                newIDs[subChanges['add']] = subItem.id.hex
+                subItem = subClass.create(self, subData, context, newIDs=newIDs)
+                newIDs[subData['add']] = subItem.id.hex
     
     def updateChildren(self, changes, key, context, subClass, children, newIDs={}):
         if key in changes:

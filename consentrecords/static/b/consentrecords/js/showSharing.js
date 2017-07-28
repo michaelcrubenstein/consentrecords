@@ -97,7 +97,7 @@ var SharingPanel = (function() {
 		spans.on('click', function(d) {
 				if (prepareClick('click', 'ignore access request {0}'.format(d.getDescription())))
 				{
-					d.deleteValue()
+					d.deleteData()
 						.then(function()
 						{
 							unblockClick();

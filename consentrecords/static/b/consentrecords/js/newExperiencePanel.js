@@ -72,14 +72,29 @@ var ExperienceController = (function() {
 		return this.newExperience.organization(newValue);
 	}
 
+	ExperienceController.prototype.customOrganization = function(newValue)
+	{
+		return this.newExperience.customOrganization(newValue);
+	}
+
 	ExperienceController.prototype.site = function(newValue)
 	{
 		return this.newExperience.site(newValue);
 	}
 
+	ExperienceController.prototype.customSite = function(newValue)
+	{
+		return this.newExperience.customSite(newValue);
+	}
+
 	ExperienceController.prototype.offering = function(newValue)
 	{
 		return this.newExperience.offering(newValue);
+	}
+
+	ExperienceController.prototype.customOffering = function(newValue)
+	{
+		return this.newExperience.customOffering(newValue);
 	}
 
 	ExperienceController.prototype.experienceServices = function(newValue)
@@ -176,6 +191,31 @@ var ExperienceController = (function() {
 	{
 		this.newExperience.site(null)
 						  .customSite(null);
+		return this;
+	}
+	
+	ExperienceController.prototype.organizationPicked = function(d)
+	{
+		this.newExperience.organization(d)
+						  .customOrganization(null);
+	}
+	
+	ExperienceController.prototype.sitePicked = function(d)
+	{
+		this.newExperience.site(d)
+						  .customSite(null)
+						  .organization(d.organization())
+						  .customOrganization(null);
+	}
+	
+	ExperienceController.prototype.offeringPicked = function(d)
+	{
+		this.newExperience.offering(d)
+						  .customOffering(null)
+						  .site(d.site())
+						  .customSite(null)
+						  .organization(d.organization())
+						  .customOrganization(null);
 	}
 	
 	ExperienceController.prototype.setOffering = function(args) {
@@ -240,115 +280,85 @@ var ExperienceController = (function() {
 			this.services.splice(index, 1);
 	}
 	
-	ExperienceController.prototype.appendData = function(initialData)
+	ExperienceController.prototype.distinctExperienceServices = function()
+	{
+		var existingServices = null;
+		if (this.offering() && this.offering().offeringServices())
+			existingServices = this.offering().offeringServices()
+				.map(function(os) { return os.service(); });
+		
+		return this.newExperience.experienceServices().filter(
+			function(s)
+				{
+					return !existingServices || 
+						   !existingServices.find(function(d) { 
+							return s.service().id() == d.id(); 
+						});
+				});	
+	}
+	
+	ExperienceController.prototype.appendData = function(initialData, idPrefix)
 	{
 		if (this.start())
-			initialData["Start"] = [{text: this.start()}];
+			initialData['start'] = this.start();
 		if (this.end())
-			initialData["End"] = [{text: this.end()}];
+			initialData['end'] = this.end();
 		
-		if (this.organization)
-			initialData["Organization"] = [{instanceID: this.organization.id()}];
-		else if (this.organizationName)
-			initialData["User Entered Organization"] = [{text: this.organizationName}];
+		if (this.organization())
+			initialData['organization'] = this.organization.urlPath();
+		else if (this.customOrganization())
+			initialData['custom organization'] = this.customOrganization();
 			
-		if (this.site)
-			initialData["Site"] = [{instanceID: this.site.id()}];
-		else if (this.siteName)
-			initialData["User Entered Site"] = [{text: this.siteName}];
+		if (this.site())
+			initialData['site'] = this.site().urlPath();
+		else if (this.customSite())
+			initialData['custom site'] = this.customSite();
 			
-		if (this.offering)
-			initialData["offering"] = [{instanceID: this.offering.id()}];
-		else if (this.offeringName)
-			initialData["custom offering"] = [{text: this.offeringName}];
+		if (this.offering())
+			initialData['offering'] = this.offering().urlPath();
+		else if (this.customOffering())
+			initialData['custom offering'] = this.customOffering();
 		
-		var existingServices = null;
-		if (this.offering && this.offering.offeringServices())
-			existingServices = this.offering.offeringServices()
-				.map(function(os) { return os.service(); });
-			
 		if (this.timeframe())
-			initialData["Timeframe"] = [{instanceID: this.timeframe()}];
-				
-		for (i = 0; i < this.services.length; ++i)
-		{
-			var s = this.services[i];
-			
-			/* Make sure the service isn't part of the offering's services. */
-			if (s instanceof cr.Service)
-			{
-				if (!existingServices || 
-					!existingServices.find(function(d) { 
-						return s.id() == d.id(); 
-					}))
+			initialData['timeframe'] = this.timeframe();
+		
+		var i = 0;
+		
+		var newServices = this.distinctExperienceServices()
+			.map(function(s)
 				{
-					if (!initialData["services"])
-						initialData["services"] = [{instanceID: s.id()}];
-					else
-						initialData["services"].push({instanceID: s.id()});
-				}
-			}
-			else if (typeof(s) == "string")
-			{
-				if (!initialData["custom services"])
-					initialData["custom services"] = [{text: s}];
-				else
-					initialData["custom services"].push({text: s});
-			}
+					var addID = '{0}.{1}'.format(idPrefix, i);
+					s.clientID(addID);
+					return {add: addID, position: i++, service: s.service().urlPath()};
+				});
+		if (newServices.length)
+		{
+			initialData['services'] = newServices
 		}
 		
-		initialData["comments"] = [];
+		i = 0;
+		var newCustomServices = this.newExperience.customServices()
+			.map(function(s)
+				{
+					var addID = '{0}.cs.{1}'.format(idPrefix, i);
+					s.clientID(addID);
+					return {position: i, name: s};
+				});
 	}
 	
 	ExperienceController.prototype.getServiceByName = function(name)
 	{
-		for (i = 0; i < this.services.length; ++i)
+		for (i = 0; i < this.experienceServices().length; ++i)
 		{
-			if (this.services[i].description() == name)
-				return this.services[i];
+			if (this.experienceServices()[i].description() == name)
+				return this.experienceServices()[i].service();
 		}
 		return null;
 	}
 	
 	ExperienceController.prototype.getTagList = function()
 	{
-		var names = [];
-	
-		var offering = this.offering;
-		if (offering && offering.id())
-		{
-			if (!offering.offeringServices())
-				throw new Error("Runtime error: offering services are not loaded");
-			
-			names = offering.offeringServices()
-				.filter(function(v) { return !v.isEmpty(); })
-				.map(function(v) { return v.description(); });
-		}
-	
-		this.services.forEach(function(d)
-			{
-				var name = d.description();
-				if (!names.find(function(d) { return d === name; }))
-					names.push(name);
-			});
-	
-		return names.join(", ");
-	}
-	
-	ExperienceController.prototype.setHeightByText = function(node, textDiv, text, step)
-	{
-		var jNode = $(node);
-		if (text)
-		{
-			textDiv.text(text);
-			var oldHeight = jNode.height();
-			jNode.height('auto');
-			var height = jNode.height();
-			jNode.height(oldHeight);
-			jNode.animate({height: height}, {duration: 400, easing: 'swing', step: step});
-		}
-		else
-			jNode.animate({height: 0}, {duration: 400, easing: 'swing', step: step, done: function() { textDiv.text(text); }});
+		return this.newExperience.getTagList();
 	}
 	
 	ExperienceController.prototype.appendTags = function(container, tagDivs, addFunction)
@@ -401,56 +411,6 @@ var ExperienceController = (function() {
 		}
 	}
 
-	ExperienceController.prototype.appendView = function(header, step)
-	{
-		function checkChild(container, className)
-		{
-			var div = container.selectAll('div.{0}'.format(className));
-			if (div.size() == 0)
-				return container.append('div').classed(className, true);
-			else
-				return div;
-		}
-		var titleContainerDiv = checkChild(header, 'title');
-		var titleDiv = checkChild(titleContainerDiv, 'title');
-		this.setHeightByText(titleContainerDiv.node(), titleDiv, this.offeringName, step);
-		
-		var orgDiv = checkChild(header, 'organization');
-		var organizationDiv = checkChild(orgDiv, 'organization');
-		this.setHeightByText(orgDiv.node(), organizationDiv, this.organizationName, step);
-	
-		var siteContainerDiv = checkChild(header, 'site');
-		var siteDiv = checkChild(siteContainerDiv, 'site');
-		var siteText = this.siteName != this.organizationName ? this.siteName : null;
-		this.setHeightByText(siteContainerDiv.node(), siteDiv, siteText, step);
-			
-		{
-			var startDate = this.start();
-			var endDate = this.end();
-			if (startDate && endDate)
-				t = startDate + " - " + endDate;
-			else if (startDate)
-				t = startDate + " - ";
-			else if (endDate)
-				t = " - " + endDate;
-			else
-				t = "";
-			if (t.length)
-			{
-				var section = header.append('section')
-					.classed('cell view unique', true);
-				crf.appendItemList(section)
-					.append('li')
-					.append('div').classed('text-fill growable', true)
-					.text(t);
-			}
-		}
-
-		var tagsDiv = checkChild(header, 'tags');
-		
-		this.appendTags(tagsDiv);
-	}
-	
 	ExperienceController.prototype.add = function()
 	{
 		var _this = this;
@@ -462,7 +422,7 @@ var ExperienceController = (function() {
 			this.instance.appendUpdateOrganizationCommand(this.newExperience.organization(), updateData, sourceObjects);
 			this.instance.appendUpdateCustomOrganizationCommand(this.newExperience.customOrganization(), updateData, sourceObjects);
 					
-			this.instance.getValue("Site").appendUpdateCommands(0, this.site, updateData, sourceObjects);
+			this.instance.site().appendUpdateCommands(0, this.site, updateData, sourceObjects);
 			this.instance.getValue("User Entered Site").appendUpdateCommands(
 					0, this.site ? null : this.siteName, updateData, sourceObjects);
 					
@@ -522,7 +482,7 @@ var ExperienceController = (function() {
 			
 			bootstrap_alert.show($('.alert-container'), "Saving Experience...", "alert-info");
 			
-			return cr.updateValues(updateData, sourceObjects)
+			return this.instance.updateValues(updateData, sourceObjects)
 				.then(function()
 					{
 						var offering = _this.instance.offering();
@@ -537,31 +497,29 @@ var ExperienceController = (function() {
 			/* Test case: add an experience to a path. */
 			bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
 
-			field = {ofKind: "More Experience", name: "More Experience"};
 			var initialData = {};
 
-			this.appendData(initialData);
+			this.appendData(initialData, '1');
 		
-			return cr.createInstance(field, this.path.id(), initialData)
-			 .then(function(newData)
+			initialData['add'] = '1';
+			return this.path.update({'experiences': [initialData]}, false)
+				.then(function(changes, newIDs)
 					{
-						var r = $.Deferred();
-						newData.promiseCellsFromCache(["Offering"])
-							.then(function()
-								{
-									r.resolve(newData);
-									return r;
-								},
-								function(err)
-								{
-									r.reject(err);
-								})
-						return r;
-					})
-			 .then(function(newData)
-			 		{
-			 			_this.path.getCell("More Experience").addValue(newData);
-			 		});
+						var r2 = $.Deferred();
+						try
+						{
+							_this.path.experiences().push(_this.newExperience);
+							_this.newExperience.clientID('1');
+							_this.path.updateData(changes, newIDs)
+							r2.resolve(changes, newIDs);
+						}
+						catch(err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					},
+					cr.syncFail);
 		}
 	}
 	
@@ -627,7 +585,10 @@ var ExperienceController = (function() {
 		this.initPreviousDateRange();
 		
 		/* Call setOrganization, which recognizes this as a site and does the correct thing. */
-		this.setOrganization(d);
+		this.organization(d.organization())
+			.customOrganization(null)
+			.site(d)
+			.customSite(null);
 		
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
@@ -645,13 +606,7 @@ var ExperienceController = (function() {
 
 		this.initPreviousDateRange();
 		
-		this.setOffering({instance: d});
-		
-		/* Set the organization, then the site, because setting the organization may
-			also set the site.
-		 */
-		this.setOrganization(d.organization());
-		this.setSite(d.site());
+		this.offeringPicked(d);
 		
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
@@ -834,7 +789,8 @@ var ExperienceDatumSearchView = (function() {
 						{
 							return es.service().id() == d.id();
 						}))
-					this.experience.setOffering({text: d.description() });
+					this.experience.customOffering(d.description())
+								   .offering(null);
 				else
 					this.experience.addService(d);
 				this.sitePanel.onExperienceUpdated();
@@ -845,16 +801,16 @@ var ExperienceDatumSearchView = (function() {
 					});
 			}
 		}
-		else if (d.getTypeName() === 'Organization')
+		else if (d instanceof cr.Organization)
 		{
 			if (prepareClick('click', 'organization: ' + d.description()))
 			{
 				try
 				{
 					/* Clear the site and offering if they aren't within the new organization. */
-					if (_this.experience.site &&
-						_this.experience.organization &&
-						_this.experience.organization.id() != d.id())
+					if (_this.experience.site() &&
+						_this.experience.organization() &&
+						_this.experience.organization().id() != d.id())
 					{
 						if (this.experience.offering())
 						{
@@ -866,11 +822,7 @@ var ExperienceDatumSearchView = (function() {
 							this.experience.clearSite();
 						}
 					}
-					/* Set the organization and organizationName explicitly so that the site
-						isn't cleared inappropriately.
-					 */
-					this.experience.organization = d;
-					this.experience.organizationName = d.description();
+					this.experience.organizationPicked(d);
 					
 					this.sitePanel.onExperienceUpdated();
 					this.hideSearch(function()
@@ -888,7 +840,7 @@ var ExperienceDatumSearchView = (function() {
 				}
 			}
 		}
-		else if (d.getTypeName() === 'Site')
+		else if (d instanceof cr.Site)
 		{
 			if (prepareClick('click', 'site: ' + d.description()))
 			{
@@ -902,7 +854,7 @@ var ExperienceDatumSearchView = (function() {
 									_this.experience.site() &&
 									_this.experience.site().id() != d.id())
 									_this.experience.clearOffering();
-								_this.experience.setOrganization(d);
+								_this.experience.sitePicked(d);
 								_this.sitePanel.onExperienceUpdated();
 								_this.hideSearch(function()
 									{
@@ -921,16 +873,11 @@ var ExperienceDatumSearchView = (function() {
 						cr.syncFail);
 			}
 		}
-		else if (d.getTypeName() === 'Offering')
+		else if (d instanceof cr.Offering)
 		{
 			if (prepareClick('click', 'offering: ' + d.description()))
 			{
-				this.experience.setOffering(d);
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization(d.organization());
-				this.experience.setSite(d.site());
+				this.experience.offeringPicked(d);
 				this.sitePanel.onExperienceUpdated();
 				_this.hideSearch(function()
 					{
@@ -948,32 +895,32 @@ var ExperienceDatumSearchView = (function() {
 	
 		var data = this.buttons().data();
 		return data.find(function(d) {
-				return d.getTypeName() === "Site" &&
+				return d instanceof cr.Site &&
 					   d.description() === compareText &&
-					   d.getValue("Organization").description() === compareText;
+					   d.organization().description() === compareText;
 			});
 	}
 	
 	ExperienceDatumSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		/* Do not display organizations if there is a site with the same name. */
-		if (d.getTypeName() === "Organization" &&
+		if (d instanceof cr.Organization &&
 			this.hasUniqueSite(d))
 			return false;
 		
 		if (this.isMatchingDatum(d, compareText))
 			return true;
 
-		if (d.getTypeName() === "Offering")
+		if (d instanceof cr.Offering)
 		{
-			if (this.stringContains(d.getValue("Site").description(), compareText))
+			if (this.stringContains(d.site().description(), compareText))
 				return true;
-			if (this.stringContains(d.getValue("Organization").description(), compareText))
+			if (this.stringContains(d.organization().description(), compareText))
 				return true;
 		}
-		else if (d.getTypeName() === "Site")
+		else if (d instanceof cr.Site)
 		{
-			if (this.stringContains(d.getValue("Organization").description(), compareText))
+			if (this.stringContains(d.organization().description(), compareText))
 				return true;
 		}
 		return false;
@@ -1405,7 +1352,7 @@ var OrganizationSearchView = (function() {
 	
 	OrganizationSearchView.prototype.clearFromOrganization = function()
 	{
-		if (this.experience.organization)
+		if (this.experience.organization())
 		{
 			if (this.experience.offering())
 			{
@@ -1551,7 +1498,7 @@ var OrganizationSearchView = (function() {
 	OrganizationSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
-		return this.inputText() != (this.experience.organizationName || "");
+		return this.inputText() != (this.experience.organizationName() || "");
 	}
 	
 	function OrganizationSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
@@ -1568,7 +1515,7 @@ var SiteSearchView = (function() {
 	
 	SiteSearchView.prototype.clearFromSite = function()
 	{
-		if (this.experience.site)
+		if (this.experience.site())
 		{
 			if (this.experience.offering())
 			{
@@ -1589,35 +1536,34 @@ var SiteSearchView = (function() {
 	SiteSearchView.prototype.searchPath = function(val)
 	{
 		var path;
-		if (this.experience.organizationName)
+		if (this.experience.organizationName())
 		{
-			if (this.experience.organization == null)
+			if (this.experience.organization() == null)
 			{
 				return "";
 			}
 			else if (!val)
 			{
-				if (this.typeName === "Site")
-					return "{0}/Sites/Site".format(this.experience.organization.id());
-				else if (this.typeName === "Offering from Site")
+				if (this.typeName === 'Site')
+					return this.experience.organization().urlPath() + 'site';
+				else if (this.typeName === 'Offering from Site')
 				{
-					path = "{0}/Sites/Site/Offering".format(this.experience.organization.id());
+					path = this.experience.organization().urlPath() + 'site/offering';
 					path += this.experience.getOfferingConstraint();
 					return path;
 				}
 			}
 			else
 			{
-				if (this.typeName === "Offering")
+				if (this.typeName === 'Offering')
 				{
-					path = 'Offering[ancestor:name>text*="{1}"]';
-					path = "{0}/Sites/Site/Offerings/".format(this.experience.organization.id()) + path;
+					path = '[name>text*="{1}"]|[site>name*="{1}"]|[site>organization>name*="{1}"]';
+					path = this.experience.organization().urlPath() + 'site/offering' + path;
 					path += this.experience.getOfferingConstraint();
 				}
-				else if (this.typeName === "Site")
+				else if (this.typeName === 'Site')
 				{
-					path = 'Site[name>text*="{1}"]';
-					path = "{0}/Sites/".format(this.experience.organization.id()) + path;
+					path = this.experience.organization().urlPath() + 'site[name>text*="{1}"]';
 				}
 			
 				var symbol = "*=";
@@ -1635,12 +1581,12 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[ancestor:name>text*="{1}"]';
+					path = 'offering[name>text*="{1}"]|[site>name*="{1}"]|[site>organization>name*="{1}"]';
 					path += this.experience.getOfferingConstraint();
 				}
-				else if (this.typeName === "Site")
+				else if (this.typeName === 'Site')
 				{
-					path = 'Site[ancestor:name>text*="{1}"]';
+					path = 'site[name>text*="{1}"]|[organization>name*="{1}"]';
 					if (this.experience.services[0] instanceof cr.Service)
 					{
 						path += '[offering>service>service={0}]]'.format(this.experience.services[0].id());
@@ -1648,7 +1594,7 @@ var SiteSearchView = (function() {
 				}
 				else if (this.typeName === "Organization")
 				{
-					path = 'Organization[name>text*="{1}"]';
+					path = 'organization[name>text*="{1}"]';
 				}
 				else
 					throw "Unrecognized typeName: {0}".format(this.typeName);
@@ -1661,13 +1607,13 @@ var SiteSearchView = (function() {
 		}
 		else if (val)
 		{
-			if (this.typeName === "Site")
+			if (this.typeName === 'Site')
 			{
-				path = 'Site[ancestor:name>text*="{1}"]';
+				path = 'site[name>text*="{1}"]|[organization>name*="{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[name>text*="{1}"]';
+				path = 'organization[name>text*="{1}"]';
 			}
 			var symbol = "*=";
 		
@@ -1680,15 +1626,15 @@ var SiteSearchView = (function() {
 	SiteSearchView.prototype.resultType = function(val)
 	{
 		var path;
-		if (this.experience.organizationName)
+		if (this.experience.organizationName())
 		{
-			if (this.experience.organization == null)
+			if (this.experience.organization() == null)
 			{
 				return null;
 			}
 			else if (!val)
 			{
-				if (this.typeName === "Site")
+				if (this.typeName === 'Site')
 					return cr.Site;
 				else if (this.typeName === "Offering from Site")
 				{
@@ -1701,7 +1647,7 @@ var SiteSearchView = (function() {
 				{
 					return cr.Offering;
 				}
-				else if (this.typeName === "Site")
+				else if (this.typeName === 'Site')
 				{
 					return cr.Site;
 				}
@@ -1719,7 +1665,7 @@ var SiteSearchView = (function() {
 				{
 					return cr.Offering;
 				}
-				else if (this.typeName === "Site")
+				else if (this.typeName === 'Site')
 				{
 					return cr.Site;
 				}
@@ -1733,7 +1679,7 @@ var SiteSearchView = (function() {
 		}
 		else if (val)
 		{
-			if (this.typeName === "Site")
+			if (this.typeName === 'Site')
 			{
 				return cr.Site;
 			}
@@ -1749,35 +1695,30 @@ var SiteSearchView = (function() {
 	SiteSearchView.prototype.setupSearchTypes = function(searchText)
 	{
 		/* For each state, set up typeName, and the list of typeNames. */
-		if (this.experience.organizationName)
+		if (this.experience.organizationName())
 		{
-			if (this.experience.organization)
+			if (this.experience.organization())
 			{
-				if (searchText && searchText.length > 0)
-					this.typeNames = ["Site", "Offering"];
+				if (searchText)
+					this.typeNames = ['Site', "Offering"];
 				else
-					this.typeNames = ["Site"];
+					this.typeNames = ['Site'];
 			}
 			else
 			{
 				this.typeNames = [""];
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experience.experienceServices().length > 0)
 		{
-			if (this.experience.services[0] instanceof cr.Service)
-			{
-				if (searchText && searchText.length > 0)
-					this.typeNames = ["Offering", "Site", "Organization"];
-				else
-					this.typeNames = [""];
-			}
+			if (searchText)
+				this.typeNames = ["Offering", 'Site', "Organization"];
 			else
-				this.typeNames = ["Site", "Organization"];
+				this.typeNames = [""];
 		}
 		else if (searchText)
 		{
-			this.typeNames = ["Site", "Organization"];
+			this.typeNames = ['Site', "Organization"];
 		}
 		else
 		{
@@ -1826,20 +1767,20 @@ var SiteSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
-				if (d.getTypeName() === "Offering")
+				if (d instanceof cr.Offering)
 				{
 					leftText.append('div')
 						.classed('title', true).text(d.description());
 
 					orgDiv = leftText.append('div').classed("organization", true);
-					if (d.getValue("Site").description() != d.getValue("Organization").description())
+					if (d.site().description() != d.organization().description())
 					{
 						orgDiv.append('div')
 							.classed('address-line', true)
-							.text(d.getValue("Site").description());
+							.text(d.site().description());
 					}
 				}
-				else if (d.getTypeName() === "Site")
+				else if (d instanceof cr.Site)
 				{
 					/* The organization name is either a value of d or, if d is a value
 					   of an Offering, then the organization name is the value of the offering.
@@ -1851,7 +1792,7 @@ var SiteSearchView = (function() {
 						orgValue = d.organization();
 						
 					if (orgValue.description() == d.description() ||
-						orgValue.id() == (_this.experience.organization && _this.experience.organization.id()))
+						orgValue.id() == (_this.experience.organization() && _this.experience.organization().id()))
 					{
 						leftText.text(d.description());
 					}
@@ -1896,11 +1837,13 @@ var OfferingSearchView = (function() {
 	
 	OfferingSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.getTypeName() === 'Service')
+		if (d instanceof cr.Service)
 		{
 			if (prepareClick('click', 'service for offering: ' + d.description()))
 			{
-				this.experience.setOffering({text: d.description() });
+				this.experience.customOffering(d.description())
+							   .offering(null);
+				
 				this.sitePanel.onExperienceUpdated();
 				this.hideSearch(function()
 					{
@@ -1909,16 +1852,11 @@ var OfferingSearchView = (function() {
 					});
 			}
 		}
-		else if (d.getTypeName() === 'Offering')
+		else if (d instanceof cr.Offering)
 		{
 			if (prepareClick('click', 'offering: ' + d.description()))
 			{
-				this.experience.setOffering({instance: d});
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization(d.organization());
-				this.experience.setSite(d.site());
+				this.experience.offeringPicked(d);
 				this.sitePanel.onExperienceUpdated();
 				_this.hideSearch(function()
 					{
@@ -1934,7 +1872,7 @@ var OfferingSearchView = (function() {
 	{
 		var path;
 
-		if (this.experience.siteName)
+		if (this.experience.siteName())
 		{
 			if (this.experience.site)
 			{
@@ -1942,8 +1880,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Offerings>Offering".format(this.experience.site.id());
-						return path;
+						return this.experience.site().urlPath() + "/offering";
 					}
 					else
 						throw new Error('unrecognized typeName');
@@ -1952,7 +1889,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Offerings>Offering".format(this.experience.site.id()) + '[name>text*="{1}"]';
+						path = this.experience.site().urlPath() + '/offering[name>text*="{1}"]';
 					}
 					else
 						throw new Error('unrecognized typeName');
@@ -1969,15 +1906,15 @@ var OfferingSearchView = (function() {
 			else
 				return '';
 		}
-		else if (this.experience.organizationName)
+		else if (this.experience.organizationName())
 		{
-			if (this.experience.organization)
+			if (this.experience.organization())
 			{
 				if (!val)
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.id());
+						path = this.experience.organization().urlPath() + '/site/offering';
 						path += this.experience.getOfferingConstraint();
 						return path;
 					}
@@ -1988,8 +1925,8 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = 'Offering[ancestor:name>text*="{1}"]';
-						path = "{0}>Sites>Site>Offerings>".format(this.experience.organization.id()) + path;
+						path = '[name>text*="{1}"]|[site>name*="{1}"]';
+						path = this.experience.organization().urlPath() + '/site/offering' + path;
 						path += this.experience.getOfferingConstraint();
 					}
 			
@@ -2000,7 +1937,7 @@ var OfferingSearchView = (function() {
 			}
 			else
 			{
-				throw new Error("Unreachable code");
+				console.assert(false) /* Unreachable code */;
 			}
 		}
 		else if (this.experience.services.length > 0)
@@ -2009,7 +1946,7 @@ var OfferingSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[ancestor:name>text*="{1}"]';
+					path = 'offering[name>text*="{1}"]|[site>name*="{1}"]|[site>organization>name*="{1}"]';
 					path += this.experience.getOfferingConstraint();
 				}
 				else
@@ -2022,7 +1959,7 @@ var OfferingSearchView = (function() {
 			}
 			else
 			{
-				path = "Offering";
+				path = "offering";
 				path += this.experience.getOfferingConstraint();
 				return path;
 			}
@@ -2031,7 +1968,7 @@ var OfferingSearchView = (function() {
 		{
 			if (this.typeName === "Offering")
 			{
-				path = 'Offering[name>text*="{1}"]' +
+				path = 'offering[name>text*="{1}"]' +
 						this.experience.getOfferingConstraint();
 			}
 			else
@@ -2049,7 +1986,7 @@ var OfferingSearchView = (function() {
 	{
 		var path;
 
-		if (this.experience.siteName)
+		if (this.experience.siteName())
 		{
 			if (this.experience.site)
 			{
@@ -2065,9 +2002,9 @@ var OfferingSearchView = (function() {
 			else
 				return '';
 		}
-		else if (this.experience.organizationName)
+		else if (this.experience.organizationName())
 		{
-			if (this.experience.organization)
+			if (this.experience.organization())
 			{
 				if (!val)
 				{
@@ -2121,7 +2058,7 @@ var OfferingSearchView = (function() {
 	OfferingSearchView.prototype.setupSearchTypes = function(searchText)
 	{
 		/* For each state, set up typeName, and the list of typeNames. */
-		if (this.experience.siteName)
+		if (this.experience.siteName())
 		{
 			if (this.experience.site)
 			{
@@ -2132,9 +2069,9 @@ var OfferingSearchView = (function() {
 				this.typeNames = [""];
 			}
 		}
-		else if (this.experience.organizationName)
+		else if (this.experience.organizationName())
 		{
-			if (this.experience.organization)
+			if (this.experience.organization())
 			{
 				if (searchText)
 					this.typeNames = ["Offering"];
@@ -2206,9 +2143,9 @@ var OfferingSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
-				if (d.getTypeName() === "Offering")
+				if (d instanceof cr.Offering)
 				{
-					if (_this.experience.site && _this.experience.site.id() == d.getValue("Site").id())
+					if (_this.experience.site() && _this.experience.site().id() == d.site().id())
 						leftText.text(d.description());
 					else
 					{
@@ -2216,18 +2153,18 @@ var OfferingSearchView = (function() {
 							.classed('title', true).text(d.description());
 	
 						orgDiv = leftText.append('div').classed("organization", true);
-						if (d.getValue("Organization").id() !=
-							(_this.experience.organization && _this.experience.organization.id()))
-							orgDiv.append('div').text(d.getValue("Organization").description());
-						if (d.getValue("Site").description() != d.getValue("Organization").description())
+						if (d.organization().id() !=
+							(_this.experience.organization() && _this.experience.organization().id()))
+							orgDiv.append('div').text(d.organization().description());
+						if (d.site().description() != d.organization().description())
 						{
 							orgDiv.append('div')
 								.classed('address-line', true)
-								.text(d.getValue("Site").description());
+								.text(d.site().description());
 						}
 					}
 				}
-				else if (d.getTypeName() === "Service")
+				else if (d instanceof cr.Service)
 				{
 					leftText.text(d.description());
 				}
@@ -2948,11 +2885,11 @@ var NewExperiencePanel = (function () {
 				newInstance.id() != (this.experienceController.organization() && this.experienceController.organization().id()))
 				this.experienceController.setOrganization(newInstance);
 			else if (newText != this.experienceController.organizationName())
-				this.experienceController.setOrganization({text: newText});
+				this.experienceController.customOrganization(newText)
+										 .organization(null);
 		}
 		else
 			this.organizationSearchView.clearFromOrganization();
-		this.updateInputs();
 	}
 		
 	NewExperiencePanel.prototype.checkSiteInput = function()
@@ -2964,13 +2901,14 @@ var NewExperiencePanel = (function () {
 			var newInstance = this.siteSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
 				newInstance.id() != (this.experienceController.site() && this.experienceController.site().id()))
-				this.experienceController.setSite({instance: newInstance});
+				this.experienceController.site(newInstance)
+										 .customSite(null);
 			else if (newText != this.experienceController.siteName())
-				this.experienceController.setSite({text: newText});
+				this.experienceController.customSite(newText)
+										 .site(null);
 		}
 		else
 			this.siteSearchView.clearFromSite();
-		this.updateInputs();
 	}
 		
 	NewExperiencePanel.prototype.checkOfferingInput = function()
@@ -2982,15 +2920,16 @@ var NewExperiencePanel = (function () {
 			var newInstance = this.offeringSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
 				newInstance.id() != (this.experienceController.offering() && this.experienceController.offering().id()))
-				this.experienceController.setOffering({instance: newInstance});
+				this.experienceController.offering(newInstance)
+										 .customOffering(null);
 			else if (newText != this.experienceController.offeringName)
-				this.experienceController.setOffering({text: newText});
+				this.experienceController.customOffering(newText)
+										 .offering(null);
 		}
 		else
 		{
 			this.offeringSearchView.clearFromOffering();
 		}
-		this.updateInputs();
 	}
 	
 	NewExperiencePanel.prototype.checkTagInput = function(exceptNode)
@@ -3062,6 +3001,7 @@ var NewExperiencePanel = (function () {
 		{
 			this.checkOrganizationInput();
 			this.organizationSearchView.hideSearch(done);
+			this.updateInputs();
 			return true;
 		}
 		else if (newReveal != this.siteSearchView.reveal &&
@@ -3069,6 +3009,7 @@ var NewExperiencePanel = (function () {
 		{
 			this.checkSiteInput();
 			this.siteSearchView.hideSearch(done);
+			this.updateInputs();
 			return true;
 		}
 		else if (newReveal != this.offeringSearchView.reveal &&
@@ -3076,6 +3017,7 @@ var NewExperiencePanel = (function () {
 		{
 			this.checkOfferingInput();
 			this.offeringSearchView.hideSearch(done);
+			this.updateInputs();
 			return true;
 		}
 		else if (newReveal != this.tagSearchView.reveal &&
@@ -3214,7 +3156,7 @@ var NewExperiencePanel = (function () {
 			var _this = this;
 			new ConfirmDeleteAlert(this.node(), "Delete Experience", 
 				function() { 
-					_this.experience.instance.deleteValue()
+					_this.experienceController.instance.deleteData()
 						.then(function() { _this.hideDown(unblockClick) },
 							  cr.syncFail);
 				}, 
@@ -3334,7 +3276,7 @@ var NewExperiencePanel = (function () {
 				{
 					_this.checkOfferingInput();
 				}
-				
+				_this.updateInputs();
 				_this.checkTagInput();
 						
 				if (!experienceController.offeringName() &&

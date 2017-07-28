@@ -619,7 +619,7 @@ var ExperienceCommentsPanel = (function() {
 		/* commentsCells is an array of cells contained within a Comments instance. */
 		function onCommentsChecked(experience)
 		{
-			setupOnViewEventHandler(experience, 'valueAdded.cr', commentsDiv.node(), onCommentAdded);
+			setupOnViewEventHandler(experience, 'commentAdded.cr', commentsDiv.node(), onCommentAdded);
 			_this.loadComments(experience.comments());
 		}
 		

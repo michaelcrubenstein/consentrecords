@@ -2115,6 +2115,7 @@ cr.removeElement = function(array, item)
 cr.IInstance = (function() {
 	IInstance.prototype = new cr.ModelObject();
 	IInstance.prototype._id = null;
+	IInstance.prototype._clientID = null;
 	IInstance.prototype._description = "None";
 	IInstance.prototype._privilege = null;
 	IInstance.prototype._parentID = null;
@@ -2127,6 +2128,20 @@ cr.IInstance = (function() {
 		else
 		{
 			this._id = newID;
+			return this;
+		}
+	}
+	
+	/* The clientID is a temporary id that is used before the item is added.
+		The only constraint is that it is unique within a single update operation.
+	 */
+	IInstance.prototype.clientID = function(newID)
+	{
+		if (newID === undefined)
+			return this._clientID;
+		else
+		{
+			this._clientID = newID;
 			return this;
 		}
 	}
@@ -2330,13 +2345,14 @@ cr.IInstance = (function() {
 	IInstance.prototype.updateList = function(items, data, newIDs, resultType, addEventType, deletedEventType)
 	{
 		var _this = this;
-		if (items())
+		items = items.call(this);
+		if (items)
 		{
 			data.forEach(function(d)
 				{
 					if ('delete' in d)
 					{
-						var item = items().find(function(i)
+						var item = items.find(function(i)
 							{
 								return i.id() == d['delete'];
 							});
@@ -2347,13 +2363,14 @@ cr.IInstance = (function() {
 					}
 					else if ('add' in d)
 					{
-						var item = items().find(function(i)
+						var item = items.find(function(i)
 							{
 								return i.clientID() == d['add'];
 							});
 						if (item)
 						{
-							item.id(newIDs[d['add']]);
+							item.id(newIDs[d['add']])
+								.clientID(null);
 							$(_this).trigger(addEventType, item);
 						}
 						else
@@ -2363,7 +2380,7 @@ cr.IInstance = (function() {
 					}
 					else
 					{
-						var item = items().find(function(i)
+						var item = items.find(function(i)
 							{
 								return i.id() == d['id'];
 							});
@@ -2403,8 +2420,14 @@ cr.IInstance = (function() {
 		return this;
 	}
 
-	IInstance.prototype.update = function(changes)
+	/* Normally, all of the elements are expected to be part of this, so newIDs are applied
+		to existing objects. Otherwise, autoUpdateData should be false, the caller should
+		update the data objects as needed and then dall updateData with the changes and newIDs. 
+	 */
+	IInstance.prototype.update = function(changes, autoUpdateData)
 	{
+		autoUpdateData = (autoUpdateData !== undefined) ? autoUpdateData : true;
+		
 		var _this = this;
 		if (Object.keys(changes).length == 0)
 		{
@@ -2423,8 +2446,9 @@ cr.IInstance = (function() {
 					{
 					    /* If the server succeeds, then update this with the changes and any new IDs. */
 						newIDs = json['new IDs'];
-					    _this.updateData(changes, newIDs);
-						r2.resolve();
+					    if (autoUpdateData)
+					    	_this.updateData(changes, newIDs);
+						r2.resolve(changes, newIDs);
 					}
 					catch (err)
 					{
