@@ -166,16 +166,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.columnData = [{labelY: PathGuides.labelYs[0], color: "#666"}, 
 										{labelY: PathGuides.labelYs[0], color: "#666"}];
 
-	ComparePath.prototype.handleValueDeleted = function(experience)
-	{
-		var index = this.allExperiences.indexOf(experience);
-		var _this = this;
-		if (index >= 0)
-			this.allExperiences.splice(index, 1);
-		this.clearLayout();
-		this.checkLayout();
-	};
-
 	ComparePath.prototype.getColumn = function(fd)
 	{
 		if (fd.isOnPath(this.rightPath))

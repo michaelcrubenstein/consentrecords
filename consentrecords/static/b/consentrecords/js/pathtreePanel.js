@@ -596,7 +596,7 @@ var PathView = (function() {
 	
 		var node = this.sitePanel.node();
 		setupOnViewEventHandler(experience, "changed.cr", node, handleDataChanged);
-		setupOnViewEventHandler(experience, "valueAdded.cr valueDeleted.cr changed.cr", node, handleExperienceDateChanged);
+		setupOnViewEventHandler(experience, "changed.cr", node, handleExperienceDateChanged);
 	}
 	
 	PathView.prototype._setFlagText = function(node)
@@ -616,10 +616,10 @@ var PathView = (function() {
 	{
 		var _this = this;
 		
-		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, function(eventObject)
+		setupOneViewEventHandler(fd.experience, "deleted.cr", node, function(eventObject)
 			{
 				$(eventObject.data).remove();
-				_this.handleValueDeleted(this);
+				_this.handleExperienceDeleted(this);
 			});
 		
 		var flagCells = ["Organization",
@@ -1035,10 +1035,9 @@ var PathLines = (function() {
 	/* A flag indicating whether or not the userSet event has been triggered. */
 	PathLines.prototype.isUserSet = false;
 
-	PathLines.prototype.handleValueDeleted = function(experience)
+	PathLines.prototype.handleExperienceDeleted = function(experience)
 	{
 		var index = this.allExperiences.indexOf(experience);
-		var _this = this;
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
 		this.clearLayout();

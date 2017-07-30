@@ -576,7 +576,7 @@ var ExperienceCommentsPanel = (function() {
 				resizeDetail();
 			});
 		
-		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", this.node(), function(eventObject)
+		setupOneViewEventHandler(fd.experience, "deleted.cr", this.node(), function(eventObject)
 			{
 				_this.hideNow();
 			});
