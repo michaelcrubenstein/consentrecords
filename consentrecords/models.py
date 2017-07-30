@@ -554,17 +554,17 @@ class SecureRootInstance(RootInstance):
     # for the specified user to have one of the specified privileges.
     def grantorIDs(user, privileges):
         return UserGrant.objects.filter(\
-				privilege__in=privileges,
-				deleteTransaction__isnull=True,
-				grantee=user,
-			).values('grantor_id').union(\
-			GroupGrant.objects.filter(\
-				privilege__in=privileges,
-				deleteTransaction__isnull=True,
-				grantee__deleteTransaction__isnull=True,
-				grantee__members__user=user,
-				grantee__members__deleteTransaction__isnull=True,
-			).values('grantor_id'))
+                privilege__in=privileges,
+                deleteTransaction__isnull=True,
+                grantee=user,
+            ).values('grantor_id').union(\
+            GroupGrant.objects.filter(\
+                privilege__in=privileges,
+                deleteTransaction__isnull=True,
+                grantee__deleteTransaction__isnull=True,
+                grantee__members__user=user,
+                grantee__members__deleteTransaction__isnull=True,
+            ).values('grantor_id'))
     
     def privilegedQuerySet(qs, user, prefix, privileges):  
         if prefix: prefix += '__'
@@ -3935,7 +3935,7 @@ class Experience(ChildInstance, dbmodels.Model):
         for i in self.customServices.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
         for i in self.services.filter(deleteTransaction__isnull=True):
-            i.markDeleted(context)
+            i.markDeleted(context, needToCheck=False)
         for i in self.comments.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
         
@@ -3943,6 +3943,9 @@ class Experience(ChildInstance, dbmodels.Model):
         for i in Notification.objects.filter(deleteTransaction__isnull=True,
             notificationArguments__argument=self.id):
             i.markDeleted(context)
+        
+        # Delete all of the experience implications.   
+        self.experienceImplications.all().delete()
             
         super(Experience, self).markDeleted(context)
     
@@ -3974,7 +3977,31 @@ class Experience(ChildInstance, dbmodels.Model):
         newItem.createChildren(data, 'custom services', context, ExperienceCustomService, newIDs)
         newItem.createChildren(data, 'comments', context, Comment, newIDs)
         
+        if newItem.offering: self.checkImplications()
+        
         return newItem
+        
+    def checkImplications(self):
+        serviceSet = set()
+        for es in self.services.filter(deleteTransaction__isnull=True):
+            for imp in es.service.serviceImplications.filter(deleteTransaction__isnull=True):
+                serviceSet.add(imp.impliedService)
+        if self.offering:
+            for os in self.offering.offeringServices.filter(deleteTransaction__isnull=True):
+                for imp in os.service.serviceImplications.filter(deleteTransaction__isnull=True):
+                    serviceSet.add(imp.impliedService)
+        
+        # For each existing service implication, either remove it from the service
+        # set if it is there, or delete it from the database.
+        for ei in self.experienceImplications.all():
+            if ei.service in serviceSet:
+                serviceSet.remove(ei.service)
+            else:
+                ei.delete()
+        
+        # For any leftever elements in the service set, create experience implications.     
+        for s in serviceSet:
+            ExperienceImplication.objects.create(experience=self, service=s)
 
     def buildHistory(self, context):
         return ExperienceHistory.objects.create(transaction=self.lastTransaction,
@@ -4019,6 +4046,8 @@ class Experience(ChildInstance, dbmodels.Model):
             if newValue != self.offering:
                 history = history or self.buildHistory(context)
                 self.offering = newValue
+                # Check that all of the services associated with this experience are correct.
+                self.checkImplications()
         if 'custom offering' in changes and changes['custom offering'] != self.customOffering:
             history = history or self.buildHistory(context)
             self.customOffering = changes['custom offering']
@@ -4210,9 +4239,31 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
                                  position=_newPosition(parent.services, data, 'position'),
                                  service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
+                                
+        self.createImplications()
         
-        return newItem                          
+        return newItem
         
+    def createImplications(self):
+        serviceSet = set()
+        for s in self.service.implication.all():
+            serviceSet.add(s)
+        
+        # for each existing service implication, remove it from the service
+        # set if it is there.
+        for ei in self.parent.experienceImplications.all():
+            if ei.service in serviceSet:
+                serviceSet.remove(ei.service)
+        
+        # For any leftever elements in the service set, create experience implications.     
+        for s in serviceSet:
+            ExperienceImplication.objects.get_or_create(experience=self.parent, service=s)
+        
+    def markDeleted(self, context, needToCheck=True):
+        super(ExperienceService, self).markDeleted(context)
+        if needToCheck:
+            self.parent.checkImplications()
+
     @property
     def historyType(self):
         return ExperienceServiceHistory
@@ -5681,8 +5732,8 @@ class Period(ChildInstance, dbmodels.Model):
     elementMap = {}
     
     weekdays = {'en': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-    			'sp': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-    		   }
+                'sp': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+               }
     
     def description(self, languageCode=None):
         return '%s: %s-%s' % ('any day' if (self.weekday == None) else Period.weekdays[languageCode][self.weekday], 
