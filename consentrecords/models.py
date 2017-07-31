@@ -4027,6 +4027,10 @@ class Experience(ChildInstance, dbmodels.Model):
         ExperiencePrompt.validateTimeframe(changes, 'timeframe')
         _validateDate(changes, 'start')
         _validateDate(changes, 'end')
+        testStart = changes['start'] if 'start' in changes and changes['start'] else (self.start or "0000-00-00")
+        testEnd = changes['end'] if 'end' in changes and changes['end'] else (self.end or "9999-99-99")
+        if testStart > testEnd:
+            raise ValueError("the start date of an experience cannot be after the end date of the experience")
 
         history = None
         if 'organization' in changes:
@@ -4065,9 +4069,6 @@ class Experience(ChildInstance, dbmodels.Model):
             history = history or self.buildHistory(context)
             self.timeframe = changes['timeframe']
         
-        if self.start and self.end and self.start > self.end:
-            raise ValueError('the start date of an experience cannot be after the end date of the experience')
-
         self.updateChildren(changes, 'services', context, ExperienceService, self.services, newIDs)
         self.updateChildren(changes, 'custom services', context, ExperienceCustomService, self.customServices, newIDs)
         self.updateChildren(changes, 'comments', context, Comment, self.comments, newIDs)
@@ -6390,6 +6391,11 @@ class Session(ChildInstance, dbmodels.Model):
         
         _validateDate(changes, 'start')
         _validateDate(changes, 'end')
+        testStart = changes['start'] if 'start' in changes and changes['start'] else (self.start or "0000-00-00")
+        testEnd = changes['end'] if 'end' in changes and changes['end'] else (self.end or "9999-99-99")
+        if testStart > testEnd:
+            raise ValueError('the start date of a session cannot be after the end date of the session')
+        
         history = None
         if 'registration deadline' in changes and changes['registration deadline'] != self.registrationDeadline:
             _validateDate(changes, 'registration deadline')
