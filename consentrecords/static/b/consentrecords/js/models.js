@@ -2182,12 +2182,17 @@ cr.IInstance = (function() {
 	IInstance.prototype.parentID = function(newParentID)
 	{
 		if (newParentID === undefined)
-			return this._parentID && crp.getInstance(this._parentID);
+			return this._parentID;
 		else
 		{
 			this._parentID = newParentID;
 			return this;
 		}
+	}
+	
+	IInstance.prototype.parent = function()
+	{
+		return crp.getInstance(this._parentID);
 	}
 	
     IInstance.prototype.promiseData = function()
@@ -2251,7 +2256,7 @@ cr.IInstance = (function() {
 		if (!this._id) this._id = source._id;
 		if (!this._description) this._description = source._description;
 		if (!this._privilege) this._privilege = source._privilege;
-		if (!this.parentID) this._parentID = source._parentID;
+		if (!this._parentID) this._parentID = source._parentID;
 		return this;
 	}
 	
