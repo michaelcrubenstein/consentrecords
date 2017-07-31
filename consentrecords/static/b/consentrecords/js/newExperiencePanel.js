@@ -264,14 +264,15 @@ var ExperienceController = (function() {
 		if (args instanceof cr.Service)
 		{
 			var i = new cr.ExperienceService();
-			i.description(args.description());
-			i.service(args);
+			i.description(args.description())
+			 .service(args);
 			this.experienceServices().push(i);
 		}
 		else if (typeof(args) == "string")
 		{
 			var i = new cr.ExperienceCustomService();
-			i.text(args);
+			i.description(args)
+			 .name(args);
 			this.customServices().push(i);
 		}
 		else
@@ -612,7 +613,7 @@ var ExperienceController = (function() {
 		else
 		{
 			var services = [new cr.ExperienceCustomService()];
-			services[0].text(service)
+			services[0].name(service)
 					   .position(0);
 			this.newExperience.customServices(services);
 		}
@@ -720,7 +721,7 @@ var MultiTypeOptionView = (function() {
 		return data.find(function(d) {
 				return d.getCell && d.getCell(cr.fieldNames.name).data.find(
 					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
-					(d.getDescription && d.description().toLocaleLowerCase() === compareText);
+					(d.description && d.description().toLocaleLowerCase() === compareText);
 			});
 	}
 	
@@ -1320,11 +1321,11 @@ var TagSearchView = (function() {
 				if (d3Focus && d3Focus.datum())
 				{
 					var oldService = d3Focus.datum();
-					if (oldService instanceof cr.Service)
+					if (oldService instanceof cr.ServiceLinkInstance)
 					{
 						var oldES = this.experience.experienceServices().find(function(es)
 							{
-								return es.service() == oldService;
+								return es == oldService;
 							});
 						/* Replace the old experienceService with a new one. */
 						if (oldES)
@@ -1358,7 +1359,9 @@ var TagSearchView = (function() {
 				{
 					container
 						.selectAll('input.tag')
-						.filter(function(d) { return d == newDatum; })
+						.filter(function(d)	
+							{ return d instanceof cr.ServiceLinkInstance &&
+									 d.service() == newDatum; })
 						.node().focus();
 				}
 				unblockClick();
@@ -3029,10 +3032,7 @@ var NewExperiencePanel = (function () {
 					if (newText)
 					{
 						var d = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
-						if (d)
-							_this.experience.addService(d);
-						else
-							_this.experience.addService(newText);
+						_this.experienceController.addService(d || newText);
 						_this.showTags();
 						this.value = "";
 						$(this).attr('placeholder', $(this).attr('placeholder'));

@@ -4408,7 +4408,7 @@ cr.ExperienceCustomService = (function() {
 		{
 		    if (newValue != this._name)
 		    {
-				this._name = newValue.id();
+				this._name = newValue;
 			}
 			return this;
 		}
