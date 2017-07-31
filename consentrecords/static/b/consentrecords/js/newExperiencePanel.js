@@ -102,6 +102,11 @@ var ExperienceController = (function() {
 		return this.newExperience.experienceServices(newValue);
 	}
 
+	ExperienceController.prototype.customServices = function(newValue)
+	{
+		return this.newExperience.customServices(newValue);
+	}
+
 	ExperienceController.prototype.start = function(newValue)
 	{
 		return this.newExperience.start(newValue);
@@ -267,7 +272,7 @@ var ExperienceController = (function() {
 		{
 			var i = new cr.ExperienceCustomService();
 			i.text(args);
-			this.newExperience.customServices().push(i);
+			this.customServices().push(i);
 		}
 		else
 			throw new Error("Invalid arguments to addService");
@@ -275,9 +280,12 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.removeService = function(service)
 	{
-		var index = this.services.indexOf(service);
-		if (index >= 0)
-			this.services.splice(index, 1);
+		cr.removeElement(this.newExperience.experienceServices(), service);
+	}
+	
+	ExperienceController.prototype.removeCustomService = function(service)
+	{
+		cr.removeElement(this.newExperience.customServices(), service);
 	}
 	
 	ExperienceController.prototype.distinctExperienceServices = function()
@@ -337,7 +345,7 @@ var ExperienceController = (function() {
 		}
 		
 		i = 0;
-		var newCustomServices = this.newExperience.customServices()
+		var newCustomServices = this.customServices()
 			.map(function(s)
 				{
 					var addID = '{0}.cs.{1}'.format(idPrefix, i);
@@ -417,79 +425,111 @@ var ExperienceController = (function() {
 	
 		if (this.instance)
 		{
-			var updateData = [];
-			var sourceObjects = [];
-			this.instance.appendUpdateOrganizationCommand(this.newExperience.organization(), updateData, sourceObjects);
-			this.instance.appendUpdateCustomOrganizationCommand(this.newExperience.customOrganization(), updateData, sourceObjects);
-					
-			this.instance.site().appendUpdateCommands(0, this.site, updateData, sourceObjects);
-			this.instance.getValue("User Entered Site").appendUpdateCommands(
-					0, this.site ? null : this.siteName, updateData, sourceObjects);
-					
-			this.instance.getValue("Offering").appendUpdateCommands(0, this.offering, updateData, sourceObjects);
-			this.instance.getValue("User Entered Offering").appendUpdateCommands(
-					0, this.offering ? null : this.offeringName, updateData, sourceObjects);
-					
-			this.instance.getValue("Start").appendUpdateCommands(0, this.start(), updateData, sourceObjects);	
-			this.instance.getValue("End").appendUpdateCommands(0, this.end(), updateData, sourceObjects);
+			var updateData = {};
 			
-			this.instance.getValue("Timeframe").appendUpdateCommands(0, this.timeframe(), updateData, sourceObjects);
+			if (this.instance.organization() != this.newExperience.organization())
+				updateData['organization'] = this.newExperience.organization().urlPath();
+			if (cr.stringChanged(this.instance.customOrganization(), this.newExperience.customOrganization()))
+				updateData['custom organization'] = this.newExperience.customOrganization();
+					
+			if (this.instance.site() != this.newExperience.site())
+				updateData['site'] = this.newExperience.site().urlPath();
+			if (cr.stringChanged(this.instance.customSite(), this.newExperience.customSite()))
+				updateData['custom site'] = this.newExperience.customSite();
+					
+			if (this.instance.offering() != this.newExperience.offering())
+				updateData['offering'] = this.newExperience.offering().urlPath();
+			if (cr.stringChanged(this.instance.customOffering(), this.newExperience.customOffering()))
+				updateData['custom offering'] = this.newExperience.customOffering();
+					
+			if (cr.stringChanged(this.instance.start(), this.newExperience.start()))
+				updateData['start'] = this.newExperience.start();
+			if (cr.stringChanged(this.instance.end(), this.newExperience.end()))
+				updateData['end'] = this.newExperience.end();
+			if (cr.stringChanged(this.instance.timeframe(), this.newExperience.timeframe()))
+				updateData['timeframe'] = this.newExperience.timeframe();
 			
 			var i = 0;
 			var j = 0;
 			
-			var existingServices = null;
-			if (this.offering && this.offering.offeringServices())
-				existingServices = this.offering.offeringServices()
-					.map(function(d) { return d.service().id(); });
-
-			var newServices = this.experienceServices().filter(function(es) {
-					return 
-						(!existingServices || 
-					     !existingServices.find(function(d) { 
-							return es.service().id() == d;
-							}));
-				});
-			var newUserEnteredServices = this.customServices();
+			var newServices = this.distinctExperienceServices();
+			var oldServices = this.instance.experienceServices();
+			var newCustomServices = this.customServices();
+			var oldCustomServices = this.instance.customServices();
 			
-			var collateValues = function(cell, newValues, updateData, sourceObjects)
-			{
-				var j = 0;
-				newValues.forEach(function(d)
-					{
-						if (j < cell.data.length)
-						{
-							var oldService = cell.data[j];
-							oldService.appendUpdateCommands(j, d, updateData, sourceObjects);
-							++j;
-						}
-						else
-						{
-							updateData.push(cell.getAddCommand(d));
-							sourceObjects.push(cell);
-						}
-					});
-				while (j < cell.data.length)
+			var j = 0;
+			var subChanges;
+			subChanges = [];
+			newServices.forEach(function(d)
 				{
-					var oldService = cell.data[j];
-					oldService.appendUpdateCommands(j, null, updateData, sourceObjects);
-					++j;
-				}
+					if (j < oldServices.length)
+					{
+						var oldService = oldServices[j];
+						if (oldService.service().id() != d.service().id())
+							subChanges.push({change: oldService.id(), service: d.service().urlPath()});
+						++j;
+					}
+					else
+					{
+						d.clientID('S{0}'.format(j));
+						subChanges.push({add: d.clientID(), service: d.service().urlPath()});
+					}
+				});
+			while (j < oldServices.length)
+			{
+				var oldService = oldServices[j];
+				subChanges.push({'delete': oldService.id()});
+				++j;
 			}
-			
-			collateValues(this.instance.experienceServices(), newServices, updateData, sourceObjects);
-			collateValues(this.instance.customServices(), newUserEnteredServices, updateData, sourceObjects);
-			
+			if (subChanges.length > 0)
+				updateData['services'] = subChanges;
+				
+			subChanges = [];
+			newCustomServices.forEach(function(d)
+				{
+					if (j < oldCustomServices.length)
+					{
+						var oldService = oldCustomServices[j];
+						if (oldCustomServices.name() != d.name())
+							subChanges.push({change: oldService.id(), name: d.name()});
+						++j;
+					}
+					else
+					{
+						d.clientID('CS{0}'.format(j));
+						subChanges.push({add: d.clientID(), name: d.name()});
+					}
+				});
+			while (j < oldCustomServices.length)
+			{
+				var oldService = oldCustomServices[j];
+				subChanges.push({'delete': oldService.id()});
+				++j;
+			}
+			if (subChanges.length > 0)
+				updateData['custom services'] = subChanges;
+				
 			bootstrap_alert.show($('.alert-container'), "Saving Experience...", "alert-info");
 			
-			return this.instance.updateValues(updateData, sourceObjects)
-				.then(function()
+			return this.instance.update(updateData, false)
+				.then(function(changes, newIDs)
 					{
-						var offering = _this.instance.offering();
-						if (offering && offering.id() && !offering.areCellsLoaded())
-							return offering.promiseCellsFromCache();
-						else
-							return undefined;
+						var r2 = $.Deferred();
+						try
+						{
+							/* Add any services and custom services from newExperience to instance. */
+							_this.instance.pushNewElements(_this.experienceServices(),
+														   _this.instance.experienceServices())
+										  .pushNewElements(_this.customServices(),
+														   _this.instance.customServices())
+										  .updateData(changes, newIDs)
+							r2.resolve(changes, newIDs);
+						}
+						catch(err)
+						{
+							r2.reject(err);
+						}
+						return r2;
 					});
 		}
 		else
@@ -518,8 +558,7 @@ var ExperienceController = (function() {
 							r2.reject(err);
 						}
 						return r2;
-					},
-					cr.syncFail);
+					});
 		}
 	}
 	
@@ -2605,6 +2644,8 @@ var NewExperiencePanel = (function () {
 			{
 				if (d instanceof cr.Service)
 					service = d;
+				else if (d instanceof cr.ServiceLinkInstance)
+					service = d.service();
 			}
 			
 			if (service)
@@ -2771,7 +2812,15 @@ var NewExperiencePanel = (function () {
 		container = this.mainDiv.select('.tags-container');
 		var tagDivs = container.selectAll('input.tag');
 		tags = tags.concat(this.experienceController.experienceServices()
-			.map(function(s) { return s.service(); })
+			.filter(function(s) 
+			{
+				sDescription = s.description();
+				return !offeringTags.find(function(d)
+					{
+						return d.description() === sDescription;
+					})
+			}));
+		tags = tags.concat(this.experienceController.customServices()
 			.filter(function(s) 
 			{
 				sDescription = s.description();
@@ -2947,7 +2996,12 @@ var NewExperiencePanel = (function () {
 					var newText = this.value.trim();
 					if (!newText)
 					{
-						_this.experience.removeService(d);
+						if (d instanceof cr.ExperienceService)
+							_this.experienceController.removeService(d);
+						else if (d instanceof cr.ExperienceCustomService)
+							_this.experienceController.removeCustomService(d);
+						else
+							throw new Error("Invalid object to remove");
 						$(this).remove();
 					}
 					else

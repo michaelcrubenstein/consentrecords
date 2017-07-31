@@ -411,14 +411,14 @@ class IInstance():
                 if 'delete' in subChanges:
                     subItem = children.get(pk=subChanges['delete'])
                     subItem.markDeleted(context)
-                if 'id' in subChanges:
+                elif 'id' in subChanges:
                     subItem = children.get(pk=subChanges['id'])
                     subItem.update(subChanges, context, newIDs)
                 elif 'add' in subChanges:
                     subItem = subClass.create(self, subChanges, context, newIDs=newIDs)
                     newIDs[subChanges['add']] = subItem.id.hex
                 else:
-                    raise ValueError('subChange has no action key (delete, id or add): %s' % subChange) 
+                    raise ValueError('subChange has no action key (delete, id or add): %s' % subChanges) 
     
     @property
     def currentNamesQuerySet(self):

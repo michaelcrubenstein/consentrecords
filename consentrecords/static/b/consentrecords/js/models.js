@@ -790,7 +790,7 @@ cr.TranslationValue = (function() {
 cr.Instance = (function() {
 	Instance.prototype = new cr.ModelObject();
 	Instance.prototype._instanceID = null;
-	Instance.prototype._description = "None";
+	Instance.prototype._description = "";
 	Instance.prototype._typeName = null;
 	Instance.prototype._privilege = null;
 	Instance.prototype._cells = null;
@@ -803,7 +803,7 @@ cr.Instance = (function() {
 	
 	Instance.prototype.setDescription = function(newDescription)
 	{
-		this._description = newDescription || "None";
+		this._description = newDescription;
 		return this;
 	}
 	
@@ -2111,12 +2111,19 @@ cr.removeElement = function(array, item)
 			array.splice(n, 1);
 	}
 }
+
+cr.stringChanged = function(source, target)
+{
+	if (source === null) source = "";
+	if (target === null) target = "";
+	return source != target;
+}
 	
 cr.IInstance = (function() {
 	IInstance.prototype = new cr.ModelObject();
 	IInstance.prototype._id = null;
 	IInstance.prototype._clientID = null;
-	IInstance.prototype._description = "None";
+	IInstance.prototype._description = "";
 	IInstance.prototype._privilege = null;
 	IInstance.prototype._parentID = null;
 	IInstance.prototype._dataLoaded = false;
@@ -2152,7 +2159,7 @@ cr.IInstance = (function() {
 			return this._description;
 		else
 		{
-			this._description = newDescription || "None";
+			this._description = newDescription;
 			return this;
 		}
 	}
@@ -2347,6 +2354,20 @@ cr.IInstance = (function() {
 		}
 	}
 	
+	IInstance.prototype.pushNewElements = function(newElements, oldElements)
+	{
+		var _this = this;
+		newElements.forEach(function(i)
+			{
+				if (i.clientID())
+				{
+					oldElements.push(i);
+					i.parentID(_this.id());
+				}
+			});
+		return this;
+	}
+							
 	IInstance.prototype.updateList = function(items, data, newIDs, resultType, addEventType, deletedEventType)
 	{
 		var _this = this;
@@ -2363,7 +2384,7 @@ cr.IInstance = (function() {
 							});
 						if (item)
 						{
-							$(item).trigger(deletedEventType, item);
+							$(item).trigger("deleted.cr", item);
 						}
 					}
 					else if ('add' in d)
@@ -4185,6 +4206,13 @@ cr.Experience = (function() {
 		return changed;
 	}
 	
+	Experience.prototype.deleted = function()
+	{
+		path = this.parent();
+		cr.removeElement(path.experiences(), this);
+		$(path).trigger("experienceDeleted.cr", this);
+	}
+	
 	Experience.prototype.calculateDescription = function(language)
 	{
 // 		if (!this.getCells())
@@ -4408,6 +4436,13 @@ cr.ExperienceCustomService = (function() {
     	target._position = this._position;
     }
     
+	ExperienceCustomService.prototype.deleted = function()
+	{
+		experience = this.parent();
+		cr.removeElement(experience.experienceCustomServices(), this);
+		$(experience).trigger("experienceCustomServiceDeleted.cr", this);
+	}
+	
 	function ExperienceCustomService() {
 	    cr.IInstance.call(this);
 	};
@@ -4423,6 +4458,19 @@ cr.ExperienceService = (function() {
 	{
 		console.assert(this.id());
 		return 'experience service/{0}'.format(this.id());
+	}
+	
+	ExperienceService.prototype.changed = function()
+	{
+		experience = crp.getInstance(this.parent());
+		$(experience).trigger('changed.cr');
+	}
+	
+	ExperienceService.prototype.deleted = function()
+	{
+		experience = this.parent();
+		cr.removeElement(experience.experienceServices(), this);
+		$(experience).trigger("experienceServiceDeleted.cr", this);
 	}
 	
 	function ExperienceService() {
@@ -5216,7 +5264,7 @@ cr.Offering = (function() {
 		}
 		if ('services' in d)
 		{
-			if (this.updateList(this.experienceServices, d['services'], newIDs, cr.ExperienceService, "experienceServiceAdded.cr", "experienceServiceDeleted.cr"))
+			if (this.updateList(this.offeringServices, d['services'], newIDs, cr.OfferingService, "offeringServiceAdded.cr", "offeringServiceDeleted.cr"))
 				changed = true;
 		}
 		if ('sessions' in d)
@@ -7527,12 +7575,6 @@ cr.User = (function() {
 		}
 	}
 	
-	User.prototype.deletedUserGrantRequest = function(i)
-	{
-		cr.removeElement(this._userGrantRequests, i);
-		$(this).trigger("userGrantRequestDeleted.cr", i);
-	}
-	
 	function User() {
 	    cr.Grantable.call(this);
 	};
@@ -7680,7 +7722,9 @@ cr.UserUserGrantRequest = (function() {
 	UserUserGrantRequest.prototype.deleted = function()
 	{
 		/* Delete from the container first, so that other objects know the container may be empty. */
-		this.user().deletedUserGrantRequest(this);
+		var user = this.user();
+		cr.removeElement(user.userGrantRequests(), this);
+		$(user).trigger("userGrantRequestDeleted.cr", this);
 	}
 	
 	function UserUserGrantRequest() {
