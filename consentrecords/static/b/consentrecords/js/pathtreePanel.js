@@ -384,7 +384,7 @@ var FlagController = (function() {
 	FlagController.prototype.setupChangeEventHandler = function(data, handler)
 	{
 		var experience = this.experience;
-		setupOnViewEventHandler(this.experience, "changed.cr", data, handler);
+		setupOnViewEventHandler(this.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr", data, handler);
 	}
 	
 	FlagController.prototype.selected = function(newValue)
@@ -460,8 +460,8 @@ var PathView = (function() {
 					handler(eventObject, v);
 			}
 			
-			setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr changed.cr", r, f);
-			setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr changed.cr", r, f);
+			setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr", r, f);
+			setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr", r, f);
 		}
 	
 	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.

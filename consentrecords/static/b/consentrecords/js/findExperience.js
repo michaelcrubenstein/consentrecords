@@ -160,7 +160,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 							description: user.caption(),
 						}];
 					var sourceObjects = [new cr.ObjectValue()];
-					sourceObjects[0].on('dataChanged.cr', user, function(eventObject)
+					sourceObjects[0].on('changed.cr', user, function(eventObject)
 						{
 							var newInquiryID = this.id;
 							function done()
