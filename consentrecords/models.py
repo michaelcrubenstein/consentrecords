@@ -4245,7 +4245,7 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
                                  service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
                                 
-        self.createImplications()
+        newItem.createImplications()
         
         return newItem
         
