@@ -103,7 +103,11 @@ def _newPosition(objects, data, key):
     else:
         return 0
             
-def _validateDate(s):
+def _validateDate(data, key):
+    if key not in data or not data[key]:
+        return
+    s = data[key]
+    
     if re.search('^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$', s):
         if int(s[5:7]) <= 12 and int(s[8:10]) <= 31:
             return
@@ -3705,11 +3709,11 @@ class Engagement(ChildInstance, dbmodels.Model):
                 history = history or self.buildHistory(context)
                 self.user = newUser
         if 'start' in changes and changes['start'] != self.start:
-            Session.validateDate(changes, 'start')
+            _validateDate(changes, 'start')
             history = history or self.buildHistory(context)
             self.start = changes['start'] or None
         if 'end' in changes and changes['end'] != self.end:
-            Session.validateDate(changes, 'end')
+            _validateDate(changes, 'end')
             history = history or self.buildHistory(context)
             self.end = changes['end'] or None
         
@@ -3954,8 +3958,8 @@ class Experience(ChildInstance, dbmodels.Model):
            raise PermissionDenied
         
         ExperiencePrompt.validateTimeframe(data, 'timeframe')
-        if 'start' in data: _validateDate(data['start'])
-        if 'end' in data: _validateDate(data['end'])
+        _validateDate(data, 'start')
+        _validateDate(data, 'end')
         if 'start' in data and 'end' in data and data['start'] > data['end']:
             raise ValueError('the start date of an experience cannot be after the end date of the experience')
              
@@ -4021,8 +4025,8 @@ class Experience(ChildInstance, dbmodels.Model):
             raise RuntimeError('you do not have permission to complete this update')
         
         ExperiencePrompt.validateTimeframe(changes, 'timeframe')
-        if 'start' in changes: _validateDate(changes['start'])
-        if 'end' in changes: _validateDate(changes['end'])
+        _validateDate(changes, 'start')
+        _validateDate(changes, 'end')
 
         history = None
         if 'organization' in changes:
@@ -5676,7 +5680,7 @@ class Path(IInstance, dbmodels.Model):
         
         history = None
         if 'birthday' in changes and changes['birthday'] != self.birthday:
-            _validateDate(changes['birthday'])
+            _validateDate(changes, 'birthday')
             history = history or self.buildHistory(context)
             self.birthday = changes['birthday']
         if 'screen name' in changes and changes['screen name'] != self.name:
@@ -6342,11 +6346,6 @@ class Session(ChildInstance, dbmodels.Model):
             i.markDeleted(context)
         super(Session, self).markDeleted(context)
 
-    def validateDate(data, key):
-        if key not in data or not data[key]:
-            return
-        _validateDate(data[key])
-    
     def validateCanRegister(data, key):
         validValues = ['no', 'yes']
         _validateEnumeration(data, key, validValues)
@@ -6355,9 +6354,9 @@ class Session(ChildInstance, dbmodels.Model):
         if not context.canWrite(parent):
            raise PermissionDenied
         
-        Session.validateDate(data, 'registration deadline')
-        Session.validateDate(data, 'start')
-        Session.validateDate(data, 'end')
+        _validateDate(data, 'registration deadline')
+        _validateDate(data, 'start')
+        _validateDate(data, 'end')
         Session.validateCanRegister(data, 'can register')
            
         newItem = Session.objects.create(transaction=context.transaction,
@@ -6389,17 +6388,17 @@ class Session(ChildInstance, dbmodels.Model):
         if not context.canWrite(self):
             raise PermissionDenied('you do not have permission to complete this update')
         
+        _validateDate(changes, 'start')
+        _validateDate(changes, 'end')
         history = None
         if 'registration deadline' in changes and changes['registration deadline'] != self.registrationDeadline:
-            Session.validateDate(changes, 'registration deadline')
+            _validateDate(changes, 'registration deadline')
             history = history or self.buildHistory(context)
             self.registrationDeadline = changes['registration deadline'] or None
         if 'start' in changes and changes['start'] != self.start:
-            Session.validateDate(changes, 'start')
             history = history or self.buildHistory(context)
             self.start = changes['start'] or None
         if 'end' in changes and changes['end'] != self.end:
-            Session.validateDate(changes, 'end')
             history = history or self.buildHistory(context)
             self.end = changes['end'] or None
         if 'can register' in changes and changes['can register'] != self.canRegister:
@@ -6852,7 +6851,9 @@ class User(SecureRootInstance, dbmodels.Model):
     def validateBirthday(data, key):
         if key not in data:
             return
-        _validateDate(data[key])
+        if not data[key]:
+            raise ValuError('birthday can not be empty if specified')
+        _validateDate(data, key)
     
     def create(data, context, newIDs={}):
         User.validateBirthday(data, 'birthday')
@@ -6903,7 +6904,7 @@ class User(SecureRootInstance, dbmodels.Model):
             raise RuntimeError('you do not have permission to complete this update')
         
         if 'birthday' in changes:
-            _validateDate(changes['birthday'])
+            _validateDate(changes, 'birthday')
             
         history = None
         if 'first name' in changes and changes['first name'] != self.firstName:
