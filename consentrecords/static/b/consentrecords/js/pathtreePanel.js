@@ -2049,9 +2049,9 @@ var ExperienceIdeas = (function() {
 								}
 								datum.experience.domain(d.domain());
 								datum.experience.stage(d.stage());
-								datum.experience.setOrganization(d.organization());
-								datum.experience.setSite(d.site());
-								datum.experience.setOffering(d.offering());
+								datum.experience.organization(d.organization())
+												.site(d.site())
+												.offering(d.offering());
 								datum.experience.timeframe(d.timeframe());
 								datum.experience.title(d.name());
 								return datum;

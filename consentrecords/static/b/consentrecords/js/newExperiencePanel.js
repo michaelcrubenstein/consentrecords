@@ -69,129 +69,79 @@ var ExperienceController = (function() {
 
 	ExperienceController.prototype.organization = function(newValue)
 	{
-		return this.newExperience.organization(newValue);
+		var value = this.newExperience.organization(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.customOrganization = function(newValue)
 	{
-		return this.newExperience.customOrganization(newValue);
+		var value = this.newExperience.customOrganization(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.site = function(newValue)
 	{
-		return this.newExperience.site(newValue);
+		var value = this.newExperience.site(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.customSite = function(newValue)
 	{
-		return this.newExperience.customSite(newValue);
+		var value = this.newExperience.customSite(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.offering = function(newValue)
 	{
-		return this.newExperience.offering(newValue);
+		var value = this.newExperience.offering(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.customOffering = function(newValue)
 	{
-		return this.newExperience.customOffering(newValue);
+		var value = this.newExperience.customOffering(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.experienceServices = function(newValue)
 	{
-		return this.newExperience.experienceServices(newValue);
+		var value = this.newExperience.experienceServices(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.customServices = function(newValue)
 	{
-		return this.newExperience.customServices(newValue);
+		var value = this.newExperience.customServices(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.start = function(newValue)
 	{
-		return this.newExperience.start(newValue);
+		var value = this.newExperience.start(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.end = function(newValue)
 	{
-		return this.newExperience.end(newValue);
+		var value = this.newExperience.end(newValue);
+		return newValue === undefined ? value : this;
 	}
 
 	ExperienceController.prototype.timeframe = function(newValue)
 	{
-		return this.newExperience.timeframe(newValue);
+		var value = this.newExperience.timeframe(newValue);
+		return newValue === undefined ? value : this;
 	}
 
-	ExperienceController.prototype.setOrganization = function(args) {
-	    if (args instanceof cr.Site)
-			this.newExperience.organization(args.organization())
-							  .site(args)
-							  .customOrganization(null)
-							  .customSite(null);
-		else if (args instanceof cr.Organization)
-			this.newExperience.organization(args)
-							  .site(null)
-							  .customOrganization(null)
-							  .customSite(null);
-		else if (!args)
-			this.newExperience.organization(null)
-							  .site(null)
-							  .customOrganization(null)
-							  .customSite(null);
-		else if ("text" in args && args.text)
-		{
-			var textValue = args.text;
-			var site = this.newExperience.site();
-			var organization = this.newExperience.organization();
-			
-			if ((site && textValue != site.description() && textValue != organization.description()) ||
-				(!site && organization && textValue != organization.description()) ||
-				(!site && !organization))
-			{
-				this.newExperience.organization(null)
-								  .site(null)
-								  .customOrganization(textValue)
-								  .customSite(null);
-			}
-		}
-	}
-	
 	ExperienceController.prototype.clearOrganization = function()
 	{
 		this.newExperience.organization(null)
 						  .site(null)
 						  .customOrganization(null)
 						  .customSite(null);
+		return this;
 	}
 	
-	ExperienceController.prototype.setSite = function(args) {
-		if (args instanceof cr.Site)
-		{
-			this.newExperience.site(args)
-							  .customSite(null);
-		}
-		else if (!args)
-		{
-			this.newExperience.site(null)
-							  .customSite(null);
-		}
-		else if ("instance" in args && args.instance)
-		{
-			this.newExperience.site(args.instance)
-							  .customSite(null);
-		}
-		else if ("text" in args && args.text)
-		{
-			var textValue = args.text;
-			var site = this.newExperience.site();
-			if (!site || textValue != site.description())
-			{
-				this.newExperience.site(null)
-								  .customSite(textValue);
-			}
-		}
-	}
-
 	ExperienceController.prototype.clearSite = function()
 	{
 		this.newExperience.site(null)
@@ -201,61 +151,59 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.organizationPicked = function(d)
 	{
+		if (this.site() &&
+			this.organization() &&
+			this.organization().id() != d.id())
+		{
+			if (this.offering())
+			{
+				this.clearOffering();
+				this.clearSite();
+			}
+			else
+			{
+				this.clearSite();
+			}
+		}
+		
 		this.newExperience.organization(d)
 						  .customOrganization(null);
+		return this;
 	}
 	
 	ExperienceController.prototype.sitePicked = function(d)
 	{
+		if (this.offering() &&
+			this.site() &&
+			this.site().id() != d.id())
+			this.clearOffering();
+			
 		this.newExperience.site(d)
 						  .customSite(null)
 						  .organization(d.organization())
 						  .customOrganization(null);
+		return this;
 	}
 	
 	ExperienceController.prototype.offeringPicked = function(d)
 	{
+		console.assert(d.site());
+		console.assert(d.organization());
+		
 		this.newExperience.offering(d)
 						  .customOffering(null)
 						  .site(d.site())
 						  .customSite(null)
 						  .organization(d.organization())
 						  .customOrganization(null);
-	}
-	
-	ExperienceController.prototype.setOffering = function(args) {
-		if (args instanceof cr.Offering)
-		{
-			this.newExperience.offering(args)
-							  .customOffering(null);
-		}
-		else if (!args)
-		{
-			this.newExperience.offering(null)
-							  .customOffering(null);
-		}
-		else if ("instance" in args && args.instance)
-		{
-			var d = args.instance;
-			this.newExperience.offering(d)
-							  .customOffering(null);
-		}
-		else if ("text" in args && args.text)
-		{
-			var textValue = args.text;
-			var offering = this.newExperience.offering();
-			if (!offering ||textValue != offering.description())
-			{
-				this.newExperience.offering(null)
-								  .customOffering(textValue);
-			}
-		}
+		return this;
 	}
 	
 	ExperienceController.prototype.clearOffering = function()
 	{
 		this.newExperience.offering(null)
 						  .customOffering(null);
+		return this;
 	}
 	
 	/* Args can either be a cr.Service or a string. */
@@ -628,7 +576,6 @@ var ExperienceController = (function() {
 	{
 		this.initPreviousDateRange();
 		
-		/* Call setOrganization, which recognizes this as a site and does the correct thing. */
 		this.organization(d.organization())
 			.customOrganization(null)
 			.site(d)
@@ -670,9 +617,9 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.getOfferingConstraint = function()
 	{
-		if (this.services.length > 0 &&
-			this.services[0])
-			return '[service>service={0}]'.format(this.services[0].id());
+		if (this.experienceServices().length > 0 &&
+			this.experienceServices()[0])
+			return '[service>service={0}]'.format(this.experienceServices()[0].id());
 		else if (this.domain())
 			return '[service>service={0}]'.format(this.domain().id());
 		else if (this.stage())
@@ -725,7 +672,7 @@ var MultiTypeOptionView = (function() {
 		return data.find(function(d) {
 				console.assert(d.names());
 				return d.names().find(
-					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
+					function(d) { return d.text().toLocaleLowerCase() === compareText;}) ||
 					(d.description && d.description().toLocaleLowerCase() === compareText);
 			});
 	}
@@ -853,20 +800,6 @@ var ExperienceDatumSearchView = (function() {
 				try
 				{
 					/* Clear the site and offering if they aren't within the new organization. */
-					if (_this.experience.site() &&
-						_this.experience.organization() &&
-						_this.experience.organization().id() != d.id())
-					{
-						if (this.experience.offering())
-						{
-							this.experience.clearOffering();
-							this.experience.clearSite();
-						}
-						else
-						{
-							this.experience.clearSite();
-						}
-					}
 					this.experience.organizationPicked(d);
 					
 					this.sitePanel.onExperienceUpdated();
@@ -895,10 +828,6 @@ var ExperienceDatumSearchView = (function() {
 						{
 							try
 							{
-								if (_this.experience.offering() &&
-									_this.experience.site() &&
-									_this.experience.site().id() != d.id())
-									_this.experience.clearOffering();
 								_this.experience.sitePicked(d);
 								_this.sitePanel.onExperienceUpdated();
 								_this.hideSearch(function()
@@ -1623,7 +1552,7 @@ var SiteSearchView = (function() {
 				return path.format(symbol, encodeURIComponent(val));
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experience.experienceServices().length > 0)
 		{
 			if (!val)
 			{
@@ -1705,7 +1634,7 @@ var SiteSearchView = (function() {
 				}
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experience.experienceServices().length > 0)
 		{
 			if (!val)
 			{
@@ -1992,7 +1921,7 @@ var OfferingSearchView = (function() {
 				console.assert(false) /* Unreachable code */;
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experience.experienceServices().length > 0)
 		{
 			if (val)
 			{
@@ -2080,7 +2009,7 @@ var OfferingSearchView = (function() {
 				throw new Error("Unreachable code");
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experience.experienceServices().length > 0)
 		{
 			if (val)
 			{
@@ -2137,17 +2066,9 @@ var OfferingSearchView = (function() {
 				this.typeNames = [""];
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experience.experienceServices().length > 0)
 		{
-			if (this.experience.services[0] instanceof cr.Service)
-			{
-				if (searchText)
-					this.typeNames = ["Offering"];
-				else
-					this.typeNames = ["Offering"];
-			}
-			else
-				this.typeNames = [""];
+			this.typeNames = ["Offering"];
 		}
 		else if (searchText)
 		{
@@ -2945,7 +2866,14 @@ var NewExperiencePanel = (function () {
 			var newInstance = this.organizationSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
 				newInstance.id() != (this.experienceController.organization() && this.experienceController.organization().id()))
-				this.experienceController.setOrganization(newInstance);
+				{
+					if (newInstance instanceof cr.Organization)
+						this.experienceController.organizationPicked(newInstance);
+					else if (newInstance instanceof cr.Site)
+						this.experienceController.sitePicked(newInstance);
+					else
+						console.assert(false);
+				}
 			else if (newText != this.experienceController.organizationName())
 				this.experienceController.customOrganization(newText)
 										 .organization(null);
