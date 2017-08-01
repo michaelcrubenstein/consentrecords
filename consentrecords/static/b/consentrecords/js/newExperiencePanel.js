@@ -723,7 +723,8 @@ var MultiTypeOptionView = (function() {
 			return true;
 		var data = this.buttons().data();
 		return data.find(function(d) {
-				return d.getCell && d.getCell(cr.fieldNames.name).data.find(
+				console.assert(d.names());
+				return d.names().find(
 					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
 					(d.description && d.description().toLocaleLowerCase() === compareText);
 			});
@@ -780,7 +781,7 @@ var MultiTypeOptionView = (function() {
 			.classed('hover-items search', true);
 	}
 	
-	function MultiTypeOptionView(containerNode, experience, appendDescriptions)
+	function MultiTypeOptionView(containerNode, experience)
 	{
 		this.containerNode = containerNode;
 		if (containerNode)
@@ -957,6 +958,8 @@ var ExperienceDatumSearchView = (function() {
 
 		if (d instanceof cr.Offering)
 		{
+			console.assert(d.organization());
+			console.assert(d.site());
 			if (this.stringContains(d.site().description(), compareText))
 				return true;
 			if (this.stringContains(d.organization().description(), compareText))
@@ -964,6 +967,7 @@ var ExperienceDatumSearchView = (function() {
 		}
 		else if (d instanceof cr.Site)
 		{
+			console.assert(d.organization());
 			if (this.stringContains(d.organization().description(), compareText))
 				return true;
 		}
@@ -1050,10 +1054,7 @@ var ExperienceDatumSearchView = (function() {
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.initialTypeName;
 		this.sitePanel = sitePanel;
-		MultiTypeOptionView.call(this, containerNode, experience, 
-			function(buttons) { 
-				_this.appendDescriptions(buttons); 
-			});
+		MultiTypeOptionView.call(this, containerNode, experience);
 		
 		var _this = this;
 
@@ -1072,14 +1073,12 @@ var ExperienceDatumSearchView = (function() {
 
 			this.getDataChunker._onDoneSearch = function()
 				{
-					var searchText = _this._foundCompareText;
 					var i = _this.typeNames.indexOf(_this.typeName);
 					if (i < _this.typeNames.length - 1)
 					{
 						_this.typeName = _this.typeNames[i+1];
-						this.path = _this.searchPath(searchText);
-						this.fields = _this.fields();
-						this.checkStart(searchText);
+						_this.setupChunkerArguments(_this._foundCompareText);
+						this.checkStart(_this._foundCompareText);
 					}
 					else if (!_this.getDataChunker.hasButtons() && !_this.inputText())
 					{
@@ -1510,7 +1509,7 @@ var OrganizationSearchView = (function() {
 		return true;
 	}
 	
-	OrganizationSearchView.prototype.appendDescriptions = function(buttons)
+	OrganizationSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
@@ -1813,7 +1812,7 @@ var SiteSearchView = (function() {
 		return true;
 	}
 	
-	SiteSearchView.prototype.appendDescriptions = function(buttons)
+	SiteSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
@@ -2189,7 +2188,7 @@ var OfferingSearchView = (function() {
 		return true;
 	}
 	
-	OfferingSearchView.prototype.appendDescriptions = function(buttons)
+	OfferingSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		

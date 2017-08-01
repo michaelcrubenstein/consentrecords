@@ -6886,7 +6886,8 @@ cr.Site = (function() {
 		}
 		if (!this._offerings && source._offerings)
 			this._offerings = source._offerings;
-		/* Set organization separately. */
+			
+		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		return this;
 	}
 	

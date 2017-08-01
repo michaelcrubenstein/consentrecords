@@ -95,7 +95,7 @@ var SharingPanel = (function() {
 			.text("Ignore");
 			
 		spans.on('click', function(d) {
-				if (prepareClick('click', 'ignore access request {0}'.format(d.getDescription())))
+				if (prepareClick('click', 'ignore access request {0}'.format(d.description())))
 				{
 					d.deleteData()
 						.then(function()

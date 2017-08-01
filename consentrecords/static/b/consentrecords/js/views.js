@@ -2250,6 +2250,17 @@ var SearchOptionsView = (function () {
 		this.getDataChunker.clearLoadingMessage();
 	}
 	
+	SearchOptionsView.prototype.setupChunkerArguments = function(compareText)
+	{
+		this.getDataChunker.path = this.searchPath(compareText);
+		if (this.getDataChunker.path)
+		{
+			this.getDataChunker.fields = this.fields();
+			this.getDataChunker.resultType = this.resultType(compareText);
+			this.getDataChunker.increment(this.increment());
+		}
+	}
+	
 	SearchOptionsView.prototype.search = function(val)
 	{
 		if (val !== undefined)
@@ -2257,20 +2268,12 @@ var SearchOptionsView = (function () {
 			this._foundCompareText = val;
 			this._constrainCompareText = val;
 		}
-			
-		var searchPath = this.searchPath(this._constrainCompareText);
-		if (searchPath)
-		{
-			this.getDataChunker.path = searchPath;
-			this.getDataChunker.fields = this.fields();
-			this.getDataChunker.resultType = this.resultType(this._constrainCompareText);
-			this.getDataChunker.increment(this.increment());
+		
+		this.setupChunkerArguments(this._constrainCompareText);
+		if (this.getDataChunker.path)
 			this.getDataChunker.start(this._constrainCompareText);			
-		}
 		else
-		{
 			this.cancelSearch();
-		}
 	}
 	
 	SearchOptionsView.prototype.inputText = function(val)
