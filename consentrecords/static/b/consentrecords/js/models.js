@@ -4439,8 +4439,8 @@ cr.ExperienceCustomService = (function() {
 	ExperienceCustomService.prototype.deleted = function()
 	{
 		experience = this.parent();
-		cr.removeElement(experience.experienceCustomServices(), this);
-		$(experience).trigger("experienceCustomServiceDeleted.cr", this);
+		cr.removeElement(experience.customServices(), this);
+		$(experience).trigger("customServiceDeleted.cr", this);
 	}
 	
 	function ExperienceCustomService() {

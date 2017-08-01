@@ -384,7 +384,7 @@ var FlagController = (function() {
 	FlagController.prototype.setupChangeEventHandler = function(data, handler)
 	{
 		var experience = this.experience;
-		setupOnViewEventHandler(this.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr experienceCustomServiceAdded.cr experienceCustomServiceDeleted.cr changed.cr", data, handler);
+		setupOnViewEventHandler(this.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr", data, handler);
 	}
 	
 	FlagController.prototype.selected = function(newValue)

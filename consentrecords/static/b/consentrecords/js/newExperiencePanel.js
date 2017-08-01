@@ -265,15 +265,19 @@ var ExperienceController = (function() {
 		{
 			var i = new cr.ExperienceService();
 			i.description(args.description())
+			 .parentID(this.newExperience.id())
 			 .service(args);
 			this.experienceServices().push(i);
+			return i;
 		}
 		else if (typeof(args) == "string")
 		{
 			var i = new cr.ExperienceCustomService();
 			i.description(args)
+			 .parentID(this.newExperience.id())
 			 .name(args);
 			this.customServices().push(i);
+			return i;
 		}
 		else
 			throw new Error("Invalid arguments to addService");
@@ -467,7 +471,7 @@ var ExperienceController = (function() {
 					{
 						var oldService = oldServices[j];
 						if (oldService.service().id() != d.service().id())
-							subChanges.push({change: oldService.id(), service: d.service().urlPath()});
+							subChanges.push({id: oldService.id(), service: d.service().urlPath()});
 						++j;
 					}
 					else
@@ -491,15 +495,15 @@ var ExperienceController = (function() {
 					if (j < oldCustomServices.length)
 					{
 						var oldService = oldCustomServices[j];
-						if (oldCustomServices.name() != d.name())
-							subChanges.push({change: oldService.id(), name: d.name()});
-						++j;
+						if (oldService.name() != d.name())
+							subChanges.push({id: oldService.id(), name: d.name()});
 					}
 					else
 					{
 						d.clientID('CS{0}'.format(j));
 						subChanges.push({add: d.clientID(), name: d.name()});
 					}
+					++j;
 				});
 			while (j < oldCustomServices.length)
 			{
@@ -1323,19 +1327,26 @@ var TagSearchView = (function() {
 					var oldService = d3Focus.datum();
 					if (oldService instanceof cr.ServiceLinkInstance)
 					{
-						var oldES = this.experience.experienceServices().find(function(es)
-							{
-								return es == oldService;
-							});
 						/* Replace the old experienceService with a new one. */
-						if (oldES)
+						if (this.experience.experienceServices().indexOf(oldService) >= 0)
 						{
-							oldES.service(d.service);
-							oldES.description(d.service.description());
-							oldES.id(null);
+							oldService.service(d.service)
+							     .description(d.service.description())
+							     .id(null);
 						}
 						else
-							this.experience.addService(d.service);
+						{
+							oldService = this.experience.addService(d.service);
+						}
+					}
+					else if (oldService instanceof cr.ExperienceCustomService)
+					{
+						this.experience.removeCustomService(oldService);
+						oldService = this.experience.addService(d.service);
+					}
+					else
+					{
+						console.assert(false);
 					}
 					d3Focus.datum(d.service);
 					this.focusNode.value = d.description();
@@ -2994,53 +3005,75 @@ var NewExperiencePanel = (function () {
 				if (this == exceptNode)
 					return;
 					
-				if (d instanceof cr.IInstance)
+				var newText = this.value.trim();
+				var newService = newText && _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
+				if (!newText)
 				{
-					var newText = this.value.trim();
-					if (!newText)
+					if (d instanceof cr.ExperienceService)
 					{
-						if (d instanceof cr.ExperienceService)
-							_this.experienceController.removeService(d);
-						else if (d instanceof cr.ExperienceCustomService)
-							_this.experienceController.removeCustomService(d);
-						else
-							throw new Error("Invalid object to remove");
-						$(this).remove();
+						/* Remove a standard service */
+						_this.experienceController.removeService(d);
+					}
+					else if (d instanceof cr.ExperienceCustomService)
+					{
+						/* Remove a custom service */
+						_this.experienceController.removeCustomService(d);
+					}
+					else if (d)
+						throw new Error("Invalid object to remove");
+					$(this).remove();
+				}
+				else if (d instanceof cr.ExperienceService)
+				{
+					if (!newService)
+					{
+						/* Replace standard service with a custom service */
+						_this.experienceController.removeService(d);
+						var newValue = _this.experienceController.addService(newText);
+						d3.select(this).datum(newValue);
+						$(this).trigger('input');
+					}
+					else if (newService != d.service())
+					{
+						/* Replace standard service with a different standard service */
+						d.service(newService)
+						 .description(newService.description());
+						this.value = newService.description();
+						$(this).trigger('input');
+					}
+					else
+						{	/* No change */ }
+				}
+				else if (d instanceof cr.ExperienceCustomService)
+				{
+					if (!newService)
+					{
+						if (newText != d.name())
+						{
+							/* Replace custom service with a different custom service */
+							d.name(newText)
+							 .description(newText);
+							this.value = newText;
+							$(this).trigger('input');
+						}
 					}
 					else
 					{
-						var newInstance = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
-						if (!newInstance)
-						{
-							if (newText != d)
-							{
-								d.pickedObject = null;
-								this.value = newText;	/* Reset the value in case there was trimming */
-								$(this).trigger('input');
-							}
-						}
-						else if (newInstance != d)
-						{
-							this.value = d.description();
-							$(this).trigger('input');
-						}
+						/* Replace a custom service with a standard service */
+						_this.experienceController.removeCustomService(d);
+						var newValue = _this.experienceController.addService(newService);
+						d3.select(this).datum(newValue);
+						this.value = newService.description();
+						$(this).trigger('input');
 					}
 				}
 				else
 				{
-					var newText = this.value.trim();
-					if (newText)
-					{
-						var d = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
-						_this.experienceController.addService(d || newText);
-						_this.showTags();
-						this.value = "";
-						$(this).attr('placeholder', $(this).attr('placeholder'));
-					}
-					else
-					{
-						$(this).remove();
-					}
+					/* The blank tag. */
+					_this.experienceController.addService(newService || newText);
+					_this.showTags();
+					this.value = "";
+					$(this).attr('placeholder', $(this).attr('placeholder'));
 				}
 			});
 			
