@@ -2202,7 +2202,7 @@ cr.IInstance = (function() {
 		return crp.getInstance(this._parentID);
 	}
 	
-    IInstance.prototype.promiseData = function()
+    IInstance.prototype.promiseData = function(fields)
     {
     	p = this.readCheckPromise();
     	if (p) return p;
@@ -2217,7 +2217,7 @@ cr.IInstance = (function() {
         }
         
         var _this = this;	
-        this._dataPromise = this.getData()
+        this._dataPromise = this.getData(fields)
         	.done(function()
         		{
         			_this._dataLoaded = true;
@@ -3750,12 +3750,13 @@ cr.Engagement = (function() {
 		return this;
     }
     
-    Engagement.prototype.getData = function()
+    Engagement.prototype.getData = function(fields)
     {
+    	fields = fields !== undefined ? fields : ['user'];
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: ['user'],
+        		fields: [fields],
         		resultType: cr.Engagement
         	});
     }
@@ -3811,12 +3812,13 @@ cr.Enrollment = (function() {
 		}
 	}
 	
-    Enrollment.prototype.getData = function()
+    Enrollment.prototype.getData = function(fields)
     {
+    	fields = fields !== undefined ? fields : ['user'];
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: ['user'],
+        		fields: [fields],
         		resultType: cr.Enrollment
         	});
     }
@@ -5154,12 +5156,16 @@ cr.Offering = (function() {
 		}
 	}
 	
-    Offering.prototype.getData = function()
+	Offering.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
+	Offering.prototype.site = cr.SiteLinkInstance.prototype.site;
+
+    Offering.prototype.getData = function(fields)
     {
+    	fields = fields !== undefined ? fields : ['names', 'services'];
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: ['names', 'services'],
+        		fields: [fields],
         		resultType: cr.Offering
         	});
     }
@@ -5560,13 +5566,14 @@ cr.Organization = (function() {
 		return changed;
 	}
 	
-    Organization.prototype.getData = function()
+    Organization.prototype.getData = function(fields)
     {
+    	fields = fields !== undefined ? fields : ['sites', 'groups'];
     	var _this = this;
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: ['sites', 'groups'],
+        		fields: [fields],
         		resultType: cr.Organization
         	})
         	.then(function()
@@ -6757,14 +6764,15 @@ cr.Session = (function() {
 		return changed;
 	}
 	
-    Session.prototype.getData = function()
+    Session.prototype.getData = function(fields)
     {
+    	fields = fields !== undefined ? fields : ['periods'];
     	/* Do not get the inquiries, enrollments or engagements, as these may number in the thousands. */
     	var _this = this;
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: ['periods'],
+        		fields: [fields],
         		resultType: cr.Session
         	})
         	.then(function()
@@ -6932,13 +6940,14 @@ cr.Site = (function() {
 		return changed;
 	}
 	
-    Site.prototype.getData = function()
+    Site.prototype.getData = function(fields)
     {
+    	fields = fields !== undefined ? fields : ['address', 'offerings'];
     	var _this = this;
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: ['address', 'offerings'],
+        		fields: fields,
         		resultType: cr.Site
         	})
         	.then(function()

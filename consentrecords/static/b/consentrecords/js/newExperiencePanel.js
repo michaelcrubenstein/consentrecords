@@ -318,7 +318,7 @@ var ExperienceController = (function() {
 			initialData['end'] = this.end();
 		
 		if (this.organization())
-			initialData['organization'] = this.organization.urlPath();
+			initialData['organization'] = this.organization().urlPath();
 		else if (this.customOrganization())
 			initialData['custom organization'] = this.customOrganization();
 			
@@ -890,7 +890,7 @@ var ExperienceDatumSearchView = (function() {
 			if (prepareClick('click', 'site: ' + d.description()))
 			{
 				/* Need to check the cells in case this site was a value within an offering. */
-				d.promiseCellsFromCache(["parents"])
+				d.promiseData(['address', 'offerings', 'parents'])
 					.then(function()
 						{
 							try

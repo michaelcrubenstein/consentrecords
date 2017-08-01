@@ -3981,7 +3981,7 @@ class Experience(ChildInstance, dbmodels.Model):
         newItem.createChildren(data, 'custom services', context, ExperienceCustomService, newIDs)
         newItem.createChildren(data, 'comments', context, Comment, newIDs)
         
-        if newItem.offering: self.checkImplications()
+        if newItem.offering: newItem.checkImplications()
         
         return newItem
         
@@ -3991,7 +3991,7 @@ class Experience(ChildInstance, dbmodels.Model):
             for imp in es.service.serviceImplications.filter(deleteTransaction__isnull=True):
                 serviceSet.add(imp.impliedService)
         if self.offering:
-            for os in self.offering.offeringServices.filter(deleteTransaction__isnull=True):
+            for os in self.offering.services.filter(deleteTransaction__isnull=True):
                 for imp in os.service.serviceImplications.filter(deleteTransaction__isnull=True):
                     serviceSet.add(imp.impliedService)
         
