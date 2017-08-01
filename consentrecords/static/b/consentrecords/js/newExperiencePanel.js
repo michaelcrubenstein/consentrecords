@@ -740,8 +740,8 @@ var MultiTypeOptionView = (function() {
 		if (compareText.length === 0)
 			return true;
 		
-		return d.getDescription && 
-			   this.stringContains(d.description(), compareText);
+		console.assert(d.description)
+		return this.stringContains(d.description(), compareText);
 	}
 	
 	MultiTypeOptionView.prototype.canConstrain = function(searchText, constrainText)

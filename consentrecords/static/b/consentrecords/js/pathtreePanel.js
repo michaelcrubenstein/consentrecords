@@ -1192,7 +1192,7 @@ var PathLines = (function() {
 	PathLines.prototype.setUser = function(path, editable)
 	{
 		if (path.privilege() === cr.privileges.find)
-			throw "You do not have permission to see information about {0}".format(path.getDescription());
+			throw "You do not have permission to see information about {0}".format(path.description());
 		if (this.path)
 			throw "path has already been set for this pathtree";
 			
