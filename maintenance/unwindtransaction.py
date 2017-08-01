@@ -103,6 +103,16 @@ def revertExperienceService(h):
     h.delete()
     i.save()
 
+def revertExperienceCustomService(h):
+    i = h.instance
+
+    i.position = h.position
+    i.name = h.name
+
+    i.lastTransaction = h.transaction
+    h.delete()
+    i.save()
+
 def printTransaction(t):
     print("Transaction\t%s\t%s\t%s" % (t.id, t.user, t.creation_time))
     
@@ -236,12 +246,18 @@ if __name__ == "__main__":
                 
             for i in t.createdExperienceServices.all():
                 i.delete()
-            for i in t.experienceServiceHistories.all():
-                revertExperienceServiceHistory(i)
+            for h in t.experienceServiceHistories.all():
+                revertExperienceService(h)
             for i in t.deletedExperienceServices.all():
                 i.deleteTransaction=None
                 i.save()
                 i.createImplications()
+
+            for h in t.experienceCustomServiceHistories.all():
+                revertExperienceCustomService(h)
+            for i in t.deletedExperienceCustomServices.all():
+                i.deleteTransaction=None
+                i.save()
 
 # 
 #         if t.deletedValue.count():
