@@ -5868,7 +5868,8 @@ cr.Path = (function() {
         			_this._experiences = experiences;
         			_this._experiences.forEach(function(e)
         				{
-        					e.path(_this);
+        					e.parentID(_this.id())
+        					 .path(_this);
         				});
         			result = $.Deferred();
         			result.resolve(experiences);
@@ -7323,6 +7324,8 @@ cr.User = (function() {
 		{
 			this._path = new cr.Path();
 			this._path.setData(newData);
+			this._path.parentID(this.id());
+			this._path = crp.pushInstance(this._path);
 			return this;
 		}
 	}
