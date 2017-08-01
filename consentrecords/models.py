@@ -6527,6 +6527,12 @@ class Site(ChildInstance, dbmodels.Model):
                 data['offerings'] = [i.headData(context) for i in self.currentOfferings]
                 data['offerings'].sort(key=lambda s: s['description'])
                 
+            if 'parents' in fields:
+                if context.canRead(self.parent):
+                    if 'organization' in fields:
+                        data['organization'] = self.parent.getData([], context)
+                    else:
+                        data['organization'] = self.parent.headData(context)
         return data
         
     def getSubClause(qs, user, accessType):
