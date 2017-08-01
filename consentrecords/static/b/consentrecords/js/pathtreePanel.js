@@ -37,12 +37,6 @@ var FlagController = (function() {
 	
 	FlagController.prototype.subHeading = function()
 	{
-		var _this = this;
-		var f = function(name)
-		{
-			var d = _this.experience.getValue(name);
-			return d && d.id() && d.getDescription();
-		}
 		e = this.experience;
 		return (e.organization() && e.organization().description()) ||
 		       (e instanceof cr.Experience && e.customOrganization()) ||
