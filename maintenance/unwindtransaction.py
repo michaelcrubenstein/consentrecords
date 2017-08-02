@@ -235,25 +235,24 @@ if __name__ == "__main__":
         
         printTransaction(t)
         if '-yes' in sys.argv:
-            for i in t.createdExperiences.all():
-                i.delete()
-            for h in t.experienceHistories.all():
+            for i in t.changedExperiences.exclude(transaction=t):
+                h = i.history.order_by('-transaction__creation_time')[0]
                 revertExperience(h)
             for i in t.deletedExperiences.all():
                 i.deleteTransaction=None
                 i.save()
                 i.checkImplications()
                 
-            for i in t.createdExperienceServices.all():
-                i.delete()
-            for h in t.experienceServiceHistories.all():
+            for i in t.changedExperienceServices.exclude(transaction=t):
+                h = i.history.order_by('-transaction__creation_time')[0]
                 revertExperienceService(h)
             for i in t.deletedExperienceServices.all():
                 i.deleteTransaction=None
                 i.save()
                 i.createImplications()
 
-            for h in t.experienceCustomServiceHistories.all():
+            for i in t.changedExperienceCustomServices.exclude(transaction=t):
+                h = i.history.order_by('-transaction__creation_time')[0]
                 revertExperienceCustomService(h)
             for i in t.deletedExperienceCustomServices.all():
                 i.deleteTransaction=None
@@ -299,6 +298,6 @@ if __name__ == "__main__":
 #         if t.instance_set.count():
 #             sys.stderr.write('Deleting %s instances\n'%t.instance_set.count())
     
-            t.delete()
+            print(t.delete())
     
             sys.stderr.write('Transaction deleted: %s\n'%t)
