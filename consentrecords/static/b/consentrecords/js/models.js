@@ -2514,6 +2514,9 @@ cr.IInstance = (function() {
 
 })();
 
+/* Since TranslationInstance.updateData triggers a changed message, subobjects shouldn't
+	need to add fields or override updateData.
+ */
 cr.TranslationInstance = (function() {
 	TranslationInstance.prototype = new cr.IInstance();
 	
@@ -2593,6 +2596,10 @@ cr.TranslationInstance = (function() {
 			this._language = d['languageCode'];
 			changed = true;
 		}
+		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		return changed;
 	}
 	
@@ -3556,6 +3563,9 @@ cr.Address = (function() {
 				changed = true;
 		}
 		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		return changed;
 	}
 	
@@ -3724,6 +3734,9 @@ cr.CommentPrompt = (function() {
 				changed = true;
 		}
 		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		return changed;
 	}
 	
@@ -3852,17 +3865,17 @@ cr.Engagement = (function() {
 		var changed = false;
 		
 		if (cr.UserLinkInstance.prototype.updateData.call(this, d, newIDs))
-			changed = true;
-			
-		if ('user' in d)
 		{
+			changed = true;
 			this.description(this.user().description());
-			$(this).trigger("changed.cr", this);
 		}
-
+			
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+
 		return changed;
 	}
 
@@ -4270,6 +4283,10 @@ cr.Experience = (function() {
 			this._timeframe = d['timeframe'];
 			changed = true;
 		}
+		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		if ('services' in d)
 		{
 			if (this.updateList(this.experienceServices, d['services'], newIDs, cr.ExperienceService, "experienceServiceAdded.cr", "experienceServiceDeleted.cr"))
@@ -4285,7 +4302,7 @@ cr.Experience = (function() {
 			if (this.updateList(this.comments, d['comments'], newIDs, cr.Comment, "commentAdded.cr", "commentDeleted.cr"))
 				changed = true;
 		}
-		
+
 		return changed;
 	}
 	
@@ -4744,7 +4761,11 @@ cr.ExperiencePrompt = (function() {
 			changed = true;
 		if ('domain' in d)
 		{
-			this._domainID = d['domain']['id'];
+			domainData = d['domain']
+			if (typeof(domainData) == 'string')
+				console.assert(false);	/* Not yet implemented */
+			else
+				this._domainID = domainData['id'];
 			changed = true;
 		}
 		if ('stage' in d)
@@ -4757,6 +4778,10 @@ cr.ExperiencePrompt = (function() {
 			this._timeframe = d['timeframe'];
 			changed = true;
 		}
+		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		if ('translations' in d)
 		{
 			if (this.updateList(this.translations, d['translations'], newIDs, cr.ExperiencePromptText, "translationAdded.cr", "translationDeleted.cr"))
@@ -4884,6 +4909,10 @@ cr.Group = (function() {
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		if ('names' in d)
 		{
 			if (this.updateList(this.names, d['names'], newIDs, cr.GroupName, "nameAdded.cr", "nameDeleted.cr"))
@@ -5322,6 +5351,10 @@ cr.Offering = (function() {
 			this._maximumGrade = d['maximum grade'];
 			changed = true;
 		}
+		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		if ('services' in d)
 		{
 			if (this.updateList(this.offeringServices, d['services'], newIDs, cr.OfferingService, "offeringServiceAdded.cr", "offeringServiceDeleted.cr"))
@@ -5593,6 +5626,10 @@ cr.Organization = (function() {
 			this._webSite = d['web site'];
 			changed = true;
 		}
+		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		if ('names' in d)
 		{
 			if (this.updateList(this.names, d['names'], newIDs, cr.OrganizationName, "nameAdded.cr", "nameDeleted.cr"))
@@ -5610,9 +5647,15 @@ cr.Organization = (function() {
 		}
 		if ('inquiry access group' in d)
 		{
+			var idData = d['inquiry access group'];
+			var id;
+			if (typeof(idData) == 'string')
+				console.log(false);	/* To Do: */
+			else
+				id = idData['id'];
 			this._inquiryAccessGroup = this.groups().find(function(group)
 				{
-					return group.id() == d['inquiry access group']['id'];
+					return group.id() == id;
 				});
 			changed = true;
 		}
@@ -5875,9 +5918,7 @@ cr.Path = (function() {
 		}
 
 		if (changed)
-		{
 			$(this).trigger("changed.cr", this);
-		}
 		
 		if ('experiences' in d)
 		{
@@ -6981,6 +7022,10 @@ cr.Site = (function() {
 			if (this._address.updateData(d['address'], newIDs))
 				changed = true;
 		}
+		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		if ('names' in d)
 		{
 			if (this.updateList(this.names, d['names'], newIDs, cr.SiteName, "nameAdded.cr", "nameDeleted.cr"))
@@ -7153,6 +7198,9 @@ cr.Street = (function() {
 			changed = true;
 		}
 		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		return changed;
 	}
 	
@@ -7288,10 +7336,8 @@ cr.User = (function() {
 		}
 		
 		if (changed)
-		{
-			$(this).trigger("changed.cr", this);
-		}
-		
+			$(this).trigger('changed.cr', this);
+			
 		return changed;
 	}
 	
