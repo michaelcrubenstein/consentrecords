@@ -84,6 +84,15 @@ var ExperienceCommentsPanel = (function() {
 				});
 	}
 	
+	ExperienceCommentsPanel.prototype.checkDeleteControlVisibility = function(items)
+	{
+		var deleteControls = $(items.node()).parent().find('button.delete');
+		if (!this.inEditMode)
+			crf.hideDeleteControls(deleteControls, 0);
+		else
+			crf.showDeleteControls(deleteControls, 0);
+	}
+	
 	ExperienceCommentsPanel.prototype.loadComments = function(data)
 	{
 		var commentList = this.mainDiv.select('section.comments>ol');
@@ -93,36 +102,45 @@ var ExperienceCommentsPanel = (function() {
 		this.appendDescriptions(items);
 		crf.appendConfirmDeleteControls(items);
 
-		if (!this.inEditMode)
-			crf.hideDeleteControls($(deleteControls[0]), 0);
-		else
-			crf.showDeleteControls($(deleteControls[0]), 0);
-			
 		checkItemsDisplay(commentList.node());
 		
 		/* Force each item to resize in case the commentList was previously empty and hidden. */
-		items.each(function(d) { $(this).trigger("resize.cr"); });
+		items.each(function(d) 
+			{ 
+				$(this).trigger("resize.cr"); 
+				$(this).find('textarea').trigger('resize.cr');
+			});
+		
+		this.checkDeleteControlVisibility(items);
 	}
 	
-	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
+	ExperienceCommentsPanel.prototype.postComment = function(newText)
 	{
-		var initialData = {};
-		initialData[cr.fieldNames.text] = [{text: newText}];
-		
-		/* Test case: add a comment to an experience that has had a comment */
+		/* Test case: add a comment to an experience. */
 		var _this = this;
-		$.when(this.fd.experience.createComment(initialData))
-		 .then(function(newValue)
-				{
-					_this.fd.experience.addComment(newValue);
-					done(newValue);
-				},
-				fail);
+		return this.fd.experience.update({'comments': [{'add': '1', text: newText}]}, false)
+				.then(function(changes, newIDs)
+					{
+						var r2 = $.Deferred();
+						try
+						{
+							var newComment = new cr.Comment();
+							_this.fd.experience.comments().push(newComment);
+							newComment.clientID('1')
+									  .text(newText);
+							_this.fd.experience.updateData(changes, newIDs)
+							r2.resolve(changes, newIDs);
+						}
+						catch(err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					});
 	}
 	
 	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
 	{
-		
 		/* Test case: add a comment to an experience that has had a comment */
 		return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.path(), newText);
 	}
@@ -570,12 +588,14 @@ var ExperienceCommentsPanel = (function() {
 		}
 		setTimeout(resizeDetail);
 		
+		/* Update the contents of the top banner if the contents of the experience are changed. */
 		fd.setupChangeEventHandler(this.mainDiv.node(), function(eventObject, newValue)
 			{
 				fd.colorElement(_this.detailFrontRect.node());
 				resizeDetail();
 			});
 		
+		/* Hide this panel if the experience is deleted */
 		setupOneViewEventHandler(fd.experience, "deleted.cr", this.node(), function(eventObject)
 			{
 				_this.hideNow();
@@ -611,15 +631,14 @@ var ExperienceCommentsPanel = (function() {
 			.classed('deletable-items', true);
 		commentList.classed('edit', this.inEditMode);
 		
-		function onCommentAdded(eventObject, newData)
-		{
-			_this.loadComments([newData]);
-		}
+		setupOnViewEventHandler(fd.experience, 'commentAdded.cr', commentsDiv.node(), 
+			function (eventObject, newData)
+				{
+					_this.loadComments([newData]);
+				});
 		
-		/* commentsCells is an array of cells contained within a Comments instance. */
 		function onCommentsChecked(experience)
 		{
-			setupOnViewEventHandler(experience, 'commentAdded.cr', commentsDiv.node(), onCommentAdded);
 			_this.loadComments(experience.comments());
 		}
 		
@@ -655,12 +674,13 @@ var ExperienceCommentsPanel = (function() {
 								try
 								{
 									showClickFeedback(this);
-									_this.postComment(newComment, function()
-										{
-											newCommentInput.node().value = '';
-											unblockClick();
-										},
-										cr.syncFail);
+									_this.postComment(newComment)
+										.then(function()
+											{
+												newCommentInput.node().value = '';
+												unblockClick();
+											},
+											cr.syncFail);
 								}
 								catch(err)
 								{
