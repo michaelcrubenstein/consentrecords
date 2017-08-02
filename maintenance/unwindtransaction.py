@@ -12,7 +12,7 @@ from consentrecords.models import *
 
 nullString = "-"
 
-def printExperienceCustomService(i):
+def printComment(i):
     print("%s\t%s\n\t%s\n\t%s" % \
         (i.id, 
          i.text or nullString,
@@ -75,6 +75,17 @@ def printUser(i):
         (i.id, i.firstName or nullString, i.lastName or nullString, i.birthday or nullString,
         ))
          
+def revertComment(h):
+    i = h.instance
+
+    i.text = h.text
+    i.question = h.question
+    i.asker = h.asker
+
+    i.lastTransaction = h.transaction
+    h.delete()
+    i.save()
+
 def revertExperience(h):
     i = h.instance
 
@@ -235,6 +246,14 @@ if __name__ == "__main__":
         
         printTransaction(t)
         if '-yes' in sys.argv:
+            for i in t.changedComments.exclude(transaction=t):
+                h = i.history.order_by('-transaction__creation_time')[0]
+                revertComment(h)
+            for i in t.deletedComments.all():
+                i.deleteTransaction=None
+                i.save()
+                i.checkImplications()
+                
             for i in t.changedExperiences.exclude(transaction=t):
                 h = i.history.order_by('-transaction__creation_time')[0]
                 revertExperience(h)
