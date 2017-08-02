@@ -2218,7 +2218,7 @@ cr.IInstance = (function() {
         
         var _this = this;	
         this._dataPromise = this.getData(fields)
-        	.done(function()
+        	.then(function()
         		{
         			_this._dataLoaded = true;
         			return _this;
@@ -2396,7 +2396,12 @@ cr.IInstance = (function() {
 						if (item)
 						{
 							item.id(newIDs[d['add']])
-								.clientID(null);
+								.clientID(null)
+								.parentID(_this.id());
+							item = crp.pushInstance(item);
+							
+							/* Call updateData so that sub-items also get their IDs */
+							item.updateData(d, newIDs);
 							$(_this).trigger(addEventType, item);
 						}
 						else
@@ -2668,8 +2673,25 @@ cr.ServiceLinkInstance = (function() {
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('service' in d)
 		{
-			this._serviceID = d['service']['id'];
-			changed = true;
+			serviceData = d['service'];
+			var serviceID;
+			if (typeof(serviceData) == "string")
+			{
+				if (/^service\/[A-Za-z0-9]{32}$/.test(serviceData))
+					serviceID = serviceData.substring("service/".length);
+				else
+					console.assert(false);
+			}
+			else if ('id' in serviceData)
+				serviceID = serviceData['id'];
+			else
+				console.assert(false);
+			
+			if (this._serviceID != serviceID)
+			{
+				this._serviceID = serviceID;
+				changed = true;
+			}
 		}
 		
 		return changed;
@@ -2790,16 +2812,26 @@ cr.UserLinkInstance = (function() {
 	{
 		var changed = false;
 		if ('user' in d) {
-			var id;
-			if (typeof(d['user']) == "object")
-				id = d['user']['id'];
-			else if (d['user'].startsWith("user/"))
-				id = d['user'].substring(5);
+			userData = d['user'];
+			var userID;
+			if (typeof(userData) == "string")
+			{
+				if (/^user\/[A-Za-z0-9]{32}$/.test(userData))
+					userID = userData.substring("user/".length);
+				else
+					console.assert(false);
+			}
+			else if ('id' in userData)
+				userID = userData['id'];
 			else
-				throw new Error("Unrecognized user id: {0}".format(d['user']));
-			this._user = crp.getInstance(id);
-			
-			changed = true;
+				console.assert(false);
+				
+			var newUser = crp.getInstance(userID);
+			if (this._user != newUser)
+			{
+				this._user = newUser;
+				changed = true;
+			}
 		}
 		
 		return changed;
@@ -2963,7 +2995,7 @@ cr.Grantable = (function() {
         		fields: ['user grants', 'group grants'],
         		resultType: cr.User
         	})
-        	.done(function(users)
+        	.then(function(users)
         		{
         			result = $.Deferred();
         			result.resolve(users[0]);
@@ -3132,8 +3164,26 @@ cr.OrganizationLinkInstance = (function() {
 		var changed = false;
 		
 		if ('organization' in d) {
-			this._organization = crp.getInstance(d['organization']['id']);
-			changed = true;
+			organizationData = d['organization'];
+			var organizationID;
+			if (typeof(organizationData) == "string")
+			{
+				if (/^organization\/[A-Za-z0-9]{32}$/.test(organizationData))
+					organizationID = organizationData.substring("organization/".length);
+				else
+					console.assert(false);
+			}
+			else if ('id' in organizationData)
+				organizationID = organizationData['id'];
+			else
+				console.assert(false);
+				
+			var newOrganization = crp.getInstance(organizationID);
+			if (this._organization != newOrganization)
+			{
+				this._organization = newOrganization;
+				changed = true;
+			}
 		}
 		
 		return changed;
@@ -3182,8 +3232,26 @@ cr.SiteLinkInstance = (function() {
 		var changed = false;
 		
 		if ('site' in d) {
-			this._site = crp.getInstance(d['site']['id']);
-			changed = true;
+			siteData = d['site'];
+			var siteID;
+			if (typeof(siteData) == "string")
+			{
+				if (/^site\/[A-Za-z0-9]{32}$/.test(siteData))
+					siteID = siteData.substring("site/".length);
+				else
+					console.assert(false);
+			}
+			else if ('id' in siteData)
+				siteID = siteData['id'];
+			else
+				console.assert(false);
+				
+			var newSite = crp.getInstance(siteID);
+			if (this._site != newSite)
+			{
+				this._site = newSite;
+				changed = true;
+			}
 		}
 		
 		return changed;
@@ -3232,8 +3300,26 @@ cr.OfferingLinkInstance = (function() {
 		var changed = false;
 		
 		if ('offering' in d) {
-			this._offering = crp.getInstance(d['offering']['id']);
-			changed = true;
+			offeringData = d['offering'];
+			var offeringID;
+			if (typeof(offeringData) == "string")
+			{
+				if (/^offering\/[A-Za-z0-9]{32}$/.test(offeringData))
+					offeringID = offeringData.substring("offering/".length);
+				else
+					console.assert(false);
+			}
+			else if ('id' in offeringData)
+				offeringID = offeringData['id'];
+			else
+				console.assert(false);
+			
+			var newOffering = crp.getInstance(offeringID);
+			if (this._offering != newOffering)
+			{
+				this._offering = newOffering;
+				changed = true;
+			}
 		}
 		
 		return changed;
@@ -4184,11 +4270,6 @@ cr.Experience = (function() {
 			this._timeframe = d['timeframe'];
 			changed = true;
 		}
-		if ('translations' in d)
-		{
-			if (this.updateList(this.translations, d['translations'], newIDs, cr.ExperiencePromptText, "translationAdded.cr", "translationDeleted.cr"))
-				changed = true;
-		}
 		if ('services' in d)
 		{
 			if (this.updateList(this.experienceServices, d['services'], newIDs, cr.ExperienceService, "experienceServiceAdded.cr", "experienceServiceDeleted.cr"))
@@ -4233,33 +4314,6 @@ cr.Experience = (function() {
 		}
 	}
 	
-	Experience.prototype.promiseOffering = function()
-	{
-		// No longer needed?
-		offering = experience._offering;
-		if (offering && offering.id() && !offering.names)
-		{
-			var storedI = crp.getInstance(offering.id());
-			if (storedI && storedI.getCells())
-			{
-				offering.importCells(storedI.getCells());
-				r = $.Deferred();
-				r.resolve();
-				return r;
-			}
-			else
-			{
-				return offering.promiseCells();
-			}
-		}
-		else
-		{
-			r = $.Deferred();
-			r.resolve();
-			return r;
-		}
-	}
-	
     Experience.prototype.promiseComments = function()
     {
     	p = this.readCheckPromise();
@@ -4281,7 +4335,7 @@ cr.Experience = (function() {
         		fields: [],
         		resultType: cr.Comment
         	})
-        	.done(function(comments)
+        	.then(function(comments)
         		{
         			_this._comments = comments;
         			result = $.Deferred();
@@ -5351,7 +5405,7 @@ cr.Offering = (function() {
         		fields: ['parents'],
         		resultType: cr.Session
         	})
-        	.done(function(sessions)
+        	.then(function(sessions)
         		{
         			_this._sessions = sessions;
         			result = $.Deferred();
@@ -5738,11 +5792,11 @@ cr.Path = (function() {
         var _this = this;	
         this._userPromise = cr.getData(
         	{
-        		path: 'path/{0}/user'.format(this.id()),
+        		path: this.urlPath() + '/user',
         		fields: [],
         		resultType: cr.User
         	})
-        	.done(function(users)
+        	.then(function(users)
         		{
         			var user = users[0];
         			_this._user = user;
@@ -5866,11 +5920,11 @@ cr.Path = (function() {
         var _this = this;	
         this._experiencesPromise = cr.getData(
         	{
-        		path: 'path/{0}/experience'.format(this.id()),
+        		path: this.urlPath() + '/experience',
         		fields: ['services', 'custom services'],
         		resultType: cr.Experience
         	})
-        	.done(function(experiences)
+        	.then(function(experiences)
         		{
         			_this._experiences = experiences;
         			_this._experiences.forEach(function(e)
@@ -6532,7 +6586,7 @@ cr.Session = (function() {
         		fields: [],
         		resultType: cr.Inquiry
         	})
-        	.done(function(inquiries)
+        	.then(function(inquiries)
         		{
         			_this._inquiries = inquiries;
         			_this._inquiries.forEach(function(e)
@@ -6567,7 +6621,7 @@ cr.Session = (function() {
         		fields: [],
         		resultType: cr.Enrollment
         	})
-        	.done(function(enrollments)
+        	.then(function(enrollments)
         		{
         			_this._enrollments = enrollments;
         			_this._enrollments.forEach(function(e)
@@ -6602,7 +6656,7 @@ cr.Session = (function() {
         		fields: [],
         		resultType: cr.Engagement
         	})
-        	.done(function(engagements)
+        	.then(function(engagements)
         		{
         			_this._engagements = engagements;
         			_this._engagements.forEach(function(e)
@@ -6814,6 +6868,7 @@ cr.Site = (function() {
 	Site.prototype._address = null;
 	Site.prototype._organization = null;
 	Site.prototype._dataPromise = null;
+	Site.prototype._offeringsPromise = null;
 
 	Site.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
 	Site.prototype.names = cr.NamedInstance.prototype.names;
@@ -6942,7 +6997,7 @@ cr.Site = (function() {
 	
     Site.prototype.getData = function(fields)
     {
-    	fields = fields !== undefined ? fields : ['address', 'offerings'];
+    	fields = fields !== undefined ? fields : ['address'];
     	var _this = this;
     	return cr.getData(
         	{
@@ -6955,6 +7010,37 @@ cr.Site = (function() {
         		_this.address()._dataLoaded = true;
         		return _this;
         	});
+    }
+    
+    Site.prototype.promiseOfferings = function()
+    {
+    	p = this.readCheckPromise();
+    	if (p) return p;
+
+        if (this._offeringsPromise)
+        	return this._offeringsPromise;
+        else if (this._offerings)
+        {
+        	result = $.Deferred();
+        	result.resolve(this._offerings);
+        	return result;
+        }
+        
+        var _this = this;	
+        this._offeringsPromise = cr.getData(
+        	{
+        		path: this.urlPath() + "/offering",
+        		fields: ['parents', 'services'],
+        		resultType: cr.Offering
+        	})
+        	.then(function(offerings)
+        		{
+        			_this._offerings = offerings;
+        			result = $.Deferred();
+        			result.resolve(offerings);
+        			return result;
+        		});
+        return this._offeringsPromise;
     }
     
 	function Site() {
@@ -7411,7 +7497,7 @@ cr.User = (function() {
         		fields: ['experiences', 'experiences/services', 'experiences/custom services'],
         		resultType: cr.Path
         	})
-        	.done(function(paths)
+        	.then(function(paths)
         		{
         			_this._path = paths[0];
         			result = $.Deferred();
@@ -7438,11 +7524,11 @@ cr.User = (function() {
         var _this = this;	
         this._userGrantRequestsPromise = cr.getData(
         	{
-        		path: 'user/{0}/user grant request'.format(this.id()),
+        		path: this.urlPath() + '/user grant request',
         		fields: [],
         		resultType: cr.UserUserGrantRequest
         	})
-        	.done(function(userGrantRequests)
+        	.then(function(userGrantRequests)
         		{
         			_this._userGrantRequests = userGrantRequests;
         			_this._userGrantRequests.forEach(function(i)
@@ -7473,11 +7559,11 @@ cr.User = (function() {
         var _this = this;	
         this._notificationsPromise = cr.getData(
         	{
-        		path: 'user/{0}/notification'.format(this.id()),
+        		path: this.urlPath() + '/notification',
         		fields: [],
         		resultType: cr.Notification
         	})
-        	.done(function(notifications)
+        	.then(function(notifications)
         		{
         			_this._notifications = notifications;
         			result = $.Deferred();

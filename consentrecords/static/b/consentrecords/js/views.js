@@ -2255,7 +2255,7 @@ var SearchOptionsView = (function () {
 		this.getDataChunker.path = this.searchPath(compareText);
 		if (this.getDataChunker.path)
 		{
-			this.getDataChunker.fields = this.fields();
+			this.getDataChunker.fields = this.fields(compareText);
 			this.getDataChunker.resultType = this.resultType(compareText);
 			this.getDataChunker.increment(this.increment());
 		}
