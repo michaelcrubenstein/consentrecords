@@ -424,16 +424,13 @@ function removeItem(itemNode, done)
 
 function _setupItemHandlers(d, done)
 {
-	/* This method may be called for a set of items that were gotten directly and are not
-		part of a cell. Therefore, we have to test whether d.cell is not null.
-	 */
 	if ($(this).parents(".multiple").length > 0)
 	{
 		var f = function(eventObject)
 		{
 			removeItem(eventObject.data, done);
 		}
-		setupOneViewEventHandler(d, "valueDeleted.cr", this, f);
+		setupOneViewEventHandler(d, "deleted.cr", this, f);
 	}
 }
 
