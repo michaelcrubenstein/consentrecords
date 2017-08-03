@@ -1634,7 +1634,6 @@ cr.urls = {
 		acceptFollower: '/user/acceptFollower/',
 		requestAccess: '/user/requestAccess/',
 		resetPassword: '/user/resetpassword/',
-		requestExperienceComment: '/user/requestExperienceComment/',
 		log: '/monitor/log/',
 	};
 	

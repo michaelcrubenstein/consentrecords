@@ -52,7 +52,6 @@ urlpatterns = [
     url(r'^user/acceptFollower/([^?]*)/', views.acceptFollower),
     url(r'^user/acceptFollower/', views.acceptFollower),
     url(r'^user/requestAccess/', views.requestAccess, name='requestAccess'),
-    url(r'^user/requestExperienceComment/', views.requestExperienceComment, name='requestExperienceComment'),
 
     url(r'^local/updatevalues/([^?]*)/', views.updateValues, name='updateValues'),
     
