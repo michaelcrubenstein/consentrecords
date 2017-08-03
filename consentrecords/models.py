@@ -18,6 +18,7 @@ import itertools
 from collections import defaultdict
 
 from custom_user.models import AuthUser
+from custom_user.emailer import Emailer
 from parse.cssparser import parser as cssparser
 
 _currentChildQ = Q(deleteTransaction__isnull=True)|Q(deleteTransaction=F('parent__deleteTransaction'))
@@ -3431,6 +3432,48 @@ class Comment(ChildInstance, dbmodels.Model):
                                  question = _orNone(data, 'question'),
                                  asker = _orNoneForeignKey(data, 'asker', context, Path),
                                 )
+                                
+        if not newItem.text and newItem.question and newItem.asker \
+            and newItem.asker.id != context.user.path.id:
+            n = Notification.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        name='crn.ExperienceCommentRequested',
+                                        isFresh='yes',
+                                        parent=parent.parent.parent,
+                                        )
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=0,
+                                        argument=newItem.asker.id.hex)
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=1,
+                                        argument=parent.id.hex)
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=2,
+                                        argument=newItem.id.hex)
+            
+            # Send an email to the following user.
+            recipient = parent.parent.parent
+            recipientEMail = recipient.emails.filter(deleteTransaction__isnull=True).order_by('position')[0].text
+            path = parent.parent
+            salutation = path.name or recipient.firstName
+            
+            # Send an email to the recipient that they have a question.
+            Emailer.sendRequestExperienceCommentEmail(settings.PASSWORD_RESET_SENDER, 
+                salutation,
+                recipientEMail,
+                parent,
+                asker,
+                (asker.id.hex == context.user.path.id.hex and \
+                 context.authUser.is_staff),
+                question,
+                v,
+                context.hostURL)
         
         return newItem
 
@@ -3443,7 +3486,7 @@ class Comment(ChildInstance, dbmodels.Model):
         
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+            raise PermissionDenied('you do not have permission to complete this update')
         
         history = None
         if 'text' in changes and changes['text'] != self.text:
@@ -4021,57 +4064,58 @@ class Experience(ChildInstance, dbmodels.Model):
                                              timeframe=self.timeframe)
         
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
-        
-        ExperiencePrompt.validateTimeframe(changes, 'timeframe')
-        _validateDate(changes, 'start')
-        _validateDate(changes, 'end')
-        testStart = changes['start'] if 'start' in changes and changes['start'] else (self.start or "0000-00-00")
-        testEnd = changes['end'] if 'end' in changes and changes['end'] else (self.end or "9999-99-99")
-        if testStart > testEnd:
-            raise ValueError("the start date of an experience cannot be after the end date of the experience")
-
         history = None
-        if 'organization' in changes:
-            newValue = _orNoneForeignKey(changes, 'organization', context, Organization)
-            if newValue != self.organization:
+
+        if context.canWrite(self):
+            ExperiencePrompt.validateTimeframe(changes, 'timeframe')
+            _validateDate(changes, 'start')
+            _validateDate(changes, 'end')
+            testStart = changes['start'] if 'start' in changes and changes['start'] else (self.start or "0000-00-00")
+            testEnd = changes['end'] if 'end' in changes and changes['end'] else (self.end or "9999-99-99")
+            if testStart > testEnd:
+                raise ValueError("the start date of an experience cannot be after the end date of the experience")
+
+            if 'organization' in changes:
+                newValue = _orNoneForeignKey(changes, 'organization', context, Organization)
+                if newValue != self.organization:
+                    history = history or self.buildHistory(context)
+                    self.organization = newValue
+            if 'custom organization' in changes and changes['custom organization'] != self.customOrganization:
                 history = history or self.buildHistory(context)
-                self.organization = newValue
-        if 'custom organization' in changes and changes['custom organization'] != self.customOrganization:
-            history = history or self.buildHistory(context)
-            self.customOrganization = changes['custom organization']
-        if 'site' in changes:
-            newValue = _orNoneForeignKey(changes, 'site', context, Site)
-            if newValue != self.site:
+                self.customOrganization = changes['custom organization']
+            if 'site' in changes:
+                newValue = _orNoneForeignKey(changes, 'site', context, Site)
+                if newValue != self.site:
+                    history = history or self.buildHistory(context)
+                    self.site = newValue
+            if 'custom site' in changes and changes['custom site'] != self.customSite:
                 history = history or self.buildHistory(context)
-                self.site = newValue
-        if 'custom site' in changes and changes['custom site'] != self.customSite:
-            history = history or self.buildHistory(context)
-            self.customSite = changes['custom site']
-        if 'offering' in changes:
-            newValue = _orNoneForeignKey(changes, 'offering', context, Offering)
-            if newValue != self.offering:
+                self.customSite = changes['custom site']
+            if 'offering' in changes:
+                newValue = _orNoneForeignKey(changes, 'offering', context, Offering)
+                if newValue != self.offering:
+                    history = history or self.buildHistory(context)
+                    self.offering = newValue
+                    # Check that all of the services associated with this experience are correct.
+                    self.checkImplications()
+            if 'custom offering' in changes and changes['custom offering'] != self.customOffering:
                 history = history or self.buildHistory(context)
-                self.offering = newValue
-                # Check that all of the services associated with this experience are correct.
-                self.checkImplications()
-        if 'custom offering' in changes and changes['custom offering'] != self.customOffering:
-            history = history or self.buildHistory(context)
-            self.customOffering = changes['custom offering']
-        if 'start' in changes and changes['start'] != self.start:
-            history = history or self.buildHistory(context)
-            self.start = changes['start']
-        if 'end' in changes and changes['end'] != self.end:
-            history = history or self.buildHistory(context)
-            self.end = changes['end']
-        if 'timeframe' in changes and changes['timeframe'] != self.timeframe:
-            history = history or self.buildHistory(context)
-            self.timeframe = changes['timeframe']
+                self.customOffering = changes['custom offering']
+            if 'start' in changes and changes['start'] != self.start:
+                history = history or self.buildHistory(context)
+                self.start = changes['start']
+            if 'end' in changes and changes['end'] != self.end:
+                history = history or self.buildHistory(context)
+                self.end = changes['end']
+            if 'timeframe' in changes and changes['timeframe'] != self.timeframe:
+                history = history or self.buildHistory(context)
+                self.timeframe = changes['timeframe']
         
-        self.updateChildren(changes, 'services', context, ExperienceService, self.services, newIDs)
-        self.updateChildren(changes, 'custom services', context, ExperienceCustomService, self.customServices, newIDs)
-        self.updateChildren(changes, 'comments', context, Comment, self.comments, newIDs)
+            self.updateChildren(changes, 'services', context, ExperienceService, self.services, newIDs)
+            self.updateChildren(changes, 'custom services', context, ExperienceCustomService, self.customServices, newIDs)
+        
+        if context.canRead(self):
+            self.updateChildren(changes, 'comments', context, Comment, self.comments, newIDs)
 
         if history:
             self.lastTransaction = context.transaction

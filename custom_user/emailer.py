@@ -1,7 +1,6 @@
 from django.core.mail import send_mail
 
 from django.template import loader
-from consentrecords.models import *
 
 class Emailer():
     # Sends a reset password message to the specified email recipient.
@@ -29,11 +28,11 @@ class Emailer():
         return p.sub(f, html)
         
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
-    def sendRequestExperienceCommentEmail(senderEMail, salutation, recipientEMail, experienceValue, follower, isAdmin, question, commentValue, hostURL):
-        answerURL = hostURL + '/experience/%s/comment/%s/' % (experienceValue.idString, commentValue.idString)
+    def sendRequestExperienceCommentEmail(senderEMail, salutation, recipientEMail, experience, follower, isAdmin, question, comment, hostURL):
+        answerURL = hostURL + '/experience/%s/comment/%s/' % (experience.id.hex, comment.id.hex)
         context = {'salutation': " " + salutation if salutation else "", 
-                   'asker': follower.getDescription(),
-                   'experience': experienceValue.referenceValue.getDescription(),
+                   'asker': follower.description(),
+                   'experience': experience.description(),
                    'question': question,
                    'staticURL': hostURL + '/static/',
                    'replyHRef': answerURL}
@@ -48,13 +47,13 @@ class Emailer():
     
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     # following - an instance of the path of the user who owns the experience containing the question.
-    def sendAnswerExperienceQuestionEmail(salutation, recipientEMail, experienceValue, following, isAdmin, comment, hostURL):
-        experienceHRef = hostURL + '/experience/%s/' % experienceValue.idString
+    def sendAnswerExperienceQuestionEmail(salutation, recipientEMail, experience, following, isAdmin, comment, hostURL):
+        experienceHRef = hostURL + '/experience/%s/' % experience.id.hex
         context = {'salutation': salutation, 
-                   'following': following.getDescription(),
-                   'experience': experienceValue.referenceValue.getDescription(),
-                   'question': comment.getSubInstance(terms['Comment Request']),
-                   'answer': comment.getSubValue(terms.text).stringValue,
+                   'following': following.description(),
+                   'experience': experience.description(),
+                   'question': comment.question,
+                   'answer': comment.text,
                    'staticURL': hostURL + '/static/',
                    'experienceHRef': experienceHRef}
         s = 'email/answerExperienceQuestion' + ('Admin' if isAdmin else '')
@@ -69,9 +68,9 @@ class Emailer():
     
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     def sendSuggestExperienceByTagEmail(salutation, recipientEMail, tag, isAdmin, hostURL):
-        answerURL = '%s/add/?m=%s' % (hostURL, tag.getDescription())
+        answerURL = '%s/add/?m=%s' % (hostURL, tag.description())
         context = {'salutation': " " + salutation if salutation else "", 
-                   'tag': tag.getDescription(),
+                   'tag': tag.description(),
                    'staticURL': hostURL + '/static/',
                    'href': answerURL}
         s = 'email/suggestExperienceByTag' + ('Admin' if isAdmin else '')

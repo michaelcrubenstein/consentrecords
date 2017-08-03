@@ -2012,7 +2012,7 @@ cr.share = function(userPath, path, resultType, privilegeID, done, fail)
 
 cr.requestAccess = function(follower, followingPath, done, fail)
 {
-		$.post(cr.urls.requestAccess, {follower: "user/{0}".format(follower.id()),
+		$.post(cr.urls.requestAccess, {follower: follower.urlPath(),
 									   following: followingPath
 					  				  })
 		.done(done)
@@ -2022,72 +2022,6 @@ cr.requestAccess = function(follower, followingPath, done, fail)
 		});
 }
 
-cr.requestExperienceComment = function(experience, followerPath, question)
-	{
-		var jsonArray = {experience: experience.getInstanceID(),
-			path: followerPath.getInstanceID(),
-			question: question};
-	
-		return $.when($.post(cr.urls.requestExperienceComment, jsonArray))
-				.then(function(json)
-					{
-						var r2 = $.Deferred();
-						try {
-							json.fields.forEach(function(field)
-								{
-									crp.pushField(field);
-								});
-							/* Copy the data from json object into newData so that 
-								any functions are properly initialized.
-							 */
-							var newData;
-							if (json.Comments)
-							{
-								var newComments = cr.ObjectCell.prototype.copyValue(json.Comments);
-								var commentsCell = experience.getCell('Comments');
-								
-								var commentsValue = null;
-								for (var i = 0; i < commentsCell.data.length; ++i)
-								{
-									var oldData = commentsCell.data[i];
-									if (!oldData.id && oldData.isEmpty()) {
-										if (oldData.instance())
-											throw new Error("Assert failed: old comments has instance");
-										oldData.id = newComments.id;
-										oldData.instance(newComments.instance());
-										commentsValue = oldData;
-										break;
-									}
-								}
-								if (!commentsValue)
-								{
-									commentsCell.pushValue(newComments);
-									commentsValue = newComments;
-								}
-
-								$(commentsValue).trigger('changed.cr', commentsValue);
-								newData = commentsValue.getValue('Comment');
-							}
-							else
-							{
-								newData = cr.ObjectCell.prototype.copyValue(json.Comment);
-								var comments = experience.getValue('Comments');
-								commentCell = comments.getCell('Comment');
-								commentCell.addValue(newData);
-							}
-														
-							r2.resolve(newData);
-						}
-						catch (err)
-						{
-							r2.reject(err);
-						}
-						return r2;
-					},
-					cr.thenFail
-				 );
-	},
-	
 cr._logQueue = new Queue(true)
 cr.logRecord = function(name, message)
 	{
@@ -2680,7 +2614,7 @@ cr.ServiceLinkInstance = (function() {
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('service' in d)
 		{
-			serviceData = d['service'];
+			var serviceData = d['service'];
 			var serviceID;
 			if (typeof(serviceData) == "string")
 			{
@@ -2819,7 +2753,7 @@ cr.UserLinkInstance = (function() {
 	{
 		var changed = false;
 		if ('user' in d) {
-			userData = d['user'];
+			var userData = d['user'];
 			var userID;
 			if (typeof(userData) == "string")
 			{
@@ -3171,7 +3105,7 @@ cr.OrganizationLinkInstance = (function() {
 		var changed = false;
 		
 		if ('organization' in d) {
-			organizationData = d['organization'];
+			var organizationData = d['organization'];
 			var organizationID;
 			if (typeof(organizationData) == "string")
 			{
@@ -3239,7 +3173,7 @@ cr.SiteLinkInstance = (function() {
 		var changed = false;
 		
 		if ('site' in d) {
-			siteData = d['site'];
+			var siteData = d['site'];
 			var siteID;
 			if (typeof(siteData) == "string")
 			{
@@ -3307,7 +3241,7 @@ cr.OfferingLinkInstance = (function() {
 		var changed = false;
 		
 		if ('offering' in d) {
-			offeringData = d['offering'];
+			var offeringData = d['offering'];
 			var offeringID;
 			if (typeof(offeringData) == "string")
 			{
@@ -3659,12 +3593,58 @@ cr.Comment = (function() {
     Comment.prototype.mergeData = function(source)
     {
     	cr.IInstance.prototype.mergeData.call(this, source);
-    	if (!this._user) this._user = source._user;
+    	if (!this._asker) this._asker = source._asker;
     	if (!this._text) this._text = source._text;
     	if (!this._question) this._question = source._question;
 		return this;
     }
     
+	Comment.prototype.updateData = function(d, newIDs)
+	{
+		var changed = false;
+		if ('question' in d)
+		{
+			if (this._question != d['question'])
+			{
+				this._question = d['question'];
+				changed = true;
+			}
+		}
+		if ('text' in d)
+		{
+			if (this._text != d['text'])
+			{
+				this._text = d['text'];
+				changed = true;
+			}
+		}
+		
+		if ('asker' in d) {
+			var askerData = d['asker'];
+			var pathID;
+			if (typeof(askerData) == "string")
+			{
+				if (/^path\/[A-Za-z0-9]{32}$/.test(askerData))
+					pathID = askerData.substring("path/".length);
+				else
+					console.assert(false);
+			}
+			else if ('id' in askerData)
+				pathID = askerData['id'];
+			else
+				console.assert(false);
+				
+			var newPath = crp.getInstance(pathID);
+			if (this._asker != newPath)
+			{
+				this._asker = newPath;
+				changed = true;
+			}
+		}
+		
+		return changed;
+	}
+
 	function Comment() {
 	    cr.IInstance.call(this);
 	};
@@ -4438,6 +4418,31 @@ cr.Experience = (function() {
 		    return this.offering().description();
 		else
 		    return this.customOffering();
+	}
+	
+	Experience.prototype.postComment = function(changes)
+	{
+		/* Test case: add a comment to an experience. */
+		var _this = this;
+		changes.add = '1';
+		return this.update({comments: [changes]}, false)
+				.then(function(changes, newIDs)
+					{
+						var r2 = $.Deferred();
+						try
+						{
+							var newComment = new cr.Comment();
+							_this.comments().push(newComment);
+							newComment.clientID('1');
+							_this.updateData(changes, newIDs)
+							r2.resolve(changes, newIDs);
+						}
+						catch(err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					});
 	}
 	
 	function Experience() {

@@ -114,35 +114,11 @@ var ExperienceCommentsPanel = (function() {
 		this.checkDeleteControlVisibility(items);
 	}
 	
-	ExperienceCommentsPanel.prototype.postComment = function(newText)
-	{
-		/* Test case: add a comment to an experience. */
-		var _this = this;
-		return this.fd.experience.update({'comments': [{'add': '1', text: newText}]}, false)
-				.then(function(changes, newIDs)
-					{
-						var r2 = $.Deferred();
-						try
-						{
-							var newComment = new cr.Comment();
-							_this.fd.experience.comments().push(newComment);
-							newComment.clientID('1')
-									  .text(newText);
-							_this.fd.experience.updateData(changes, newIDs)
-							r2.resolve(changes, newIDs);
-						}
-						catch(err)
-						{
-							r2.reject(err);
-						}
-						return r2;
-					});
-	}
-	
 	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
 	{
 		/* Test case: add a comment to an experience that has had a comment */
-		return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.path(), newText);
+		return this.fd.experience.postComment({asker: cr.signedinUser.path().urlPath(),
+											   question: newText});
 	}
 	
 	/**
@@ -674,7 +650,7 @@ var ExperienceCommentsPanel = (function() {
 								try
 								{
 									showClickFeedback(this);
-									_this.postComment(newComment)
+									_this.fd.experience.postComment({text: newText})
 										.then(function()
 											{
 												newCommentInput.node().value = '';
