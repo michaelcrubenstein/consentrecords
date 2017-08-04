@@ -56,6 +56,18 @@ def printExperienceService(i):
          str(i.service) if i.service else nullString,
          ))
          
+def printNotification(i):
+    print("%s\t%s\t%s\t%s" % \
+        (i.id, 
+         str(i.parent),
+         i.name or nullString,
+         i.isFresh or nullString,
+         ))
+    for na in i.notificationArguments.filter(deleteTransaction__isnull=True):
+        
+        print("\t%s\t%s\t%s" % \
+              (na.id, na.position, na.argument))
+         
 def printPath(i):
     print("%s\t%s\t%s\t%s\t%s\t%s" % \
         (i.id, i.parent, i.birthday or nullString, i.name or nullString, 
@@ -74,21 +86,31 @@ def printUser(i):
     print("%s\t%s\t%s\t%s" % 
         (i.id, i.firstName or nullString, i.lastName or nullString, i.birthday or nullString,
         ))
+        
+def printUserGrant(i):
+    if User.objects.filter(pk=i.grantor_id).exists():
+        grantor = User.objects.get(pk=i.grantor_id)
+    elif Organization.objects.filter(pk=i.grantor_id).exists():
+        grantor = Organization.objects.get(pk=i.grantor_id)
+    else:
+        grantor = i.grantor_id
+    print("%s\t%s\t%s\t%s" %
+          (
+            i.id, str(grantor), str(i.grantee), i.privilege or nullString
+          ))
          
-def revertComment(h):
-    i = h.instance
-
+def printUserUserGrantRequest(i):
+    print("%s\t%s\t%s" %
+          (
+            i.id, str(i.parent), str(i.grantee)
+          ))
+         
+def revertComment(h, i):
     i.text = h.text
     i.question = h.question
     i.asker = h.asker
 
-    i.lastTransaction = h.transaction
-    h.delete()
-    i.save()
-
-def revertExperience(h):
-    i = h.instance
-
+def revertExperience(h, i):
     i.organization = h.organization
     i.customOrganization = h.customOrganization
     i.site = h.site
@@ -98,147 +120,114 @@ def revertExperience(h):
     i.start = h.start
     i.end = h.end
     i.timeframe = h.timeframe
-
-    i.lastTransaction = h.transaction
-    h.delete()
     i.save()
     i.checkImplications()
 
-def revertExperienceService(h):
-    i = h.instance
-
+def revertExperienceService(h, i):
     i.position = h.position
     i.service = h.service
 
-    i.lastTransaction = h.transaction
-    h.delete()
-    i.save()
-
-def revertExperienceCustomService(h):
-    i = h.instance
-
+def revertExperienceCustomService(h, i):
     i.position = h.position
     i.name = h.name
 
-    i.lastTransaction = h.transaction
-    h.delete()
-    i.save()
+def revertNotification(h, i):
+    i.isFresh = h.isFresh
+    i.name = h.name
+
+def revertGrant(h, i):
+    i.grantee = h.grantee
+    i.privilege = h.privilege
+    
+def revertUserUserGrantRequest(h, i):
+    i.grantee = h.grantee
+
+def revertChanged(changed, revertData):
+    for i in changed.exclude(transaction=t):
+        h = i.history.order_by('-transaction__creation_time')[0]
+        revertData(h, i)    
+        i.lastTransaction = h.transaction
+        i.save()
+
+def revertDeleted(deleted):
+    for i in deleted.all():
+        i.deleteTransaction=None
+        i.save()
+    
+def printTable(fieldsTitle, pluralName, singularName, f, created, changed, deleted, histories):
+    if created.count():
+        print("\nCreated {0: <24}".format(pluralName) + fieldsTitle)
+        for i in created.all():
+            f(i)
+    if changed.exclude(lastTransaction=F('transaction')).count():
+        print("\nChanged {0: <24}".format(pluralName) + fieldsTitle)
+        for i in changed.exclude(lastTransaction=F('transaction')):
+            f(i)
+    if deleted.count():
+        print("\nDeleted {0: <24}".format(pluralName) + fieldsTitle)
+        for i in deleted.all():
+            f(i)
+    if histories.count():
+        print("\n{0: <21} Histories".format(singularName) + fieldsTitle)
+        for i in histories.all():
+            f(i)
 
 def printTransaction(t):
     print("Transaction\t%s\t%s\t%s" % (t.id, t.user, t.creation_time))
     
-    fieldsTitle = "\ttext/asker/comments"
-    if t.createdComments.count():
-        print("\nCreated Comments" + fieldsTitle)
-        for i in t.createdComments.all():
-            printComment(i)
-    if t.changedComments.exclude(lastTransaction=F('transaction')).count():
-        print("\nChanged Comments" + fieldsTitle)
-        for i in t.changedComments.exclude(lastTransaction=F('transaction')):
-            printComment(i)
-    if t.deletedComments.count():
-        print("\nDeleted Comments" + fieldsTitle)
-        for i in t.deletedComments.all():
-            printComment(i)
-    if t.commentHistories.count():
-        print("\Comment Histories" + fieldsTitle)
-        for i in t.commentHistories.all():
-            printComment(i)
+    printTable("\ttext/asker/comments",
+               "Comments", "Comment",
+               printComment,
+               t.createdComments, t.changedComments, 
+               t.deletedComments, t.commentHistories)
 
-    fieldsTitle = "\torganization\tcustom organization\tsite\tcustom site\toffering\tcustom offering\tstart\tend\ttimeframe"
-    pluralName = "Experiences"
-    singularName = "Experience"
-    if t.createdExperiences.count():
-        print("\nCreated {0: <24}".format(pluralName) + fieldsTitle)
-        for i in t.createdExperiences.all():
-            printExperience(i)
-    if t.changedExperiences.exclude(lastTransaction=F('transaction')).count():
-        print("\nChanged {0: <24}".format(pluralName) + fieldsTitle)
-        for i in t.changedExperiences.exclude(lastTransaction=F('transaction')):
-            printExperience(i)
-    if t.deletedExperiences.count():
-        print("\nDeleted {0: <24}".format(pluralName) + fieldsTitle)
-        for i in t.deletedExperiences.all():
-            printExperience(i)
-    if t.experienceHistories.count():
-        print("\n{0: <21} Histories".format(singularName) + fieldsTitle)
-        for i in t.experienceHistories.all():
-            printExperience(i)
+    printTable("\torganization\tcustom organization\tsite\tcustom site\toffering\tcustom offering\tstart\tend\ttimeframe",
+               "Experiences", "Experience",
+               printExperience,
+               t.createdExperiences, t.changedExperiences, 
+               t.deletedExperiences, t.experienceHistories)
 
-    fieldsTitle = "\tposition\tname"
-    if t.createdExperienceCustomServices.count():
-        print("\nCreated Experience Custom Services" + fieldsTitle)
-        for i in t.createdExperienceCustomServices.all():
-            printExperienceCustomService(i)
-    if t.changedExperienceCustomServices.exclude(lastTransaction=F('transaction')).count():
-        print("\nChanged Experience Custom Services" + fieldsTitle)
-        for i in t.changedExperienceCustomServices.exclude(lastTransaction=F('transaction')):
-            printExperienceCustomService(i)
-    if t.deletedExperienceCustomServices.count():
-        print("\nDeleted Experience Custom Services" + fieldsTitle)
-        for i in t.deletedExperienceCustomServices.all():
-            printExperienceCustomService(i)
-    if t.experienceCustomServiceHistories.count():
-        print("\nExperience Custom Histories" + fieldsTitle)
-        for i in t.experienceCustomServiceHistories.all():
-            printExperienceCustomService(i)
+    printTable("\tposition\tname",
+               "Experience Custom Services", "Experience Custom Service",
+               printExperienceCustomService,
+               t.createdExperienceCustomServices, t.changedExperienceCustomServices, 
+               t.deletedExperienceCustomServices, t.experienceCustomServiceHistories)
 
-    fieldsTitle = "\tposition\tservice"
-    if t.createdExperienceServices.count():
-        print("\nCreated Experience Services" + fieldsTitle)
-        for i in t.createdExperienceServices.all():
-            printExperienceService(i)
-    if t.changedExperienceServices.exclude(lastTransaction=F('transaction')).count():
-        print("\nChanged Experience Services" + fieldsTitle)
-        for i in t.changedExperienceServices.exclude(lastTransaction=F('transaction')):
-            printExperienceService(i)
-    if t.deletedExperienceServices.count():
-        print("\nDeleted Experience Services" + fieldsTitle)
-        for i in t.deletedExperienceServices.all():
-            printExperienceService(i)
-    if t.experienceServiceHistories.count():
-        print("\nExperience Service Histories" + fieldsTitle)
-        for i in t.experienceServiceHistories.all():
-            printExperienceService(i)
+    printTable("\tposition\tservice",
+               "Experience Services", "Experience Service",
+               printExperienceService,
+               t.createdExperienceServices, t.changedExperienceServices, 
+               t.deletedExperienceServices, t.experienceServiceHistories)
 
-    fieldsTitle = "\tuser\tbirthday\tname\tspecial access\tcan answer experience"
-    if t.createdPaths.count():
-        print("\nCreated Paths" + fieldsTitle)
-        for i in t.createdPaths.all():
-            printPath(i)
-    if t.changedPaths.exclude(lastTransaction=F('transaction')).count():
-        print("\nChanged Paths" + fieldsTitle)
-        for i in t.changedPaths.exclude(lastTransaction=F('transaction')):
-            printPath(i)
-    if t.deletedPaths.count():
-        print("\nDeleted Paths" + fieldsTitle)
-        for i in t.deletedPaths.all():
-            printPath(i)
-    if t.pathHistories.count():
-        print("\nPathHistories" + fieldsTitle)
-        for i in t.pathHistories.all():
-            printPath(i)
+    printTable("\tuser\tname\tis fresh",
+               "Notifications", "Notification",
+               printNotification,
+               t.createdNotifications, t.changedNotifications, 
+               t.deletedNotifications, t.notificationHistories)
 
-    fieldsTitle = "\tfirst name\tlast name\tbirthday"
-    if t.createdUsers.count():
-        print("\nCreated Users" + fieldsTitle)
-        for i in t.createdUsers.all():
-            printUser(i)
-    if t.changedUsers.exclude(lastTransaction=F('transaction')).count():
-        print("\nChanged Users" + fieldsTitle)
-        for i in t.changedUsers.exclude(lastTransaction=F('transaction')):
-            printUser(i)
-    if t.deletedUsers.count():
-        print("\nDeleted Users" + fieldsTitle)
-        for i in t.deletedUsers.all():
-            printUser(i)
-    if t.userHistories.count():
-        print("\nUser Histories" + fieldsTitle)
-        for i in t.userHistories.all():
-            printUser(i)
+    printTable("\tuser\tbirthday\tscreen name\tspecial access\tcan answer",
+               "Paths", "Path",
+               printPath,
+               t.createdPaths, t.changedPaths, 
+               t.deletedPaths, t.pathHistories)
 
-    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administered', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    printTable("\tfirst name\tlast name\tbirthday",
+               "Users", "User",
+               printUser,
+               t.createdUsers, t.changedUsers, 
+               t.deletedUsers, t.userHistories)
+
+    printTable("\tuser\tgrantee\tprivilege",
+               "User Grants", "User Grant",
+               printUserGrant,
+               t.createdUserGrants, t.changedUserGrants, 
+               t.deletedUserGrants, t.userGrantHistories)
+
+    printTable("\tgrantor\tgrantee",
+               "User User Grant Requests", "User User Grant Request",
+               printUserUserGrantRequest,
+               t.createdUserUserGrantRequests, t.changedUserUserGrantRequests, 
+               t.deletedUserUserGrantRequests, t.userUserGrantRequestHistories)
 
 if __name__ == "__main__":
     with transaction.atomic():
@@ -246,36 +235,34 @@ if __name__ == "__main__":
         
         printTransaction(t)
         if '-yes' in sys.argv:
-            for i in t.changedComments.exclude(transaction=t):
-                h = i.history.order_by('-transaction__creation_time')[0]
-                revertComment(h)
-            for i in t.deletedComments.all():
-                i.deleteTransaction=None
-                i.save()
+            revertChanged(t.changedComments, revertComment)
+            revertDeleted(t.deletedComments)
+                
+            revertChanged(t.changedExperiences, revertExperience)
+            deleted = list(t.deletedExperiences.all())
+            revertDeleted(t.deletedExperiences)
+            for i in deleted:
                 i.checkImplications()
                 
-            for i in t.changedExperiences.exclude(transaction=t):
-                h = i.history.order_by('-transaction__creation_time')[0]
-                revertExperience(h)
-            for i in t.deletedExperiences.all():
-                i.deleteTransaction=None
-                i.save()
-                i.checkImplications()
-                
-            for i in t.changedExperienceServices.exclude(transaction=t):
-                h = i.history.order_by('-transaction__creation_time')[0]
-                revertExperienceService(h)
-            for i in t.deletedExperienceServices.all():
-                i.deleteTransaction=None
-                i.save()
+            revertChanged(t.changedExperienceServices, revertExperienceService)
+            deleted = list(t.deletedExperienceServices.all())
+            revertDeleted(t.deletedExperienceServices)
+            for i in deleted:
                 i.createImplications()
 
-            for i in t.changedExperienceCustomServices.exclude(transaction=t):
-                h = i.history.order_by('-transaction__creation_time')[0]
-                revertExperienceCustomService(h)
-            for i in t.deletedExperienceCustomServices.all():
-                i.deleteTransaction=None
-                i.save()
+            revertChanged(t.changedExperienceCustomServices, revertExperienceCustomService)
+            revertDeleted(t.deletedExperienceCustomServices)
+
+            revertChanged(t.changedNotifications, revertNotification)
+            revertDeleted(t.deletedNotifications)
+
+            revertDeleted(t.deletedNotificationArguments)
+
+            revertChanged(t.changedUserGrants, revertGrant)
+            revertDeleted(t.deletedUserGrants)
+
+            revertChanged(t.changedUserUserGrantRequests, revertUserUserGrantRequest)
+            revertDeleted(t.deletedUserUserGrantRequests)
 
 # 
 #         if t.deletedValue.count():
