@@ -2944,6 +2944,34 @@ cr.Grantable = (function() {
         return this._grantsPromise;
     }
     
+	Grantable.prototype.postUserGrant = function(accessorLevel, path)
+	{
+		var _this = this;
+
+		var changes = [{grantee: path, privilege: accessorLevel.name}];
+		return this.update({'user grants': [{add: '1', grantee: path, privilege: accessorLevel.name}]})
+			.then(function(changes, newIDs)
+			{
+				var r2 = $.Deferred();
+				try
+				{
+					if (_this.userGrants())
+					{
+						var newGrant = new cr.UserGrant();
+						_this.userGrants().push(newGrant);
+						newGrant.clientID('1');
+						_this.updateData(changes, newIDs);
+					}
+					r2.resolve(changes, newIDs);
+				}
+				catch(err)
+				{
+					r2.reject(err);
+				}
+				return r2;
+			});
+	}
+	
     function Grantable() {
     	cr.IInstance.call(this);
     }

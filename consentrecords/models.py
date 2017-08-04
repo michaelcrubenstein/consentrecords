@@ -3162,12 +3162,53 @@ class UserGrant(AccessInstance, dbmodels.Model):
         return UserGrant.getSubClause(qs, user, accessType)[0]
             
     def create(parent, data, context, newIDs={}):
+        if not context.canAdminister(parent):
+           raise PermissionDenied('you do not have permission to administer this user')
+        
+        grantee = _orNoneForeignKey(data, 'grantee', context, User)
+        if not grantee:
+            raise ValueError("the grantee for a new user grant is not specified")
+        elif type(grantee) != User:
+        	raise ValueError("the grantee for a new user grant is not a user: %s(%s)" % (str(type(grantee)), str(grantee)))
+            
+        if 'privilege' not in data:
+            raise ValueError("the privilege for a new user grant is not specified")
+        elif data['privilege'] not in ['find', 'read', 'register', 'write', 'administer']:
+            raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
+            
+        oldItem = parent.userGrants.filter(deleteTransaction__isnull=True,
+                                           grantor_id=parent.id,
+                                           grantee=grantee)
+        if oldItem.exists():
+            if parent == context.user:
+                raise ValueError('%s is already following you' % str(grantee))
+            else:
+                raise ValueError('%s is already following %s' % (str(grantee), str(parent)))
+
         newItem = UserGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  grantor_id=parent.id,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, User),
                                  privilege=_orNone(data, 'privilege'))
         
+        # Remove any corresponding access requests.
+        vs = parent.userGrantRequests.filter(deleteTransaction__isnull=True,
+                                             grantee=grantee)
+        for v in vs:
+            v.markDeleted(context)
+    
+        # Notify the grantee that they have been accepted.
+        n = Notification.objects.create(transaction=context.transaction,
+            lastTransaction=context.transaction,
+            parent=grantee,
+            name='crn.FollowerAccept',
+            isFresh='yes')
+        na=NotificationArgument.objects.create(transaction=context.transaction,
+            lastTransaction=context.transaction,
+            parent=n,
+            position=0,
+            argument=parent.id.hex)
+
         return newItem                          
         
 class UserGrantHistory(dbmodels.Model):
@@ -3211,6 +3252,27 @@ class GroupGrant(AccessInstance, dbmodels.Model):
         return GroupGrant.getSubClause(qs, user, accessType)[0]
             
     def create(parent, data, context, newIDs={}):
+        if not context.canAdminister(parent):
+           raise PermissionDenied('you do not have permission to administer this user')
+        
+        grantee = _orNoneForeignKey(data, 'grantee', context, Group)
+        if not grantee:
+            raise ValueError("the grantee for a new group grant is not specified")
+            
+        if 'privilege' not in data:
+            raise ValueError("the privilege for a new group grant is not specified")
+        elif data['privilege'] not in ['find', 'read', 'register', 'write', 'administer']:
+            raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
+            
+        oldItem = parent.groupGrants.filter(deleteTransaction__isnull=True,
+                                           grantor=parent,
+                                           grantee=grantee)
+        if oldItem.exists():
+            if parent == context.user:
+                raise ValueError('%s is already following you' % str(grantee))
+            else:
+                raise ValueError('%s is already following %s' % (str(grantee), str(parent)))
+
         newItem = GroupGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  grantor_id=parent.id,
