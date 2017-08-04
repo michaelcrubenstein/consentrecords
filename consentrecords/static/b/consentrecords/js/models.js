@@ -2944,12 +2944,12 @@ cr.Grantable = (function() {
         return this._grantsPromise;
     }
     
-	Grantable.prototype.postUserGrant = function(accessorLevel, path)
+	Grantable.prototype.postUserGrant = function(privilege, path)
 	{
 		var _this = this;
 
-		var changes = [{grantee: path, privilege: accessorLevel.name}];
-		return this.update({'user grants': [{add: '1', grantee: path, privilege: accessorLevel.name}]})
+		var changes = [{grantee: path, privilege: privilege}];
+		return this.update({'user grants': [{add: '1', grantee: path, privilege: privilege}]})
 			.then(function(changes, newIDs)
 			{
 				var r2 = $.Deferred();

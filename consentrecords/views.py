@@ -290,14 +290,9 @@ def accept(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-    if len(objs) > 0:
-        args['state'] = 'accept'
-        args['follower'] = objs[0].id.hex
-        args['cell'] = TermNames.user
-        args['privilege'] = 'read'
+    args['state'] = 'accept'
+    args['follower'] = ('user/%s' if terms.isUUID(email) else 'user[email=%s]') % email
+    args['privilege'] = 'read'
 
     return HttpResponse(template.render(args))
 
@@ -323,12 +318,12 @@ def ignore(request, email):
         args['facebookIntegration'] = True
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-    if len(objs) > 0:
+    tokens = cssparser.tokenizeHTML(containerPath)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    if len(qs) > 0:
         args['state'] = 'ignore'
-        args['follower'] = objs[0].id.hex
-        args['follower_description'] = objs[0].getDescription()
+        args['follower'] = 'user/%s' % qs[0].id.hex
+        args['follower_description'] = qs[0].description()
         
     return HttpResponse(template.render(args))
 

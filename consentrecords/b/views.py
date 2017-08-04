@@ -275,14 +275,9 @@ def accept(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo)
-    if len(objs) > 0:
-        args['state'] = 'accept'
-        args['follower'] = objs[0].id.hex
-        args['cell'] = TermNames.user
-        args['privilege'] = 'read'
+    args['state'] = 'accept'
+    args['follower'] = ('user/%s' if terms.isUUID(email) else 'user[email=%s]') % email
+    args['privilege'] = 'read'
 
     return HttpResponse(template.render(args))
 
@@ -298,6 +293,8 @@ def ignore(request, email):
         'cdn_url': settings.CDN_URL,
     }
     
+    languageCode = request.GET.get('language', 'en')
+    
     if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
@@ -307,13 +304,14 @@ def ignore(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo)
-    if len(objs) > 0:
+    containerPath = ('user/%s' if terms.isUUID(email) else 'user[email=%s]') % email
+    context = Context(languageCode, request.user)
+    tokens = cssparser.tokenizeHTML(containerPath)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    if len(qs) > 0:
         args['state'] = 'ignore'
-        args['follower'] = objs[0].id.hex
-        args['follower_description'] = objs[0].description()
+        args['follower'] = 'user/%s' % qs[0].id.hex
+        args['follower_description'] = qs[0].description()
         
     return HttpResponse(template.render(args))
 

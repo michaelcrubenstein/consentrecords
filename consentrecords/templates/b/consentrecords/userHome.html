@@ -555,10 +555,16 @@
 								}
 						}
 						
-						cr.share(null, "{{follower}}", cr.UserGrant, "{{privilege}}", function(newValue)
+						var path = "{{follower}}"
+						cr.signedinUser.postUserGrant("{{privilege}}", path)
+							.then(function(changes, newIDs)
+								{
+									return cr.getData({path: 'user grant/' + newIDs['1'], resultType: cr.UserGrant, fields: ['none']})
+								})
+							.then(function(newValues)
 							{
 								// Remove any access request with this name.
-								newValue = newValue.grantee();
+								var newValue = newValues[0].grantee();
 								clearAccessRequests(newValue);
 								bootstrap_alert.success("{0} is now following you.".format(newValue.description()), '.alert-container');
 							}, cr.asyncFail);
