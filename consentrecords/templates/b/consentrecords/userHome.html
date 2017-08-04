@@ -214,10 +214,6 @@
 			return "Leaving this page will leave the PathAdvisor web application.";
 		};
 
-		/* The global object used to identify the current user. */
-		var userFirstName = null;
-		var userLastName = null;
-
 		function checkSignin(handleState)
 		{
 			if (prepareClick('checkSignin'))
@@ -550,12 +546,13 @@
 						function clearAccessRequests(newValue)
 						{
 							var data = cr.signedinUser.userGrantRequests();
-							for (var i = 0; i < data.length; ++i)
-							{
-								var d = data[i];
-								if (d.grantee().id() == newValue.id())
-									$(d).trigger("deleted.cr");
-							}
+							if (data)
+								for (var i = 0; i < data.length; ++i)
+								{
+									var d = data[i];
+									if (d.grantee().id() == newValue.id())
+										$(d).trigger("deleted.cr");
+								}
 						}
 						
 						cr.share(null, "{{follower}}", cr.UserGrant, "{{privilege}}", function(newValue)
@@ -564,7 +561,7 @@
 								newValue = newValue.grantee();
 								clearAccessRequests(newValue);
 								bootstrap_alert.success("{0} is now following you.".format(newValue.description()), '.alert-container');
-							}, asyncFailFunction);
+							}, cr.asyncFail);
 					}
 					needsSignin = true;
 				}
@@ -682,6 +679,7 @@
 
 			{% if userID %}
 			cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+				.fail(cr.asyncFail);
 			{% endif %}
 		
 			/* Initialize all of the objects that are dependent on whether or not the user is

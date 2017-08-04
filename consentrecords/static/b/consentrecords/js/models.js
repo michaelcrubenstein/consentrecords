@@ -7916,14 +7916,20 @@ cr.signedinUser = new cr.User();
 
 cr.createSignedinUser = function(id, description)
 {
+	crp.clear();
+	cr.Service.clearPromises();
 	cr.signedinUser.id(id)
-	               .description(description)
-	               .promiseDataLoaded(['path', cr.fieldNames.systemAccess, 'user grant requests', 'notifications'])
+	               .description(description);
+	cr.signedinUser = crp.pushInstance(cr.signedinUser);
+	
+	return cr.signedinUser.promiseDataLoaded(['path', cr.fieldNames.systemAccess, 'user grant requests', 'notifications'])
 		.then(function()
 			{
 				$(cr.signedinUser).trigger("signin.cr");
-			}, 
-			cr.asyncFail);
+				var r2 = $.Deferred();
+				r2.resolve(cr.signedinUser);
+				return r2;
+			});
 }
 
 /* Return a new date that will be a UTC date that represents the same date

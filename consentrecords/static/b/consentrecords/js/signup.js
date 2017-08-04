@@ -442,9 +442,9 @@ var SigninPanel = (function()
 		bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 		
 		var _this = this;
-		$.post(cr.urls.submitSignin, { username : $(this.emailInput).val(),
+		return $.post(cr.urls.submitSignin, { username : $(this.emailInput).val(),
 									  password : $(this.passwordInput).val() })
-			.done(function(json)
+			.then(function(json)
 				{
 					if ($(_this.rememberMeCheckbox).prop("checked"))
 						$.cookie("email", $(_this.emailInput).val(), { expires : 10 });
@@ -455,13 +455,11 @@ var SigninPanel = (function()
 					$(_this.passwordInput).val("")
 				
 					$.cookie("authenticator", "email", { path: "/"});
-					if (successFunction)
-						successFunction(json.user);
-				})
-			.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				});
+					var r2 = $.Deferred();
+					r2.resolve(json.user);
+					return r2;
+				},
+				cr.thenFail);
 	}
 
 	SigninPanel.prototype.initializeFocus = function()
@@ -500,18 +498,7 @@ var SigninPanel = (function()
 				.on('input', function() { _this.checkenabled(); })
 				.node();
 		
-		var signInSuccess = function(data)
-		{
-			crp.clear();
-			cr.Service.clearPromises();
-			cr.signedinUser.setData(data);
-			_this.hideRight(function()
-				{
-					crp.pushInstance(cr.signedinUser);
-					$(cr.signedinUser).trigger("signin.cr");
-					unblockClick();
-				});
-		}
+		var signInSuccess = 
 		
 		this.passwordInput = form.append('input')
 				.attr('type', 'password')
@@ -527,7 +514,19 @@ var SigninPanel = (function()
 							{
 								try
 								{
-									_this.submit(signInSuccess, cr.syncFail);
+									if (_this.canSubmit())
+									{
+										_this.submit()
+											.then(function(data)
+											{
+												cr.createSignedinUser(data.id, data.description)
+													.then(function()
+													{
+														_this.hideRight(unblockClick);
+													},
+													cr.syncFail);
+											}, cr.syncFail);
+									}
 								}
 								catch(err)
 								{
