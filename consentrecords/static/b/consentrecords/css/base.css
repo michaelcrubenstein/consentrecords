@@ -420,10 +420,12 @@ panel.list .description-text {
 	text-align: left;
 }
 .site-chevron-right {
+	height: 14px;
 	color: #777;
 	padding-left: 12px;
 	padding-right: 12px;
-	height: 14px;
+	align-self: center;
+	-webkit-align-self: center;
 }
 .site-chevron-right+.description-text {
 	margin-right: 18px;
@@ -449,6 +451,8 @@ li>span.glyphicon:first-child {
 li>span.glyphicon.glyphicon-ok:first-child {
 	padding-left: 12px;
 	padding-right: 12px;
+	align-self: center;
+	-webkit-align-self: center;
 }
 
 .cell.unique>ol {
@@ -562,7 +566,8 @@ div.add-value>div {
 }
 
 .info-button-container {
-	padding-bottom: 5px;	/* So that the bottom border will line up properly. */
+	align-self: center;
+	-webkit-align-self: center;
 }
 
 .info-button {
@@ -608,8 +613,6 @@ div.add-value>div {
 ol.cell-items>li {
 	display: flex;
 	position: relative;	/* Relative position is needed to set the left edge of the item. */
-	align-items: center;
-	-webkit-align-items: center;
 	font-size: 15px;
 	min-height: 30px;
 	cursor: pointer;

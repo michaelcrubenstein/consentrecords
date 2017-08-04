@@ -22,6 +22,8 @@ section.cell.documentation {
 	text-align: center;
 	width: 23px;
 	height: 23px;
+	align-self: center;
+	-webkit-align-self: center;
 }
 .compare-button:focus {
 	outline: none;
