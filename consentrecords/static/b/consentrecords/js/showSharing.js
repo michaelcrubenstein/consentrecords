@@ -75,7 +75,7 @@ var SharingPanel = (function() {
 								{
 									/* Since this item was deleted as part of adding access,  
 										process it's deletion. */
-									d.deleted();
+									$(d).trigger("deleted.cr", d);
 									unblockClick();
 								}, 
 								cr.syncFail);
@@ -138,8 +138,8 @@ var SharingPanel = (function() {
 		var infoButtonDivs = appendInfoButtons(items, function(d) { return d.grantee(); });
 		
 		var itemButtonDivs = leftDivs.append('div');
-		var applyButtons = this.appendApplyButtons(itemButtonDivs);
-		var ignoreButtons = this.appendIgnoreButtons(itemButtonDivs);
+		this.appendApplyButtons(itemButtonDivs);
+		this.appendIgnoreButtons(itemButtonDivs);
 			
 		// Sort the access records by type.
 		var grants = user.userGrants().concat(user.groupGrants());
