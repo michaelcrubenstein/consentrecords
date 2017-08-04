@@ -227,21 +227,13 @@
 		/* Update the username label when a user signs in or out. */	
 		var usernameLabel = $(".username-label");
 		
-		function setName(eventObject)
+		cr.signedinUser.on("signin.cr changed.cr", usernameLabel[0], function(eventObject)
 		{
 			$(eventObject.data).text(cr.signedinUser.caption());
-		}
-		
-		cr.signedinUser.on("dataChanged.cr", usernameLabel[0], setName);
-		cr.signedinUser.on("signin.cr", usernameLabel[0], function(eventObject)
-		{
-			this.on("valueDeleted.cr dataChanged.cr", eventObject.data, setName);
-			setName.call(this, eventObject);
 		});
 		
 		cr.signedinUser.on("signout.cr", usernameLabel[0], function(eventObject)
 		{
-			this.off("valueDeleted.cr dataChanged.cr", setName);
 			$(eventObject.data).text("");
 		});
 		
