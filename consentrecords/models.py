@@ -547,13 +547,13 @@ class SecureRootInstance(RootInstance):
     ### without signing in.
     def anonymousFindFilter(prefix=''):
         return Q(((prefix + '__publicAccess__in') if prefix else 'publicAccess__in',
-                  ["find", "read"]))
+                  ['find', 'read']))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
         return Q(((prefix + '__publicAccess') if prefix else 'publicAccess',
-                  "read"))
+                  'read'))
 
     # returns a querySet that enumerates the grantor_ids for grants
     # for the specified user to have one of the specified privileges.
@@ -589,7 +589,7 @@ class SecureRootInstance(RootInstance):
             return qs
         else:
             return SecureRootInstance.privilegedQuerySet(qs, user, prefix, 
-                        ["find", "read", "register", "write", "administer"])
+                        ['find', 'read', 'register', 'write', 'administer'])
 
     def readableQuerySet(qs, user, prefix=''):
         if not user:
@@ -598,7 +598,7 @@ class SecureRootInstance(RootInstance):
             return qs
         else:
             return SecureRootInstance.privilegedQuerySet(qs, user, prefix, 
-                        ["read", "write", "administer"])
+                        ['read', 'write', 'administer'])
 
     def administrableQuerySet(qs, user, prefix=''):
         if not user:
@@ -607,14 +607,13 @@ class SecureRootInstance(RootInstance):
             return qs
         else:
             return SecureRootInstance.privilegedQuerySet(qs, user, prefix, 
-                        ["administer"])
+                        ['administer'])
 
-    @property
     def fetchPrivilege(self, user):
         if not user:
             return None
         elif self.primaryAdministrator_id == user.id:
-            return "administer"
+            return 'administer'
         else:
             f = self.userGrants.filter(grantee=user, deleteTransaction__isnull=True).values('privilege')\
                 .union(self.groupGrants.filter(grantee__members__user=user, deleteTransaction__isnull=True,
@@ -664,7 +663,7 @@ class TranslationInstance(ChildInstance):
         if not value or value in validValues:
             return
         else:
-            raise ValueError('the value "%s" is not a valid language. Valid langues are are: %s' % (value, validValues))
+            raise ValueError('the value "%s" is not a valid language. Valid languages are are: %s' % (value, validValues))
     
     def ValueCheckText(self, value):
         return
