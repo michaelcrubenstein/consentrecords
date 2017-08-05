@@ -63,15 +63,22 @@ var FlagController = (function() {
 		if (offering && offering.id())
 		{
 			var services = offering.offeringServices();
-			minColumn = services.map(function(s) {
-					return s.service().getColumn();
-				})
-				.reduce(function(a, b) {
-					if (a < maxColumn)
-						return a;
-					else
-						return b;
-				}, minColumn);
+			
+			/* Services will not be instantiated if the currently logged-in
+				user does not have read access to the offering.
+			 */
+			if (services)
+			{
+				minColumn = services.map(function(s) {
+						return s.service().getColumn();
+					})
+					.reduce(function(a, b) {
+						if (a < maxColumn)
+							return a;
+						else
+							return b;
+					}, minColumn);
+			}
 		}
 		
 		if (this.experience instanceof cr.Experience)
