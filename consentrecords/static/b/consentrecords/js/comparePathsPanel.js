@@ -84,7 +84,7 @@ var CompareFlag = (function() {
 	{
 		var e = this.experience.end();
 		var s = this.experience.start();
-		var t = this.experience.timeframe();
+		var t = this.experience.timeframe && this.experience.timeframe();
 		var top, bottom;
 		
 		if (e)
@@ -114,7 +114,7 @@ var CompareFlag = (function() {
 	CompareFlag.prototype.isOnPath = function(path)
 	{
 		return (this.experience instanceof cr.Engagement) ?
-			   (this.experience.path().user().id() == path.user().id()) :
+			   (this.experience.user().id() == path.user().id()) :
 			   (this.experience.path() == path);
 	}
 	
@@ -298,7 +298,7 @@ var ComparePath = (function() {
 		function getCompareFlag(experience)
 			{
 				var isLeft = (experience instanceof cr.Engagement) ?
-							 (experience.path().user().id() == _this.leftPath.user().id()) :
+							 (experience.user().id() == _this.leftPath.user().id()) :
 							 (experience.path() == _this.leftPath);
 				if (isLeft)
 					return new CompareFlag(experience, _this.leftAgeCalculator);

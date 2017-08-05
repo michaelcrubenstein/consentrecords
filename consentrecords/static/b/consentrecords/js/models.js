@@ -7537,6 +7537,7 @@ cr.User = (function() {
 			this._path = new cr.Path();
 			this._path.setData(newData);
 			this._path.parentID(this.id());
+			this._path.user(this);
 			this._path = crp.pushInstance(this._path);
 			return this;
 		}
@@ -7616,6 +7617,7 @@ cr.User = (function() {
         	.then(function(paths)
         		{
         			_this._path = paths[0];
+        			_this._path.user(_this);
         			result = $.Deferred();
         			result.resolve(paths[0]);
         			return result;
