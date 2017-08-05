@@ -414,30 +414,17 @@ var ComparePath = (function() {
 			.attr('y2', 500)
 			.attr('stroke', function(d) { return d.color; });
 	
-		var leftCell = this.leftPath.experiences();
-		var rightCell = this.rightPath.experiences();
 		var addedFunction = function(eventObject, newData)
 			{
 				_this.addMoreExperience(newData);
 			}
 		setupOnViewEventHandler(this.leftPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
 		setupOnViewEventHandler(this.rightPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
-			
-		var experiences = leftCell;
 		
-		this.allExperiences = this.allExperiences.concat(experiences);
-		
-		this.allExperiences = this.allExperiences.concat(rightCell);
-		$(rightCell).each(function()
-			{
-				this.calculateDescription();
-			});
-			
-		/* Ensure that all of the offerings have their associated cells. */
-		this.allExperiences.forEach(function(experience)
-			{
-				checkOfferingCells(experience);
-			});
+		this.allExperiences = this.leftPath.engagements().splice()
+			.concat(this.rightPath.engagements())
+			.concat(this.leftPath.experiences())
+			.concat(this.rightPath.experiences())
 			
 		var resizeFunction = function()
 		{
@@ -576,26 +563,7 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var p1 = crp.promise({path: 'path/' + this.rightPath.id() + '/user/engagement', 
-				   fields: ["parents"],
-				   resultType: cr.Engagement});
-		var p2 = crp.promise({path: 'path/' + this.rightPath.id() + '/user/engagement/session/offering',
-							  fields: ['services'],
-							  resultType: cr.Offering});
-		var p3 = crp.promise({path: 'path/' + this.rightPath.id() + '/experience/offering',
-							  fields: ['services'],
-							  resultType: cr.Offering});
-		$.when(p1, p2, p3)
-		.then(function(engagements, r2, r3)
-			{
-				_this.allExperiences = engagements.slice();
-				$(engagements).each(function()
-				{
-					this.setDescription(this.offering().description());
-				});
-				
-				return _this.rightPath.promiseExperiences();
-			})
+		this.rightPath.promiseExperiences()
 		.then(successFunction2, cr.asyncFail);
 	}
 	

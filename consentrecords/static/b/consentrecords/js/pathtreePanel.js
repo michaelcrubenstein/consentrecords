@@ -1283,7 +1283,7 @@ var PathLines = (function() {
 				_this.handleResize();
 			});
 
-		var successFunction2 = function()
+		var successFunction2 = function(engagements, experiences)
 		{
 			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
@@ -1300,14 +1300,7 @@ var PathLines = (function() {
 						_this.path.off("experienceAdded.cr", addedFunction);
 					});
 				
-				var experiences = _this.path.experiences();
-			
-				_this.allExperiences = _this.allExperiences.concat(experiences);
-			
-				$(experiences).each(function()
-				{
-					this.calculateDescription();
-				});
+				_this.allExperiences = engagements.slice().concat(experiences);
 			
 				_this.showAllExperiences();
 			
@@ -1330,31 +1323,8 @@ var PathLines = (function() {
 		}
 		
 		return cr.Service.servicesPromise()
-		.then(function() {
-			return crp.promise({path: "path/" + _this.path.id() + '/user/engagement/session/offering',
-			                    fields: ['services'],
-			                    resultType: cr.Offering});
-			})
-		.then(function() {
-				return crp.promise({path: "path/" + _this.path.id() + '/experience/offering',
-			                        fields: ['services'],
-			                        resultType: cr.Offering});
-			})
-		.then(function() {
-				return crp.promise({path:  "path/" + _this.path.id() + '/user/engagement',
-		           resultType: cr.Engagement, 
-				   fields: ['organization', 'site', 'offering']});
-			})
-		.then(function(engagements)
-			{
-				_this.allExperiences = engagements.slice();
-				$(engagements).each(function()
-				{
-					this.description(this.offering().description());
-				});
-			})
-		.then(function() {
-				return _this.path.promiseExperiences(["parents"]);
+			.then(function() {
+				return _this.path.promiseExperiences();
 			})
 		.then(successFunction2, cr.asyncFail);
 	}

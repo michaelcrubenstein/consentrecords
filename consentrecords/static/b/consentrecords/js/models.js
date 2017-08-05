@@ -5747,6 +5747,7 @@ cr.Path = (function() {
 	Path.prototype._specialAccess = null;
 	Path.prototype._canAnswerExperience = null;
 	Path.prototype._experiences = null;
+	Path.prototype._engagements = null;
 	Path.prototype._experiencesPromise = null;
 	Path.prototype._user = null;
 	Path.prototype._userPromise = null;
@@ -5976,6 +5977,21 @@ cr.Path = (function() {
     	}
     }
     
+    Path.prototype.engagements = function(newValue)
+    {
+    	if (newValue === undefined)
+    	{
+    		if (this._engagements === null)
+    			throw new Error("Runtime Error: engagements of a path have not been set");
+    		else
+    			return this._engagements;
+    	}
+    	else
+    	{
+    		this._engagements = newValue;
+    	}
+    }
+    
     Path.prototype.promiseExperiences = function()
     {
     	p = this.readCheckPromise();
@@ -5991,22 +6007,44 @@ cr.Path = (function() {
         }
         
         var _this = this;	
-        this._experiencesPromise = cr.getData(
-        	{
-        		path: this.urlPath() + '/experience',
-        		fields: ['services', 'custom services'],
-        		resultType: cr.Experience
-        	})
-        	.then(function(experiences)
+        this._experiencesPromise = 	
+        	cr.getData({path: _this.urlPath() + '/user/engagement/session/offering',
+			                    fields: ['services'],
+			                    resultType: cr.Offering})
+			.then(function() {
+				return cr.getData({path: _this.urlPath() + '/experience/offering',
+			                        fields: ['services'],
+			                        resultType: cr.Offering});
+				})
+			.then(function() {
+				return $.when(cr.getData({path:  _this.urlPath() + '/user/engagement',
+							   resultType: cr.Engagement, 
+							   fields: ['organization', 'site', 'offering']}),
+							  cr.getData({
+											path: _this.urlPath() + '/experience',
+											fields: ['services', 'custom services'],
+											resultType: cr.Experience
+										})
+							);
+				})
+			.then(function(engagements, experiences)
         		{
+        			_this._engagements = engagements;
         			_this._experiences = experiences;
-        			_this._experiences.forEach(function(e)
+        			experiences.forEach(function(e)
         				{
         					e.parentID(_this.id())
         					 .path(_this);
+        					e.calculateDescription();
         				});
+        			
+        			engagements.forEach(function(e)
+						{
+							e.description(e.offering().description());
+						});
+
         			result = $.Deferred();
-        			result.resolve(experiences);
+        			result.resolve(engagements, experiences);
         			return result;
         		});
         return this._experiencesPromise;
@@ -7572,7 +7610,7 @@ cr.User = (function() {
         this._pathPromise = cr.getData(
         	{
         		path: 'user/{0}/path'.format(this.id()),
-        		fields: ['experiences', 'experiences/services', 'experiences/custom services'],
+        		fields: [],
         		resultType: cr.Path
         	})
         	.then(function(paths)
