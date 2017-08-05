@@ -543,14 +543,14 @@
 					/* Accept the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						function clearAccessRequests(newValue)
+						function clearAccessRequests(user)
 						{
 							var data = cr.signedinUser.userGrantRequests();
 							if (data)
 								for (var i = 0; i < data.length; ++i)
 								{
 									var d = data[i];
-									if (d.grantee().id() == newValue.id())
+									if (d.grantee().id() == user.id())
 										$(d).trigger("deleted.cr");
 								}
 						}
@@ -576,19 +576,28 @@
 					/* Ignore the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						var cell = cr.signedinUser.getCell("access request");
-						var v = cell.data.find(function(d) { return d.id() === "{{follower}}"; });
-						if (v)
-						{
-							v.deleteValue()
-								.then(function()
+						var path = "{{follower}}"
+						cr.getData({path: path, resultType: cr.User, fields: ['none']})
+							.then(function(users)
+							{
+								if (users.length > 0)
+								{
+									var user = users[0];
+									var data = cr.signedinUser.userGrantRequests();
+									var v = data.find(function(d) { return d.grantee().id() === user.id(); });
+									if (v)
 									{
-										bootstrap_alert.success("Access request from {0} has been denied.".format(v.getDescription()), '.alert-container');
-									},
-								asyncFailFunction);
-						}
-						else
-							bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
+										v.deleteData()
+											.then(function()
+												{
+													bootstrap_alert.success("Access request from {0} has been denied.".format(v.description()), '.alert-container');
+												},
+											cr.asyncFail);
+									}
+									else
+										bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
+								}
+								});
 					}
 					needsSignin = true;
 				}

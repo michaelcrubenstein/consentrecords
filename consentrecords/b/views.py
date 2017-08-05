@@ -294,6 +294,7 @@ def ignore(request, email):
     }
     
     languageCode = request.GET.get('language', 'en')
+    context = Context(languageCode, request.user)
     
     if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
@@ -304,8 +305,7 @@ def ignore(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('user/%s' if terms.isUUID(email) else 'user[email=%s]') % email
-    context = Context(languageCode, request.user)
+    containerPath = ('user/%s' if terms.isUUID(email) else 'user[email>text=%s]') % email
     tokens = cssparser.tokenizeHTML(containerPath)
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     if len(qs) > 0:
