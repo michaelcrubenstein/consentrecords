@@ -135,10 +135,16 @@ def revertNotification(h, i):
     i.isFresh = h.isFresh
     i.name = h.name
 
+def revertPath(h, i):
+	i.revert(h)
+	
 def revertGrant(h, i):
     i.grantee = h.grantee
     i.privilege = h.privilege
     
+def revertUser(h, i):
+    i.revert(h)
+
 def revertUserUserGrantRequest(h, i):
     i.grantee = h.grantee
 
@@ -257,6 +263,12 @@ if __name__ == "__main__":
             revertDeleted(t.deletedNotifications)
 
             revertDeleted(t.deletedNotificationArguments)
+
+            revertChanged(t.changedPaths, revertPath)
+            revertDeleted(t.deletedPaths)
+
+            revertChanged(t.changedUsers, revertUser)
+            revertDeleted(t.deletedUsers)
 
             revertChanged(t.changedUserGrants, revertGrant)
             revertDeleted(t.deletedUserGrants)

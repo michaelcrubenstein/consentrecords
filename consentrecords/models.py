@@ -3169,7 +3169,7 @@ class UserGrant(AccessInstance, dbmodels.Model):
         if not grantee:
             raise ValueError("the grantee for a new user grant is not specified")
         elif type(grantee) != User:
-        	raise ValueError("the grantee for a new user grant is not a user: %s(%s)" % (str(type(grantee)), str(grantee)))
+            raise ValueError("the grantee for a new user grant is not a user: %s(%s)" % (str(type(grantee)), str(grantee)))
             
         if 'privilege' not in data:
             raise ValueError("the privilege for a new user grant is not specified")
@@ -5777,7 +5777,15 @@ class Path(IInstance, dbmodels.Model):
                                              specialAccess=self.specialAccess,
                                              publicAccess=self.publicAccess,
                                              canAnswerExperience=self.canAnswerExperience)
-        
+    
+    ### Revert the data components of this object to values in the corresponding history    
+    def revert(h)
+        self.birthday = h.birthday
+        self.name = h.name
+        self.specialAccess = h.specialAccess
+        self.publicAccess = h.publicAccess
+        self.canAnswerExperience = self.canAnswerExperience
+    
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -7016,6 +7024,13 @@ class User(SecureRootInstance, dbmodels.Model):
                                              publicAccess=self.publicAccess,
                                              primaryAdministrator=self.primaryAdministrator)
     
+    def revert(h)
+        self.firstName = h.firstName
+        self.lastName = h.lastName
+        self.birthday = h.birthday
+        self.publicAccess = h.publicAccess
+        self.primaryAdministrator = h.primaryAdministrator
+            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
