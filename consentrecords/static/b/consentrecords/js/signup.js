@@ -435,7 +435,7 @@ var SigninPanel = (function()
 		}
 	},
 
-	SigninPanel.prototype.submit = function(successFunction, failFunction) {
+	SigninPanel.prototype.submit = function() {
 		if (!this.canSubmit())
 			return;
 		
@@ -497,8 +497,6 @@ var SigninPanel = (function()
 				.attr('autofocus', '')
 				.on('input', function() { _this.checkenabled(); })
 				.node();
-		
-		var signInSuccess = 
 		
 		this.passwordInput = form.append('input')
 				.attr('type', 'password')
@@ -587,7 +585,16 @@ var SigninPanel = (function()
 					{
 						try
 						{
-							_this.submit(signInSuccess, cr.syncFail);
+							_this.submit()
+								.then(function(data)
+									{
+										cr.createSignedinUser(data.id, data.description)
+											.then(function()
+											{
+												_this.hideRight(unblockClick);
+											},
+											cr.syncFail)
+									});
 						}
 						catch(err)
 						{
