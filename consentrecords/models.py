@@ -5779,7 +5779,7 @@ class Path(IInstance, dbmodels.Model):
                                              canAnswerExperience=self.canAnswerExperience)
     
     ### Revert the data components of this object to values in the corresponding history    
-    def revert(h)
+    def revert(h):
         self.birthday = h.birthday
         self.name = h.name
         self.specialAccess = h.specialAccess
@@ -7024,7 +7024,7 @@ class User(SecureRootInstance, dbmodels.Model):
                                              publicAccess=self.publicAccess,
                                              primaryAdministrator=self.primaryAdministrator)
     
-    def revert(h)
+    def revert(h):
         self.firstName = h.firstName
         self.lastName = h.lastName
         self.birthday = h.birthday

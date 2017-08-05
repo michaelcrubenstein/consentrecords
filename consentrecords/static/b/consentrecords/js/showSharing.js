@@ -43,7 +43,7 @@ var SharingPanel = (function() {
 		when the new data is added.
 		the viewFunction is called when the item is clicked.
 	 */
-	SharingPanel.prototype.onUserAdded = function(itemsDivNode, newValue)
+	SharingPanel.prototype.onGrantAdded = function(itemsDivNode, newValue)
 	{
 		var itemsDiv = d3.select(itemsDivNode);
 		var item = appendItem(itemsDiv, newValue);
@@ -206,14 +206,14 @@ var SharingPanel = (function() {
 		return this.user.postUserGrant(accessorLevel.name, path)
 			.then(function(changes, newIDs)
 				{
-					return cr.getData({path: path, resultType: cr.User, fields: ['none']})
+					return cr.getData({path: 'user grant/' + newIDs['1'], resultType: cr.UserGrant, fields: ['none']})
 				})
-			.then(function(users)
+			.then(function(userGrants)
 				{
-					var grantee = users[0];
-					_this.onUserAdded(accessorLevel.itemsDiv, grantee);
+					var userGrant = userGrants[0];
+					_this.onGrantAdded(accessorLevel.itemsDiv, userGrant);
 					var r2 = $.Deferred();
-					r2.resolve(grantee);
+					r2.resolve(userGrant);
 					return r2;
 				});
 	}
