@@ -3483,19 +3483,22 @@ class Comment(ChildInstance, dbmodels.Model):
         super(Comment, self).markDeleted(context)
     
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied
+        question = _orNone(data, 'question')
+        askerPath = _orNoneForeignKey(data, 'asker', context, Path)
+        if not (context.canWrite(parent) or \
+                (askerPath and question and context.user and askerPath == context.user.path and context.canRead(parent))):
+           raise PermissionDenied('you do not have permission to create this comment')
         
         newItem = Comment.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
                                  text = _orNone(data, 'text'),
-                                 question = _orNone(data, 'question'),
-                                 asker = _orNoneForeignKey(data, 'asker', context, Path),
+                                 question = question,
+                                 asker = askerPath,
                                 )
                                 
         if not newItem.text and newItem.question and newItem.asker \
-            and newItem.asker.id != context.user.path.id:
+            and newItem.asker.id != parent.parent.id:
             n = Notification.objects.create(transaction=context.transaction,
                                         lastTransaction=context.transaction,
                                         name='crn.ExperienceCommentRequested',
@@ -3529,11 +3532,11 @@ class Comment(ChildInstance, dbmodels.Model):
                 salutation,
                 recipientEMail,
                 parent,
-                asker,
-                (asker.id.hex == context.user.path.id.hex and \
+                askerPath.caption(context),
+                (askerPath.id.hex == context.user.path.id.hex and \
                  context.authUser.is_staff),
                 question,
-                v,
+                newItem,
                 context.hostURL)
         
         return newItem
@@ -5610,8 +5613,18 @@ class Path(IInstance, dbmodels.Model):
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
+    def description(self, languageCode='en'):
+        return self.name or "Someone's path"
+    
     def __str__(self):
-        return self.name or ("%s %s" % (str(self.parent), "Path"))
+        return self.name or ("%s %s" % (str(self.parent), "path"))
+        
+    def caption(self, context):
+        user = context.canRead(self.parent) and self.parent
+        return (user and user.fullName) or \
+               self.name or \
+               (user and user.description) or \
+               "Someone"
 
     def select_head_related(querySet):
         return querySet
@@ -6880,6 +6893,16 @@ class User(SecureRootInstance, dbmodels.Model):
         
     def __str__(self):
         return self.description()
+    
+    @property    
+    def fullName(self):
+        if self.firstName:
+            if self.lastName:
+                return "%s %s" % (self.firstName, self.lastName)
+            else:
+                return self.firstName
+        else:
+            return self.lastName
         
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('emails',
@@ -7310,7 +7333,7 @@ class Context:
         
     @property
     def hostURL(self):
-        return _hostURL
+        return self._hostURL
             
     def canRead(self, i):
         privilege = self.getPrivilege(i)

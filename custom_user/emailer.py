@@ -32,7 +32,7 @@ class Emailer():
     def sendRequestExperienceCommentEmail(senderEMail, salutation, recipientEMail, experience, follower, isAdmin, question, comment, hostURL):
         answerURL = hostURL + '/experience/%s/comment/%s/' % (experience.id.hex, comment.id.hex)
         context = {'salutation': " " + salutation if salutation else "", 
-                   'asker': follower.description(),
+                   'asker': follower,
                    'experience': experience.description(),
                    'question': question,
                    'staticURL': hostURL + '/static/',
