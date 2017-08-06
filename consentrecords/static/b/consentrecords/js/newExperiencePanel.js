@@ -3364,9 +3364,15 @@ var NewExperiencePanel = (function () {
 			.text('Add Tag')
 			.on('click', function()
 				{
-					_this.checkTagInput(null);
-					var tagInput = _this.appendTag(tagsContainer, null);
-					tagInput.node().focus();
+					$(this).stop()
+						.animate({opacity: 0}, {duration: 200})
+						.promise()
+						.then(function()
+							{ 
+								_this.checkTagInput(null);
+								var tagInput = _this.appendTag(tagsContainer, null);
+								tagInput.node().focus();
+							});
 				});
 		
 		searchContainer = this.tagsSection.append('div');
