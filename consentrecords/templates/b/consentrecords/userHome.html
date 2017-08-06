@@ -634,26 +634,23 @@
 				else if (stateString.startsWith("experience/"))
 				{
 					stateString = stateString.substring("experience/".length);
+					var experienceID = stateString.substring(0, stateString.indexOf("/"));
+					stateString = stateString.substring(stateString.indexOf("/")+1);
 					
 					handleState = function(pathwayPanel)
 					{
-						f = function()
+						var f = function()
 							{
 								/* Show the specified experience. */
-								var id = stateString.substring(0, stateString.indexOf("/"));
-								stateString = stateString.substring(stateString.indexOf("/")+1);
-						
+								
 								try
 								{
-									if (stateString.startsWith("comments/"))
+									var commentsPanel = pathwayPanel.showCommentsPanelAsync(experienceID);
+									
+									if (stateString.startsWith("comment/"))
 									{
-										pathwayPanel.showCommentsPanelAsync(id);
-									}
-									else if (stateString.startsWith("comment/"))
-									{
-										var commentsPanel = pathwayPanel.showCommentsPanelAsync(id);
 										stateString = stateString.substring("comment/".length);
-										id = stateString.substring(0, stateString.indexOf("/"));
+										var commentID = stateString.substring(0, stateString.indexOf("/"));
 										stateString = stateString.substring(stateString.indexOf("/")+1);
 										if (commentsPanel)
 										{
@@ -663,12 +660,10 @@
 											commentsPanel.promise = commentsPanel.promise
 												.then(function()
 													{
-														commentsPanel.focusOnComment(id);
+														commentsPanel.focusOnComment(commentID);
 													});									
 										}
 									}
-									else
-										pathwayPanel.showCommentsPanelAsync(id);
 										
 								}
 								catch(err)
@@ -677,7 +672,24 @@
 								}
 							}
 						if (pathwayPanel.pathtree.isUserSet)
-							f();
+						{
+							if (pathwayPanel.pathtree.path.experiences().find(function(e)
+								{
+									return e.id() == experienceID;
+								}))
+							{
+								f();
+							}
+							else
+							{
+								sign_out()
+									.then(function()
+										{
+											checkSignin(f);
+										},
+										cr.asyncFail);
+							}
+						}
 						else
 							$(pathwayPanel.pathtree).on('userSet.cr', f);
 					}
@@ -775,7 +787,7 @@
 		
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			cr.submitSignout()
+			return cr.submitSignout()
 				.then(function()
 					{
 						cr.signedinUser.clear();
@@ -784,14 +796,12 @@
 						var panel = new WelcomePanel();
 						panel.showNow();
 						sitePanels.trigger("hiding.cr");
-						$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
+						return $(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
 							function() {
 								sitePanels.remove();
 								closealert();
-							});
-						unblockClick();
-					},
-					cr.syncFail);
+							}).promise();
+					});
 		}
 		
 		function show_consent_records(containerDiv) {

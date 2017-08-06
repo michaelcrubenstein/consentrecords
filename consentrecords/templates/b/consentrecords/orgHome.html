@@ -277,13 +277,14 @@
 			{
 				if (cr.signedinUser.id())
 				{
-					sign_out(function()
-						{
-							cr.signedinUser.clear();
-							$(cr.signedinUser).trigger("signout.cr");
-							unblockClick();
-						}, 
-						cr.syncFail);
+					sign_out()
+						.then(function()
+							{
+								cr.signedinUser.clear();
+								$(cr.signedinUser).trigger("signout.cr");
+								unblockClick();
+							}, 
+							cr.syncFail);
 				}
 				else
 				{
@@ -367,10 +368,9 @@
 			panel.showLeft().then(unblockClick);
 		}
 			
-		function sign_out(successFunction, failFunction) {
+		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			cr.submitSignout()
-				.then(successFunction, failFunction);
+			return. cr.submitSignout();
 		}
 		
 		function cells_get_cell_by_name(cells, name)

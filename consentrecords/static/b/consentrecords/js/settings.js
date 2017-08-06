@@ -174,7 +174,8 @@ var Settings = (function () {
 						if (prepareClick('click', 'Sign Out'))
 						{
 							showClickFeedback(this);
-							sign_out(syncFailFunction);
+							sign_out()
+								.then(unblockClick, cr.syncFail);
 						}
 					})
 					.classed('first', true);
