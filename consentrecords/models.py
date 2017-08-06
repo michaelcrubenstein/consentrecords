@@ -4017,7 +4017,9 @@ class Experience(ChildInstance, dbmodels.Model):
                     data['site'] = self.site.headData(context)
             if self.offering_id:
                 if 'offering' in fields:
-                    data['offering'] = self.offering.getData([], context)
+                    offeringFields = list(map(lambda s: s[len('offering/'):], 
+                        filter(lambda s: s.startswith('offering/'), fields)))
+                    data['offering'] = self.offering.getData(offeringFields, context)
                 else:
                     data['offering'] = self.offering.headData(context)
             if 'services' in fields:

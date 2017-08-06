@@ -484,10 +484,10 @@
 					}
 					stateString = "";
 				}
-				else if (stateString.startsWith("addExperience"))
+				else if (stateString.startsWith("addExperience/"))
 				{
 					// Test case: respond to an sent email to add experience.
-					stateString = stateString.substring("addExperience".length);
+					stateString = stateString.substring("addExperience/".length);
 					if (stateString.length > 0)
 					{
 						var experienceID = stateString;
@@ -495,24 +495,18 @@
 						{
 							var pathway = pathwayPanel.pathtree;
 							var experiencesPath = cr.signedinUser.path();
-							cr.getData({path: experienceID, fields: ["Offering"]})
+							cr.getData({path: 'experience/' + experienceID, 
+							            fields: ['services', 'custom services', 'offering', 'offering/services'],
+							            resultType: cr.Experience})
 								.then(function(experiences)
 								{
 									if (experiences.length > 0)
 									{
-										cr.signedinUser.promiseCellsFromCache()
-											.then(function()
-												{
-													if (experiences[0].getTypeName() == "More Experience")
-													{
-														var experience = new Experience(cr.signedinUser.path(), experiences[0]);
-														new NewExperiencePanel(experience, experience.getPhase())
-															.showUp();
-													}
-													else
-														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].getTypeName()));
-												},
-												cr.asyncFail);
+										console.assert (experiences[0] instanceof cr.Experience);
+
+										var experienceController = new ExperienceController(cr.signedinUser.path(), experiences[0]);
+										var newPanel = new NewExperiencePanel(experienceController);
+										newPanel.showUp();
 									}
 									else
 									{
@@ -734,7 +728,8 @@
 										handleState(firstPanel);
 									else
 										firstPanel.checkShowIdeas();
-								});
+								})
+							.fail(cr.asyncFail);	/* Catch errors in any previous promise in the chain. */
 						}
 						catch(err)
 						{

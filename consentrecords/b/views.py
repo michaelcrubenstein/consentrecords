@@ -463,7 +463,7 @@ def addExperience(request, experienceID):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    args['state'] = 'addExperience%s' % experienceID
+    args['state'] = 'addExperience/%s' % experienceID
 
     return HttpResponse(template.render(args))
 
