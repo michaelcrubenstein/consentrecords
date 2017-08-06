@@ -3474,6 +3474,9 @@ class Comment(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, prefix='parent__parent')
             
+    def order_by(queryset, context):
+        return queryset.order_by('transaction__creation_time')
+    
     def markDeleted(self, context):
         # When deleting a comment, delete any notifications that refer to that comment.
         for i in Notification.objects.filter(deleteTransaction__isnull=True,
