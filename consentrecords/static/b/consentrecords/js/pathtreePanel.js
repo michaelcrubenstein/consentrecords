@@ -271,13 +271,13 @@ var FlagController = (function() {
 		title = e.pickedOrCreatedText(e.offering(), e.customOffering());
 		if (!title)
 		{
-			var serviceValue = e.experienceServices().length > 0 ? e.experienceServices()[0] : null;
-			var userServiceValue = e.customService();
+			var service = e.experienceServices().length > 0 ? e.experienceServices()[0] : null;
+			var customService = e.customServices().length > 0 ? e.customServices()[0] : null;
 
-			if (serviceValue)
-				title = serviceValue.description();
-			else if (userServiceValue)
-				title = userServiceValue;
+			if (service)
+				title = service.description();
+			else if (customService)
+				title = customService.description();
 		}
 		var orgString = e.pickedOrCreatedText(e.organization(), e.customOrganization());
 		var siteString = e.pickedOrCreatedText(e.site(), e.customSite());
