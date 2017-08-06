@@ -1626,12 +1626,17 @@ var PathlinesPanel = (function () {
 		this.searchPanel = new SearchPathsPanel();
 	}
 	
+	/** Returns the FlagController whose experience matches the specified id. */
 	PathlinesPanel.prototype.getFlagData = function(id)
 	{
 		var $group = $(this.panelDiv.node()).find(".experiences>g")
 			.filter(function() { 
-				return d3.select(this).datum().experience.id == id; 
+				return d3.select(this).datum().experience.id() == id; 
 				});
+				
+		if (!$group.get(0))
+			throw new Error("This experience is not in the path of {0}.".format(this.pathtree.path.caption()));
+			
 		return d3.select($group.get(0)).datum();
 	}
 	
