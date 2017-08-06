@@ -655,6 +655,7 @@ var ExperienceController = (function() {
 		{
 			this.newExperience.setDefaultValues();
 		}
+		this.newExperience.privilege(path.privilege());
 	}
 	
 	return ExperienceController;
@@ -3288,11 +3289,11 @@ var NewExperiencePanel = (function () {
 								var timeframeName;
 								
 								if (previousExperienceButton.classed('pressed'))
-									timeframeName = "Previous";
+									timeframeName = 'Previous';
 								else if (currentExperienceButton.classed('pressed'))
-									timeframeName = "Current";
+									timeframeName = 'Current';
 								else
-									timeframeName = "Goal";
+									timeframeName = 'Goal';
 								experienceController.timeframe(timeframeName);
 
 								experienceController.add()
