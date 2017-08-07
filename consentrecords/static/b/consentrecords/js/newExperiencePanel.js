@@ -402,9 +402,6 @@ var ExperienceController = (function() {
 			if (cr.stringChanged(this.instance.timeframe(), this.newExperience.timeframe()))
 				updateData['timeframe'] = this.newExperience.timeframe();
 			
-			var i = 0;
-			var j = 0;
-			
 			var newServices = this.distinctExperienceServices();
 			var oldServices = this.instance.experienceServices();
 			var newCustomServices = this.customServices();
@@ -436,7 +433,8 @@ var ExperienceController = (function() {
 			}
 			if (subChanges.length > 0)
 				updateData['services'] = subChanges;
-				
+			
+			j=0;	
 			subChanges = [];
 			newCustomServices.forEach(function(d)
 				{
@@ -1289,7 +1287,6 @@ var TagSearchView = (function() {
 					{
 						console.assert(false);
 					}
-					d3Focus.datum(d.service);
 					this.focusNode.value = d.description();
 				}
 				else
