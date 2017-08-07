@@ -128,23 +128,24 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.checkTextAreas = function(done, fail)
 	{
 		var commentsDiv = this.mainDiv.select('section.comments');
-		var cell = commentsDiv.datum();
-		var initialData = [];
-		var sourceObjects = [];
+		var changes = [];
 		
 		commentsDiv.selectAll('li textarea').each(function(d)
 			{
 				var newValue = this.value.trim();
 				if (d)
 				{
-					if (d3.select(this).classed('question'))
-						d.appendUpdateQuestionCommand(newValue, initialData, sourceObjects);
-					else if (d3.select(this).classed('answer'))
-						d.appendUpdateTextCommand(newValue, initialData, sourceObjects);
+					if (d.id())
+					{
+						if (d3.select(this).classed('question') && newValue != d.question())
+							changes.push({'id': d.id(), 'question': newValue});
+						else if (d3.select(this).classed('answer') && newValue != d.text())
+							changes.push({'id': d.id(), 'text': newValue});
+					}
 				}
 			});
-		if (initialData.length > 0)
-			return cr.updateValues(initialData, sourceObjects);
+		if (changes.length > 0)
+			return this.fd.experience.update({'comments': changes});
 		else
 		{
 			var r = $.Deferred();
@@ -461,7 +462,7 @@ var ExperienceCommentsPanel = (function() {
 							var newButtonText = crv.buttonTexts.edit;
 							var fail = function(err)
 								{
-									newButtonText = crv.buttonsText.done;
+									newButtonText = crv.buttonTexts.done;
 									_this.editButton.selectAll('span').text(newButtonText);
 									cr.syncFail(err);
 								}

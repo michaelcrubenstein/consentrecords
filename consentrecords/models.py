@@ -3545,7 +3545,10 @@ class Comment(ChildInstance, dbmodels.Model):
         return newItem
 
     def buildHistory(self, context):
-        return CommentHistory.objects.create(transaction=self.lastTransaction,
+        if self.lastTransaction == context.transaction:
+            return True # history has already been built
+        else:
+            return CommentHistory.objects.create(transaction=self.lastTransaction,
                                              instance=self,
                                              text=self.text,
                                              question=self.question,
@@ -3561,7 +3564,7 @@ class Comment(ChildInstance, dbmodels.Model):
             self.text = changes['text'] or None
         if 'question' in changes and changes['question'] != self.question:
             history = history or self.buildHistory(context)
-            self.text = changes['question'] or None
+            self.question = changes['question'] or None
         if 'asker' in changes:
             newAsker = _orNoneForeignKey(changes, 'asker', context, Path)
             if newAsker != self.asker:

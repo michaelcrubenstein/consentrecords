@@ -3564,12 +3564,6 @@ cr.Comment = (function() {
 		}
 	}
 	
-	Comment.prototype.appendUpdateTextCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateValueCommand(newValue, 
-			this.text, 'text', initialData, sourceObjects);
-	}
-
 	Comment.prototype.question = function(newValue)
 	{
 		if (newValue === undefined)
@@ -3584,12 +3578,6 @@ cr.Comment = (function() {
 		}
 	}
 	
-	Comment.prototype.appendUpdateQuestionCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateValueCommand(newValue, 
-			this.question, 'question', initialData, sourceObjects);
-	}
-
 	Comment.prototype.asker = function(newValue)
 	{
 		if (newValue === undefined)
@@ -3669,6 +3657,9 @@ cr.Comment = (function() {
 			}
 		}
 		
+		if (changed)
+			$(this).trigger('changed.cr', this);
+			
 		return changed;
 	}
 
