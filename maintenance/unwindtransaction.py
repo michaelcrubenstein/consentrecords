@@ -63,8 +63,7 @@ def printNotification(i):
          i.name or nullString,
          i.isFresh or nullString,
          ))
-    for na in i.notificationArguments.filter(deleteTransaction__isnull=True):
-        
+    for na in i.notificationArguments.filter(deleteTransaction__isnull=True).order_by('position'):
         print("\t%s\t%s\t%s" % \
               (na.id, na.position, na.argument))
          

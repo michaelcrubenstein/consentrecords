@@ -7097,6 +7097,7 @@ class User(SecureRootInstance, dbmodels.Model):
         if context.canAdminister(self):
             self.updateChildren(changes, 'user grants', context, UserGrant, self.userGrants, newIDs)
             self.updateChildren(changes, 'group grants', context, GroupGrant, self.groupGrants, newIDs)
+            self.updateChildren(changes, 'notifications', context, Notification, self.notifications, newIDs)
         
         
         if history:

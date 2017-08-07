@@ -211,7 +211,7 @@ var ExperienceCommentsPanel = (function() {
 		var commentList = this.mainDiv.select('section.comments>ol');
 		var textAreas = $(commentList.node()).children('li')
 			.filter(function() {
-					return d3.select(this).datum().id == id;
+					return d3.select(this).datum().id() == id;
 				});
 		if (textAreas.length == 0)
 			throw new Error('The specified comment is not recognized.');
@@ -273,8 +273,7 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.clearNotifications = function()
 	{
 		var _this = this;
-		var initialData = [];
-		var sourceObjects = [];
+		var changes = [];
 
 		cr.signedinUser.notifications().forEach(function(n)
 			{
@@ -285,17 +284,17 @@ var ExperienceCommentsPanel = (function() {
 						args[1].id() == _this.fd.experience.id())
 					{
 						var comment = crp.getInstance(args[2].id());
-						if (comment.text())
+						if (comment && comment.text())
 						{
-							n.appendDeleteCommand(initialData, sourceObjects);
+							changes.push({'delete': n.id()});
 						}
 					}
 				}
 			});
 			
-		if (initialData.length > 0)
+		if (changes.length > 0)
 		{
-			return cr.updateValues(initialData, sourceObjects);
+			return cr.signedinUser.update({'notifications': changes});
 		}
 		else
 		{
@@ -414,7 +413,7 @@ var ExperienceCommentsPanel = (function() {
 							_this.checkTextAreas()
 								.then(function()
 									{
-										_this.clearNotifications();
+										return _this.clearNotifications();
 									})
 								.then(function()
 									{

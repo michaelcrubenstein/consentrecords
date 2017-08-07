@@ -837,7 +837,8 @@ var NotificationsPanel = (function () {
 		itemCells = crf.appendItemList(sections)
 			.classed('deletable-items', true);
 	
-		var items = appendItems(itemCells, user.notifications().reverse());
+		/* Order the items in reverse order. Use splice to copy the array before reversing. */
+		var items = appendItems(itemCells, user.notifications().slice().reverse());
 		
 		items.classed('is-fresh', function(d)
 				{
@@ -875,8 +876,7 @@ var NotificationsPanel = (function () {
 		{
 			try
 			{
-				var updateData = [];
-				var sourceObjects = [];
+				var changes = [];
 				var scrollParent = $(itemCells.node()).scrollParent();
 				var scrollParentTop = scrollParent.offset().top;
 				var innerTop = scrollParent.scrollTop();
@@ -887,16 +887,13 @@ var NotificationsPanel = (function () {
 						if (itemTop < innerBottom &&
 							itemTop >= innerTop)
 						{
-							var v = d.isFresh();
-							if (v == cr.booleans.yes)
-							{
-								d.appendUpdateIsFreshCommand(cr.booleans.no, updateData, sourceObjects);
-							}
+							if (d.isFresh() == cr.booleans.yes)
+								changes.push({id: d.id(), 'is fresh': cr.booleans.no});
 						}
 					});
-				if (updateData.length > 0)
+				if (changes.length > 0)
 				{
-					cr.updateValues(updateData, sourceObjects)
+					user.update({'notifications': changes})
 						.fail(cr.asyncFail);
 				}
 			}

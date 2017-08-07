@@ -1463,7 +1463,7 @@ var NotificationsButton = (function() {
 			.then(function()
 				{
 					var cell = _this.user;
-					cell.on("valueDeleted.cr valueAdded.cr changed.cr", 
+					cell.on("notificationDeleted.cr notificationAdded.cr", 
 						_this.button.node(), function() { _this.checkBadge(); });
 					_this.user.notifications().forEach(function(d)
 						{

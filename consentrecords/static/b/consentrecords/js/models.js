@@ -5171,6 +5171,31 @@ cr.Notification = (function() {
 		return this;
 	}
 	
+	Notification.prototype.deleted = function()
+	{
+		user = this.parent();
+		cr.removeElement(user.notifications(), this);
+		$(user).trigger("notificationDeleted.cr", this);
+	}
+	
+	/** Called after the contents of the Notification have been updated on the server. */
+	Notification.prototype.updateData = function(d, newIDs)
+	{
+		var changed = false;
+		
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		if ('is fresh' in d)
+		{
+			this._isFresh = d['is fresh'];
+			changed = true;
+		}
+		
+		if (changed)
+			this.triggerChanged();
+			
+		return changed;
+	}
+	
     Notification.prototype.controller = function()
     {
     	return crn[this._name.split(".")[1]];
@@ -7430,15 +7455,21 @@ cr.User = (function() {
 				changed = true;
 		}
 		
+		if (changed)
+			this.triggerChanged();
+			
 		if ('user grant requests' in d)
 		{
 			if (this.updateList(this.userGrantRequests, d['user grant requests'], newIDs, cr.UserGrantRequest, "userGrantRequestAdded.cr", "userGrantRequestDeleted.cr"))
 				changed = true;
 		}
 		
-		if (changed)
-			this.triggerChanged();
-			
+		if ('notifications' in d)
+		{
+			if (this.updateList(this.notifications, d['notifications'], newIDs, cr.Notification, "notificationAdded.cr", "notificationDeleted.cr"))
+				changed = true;
+		}
+		
 		return changed;
 	}
 	
