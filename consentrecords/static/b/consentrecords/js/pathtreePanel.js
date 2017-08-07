@@ -623,15 +623,6 @@ var PathView = (function() {
 				_this.handleExperienceDeleted(this);
 			});
 		
-		var flagCells = ["Organization",
-		 	"User Entered Organization",
-		 	"Site",
-		 	"User Entered Site",
-		 	"Offering",
-		 	"User Entered Offering",
-		 	"Service",
-		 	"User Entered Service"];
-		
 		var flagDataChanged =  function(eventObject)
 			{
 				_this._setFlagText(eventObject.data);
