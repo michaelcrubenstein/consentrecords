@@ -2536,7 +2536,7 @@ cr.TranslationInstance = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		return changed;
 	}
@@ -3530,7 +3530,7 @@ cr.Address = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		return changed;
 	}
@@ -3663,7 +3663,7 @@ cr.Comment = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		return changed;
 	}
@@ -3738,7 +3738,7 @@ cr.CommentPrompt = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		return changed;
 	}
@@ -3877,7 +3877,7 @@ cr.Engagement = (function() {
 			changed = true;
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 
 		return changed;
 	}
@@ -4288,7 +4288,7 @@ cr.Experience = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		if ('services' in d)
 		{
@@ -4843,7 +4843,7 @@ cr.ExperiencePrompt = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		if ('translations' in d)
 		{
@@ -4974,7 +4974,7 @@ cr.Group = (function() {
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		if ('names' in d)
 		{
@@ -5416,7 +5416,7 @@ cr.Offering = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		if ('services' in d)
 		{
@@ -5691,7 +5691,7 @@ cr.Organization = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		if ('names' in d)
 		{
@@ -7125,7 +7125,7 @@ cr.Site = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		if ('names' in d)
 		{
@@ -7300,7 +7300,7 @@ cr.Street = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		return changed;
 	}
@@ -7437,7 +7437,7 @@ cr.User = (function() {
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr', this);
+			this.triggerChanged();
 			
 		return changed;
 	}
