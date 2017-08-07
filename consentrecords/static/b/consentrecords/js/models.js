@@ -66,8 +66,8 @@ var CRP = (function() {
     /* Get an instance that has been loaded, or undefined if it hasn't been loaded. */
     CRP.prototype.getInstance = function(id)
     {
-    	if (!id)
-    		throw new Error("id is not defined");
+    	console.assert(id);
+    	console.assert(typeof(id) == 'string');
     	if (id in this.instances)
     		return this.instances[id];
     	else
@@ -2850,7 +2850,7 @@ cr.Grantable = (function() {
 		{
 		    this._primaryAdministrator = new cr.User();
 		    this._primaryAdministrator.setData(d['primary administrator']);
-		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator);
+		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator.id());
 		}
 		if ('user grants' in d)
 			this._userGrants = d['user grants'].map(function(d) {
@@ -4534,7 +4534,7 @@ cr.ExperienceCustomService = (function() {
     
 	ExperienceCustomService.prototype.deleted = function()
 	{
-		experience = this.parent();
+		var experience = this.parent();
 		cr.removeElement(experience.customServices(), this);
 		$(experience).trigger("customServiceDeleted.cr", this);
 	}
@@ -4558,13 +4558,13 @@ cr.ExperienceService = (function() {
 	
 	ExperienceService.prototype.changed = function()
 	{
-		experience = crp.getInstance(this.parent());
+		var experience = crp.getInstance(this.parent().id());
 		$(experience).trigger('changed.cr');
 	}
 	
 	ExperienceService.prototype.deleted = function()
 	{
-		experience = this.parent();
+		var experience = this.parent();
 		cr.removeElement(experience.experienceServices(), this);
 		$(experience).trigger("experienceServiceDeleted.cr", this);
 	}
