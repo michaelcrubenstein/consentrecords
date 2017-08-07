@@ -454,16 +454,9 @@ var PathView = (function() {
 		The trigger runs the specified handler.
 	 */
 	PathView.prototype.setupServiceTriggers = function(r, fd, handler)
-		{
-			var f = function(eventObject, v)
-			{
-				if (!v.isEmpty())
-					handler(eventObject, v);
-			}
-			
-			setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr", r, f);
-			setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr", r, f);
-		}
+	{
+		setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr", r, handler);
+	}
 	
 	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
 		The trigger sets the color of the specified element (r).
@@ -471,11 +464,10 @@ var PathView = (function() {
 	PathView.prototype.setupColorWatchTriggers = function(r, fd)
 	{
 		var f = function(eventObject)
-			{
-				fd.colorElement(eventObject.data);
-			}
+		{
+			fd.colorElement(eventObject.data);
+		}
 		
-		setupOneViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr changed.cr", r, f);
 		this.setupServiceTriggers(r, fd, f);
 	}
 	
@@ -586,18 +578,13 @@ var PathView = (function() {
 					{
 						_this.clearLayout();
 						_this.checkLayout();
+						_this.transitionPositions();
 					},
 					cr.asyncFail);
 		}
 	
-		var handleExperienceDateChanged = function(eventObject)
-		{
-			_this.transitionPositions();
-		}
-	
 		var node = this.sitePanel.node();
 		setupOnViewEventHandler(experience, "changed.cr", node, handleDataChanged);
-		setupOnViewEventHandler(experience, "changed.cr", node, handleExperienceDateChanged);
 	}
 	
 	PathView.prototype._setFlagText = function(node)
@@ -637,7 +624,7 @@ var PathView = (function() {
 						});	
 			}
 						
-		setupOnViewEventHandler(fd.experience, "valueAdded.cr valueDeleted.cr changed.cr", node, flagDataChanged);
+		setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr", node, flagDataChanged);
 	}
 	
 	PathView.prototype.compareDates = function (d1, d2)

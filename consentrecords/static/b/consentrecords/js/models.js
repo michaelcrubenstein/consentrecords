@@ -2440,6 +2440,11 @@ cr.IInstance = (function() {
 				cr.thenFail);
 	};
 	
+	IInstance.prototype.triggerChanged = function()
+	{
+		$(this).trigger('changed.cr', this);
+	}
+	
 	function IInstance() {
 	};
 	
@@ -4539,6 +4544,27 @@ cr.ExperienceCustomService = (function() {
 		$(experience).trigger("customServiceDeleted.cr", this);
 	}
 	
+	ExperienceCustomService.prototype.updateData = function(d, newIDs)
+	{
+		var changed = false;
+		
+		if ('name' in d)
+		{
+			this._name = d['name'];
+			changed = true;
+		}
+		if ('position' in d)
+		{
+			this._name = d['position'];
+			changed = true;
+		}
+		
+		if (changed)
+			$(this).trigger('changed.cr');
+	
+		return changed;
+	}
+	
 	function ExperienceCustomService() {
 	    cr.IInstance.call(this);
 	};
@@ -4556,9 +4582,23 @@ cr.ExperienceService = (function() {
 		return 'experience service/{0}'.format(this.id());
 	}
 	
-	ExperienceService.prototype.changed = function()
+	ExperienceService.prototype.updateData = function(d, newIDs)
 	{
-		var experience = crp.getInstance(this.parent().id());
+		var changed = cr.OrderedServiceLinkInstance.prototype.updateData.call(this, d, newIDs);
+
+		if (changed)
+			this.triggerChanged();
+	
+		return changed;
+	}
+	
+	ExperienceService.prototype.triggerChanged = function()
+	{
+		this.description(this.service().description());
+		
+		cr.IInstance.prototype.triggerChanged.call(this);
+
+		var experience = this.parent();
 		$(experience).trigger('changed.cr');
 	}
 	
@@ -4566,7 +4606,7 @@ cr.ExperienceService = (function() {
 	{
 		var experience = this.parent();
 		cr.removeElement(experience.experienceServices(), this);
-		$(experience).trigger("experienceServiceDeleted.cr", this);
+		$(experience).trigger('experienceServiceDeleted.cr', this);
 	}
 	
 	function ExperienceService() {
