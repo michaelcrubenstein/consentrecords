@@ -153,6 +153,7 @@ def revertChanged(changed, revertData):
         h = i.history.order_by('-transaction__creation_time')[0]
         revertData(h, i)    
         i.lastTransaction = h.transaction
+        h.delete()
         i.save()
 
 def revertDeleted(deleted):
@@ -174,7 +175,7 @@ def printTable(fieldsTitle, pluralName, singularName, f, created, changed, delet
         for i in deleted.all():
             f(i)
     if histories.count():
-        print("\n{0: <21} Histories".format(singularName) + fieldsTitle)
+        print("\n{0: <32}".format(singularName + " Histories") + fieldsTitle)
         for i in histories.all():
             f(i)
 
