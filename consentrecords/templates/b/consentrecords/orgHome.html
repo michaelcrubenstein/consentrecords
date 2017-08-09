@@ -370,7 +370,7 @@
 			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			return. cr.submitSignout();
+			return cr.submitSignout();
 		}
 		
 		function cells_get_cell_by_name(cells, name)
@@ -633,7 +633,7 @@
 		 */
 		function pick_offering(site, previousPanelNode, successFunction)
 		{
-			site.promiseData().then(function()
+			site.promiseData("offerings").then(function()
 				{
 					pickChild(site, site.offerings(), previousPanelNode, "Pick Offering", successFunction);
 				},
