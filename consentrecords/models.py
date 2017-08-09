@@ -4903,12 +4903,32 @@ class Inquiry(ChildInstance, dbmodels.Model):
                        .order_by('user__emails__text')
     
     def create(parent, data, context, newIDs={}):
+        user = _orNoneForeignKey(data, 'user', context, User)
+        if not user:
+            raise ValueError('no user was specified for a new inquiry')
+        
         newItem = Inquiry.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 user=_orNoneForeignKey(data, 'user', context, User),
+                                 user=user,
                                 )
         
+        # When adding an inquiry, ensure that the inquiry access group of the organization 
+        # containing the inquiry can read the user.
+        organization = parent.parent.parent.parent
+        if type(organization) != Organization:
+            raise ValueError('this session is not associated with an organization')
+            
+        if organization.inquiryAccessGroup and \
+           not user.groupGrants.filter(deleteTransaction__isnull=True,
+                                       grantee=organization.inquiryAccessGroup,
+                                       privilege__in=['read', 'write', 'administer']).exists():
+            newGrant = GroupGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 grantor_id=user.id,
+                                 grantee=organization.inquiryAccessGroup,
+                                 privilege='read')
+            
         return newItem                          
         
     def buildHistory(self, context):

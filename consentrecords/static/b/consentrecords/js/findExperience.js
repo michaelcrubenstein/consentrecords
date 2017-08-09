@@ -149,21 +149,26 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = 'organization/' + organization.id() + '/inquiry access group';
-		cr.getData({path: groupPath, fields: ['none']})
+		groupPath = organization.urlPath() + '/inquiry access group';
+		cr.getData({path: groupPath, fields: ['none'], resultType: cr.Group})
 			.then(function(groupPaths)
 				{
-					var initialData = [{
-							container: 'session/{0}/inquiry'.format(session.id()),
-							field: cr.fieldNames.user,
-							instanceID: user.id(),
-							description: user.caption(),
-						}];
+					changes = {'inquiries': [{'add': '1', 'user': user.urlPath() }]};
 					var sourceObjects = [new cr.ObjectValue()];
 					sourceObjects[0].on('changed.cr', user, function(eventObject)
 						{
 							var newInquiryID = this.id;
 							function done()
+							{
+							};
+							if (groupPaths.length == 0)
+								done();
+							else {
+								addMissingAccess(user, cr.privileges.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
+							}
+						});
+					return session.update(changes)
+						.then(function()
 							{
 								s = "{2} signed up for {0}/{1}.\n\nLook out for a notice when {3} enrolled."
 									.format(offering.description(),
@@ -173,14 +178,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 								bootstrap_alert.success(s,
 											  ".alert-container");
 								checkInquiryFunction(user, newInquiryID); 
-							};
-							if (groupPaths.length == 0)
-								done();
-							else {
-								addMissingAccess(user, cr.privileges.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
-							}
-						});
-					return cr.updateValues(initialData, sourceObjects);
+							});
 				})
 			.then(undefined, cr.asyncFail);
 	}
