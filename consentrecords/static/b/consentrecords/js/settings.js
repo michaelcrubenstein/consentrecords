@@ -339,7 +339,9 @@ var Settings = (function () {
 var PickUserAccessPanel = (function () {
 	PickUserAccessPanel.prototype = new PickFromListPanel();
 	PickUserAccessPanel.prototype.title = Settings.prototype.userPublicAccessLabel;
-	PickUserAccessPanel.prototype.buttonData = [{description: Settings.prototype.profileHiddenLabel,
+	PickUserAccessPanel.prototype.data = function()
+	{
+		return [{description: Settings.prototype.profileHiddenLabel,
 						   instancePath: null
 						  },
 						  {description: Settings.prototype.emailVisibleLabel,
@@ -356,48 +358,16 @@ var PickUserAccessPanel = (function () {
 						   instancePath: "term[name=privilege]>enumerator[name=read]"
 						  }
 						 ];
+	}
+	
+	PickUserAccessPanel.prototype.datumDescription = function(d)
+	{
+		return d.description;
+	}
 	
 	PickUserAccessPanel.prototype.createRoot = function(user, path, oldDescription)
 	{
-		PickFromListPanel.prototype.createRoot.call(this, null, this.title, "");
-		var _this = this;
-
-		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
-	
-		var items = itemsDiv.selectAll('li')
-			.data(this.buttonData)
-			.enter()
-			.append('li');
-		
-		items.append("div")
-			.classed("description-text growable unselectable", true)
-			.text(function(d) { return d.description; });
-				
-		items.filter(function(d, i)
-			{
-				return d.description === oldDescription;
-			})
-			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
-				
-		items.on('click', function(d, i)
-				{
-					if (d.description === oldDescription)
-						return;
-					
-					if (prepareClick('click', d.description))
-					{
-						try
-						{
-							$(_this.node()).trigger('itemPicked.cr', d.description);
-							_this.hideRight(unblockClick);
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
-				});
-		return this;
+		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, oldDescription);
 	}
 	
 	function PickUserAccessPanel() {

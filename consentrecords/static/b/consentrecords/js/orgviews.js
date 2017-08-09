@@ -250,53 +250,22 @@ var SessionPanel = (function () {
 var PickCanRegisterPanel = (function () {
 	PickCanRegisterPanel.prototype = new PickFromListPanel();
 	PickCanRegisterPanel.prototype.title = SessionPanel.prototype.canRegisterLabel;
-	PickCanRegisterPanel.prototype.buttonData = [{description: SessionPanel.prototype.yesLabel
-						  },
-						  {description: SessionPanel.prototype.noLabel
-						  }
-						 ];
 	
-	PickCanRegisterPanel.prototype.createRoot = function(user, path, oldDescription)
+	PickCanRegisterPanel.prototype.data = function()
 	{
-		PickFromListPanel.prototype.createRoot.call(this, null, this.title, "");
-		var _this = this;
-
-		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
+		return [{description: SessionPanel.prototype.yesLabel},
+				{description: SessionPanel.prototype.noLabel}
+			   ];
+	}
 	
-		var items = itemsDiv.selectAll('li')
-			.data(this.buttonData)
-			.enter()
-			.append('li');
-		
-		items.append("div")
-			.classed("description-text growable unselectable", true)
-			.text(function(d) { return d.description; });
-				
-		items.filter(function(d, i)
-			{
-				return d.description === oldDescription;
-			})
-			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
-				
-		items.on('click', function(d, i)
-				{
-					if (d.description === oldDescription)
-						return;
-					
-					if (prepareClick('click', d.description))
-					{
-						try
-						{
-							$(_this.node()).trigger('itemPicked.cr', d.description);
-							_this.hideRight(unblockClick);
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
-				});
-		return this;
+	PickCanRegisterPanel.prototype.datumDescription = function(d)
+	{
+		return d.description;
+	}
+	
+	PickCanRegisterPanel.prototype.createRoot = function(user, oldDescription)
+	{
+		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, oldDescription);
 	}
 	
 	function PickCanRegisterPanel() {
@@ -1368,54 +1337,19 @@ var PickEngagementUserPanel = (function()
 var PickWeekdayPanel = (function () {
 	PickWeekdayPanel.prototype = new PickFromListPanel();
 	PickWeekdayPanel.prototype.title = PeriodPanel.prototype.weekdayLabel;
-	PickWeekdayPanel.prototype.buttonData = ["0", "1", "2", "3", "4", "5", "6"];
+	PickWeekdayPanel.prototype.data = function()
+	{
+		return ["0", "1", "2", "3", "4", "5", "6"];
+	}
+	
+	PickWeekdayPanel.prototype.datumDescription = function(d)
+	{
+		return PeriodPanel.prototype.weekdayDescriptions[d];
+	}
 	
 	PickWeekdayPanel.prototype.createRoot = function(oldDescription)
 	{
-		PickFromListPanel.prototype.createRoot.call(this, null, this.title, "");
-		var _this = this;
-
-		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
-	
-		var getDescription = function(d)
-		{
-			return PeriodPanel.prototype.weekdayDescriptions[d];
-		}
-		
-		var items = itemsDiv.selectAll('li')
-			.data(this.buttonData)
-			.enter()
-			.append('li');
-		
-		items.append("div")
-			.classed("description-text growable unselectable", true)
-			.text(function(d) { return getDescription(d); });
-				
-		items.filter(function(d, i)
-			{
-				return getDescription(d) === oldDescription;
-			})
-			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
-				
-		items.on('click', function(d, i)
-				{
-					if (getDescription(d) === oldDescription)
-						return;
-					
-					if (prepareClick('click', getDescription(d)))
-					{
-						try
-						{
-							$(_this.node()).trigger('itemPicked.cr', getDescription(d));
-							_this.hideRight(unblockClick);
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
-				});
-		return this;
+		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, oldDescription);
 	}
 	
 	function PickWeekdayPanel(oldDescription) {
@@ -1598,6 +1532,209 @@ var RootItemsPanel = (function () {
 	
 	return RootItemsPanel;
 	
+})();
+
+var OrganizationPanel = (function () {
+	OrganizationPanel.prototype = new EditPanel();
+	OrganizationPanel.prototype.organization = null;
+	OrganizationPanel.prototype.panelTitle = "Organization";
+	OrganizationPanel.prototype.namesLabel = "Names";
+	OrganizationPanel.prototype.nameLabel = "Name";
+	OrganizationPanel.prototype.publicAccessLabel = "Public Access";
+	OrganizationPanel.prototype.primaryAdministratorLabel = "Primary Administrator";
+	OrganizationPanel.prototype.webSiteLabel = "Web Site";
+	OrganizationPanel.prototype.webSitePlaceholder = "Web Site";
+	OrganizationPanel.prototype.sitesLabel = "Sites";
+	OrganizationPanel.prototype.groupsLabel = "Groups";
+	OrganizationPanel.prototype.inquiryAccessGroupLabel = "Inquiry Access Group";
+	OrganizationPanel.prototype.readLabel = "Public";
+	OrganizationPanel.prototype.hiddenLabel = "Hidden";
+
+    OrganizationPanel.prototype.promiseUpdateChanges = function()
+    {
+		var changes = {};
+		var getPublicAccessValue = function(enumValue)
+		{
+			if (enumValue == OrganizationPanel.prototype.readLabel)
+				return 'read';
+			else
+				return '';
+		}
+		
+		this.appendTextChanges(this.webSiteEditor, this.organization.webSite(), 
+								changes, 'web site')
+// 			.appendUniqueItem(this.inquiryAccessGroupEditor, this.organization.inquiryAccessGroup(),
+// 							   changes, 'inquiry access group')
+// 			.appendUniqueItem(this.primaryAdministratorEditor, this.organization.primaryAdministrator(),
+// 							   changes, 'primary administrator')
+			.appendEnumerationChanges(this.publicAccessSection, getPublicAccessValue, 
+									  this.organization.publicAccess(),
+							   		  changes, 'public access')
+			.appendTranslationChanges(this.namesSection, this.organization.names, changes, 'names');
+		return this.session.update(changes);
+    }
+    
+    OrganizationPanel.prototype.publicAccessDescription = function()
+    {
+    	if (this.organization.publicAccess() == 'read')
+    		return this.readLabel;
+    	else
+    		return this.hiddenLabel;
+    }
+    
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	OrganizationPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		return false;
+	}
+	
+	function OrganizationPanel(organization, onShow) {
+		var _this = this;
+		this.organization = organization;
+
+		this.createRoot(organization, this.panelTitle, "edit", onShow);
+
+		var doneButton = this.navContainer.appendRightButton();
+			
+		this.navContainer.appendTitle(this.panelTitle);
+		
+		doneButton.on("click", function()
+			{
+				if (prepareClick('click', _this.panelTitle + ' done'))
+				{
+					showClickFeedback(this);
+		
+					try
+					{
+						/* Build up an update for initialData. */
+						_this.promiseUpdateChanges()
+							.then(function() { _this.hide(); },
+								  cr.syncFail)
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+		.append("span").text(crv.buttonTexts.done);
+		
+		this.namesSection = this.mainDiv.append('section')
+			.datum(this.organization)
+			.classed('cell edit multiple', true);
+		this.namesSection.append('label')
+			.text(this.namesLabel);
+		this.appendTranslationEditor(this.namesSection, this.organization, this.namesLabel, this.nameLabel, 
+									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr changed.cr", 
+									 this.organization.names(),
+									 cr.SessionName);
+
+		this.webSiteSection = this.mainDiv.append('section')
+			.datum(this.organization)
+			.classed('cell edit unique first', true);
+		this.webSiteSection.append('label')
+			.text(this.webSiteLabel);
+		this.webSiteEditor = this.appendTextEditor(this.webSiteSection, 
+							  this.webSitePlaceholder,
+							  this.organization.webSite(),
+							  'text');
+				 
+		var publicAccessSectionTextContainer = null;
+		
+		this.publicAccessSection = this.mainDiv.append('section')
+			.classed('cell edit unique first', true)
+			.datum(this.organization)
+			.on('click', 
+				function(cell) {
+					if (prepareClick('click', 'pick ' + _this.publicAccessLabel))
+					{
+						try
+						{
+							var panel = new PickPublicAccessPanel();
+							panel.createRoot(_this.organization, publicAccessSectionTextContainer.text())
+								 .showLeft().then(unblockClick);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
+								{
+									publicAccessSectionTextContainer.text(newDescription);
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+	
+		this.publicAccessSection.append('label')
+			.text(_this.publicAccessLabel);
+			
+		var items = this.appendEnumerationEditor(this.publicAccessSection, this.publicAccessDescription());
+			
+		publicAccessSectionTextContainer = items.selectAll('div.description-text');
+	
+		crf.appendRightChevrons(items);	
+
+		var childrenButton;
+		childrenButton = this.appendActionButton(this.sitesLabel, function() {
+				if (prepareClick('click', 'Sites'))
+				{
+					showClickFeedback(this);
+					try
+					{
+						var panel = new SitesPanel(organization, revealPanelLeft);
+						panel.showLeft().then(unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+		childrenButton.selectAll('li>div').classed('description-text', true);
+		crf.appendRightChevrons(childrenButton.selectAll('li'));	
+
+		childrenButton = this.appendActionButton(this.groupsLabel, function() {
+				if (prepareClick('click', 'Groups'))
+				{
+					showClickFeedback(this);
+					try
+					{
+						var panel = new GroupsPanel(organization, revealPanelLeft);
+						panel.showLeft().then(unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+		childrenButton.selectAll('li>div').classed('description-text', true);
+		crf.appendRightChevrons(childrenButton.selectAll('li'));	
+	}
+	
+	return OrganizationPanel;
+})();
+
+var PickPublicAccessPanel = (function () {
+	PickPublicAccessPanel.prototype = new PickFromListPanel();
+	PickPublicAccessPanel.prototype.title = OrganizationPanel.prototype.publicAccessLabel;
+	
+	PickPublicAccessPanel.prototype.data = function()
+	{
+		return [{description: OrganizationPanel.prototype.readLabel},
+				{description: OrganizationPanel.prototype.hiddenLabel}
+			   ];
+	}
+	
+	PickPublicAccessPanel.prototype.datumDescription = function(d)
+	{
+		return d.description;
+	}
+	
+	PickPublicAccessPanel.prototype.createRoot = function(organization, oldDescription)
+	{
+		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, oldDescription);
+	}
+	
+	function PickPublicAccessPanel() {
+		PickFromListPanel.call(this);
+	}
+	
+	return PickPublicAccessPanel;
 })();
 
 var OrganizationSearchView = (function () {

@@ -3107,9 +3107,9 @@ var EditPanel = (function() {
 var PickFromListPanel = (function () {
 	PickFromListPanel.prototype = new SitePanel();
 	
-	PickFromListPanel.prototype.createRoot = function(datum, headerText, panelClass)
+	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
 	{
-		SitePanel.prototype.createRoot.call(this, datum, headerText, "list " + panelClass, revealPanelLeft);
+		SitePanel.prototype.createRoot.call(this, datum, headerText, "list", revealPanelLeft);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -3129,9 +3129,43 @@ var PickFromListPanel = (function () {
 
 		var section = this.appendScrollArea().append("section")
 			.classed("cell multiple", true);
-		crf.appendItemList(section)
+		var itemsDiv = crf.appendItemList(section)
 			.classed('hover-items', true);
 			
+		var items = itemsDiv.selectAll('li')
+			.data(this.data())
+			.enter()
+			.append('li');
+		
+		items.append("div")
+			.classed("description-text growable unselectable", true)
+			.text(function(d) { return _this.datumDescription(d); });
+				
+		items.filter(function(d, i)
+			{
+				return _this.datumDescription(d) === oldDescription;
+			})
+			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
+				
+		items.on('click', function(d, i)
+				{
+					if (_this.datumDescription(d) === oldDescription)
+						return;
+					
+					if (prepareClick('click', _this.datumDescription(d)))
+					{
+						try
+						{
+							$(_this.node()).trigger('itemPicked.cr', _this.datumDescription(d));
+							_this.hideRight(unblockClick);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+				});
+
 		return this;
 	}
 

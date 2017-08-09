@@ -434,6 +434,8 @@ panel.list .description-text {
 	width: 80px;
 	margin-right: 12px;
 	outline: none;
+	align-self: center;
+	-webkit-align-self: center;
 }
 li > .row-button {
 	text-align: left;
