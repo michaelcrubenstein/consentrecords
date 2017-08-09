@@ -1426,3 +1426,370 @@ var PickWeekdayPanel = (function () {
 	return PickWeekdayPanel;
 })();
 
+var RootPanelSearchView = (function () {
+	RootPanelSearchView.prototype = new PanelSearchView();
+	RootPanelSearchView.prototype.searchPathTextField = 'name>text';
+	
+	/* Overrides SearchView.searchPath */
+	RootPanelSearchView.prototype.searchPath = function(val)
+	{
+		var s = this.searchPathType;
+		if (val.length == 0)
+			return s;
+		else
+		{
+			if (val.length < 3)
+				return s + '[{0}^="{1}"]'.format(this.searchPathTextField, encodeURIComponent(val));
+			else
+				return s + '[{0}*="{1}"]'.format(this.searchPathTextField, encodeURIComponent(val));
+		}
+	}
+	
+	RootPanelSearchView.prototype.increment = function()
+	{
+		return 50;
+	}
+	
+	RootPanelSearchView.prototype.fields = function()
+	{
+		return ['names'];
+	}
+	
+	RootPanelSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	RootPanelSearchView.prototype.fillItems = function(items)
+	{
+		var deleteControls = crf.appendDeleteControls(items);
+		PanelSearchView.prototype.fillItems.call(this, items);
+		crf.appendConfirmDeleteControls(items);
+
+		crf.showDeleteControls($(deleteControls[0]), 0);
+		
+		var _this = this;
+		items.each(function(d)
+			{
+				setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
+					{
+						_this.getDataChunker.onItemDeleted();
+						$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
+						{
+							$(this).remove();
+						});
+					});
+				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
+					{
+						d3.select(eventObject.data).selectAll('div.description-text')
+							.text(d.description());
+					});
+			});
+	}
+	
+	RootPanelSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (compareText.length === 0)
+			return true;
+			
+		var i = d.description().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
+			return i == 0;
+		else
+			return i >= 0;
+	}
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	RootPanelSearchView.prototype.onClickButton = function(d, i, button) {
+		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
+		{
+			try
+			{
+				showClickFeedback(button);
+			
+				var panel = new (this.childPanelType())(d);
+				panel.showLeft().then(unblockClick);
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+		d3.event.preventDefault();
+	}
+	
+	RootPanelSearchView.prototype.appendSearchArea = function()
+	{
+		return PanelSearchView.prototype.appendSearchArea.call(this)
+			.classed('deletable-items', true);
+	}
+	
+	function RootPanelSearchView(sitePanel) {
+		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return RootPanelSearchView;
+})();
+
+var RootItemsPanel = (function () {
+	RootItemsPanel.prototype = new EditPanel();
+
+	RootItemsPanel.prototype.showAddPanel = function()
+	{
+		var _this = this;
+		var panel = new (this.searchView.childPanelType())(this.addPanelTitle);
+		setupOnViewEventHandler(cr, this.addEventType, panel.node(), function(eventObject)
+			{
+				_this.searchView.restartSearchTimeout("");
+			}); 
+		panel.showLeft().then(unblockClick);
+	}
+
+	RootItemsPanel.prototype.createRoot = function(objectData, header, onShow)
+	{
+		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
+
+		var _this = this;
+		var backButton = this.navContainer.appendLeftButton()
+			.on('click', function()
+			{
+				_this.hide();
+			});
+		appendLeftChevronSVG(backButton).classed('chevron-left', true);
+		backButton.append('span').text("Back");
+
+		var addButton = this.navContainer.appendRightButton()
+				.classed('add-button', true)
+				.on('click', function(d) {
+					if (prepareClick('click', 'edit root objects: add'))
+					{
+						try
+						{
+							showClickFeedback(this);
+							_this.showAddPanel()
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+					d3.event.preventDefault();
+				});
+		addButton.append('span').text("+");
+		
+		this.navContainer.appendTitle(this.panelTitle);
+	}
+	
+	function RootItemsPanel(onShow)
+	{
+		EditPanel.call(this);
+		
+		this.createRoot(null, this.panelTitle, "edit", onShow);
+
+		var _this = this;
+		if (this.searchViewType)
+		{
+			this.searchView = new (this.searchViewType)(this);
+			$(this.node()).one('revealing.cr', function() { 
+					_this.searchView.search(""); 
+					_this.searchView.inputBox.focus();
+				});
+		}
+	}
+	
+	return RootItemsPanel;
+	
+})();
+
+var OrganizationSearchView = (function () {
+	OrganizationSearchView.prototype = new RootPanelSearchView();
+	OrganizationSearchView.prototype.searchPathType = 'organization';
+	
+	/* Overrides SearchView.searchPath */
+	OrganizationSearchView.prototype.resultType = function()
+	{
+		return cr.Organization;
+	}
+	
+	OrganizationSearchView.prototype.childPanelType = function()
+	{
+		return OrganizationPanel;
+	}
+	
+	function OrganizationSearchView(sitePanel) {
+		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return OrganizationSearchView;
+})();
+
+var OrganizationsPanel = (function () {
+	OrganizationsPanel.prototype = new RootItemsPanel();
+	OrganizationsPanel.prototype.panelTitle = "Organizations";
+	OrganizationsPanel.prototype.addPanelTitle = "Add Organization";
+	OrganizationsPanel.prototype.searchViewType = OrganizationSearchView;
+	OrganizationsPanel.prototype.addEventType = 'organizationAdded.cr';
+	
+	function OrganizationsPanel(onShow)
+	{
+		RootItemsPanel.call(this);
+	}
+	
+	return OrganizationsPanel;
+	
+})();
+
+var ServiceSearchView = (function () {
+	ServiceSearchView.prototype = new RootPanelSearchView();
+	ServiceSearchView.prototype.searchPathType = 'service';
+	
+	/* Overrides SearchView.searchPath */
+	ServiceSearchView.prototype.resultType = function()
+	{
+		return cr.Service;
+	}
+	
+	ServiceSearchView.prototype.childPanelType = function()
+	{
+		return ServicePanel;
+	}
+	
+	function ServiceSearchView(sitePanel) {
+		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return ServiceSearchView;
+})();
+
+var ServicesPanel = (function () {
+	ServicesPanel.prototype = new RootItemsPanel();
+	ServicesPanel.prototype.panelTitle = "Services";
+	ServicesPanel.prototype.addPanelTitle = "Add Service";
+	ServicesPanel.prototype.searchViewType = ServiceSearchView;
+	ServicesPanel.prototype.addEventType = 'serviceAdded.cr';
+	
+	function ServicesPanel(onShow)
+	{
+		RootItemsPanel.call(this);
+	}
+	
+	return ServicesPanel;
+	
+})();
+
+var UserSearchView = (function () {
+	UserSearchView.prototype = new RootPanelSearchView();
+	UserSearchView.prototype.searchPathType = 'user';
+	UserSearchView.prototype.searchPathTextField = 'email>text';
+	
+	/* Overrides SearchView.searchPath */
+	UserSearchView.prototype.resultType = function()
+	{
+		return cr.User;
+	}
+	
+	UserSearchView.prototype.childPanelType = function()
+	{
+		return UserPanel;
+	}
+	
+	function UserSearchView(sitePanel) {
+		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return UserSearchView;
+})();
+
+var UsersPanel = (function () {
+	UsersPanel.prototype = new RootItemsPanel();
+	UsersPanel.prototype.panelTitle = "Users";
+	UsersPanel.prototype.addPanelTitle = "Add User";
+	UsersPanel.prototype.searchViewType = UserSearchView;
+	UsersPanel.prototype.addEventType = 'userAdded.cr';
+	
+	function UsersPanel(onShow)
+	{
+		RootItemsPanel.call(this);
+	}
+	
+	return UsersPanel;
+	
+})();
+
+var CommentPromptSearchView = (function () {
+	CommentPromptSearchView.prototype = new RootPanelSearchView();
+	CommentPromptSearchView.prototype.searchPathType = 'comment prompt';
+	CommentPromptSearchView.prototype.searchPathTextField = 'translation>text';
+	
+	/* Overrides SearchView.searchPath */
+	CommentPromptSearchView.prototype.resultType = function()
+	{
+		return cr.CommentPrompt;
+	}
+	
+	CommentPromptSearchView.prototype.childPanelType = function()
+	{
+		return CommentPromptPanel;
+	}
+	
+	function CommentPromptSearchView(sitePanel) {
+		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return CommentPromptSearchView;
+})();
+
+var CommentPromptsPanel = (function () {
+	CommentPromptsPanel.prototype = new RootItemsPanel();
+	CommentPromptsPanel.prototype.panelTitle = "Comment Prompts";
+	CommentPromptsPanel.prototype.addPanelTitle = "Add Comment Prompt";
+	CommentPromptsPanel.prototype.searchViewType = CommentPromptSearchView;
+	CommentPromptsPanel.prototype.addEventType = 'commentPromptAdded.cr';
+	
+	function CommentPromptsPanel(onShow)
+	{
+		RootItemsPanel.call(this);
+	}
+	
+	return CommentPromptsPanel;
+	
+})();
+
+var ExperiencePromptSearchView = (function () {
+	ExperiencePromptSearchView.prototype = new RootPanelSearchView();
+	ExperiencePromptSearchView.prototype.searchPathType = 'experience prompt';
+	ExperiencePromptSearchView.prototype.searchPathTextField = 'translation>text';
+	
+	/* Overrides SearchView.searchPath */
+	ExperiencePromptSearchView.prototype.resultType = function()
+	{
+		return cr.ExperiencePrompt;
+	}
+	
+	ExperiencePromptSearchView.prototype.childPanelType = function()
+	{
+		return ExperiencePromptPanel;
+	}
+	
+	function ExperiencePromptSearchView(sitePanel) {
+		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return ExperiencePromptSearchView;
+})();
+
+var ExperiencePromptsPanel = (function () {
+	ExperiencePromptsPanel.prototype = new RootItemsPanel();
+	ExperiencePromptsPanel.prototype.panelTitle = "Experience Prompts";
+	ExperiencePromptsPanel.prototype.addPanelTitle = "Add Experience Prompt";
+	ExperiencePromptsPanel.prototype.searchViewType = ExperiencePromptSearchView;
+	ExperiencePromptsPanel.prototype.addEventType = 'experiencePromptAdded.cr';
+	
+	function ExperiencePromptsPanel(onShow)
+	{
+		RootItemsPanel.call(this);
+	}
+	
+	return ExperiencePromptsPanel;
+	
+})();
+

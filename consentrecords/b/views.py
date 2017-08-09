@@ -185,6 +185,30 @@ def showInstances(request):
         return HttpResponse(str(e))
 
 @ensure_csrf_cookie
+def showRootItems(request):
+    
+    try:
+        url = request.path_info.split('/')[-2] + '.html'
+        logPage(request, 'pathAdvisor/' + request.path_info)
+        template = loader.get_template(templateDirectory + url)
+    
+        argList = {
+            'user': request.user,
+            'jsversion': settings.JS_VERSION,
+            'cdn_url': settings.CDN_URL,
+            }
+        
+        if request.user.is_authenticated:
+            user = Context('en', request.user).user
+            if not user:
+                return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+            argList['userID'] = user.id.hex
+        
+        return HttpResponse(template.render(argList))
+    except Exception as e:
+        return HttpResponse(str(e))
+
+@ensure_csrf_cookie
 def showPathway(request, email):
     logPage(request, 'pathAdvisor/showPathway')
     

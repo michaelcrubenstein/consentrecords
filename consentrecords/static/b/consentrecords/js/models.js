@@ -8016,15 +8016,17 @@ cr.UserUserGrantRequest = (function() {
 	
 cr.signedinUser = new cr.User();
 
-cr.createSignedinUser = function(id, description)
+cr.createSignedinUser = function(id, description, fields)
 {
+	fields = fields !== undefined ? fields 
+								  : ['path', cr.fieldNames.systemAccess, 'user grant requests', 'notifications'];
 	crp.clear();
 	cr.Service.clearPromises();
 	cr.signedinUser.id(id)
 	               .description(description);
 	cr.signedinUser = crp.pushInstance(cr.signedinUser);
 	
-	return cr.signedinUser.promiseDataLoaded(['path', cr.fieldNames.systemAccess, 'user grant requests', 'notifications'])
+	return cr.signedinUser.promiseDataLoaded(fields)
 		.then(function()
 			{
 				$(cr.signedinUser).trigger("signin.cr");
