@@ -225,6 +225,12 @@ def printTransaction(t):
                t.createdOrganizations, t.changedOrganizations, 
                t.deletedOrganizations, t.organizationHistories)
 
+    printTable("\ttext\tlanguageCode",
+               "Organization Names", "Organization Name",
+               printTranslation,
+               t.createdOrganizationNames, t.changedOrganizationNames, 
+               t.deletedOrganizationNames, t.organizationNameHistories)
+
     printTable("\tuser\tbirthday\tscreen name\tspecial access\tcan answer",
                "Paths", "Path",
                printPath,
@@ -280,6 +286,9 @@ if __name__ == "__main__":
 
             revertChanged(t.changedOrganizations, revertInstance)
             revertDeleted(t.deletedOrganizations)
+
+            revertChanged(t.changedOrganizationNames, revertInstance)
+            revertDeleted(t.deletedOrganizationNames)
 
             revertChanged(t.changedPaths, revertInstance)
             revertDeleted(t.deletedPaths)

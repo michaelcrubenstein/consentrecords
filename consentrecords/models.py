@@ -674,6 +674,10 @@ class TranslationInstance(ChildInstance):
                                              text=self.text,
                                              languageCode=self.languageCode)
         
+    def revert(self, h):
+        self.text = h.text 
+        self.languageCode = h.languageCode 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
