@@ -5537,7 +5537,13 @@ class Organization(SecureRootInstance, dbmodels.Model):
                                              inquiryAccessGroup=self.inquiryAccessGroup,
                                              publicAccess=self.publicAccess,
                                              primaryAdministrator=self.primaryAdministrator)
-        
+    
+    def revert(self, h):
+        self.webSite = h.webSite 
+        self.inquiryAccessGroup = h.inquiryAccessGroup 
+        self.publicAccess = h.publicAccess 
+        self.primaryAdministrator = h.primaryAdministrator 
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -5820,7 +5826,7 @@ class Path(IInstance, dbmodels.Model):
                                              canAnswerExperience=self.canAnswerExperience)
     
     ### Revert the data components of this object to values in the corresponding history    
-    def revert(h):
+    def revert(self, h):
         self.birthday = h.birthday
         self.name = h.name
         self.specialAccess = h.specialAccess
@@ -7075,7 +7081,7 @@ class User(SecureRootInstance, dbmodels.Model):
                                              publicAccess=self.publicAccess,
                                              primaryAdministrator=self.primaryAdministrator)
     
-    def revert(h):
+    def revert(self, h):
         self.firstName = h.firstName
         self.lastName = h.lastName
         self.birthday = h.birthday

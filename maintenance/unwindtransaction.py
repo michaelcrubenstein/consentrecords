@@ -67,6 +67,14 @@ def printNotification(i):
         print("\t%s\t%s\t%s" % \
               (na.id, na.position, na.argument))
          
+def printOrganization(i):
+    print("%s\t%s\t%s\t%s\t%s" % \
+        (i.id, i.webSite or nullString, 
+         str(i.inquiryAccessGroup) if i.inquiryAccessGroup else nullString,
+         i.publicAccess or nullString,
+         str(i.primaryAdministrator) if i.primaryAdministrator else nullString,
+        ))
+
 def printPath(i):
     print("%s\t%s\t%s\t%s\t%s\t%s" % \
         (i.id, i.parent, i.birthday or nullString, i.name or nullString, 
@@ -134,7 +142,7 @@ def revertNotification(h, i):
     i.isFresh = h.isFresh
     i.name = h.name
 
-def revertPath(h, i):
+def revertInstance(h, i):
 	i.revert(h)
 	
 def revertGrant(h, i):
@@ -211,6 +219,12 @@ def printTransaction(t):
                t.createdNotifications, t.changedNotifications, 
                t.deletedNotifications, t.notificationHistories)
 
+    printTable("\tweb site\tinquiry access group\tpublic access\tprimary administrator",
+               "Organizations", "Organization",
+               printOrganization,
+               t.createdOrganizations, t.changedOrganizations, 
+               t.deletedOrganizations, t.organizationHistories)
+
     printTable("\tuser\tbirthday\tscreen name\tspecial access\tcan answer",
                "Paths", "Path",
                printPath,
@@ -264,10 +278,13 @@ if __name__ == "__main__":
 
             revertDeleted(t.deletedNotificationArguments)
 
-            revertChanged(t.changedPaths, revertPath)
+            revertChanged(t.changedOrganizations, revertInstance)
+            revertDeleted(t.deletedOrganizations)
+
+            revertChanged(t.changedPaths, revertInstance)
             revertDeleted(t.deletedPaths)
 
-            revertChanged(t.changedUsers, revertUser)
+            revertChanged(t.changedUsers, revertInstance)
             revertDeleted(t.deletedUsers)
 
             revertChanged(t.changedUserGrants, revertGrant)
