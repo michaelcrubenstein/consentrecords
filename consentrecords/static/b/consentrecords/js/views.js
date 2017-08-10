@@ -2210,7 +2210,7 @@ var SearchOptionsView = (function () {
 	{
 		var _this = this;
 		var items = this.appendButtonContainers(foundObjects)
-			.on("click", function(d, i) {
+			.on('click', function(d, i) {
 				_this.onClickButton(d, i, this);
 			});
 			
@@ -2780,11 +2780,11 @@ var EditPanel = (function() {
 		var itemsDiv = crf.appendItemList(section);
 		var items = itemsDiv.append('li');
 
-		var inputs = items.append("input")
+		var inputs = items.append('input')
 			.classed('growable', true)
-			.attr("type", inputType)
-			.attr("placeholder", placeholder)
-			.property("value", value);
+			.attr('type', inputType)
+			.attr('placeholder', placeholder)
+			.property('value', value);
 			
 		if (this.onFocusInOtherInput !== undefined)
 		{
@@ -2805,6 +2805,8 @@ var EditPanel = (function() {
 					}
 				});
 		}
+		
+		return inputs;
 	}
 	
 	EditPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)
@@ -2985,7 +2987,7 @@ var EditPanel = (function() {
 				if (prepareClick('click', 'confirm delete: ' + d.description()))
 				{
 					try {
-					    d3.select(_thisItem).isDeleted = true;
+					    _thisItem.setAttribute('isDeleted', true);
 					    hideItem(_thisItem, unblockClick);
 					} catch(err) { cr.syncFail(err); }
 				}
@@ -3046,7 +3048,7 @@ var EditPanel = (function() {
 				var item = d3.select(this);
 				var newText = item.selectAll('input').node().value;
 				var newLanguageCode = crv.languages[item.selectAll('select').node().selectedIndex].code;
-				if (d.id() && item.isDeleted)
+				if (d.id() && this.getAttribute('isDeleted'))
 				{
 					subChanges.push({'delete': d.id()});
 				}
@@ -3056,7 +3058,7 @@ var EditPanel = (function() {
 					if (newText)
 					{
 						_this.lastNewIDKey += 1;
-						subChanges.push({'add': _this.lastNewIDKey, 
+						subChanges.push({'add': "name" + _this.lastNewIDKey.toString(), 
 										 'text': newText,
 										 'languageCode': newLanguageCode});
 					}
@@ -3085,6 +3087,29 @@ var EditPanel = (function() {
 		
 		if (subChanges.length > 0)
 			changes[key] = subChanges;
+	}
+	
+	EditPanel.prototype.pushTranslationChanges = function(parent, translations, changes, resultType)
+	{
+		console.assert(translations);
+		
+		changes.forEach(function(change)
+		{
+			if ('delete' in change)
+			{
+				var d = translations.find(function(t)
+					{ return t.id() == change['delete']; })
+				cr.removeElement(translations, d);	
+			}
+			else if ('add' in change)
+			{
+				var d = new resultType();
+				d.clientID(change['add']);
+				d.parentID(parent.id());
+				translations.push(d);
+			}
+		});
+		return this;
 	}
 	
 	EditPanel.prototype.createRoot = function(objectData, header, onShow)

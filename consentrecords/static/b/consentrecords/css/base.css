@@ -770,6 +770,13 @@ div.not-sure-button>div {
 	padding-bottom: 4px;
 }
 
+section.cell.documentation {
+	padding: .5em 1em;
+	font-size: 0.8em;
+	color: #666;
+	background-color: transparent;
+}
+
 select::-ms-expand {
     display: none;
 }

@@ -1534,6 +1534,55 @@ var RootItemsPanel = (function () {
 	
 })();
 
+var EnumerationSectionEditor = (function() {
+
+    function EnumerationSectionEditor(sitePanel, container, oldValue, label, pickPanelType)
+    {
+    	var _this = this;
+		this.textContainer = null;
+		this.newValue = oldValue;
+		
+		this.section = sitePanel.mainDiv.append('section')
+			.classed('cell edit unique', true)
+			.datum(container)
+			.on('click', 
+				function() {
+					if (prepareClick('click', 'pick ' + label))
+					{
+						try
+						{
+							var panel = new pickPanelType();
+							panel.createRoot(container, _this.newValue ? _this.newValue.description() : "", label)
+								 .showLeft()
+								 .then(unblockClick, cr.syncFail);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newValue)
+								{
+									_this.textContainer.text(newValue ? newValue.description() : "");
+									_this.newValue = newValue;
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+		
+		this.section.append('label')
+			.text(label);
+			
+		var oldDescription = this.newValue ? 
+						this.newValue.description() :
+						"";
+		var items = sitePanel.appendEnumerationEditor(this.section, oldDescription);
+		this.textContainer = items.selectAll('div.description-text');
+		
+		crf.appendRightChevrons(items);	
+    }
+    
+	return EnumerationSectionEditor;
+})();
 var OrganizationPanel = (function () {
 	OrganizationPanel.prototype = new EditPanel();
 	OrganizationPanel.prototype.organization = null;
@@ -1561,17 +1610,53 @@ var OrganizationPanel = (function () {
 				return '';
 		}
 		
-		this.appendTextChanges(this.webSiteEditor, this.organization.webSite(), 
+		var _this = this;
+		this.appendTextChanges(this.webSiteSection, this.organization.webSite(), 
 								changes, 'web site')
-// 			.appendUniqueItem(this.inquiryAccessGroupEditor, this.organization.inquiryAccessGroup(),
-// 							   changes, 'inquiry access group')
-// 			.appendUniqueItem(this.primaryAdministratorEditor, this.organization.primaryAdministrator(),
-// 							   changes, 'primary administrator')
+			.appendEnumerationChanges(this.inquiryAccessGroupEditor.section, 
+									  function() { return _this.inquiryAccessGroupEditor.newValue ? 
+									  					  _this.inquiryAccessGroupEditor.newValue.urlPath() 
+									  					  : null; },
+									  this.organization.inquiryAccessGroup() ?
+									  	this.organization.inquiryAccessGroup().urlPath() : null,
+									  changes, 'inquiry access group')
+			.appendEnumerationChanges(this.primaryAdministratorEditor.section, 
+									  function() { return _this.primaryAdministratorEditor.newValue ?
+									  					  _this.primaryAdministratorEditor.newValue.urlPath() 
+									  					  : null; },
+									  this.organization.primaryAdministrator() ?
+									  	this.organization.primaryAdministrator().urlPath() : null,
+									  changes, 'primary administrator')
 			.appendEnumerationChanges(this.publicAccessSection, getPublicAccessValue, 
 									  this.organization.publicAccess(),
 							   		  changes, 'public access')
 			.appendTranslationChanges(this.namesSection, this.organization.names, changes, 'names');
-		return this.session.update(changes);
+		return this.organization.update(changes, false)
+				.then(function(changes, newIDs)
+					{
+						var r2 = $.Deferred();
+						try
+						{
+							if (changes)
+							{
+								/* Munge the objects so that objects are present as appropriate. */
+								if ('primary administrator' in changes && _this.primaryAdministratorEditor.newValue)
+									changes['primary administrator'] = {id: _this.primaryAdministratorEditor.newValue.id()};
+								if ('inquiry access group' in changes && _this.inquiryAccessGroupEditor.newValue)
+									changes['inquiry access group'] = {id: _this.inquiryAccessGroupEditor.newValue.id()};
+								if ('names' in changes)
+									_this.pushTranslationChanges(_this.organization, _this.organization.names(), changes['names'], cr.OrganizationName);
+								
+								_this.organization.updateData(changes, newIDs)
+							}
+							r2.resolve(changes, newIDs);
+						}
+						catch(err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					});
     }
     
     OrganizationPanel.prototype.publicAccessDescription = function()
@@ -1631,29 +1716,29 @@ var OrganizationPanel = (function () {
 			.classed('cell edit unique first', true);
 		this.webSiteSection.append('label')
 			.text(this.webSiteLabel);
-		this.webSiteEditor = this.appendTextEditor(this.webSiteSection, 
+		this.appendTextEditor(this.webSiteSection, 
 							  this.webSitePlaceholder,
 							  this.organization.webSite(),
 							  'text');
 				 
-		var publicAccessSectionTextContainer = null;
+		var publicAccessTextContainer = null;
 		
 		this.publicAccessSection = this.mainDiv.append('section')
 			.classed('cell edit unique first', true)
 			.datum(this.organization)
 			.on('click', 
-				function(cell) {
+				function() {
 					if (prepareClick('click', 'pick ' + _this.publicAccessLabel))
 					{
 						try
 						{
 							var panel = new PickPublicAccessPanel();
-							panel.createRoot(_this.organization, publicAccessSectionTextContainer.text())
+							panel.createRoot(_this.organization, publicAccessTextContainer.text())
 								 .showLeft().then(unblockClick);
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
 								{
-									publicAccessSectionTextContainer.text(newDescription);
+									publicAccessTextContainer.text(newDescription);
 								});
 						}
 						catch(err)
@@ -1668,10 +1753,15 @@ var OrganizationPanel = (function () {
 			
 		var items = this.appendEnumerationEditor(this.publicAccessSection, this.publicAccessDescription());
 			
-		publicAccessSectionTextContainer = items.selectAll('div.description-text');
+		publicAccessTextContainer = items.selectAll('div.description-text');
 	
 		crf.appendRightChevrons(items);	
-
+		
+		this.primaryAdministratorEditor = new EnumerationSectionEditor(
+			this, organization, organization.primaryAdministrator(), this.primaryAdministratorLabel,
+			PickPrimaryAdministratorPanel
+			);
+		
 		var childrenButton;
 		childrenButton = this.appendActionButton(this.sitesLabel, function() {
 				if (prepareClick('click', 'Sites'))
@@ -1704,6 +1794,11 @@ var OrganizationPanel = (function () {
 			.classed('first', true);
 		childrenButton.selectAll('li>div').classed('description-text', true);
 		crf.appendRightChevrons(childrenButton.selectAll('li'));	
+
+		this.inquiryAccessGroupEditor = new EnumerationSectionEditor(
+			this, organization, organization.inquiryAccessGroup(), this.inquiryAccessGroupLabel,
+			PickInquiryAccessGroupPanel
+			);
 	}
 	
 	return OrganizationPanel;
@@ -1735,6 +1830,251 @@ var PickPublicAccessPanel = (function () {
 	}
 	
 	return PickPublicAccessPanel;
+})();
+
+var PickInquiryAccessGroupSearchView = (function () {
+	PickInquiryAccessGroupSearchView.prototype = new PanelSearchView();
+	PickInquiryAccessGroupSearchView.prototype.organization = null;
+	
+	/* Overrides SearchView.searchPath */
+	PickInquiryAccessGroupSearchView.prototype.searchPath = function(val)
+	{
+		var s = this.organization.urlPath() + "/group";
+		if (val.length == 0)
+			return s;
+		else
+		{
+			return s + '[name>text^="' + encodeURIComponent(val) + '"]';
+		}
+	}
+	
+	PickInquiryAccessGroupSearchView.prototype.increment = function()
+	{
+		return 20;
+	}
+	
+	PickInquiryAccessGroupSearchView.prototype.fields = function()
+	{
+		return [];
+	}
+	
+	PickInquiryAccessGroupSearchView.prototype.resultType = function()
+	{
+		return cr.Group;
+	}
+	
+	PickInquiryAccessGroupSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (compareText.length === 0)
+			return true;
+			
+		if (!d)	/* The first item */
+			return true;
+			
+		var i = d.description().toLocaleLowerCase().indexOf(compareText);
+		return i == 0;
+	}
+	
+	PickInquiryAccessGroupSearchView.prototype.textCleared = function()
+	{
+		PanelSearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	PickInquiryAccessGroupSearchView.prototype.appendButtonContainers = function(foundObjects)
+	{
+		if (this.buttons().size() == 0)
+		{
+			var _this = this;
+			var items = this.getDataChunker.appendButtonContainers([null]);
+			items.on('click', function(d, i) {
+				_this.onClickButton(d, i, this);
+			})
+			items.append("div")
+				.classed("description-text growable", true)
+				.text("(None)");
+		}
+		return SearchOptionsView.prototype.appendButtonContainers.call(this, foundObjects);
+	}
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	PickInquiryAccessGroupSearchView.prototype.onClickButton = function(d, i, button) {
+		var _this = this;
+		
+		if (prepareClick('click', d ? d.description() : "Picked (None)"))
+		{
+			showClickFeedback(button);
+			$(_this.sitePanel.node()).trigger('itemPicked.cr', d);
+			_this.sitePanel.hide();
+		}
+	}
+	
+	function PickInquiryAccessGroupSearchView(sitePanel, organization) {
+		this.organization = organization;
+		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	}
+	
+	return PickInquiryAccessGroupSearchView;
+})();
+
+var PickInquiryAccessGroupPanel = (function()
+{
+	PickInquiryAccessGroupPanel.prototype = new SitePanel();
+	PickInquiryAccessGroupPanel.prototype.organization = null;
+
+	PickInquiryAccessGroupPanel.prototype.createRoot = function(organization, oldDescription, title)
+	{
+		var _this = this;
+		SitePanel.prototype.createRoot.call(this, organization, title, 'list', revealPanelLeft);
+		this.navContainer = this.appendNavContainer();
+
+		var _this = this;
+		this.appendBackButton();
+
+		var centerButton = this.navContainer.appendTitle(title);
+
+		this.searchView = new PickInquiryAccessGroupSearchView(this, organization);
+		$(this.node()).one('revealing.cr', function() {
+				_this.searchView.inputText(oldDescription);
+				_this.searchView.inputBox.focus();
+			});
+		return this;
+	}
+	function PickInquiryAccessGroupPanel()
+	{
+		SitePanel.call(this);
+	}
+	
+	return PickInquiryAccessGroupPanel;
+})();
+
+/*
+	Displays a panel from which the user can choose a user to be the primary administrator.
+	
+	This function should be called within a prepareClick block. 
+ */
+var PickPrimaryAdministratorPanel = (function() {
+	PickPrimaryAdministratorPanel.prototype = new EditPanel();
+	PickPrimaryAdministratorPanel.prototype.badEmailMessage =
+		'Please specify a valid email address.';
+	PickPrimaryAdministratorPanel.prototype.emailDocumentation = 
+		'Type the email address of the primary administrator for this organization.';
+	
+	PickPrimaryAdministratorPanel.prototype.showLeft = function()
+	{
+		var _this = this;
+		return EditPanel.prototype.showLeft.call(this)
+			.then(function()
+				{
+					var inputBox = _this.panelDiv.selectAll('input').node();
+					inputBox.focus();
+					inputBox.setSelectionRange(0, inputBox.value.length)
+				});
+	}
+	
+	PickPrimaryAdministratorPanel.prototype.createRoot = function(organization, oldDescription, title)
+	{
+		var _this = this;
+		EditPanel.prototype.createRoot.call(this, organization, title, revealPanelLeft);
+		this.navContainer.appendLeftButton()
+			.on('click', function()
+				{
+					if (prepareClick('click', 'Cancel {0}'.format(title)))
+					{
+						_this.hide();
+					}
+				})
+			.append('span').text('Cancel');
+		
+		this.navContainer.appendRightButton()
+			.on("click", function()
+			{
+				if (prepareClick('click', 'Select Primary Administrator'))
+				{
+					try
+					{
+						var email = d3.select(_this.node()).selectAll('input').node().value;
+						function validateEmail(email) 
+						{
+							var re = /\S+@\S+\.\S\S+/;
+							return re.test(email);
+						}
+						if (email && !validateEmail(email))
+						{
+							cr.syncFail(_this.badEmailMessage);
+						}
+						else
+						{
+							if (email)
+							{
+								cr.getData({path: 'user[email>text="{0}"]'.format(email), 
+											fields: ['none'], 
+											resultType: cr.User})
+									.then(function(users)
+									{
+										try
+										{
+											if (users.length == 0)
+												throw new Error('the email "{0}" is not recognized'.format(email));
+											else
+											{
+												$(_this.node()).trigger('itemPicked.cr', users[0]);
+												_this.hide();
+											}
+										}
+										catch(err)
+										{
+											cr.syncFail(err);
+										}
+									}, cr.syncFail)
+							}
+							else
+							{
+								$(_this.node()).trigger('itemPicked.cr', null);
+								_this.hide();
+							}
+						}
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
+				}
+				d3.event.preventDefault();
+			})
+		    .append("span").text(crv.buttonTexts.done);
+		
+		this.navContainer.appendTitle(title);
+		
+		var sectionPanel = this.mainDiv.append('section')
+			.classed('cell edit unique', true);
+			
+		var itemsDiv = crf.appendItemList(sectionPanel);
+
+		var items = itemsDiv.append("li");	// So that each item appears on its own row.
+			
+		var emailInput = items.append("input")
+			.classed('growable', true)
+			.attr("type", "email")
+			.attr("placeholder", 'Email')
+			.property('value', oldDescription);
+			
+		var docSection = this.mainDiv.append('section')
+			.classed('cell documentation', true);
+			
+		var docDiv = docSection.append('div')
+			.text(this.emailDocumentation);
+			
+		return this;
+	}
+	
+	function PickPrimaryAdministratorPanel()
+	{
+		EditPanel.call(this)
+	}
+	
+	return PickPrimaryAdministratorPanel;
 })();
 
 var OrganizationSearchView = (function () {

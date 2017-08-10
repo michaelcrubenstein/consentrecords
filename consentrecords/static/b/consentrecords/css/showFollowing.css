@@ -5,13 +5,6 @@ panel.following ol+div  {
 	color: #777;
 }
 
-section.cell.documentation {
-	padding: .5em 1em;
-	font-size: 0.8em;
-	color: #666;
-	background-color: transparent;
-}
-
 .compare-button {
 	background: transparent;
 	cursor: pointer;

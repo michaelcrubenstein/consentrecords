@@ -2900,9 +2900,14 @@ cr.Grantable = (function() {
 		
 		if ('primary administrator' in d)
 		{
-		    this._primaryAdministrator = new cr.User();
-		    this._primaryAdministrator.setData(d['primary administrator']);
-		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator);
+			if (!d['primary administrator'])
+				this._primaryAdministrator = null;
+			else
+			{
+				this._primaryAdministrator = new cr.User();
+				this._primaryAdministrator.setData(d['primary administrator']);
+				this._primaryAdministrator = crp.pushInstance(this._primaryAdministrator);
+			}
 		    changed = true;
 		}
 		if ('user grants' in d)
@@ -5737,14 +5742,19 @@ cr.Organization = (function() {
 		{
 			var idData = d['inquiry access group'];
 			var id;
-			if (typeof(idData) == 'string')
-				console.log(false);	/* To Do: */
+			if (!idData)
+				this._inquiryAccessGroup = null;
 			else
-				id = idData['id'];
-			this._inquiryAccessGroup = this.groups().find(function(group)
-				{
-					return group.id() == id;
-				});
+			{
+				if (typeof(idData) == 'string')
+					console.log(false);	/* To Do: */
+				else
+					id = idData['id'];
+				this._inquiryAccessGroup = this.groups().find(function(group)
+					{
+						return group.id() == id;
+					});
+			}
 			changed = true;
 		}
 		
