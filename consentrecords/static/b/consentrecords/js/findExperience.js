@@ -305,7 +305,7 @@ var PickOfferingSearchView = (function () {
 			return s;
 		else
 		{
-			return s + '[name*="{0}"]|[offering>name*="{0}"]|[offering>site>name*="{0}"]|[offering>site>organization>name*="{0}"]'
+			return s + '[name>text*="{0}"]|[offering>name>text*="{0}"]|[offering>site>name>text*="{0}"]|[offering>site>organization>name>text*="{0}"]'
 				.format(encodeURIComponent(val));
 		}
 	}
@@ -419,9 +419,9 @@ var FindExperienceSearchView = (function () {
 		else
 		{
 			if (val.length < 3)
-				return s + '[name^="' + encodeURIComponent(val) + '"]';
+				return s + '[name>text^="' + encodeURIComponent(val) + '"]';
 			else
-				return s + '[name*="' + encodeURIComponent(val) + '"]';
+				return s + '[name>text*="' + encodeURIComponent(val) + '"]';
 		}
 	}
 	

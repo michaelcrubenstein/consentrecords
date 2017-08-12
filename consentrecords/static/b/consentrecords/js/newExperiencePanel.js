@@ -1554,7 +1554,7 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === 'Offering')
 				{
-					path = '[name>text*="{1}"]|[site>name*="{1}"]|[site>organization>name*="{1}"]';
+					path = '[name>text*="{1}"]|[site>name>text*="{1}"]|[site>organization>name>text*="{1}"]';
 					path = this.experienceController.organization().urlPath() + 'site/offering' + path;
 					path += this.experienceController.getOfferingConstraint();
 				}
@@ -1578,12 +1578,12 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'offering[name>text*="{1}"]|[site>name*="{1}"]|[site>organization>name*="{1}"]';
+					path = 'offering[name>text*="{1}"]|[site>name>text*="{1}"]|[site>organization>name>text*="{1}"]';
 					path += this.experienceController.getOfferingConstraint();
 				}
 				else if (this.typeName === 'Site')
 				{
-					path = 'site[name>text*="{1}"]|[organization>name*="{1}"]';
+					path = 'site[name>text*="{1}"]|[organization>name>text*="{1}"]';
 					if (this.experienceController.experienceServices[0] instanceof cr.Service)
 					{
 						path += '[offering>service>service={0}]]'.format(this.experienceController.experienceServices[0].service().id());
@@ -1606,7 +1606,7 @@ var SiteSearchView = (function() {
 		{
 			if (this.typeName === 'Site')
 			{
-				path = 'site[name>text*="{1}"]|[organization>name*="{1}"]';
+				path = 'site[name>text*="{1}"]|[organization>name>text*="{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
@@ -1922,7 +1922,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = '[name>text*="{1}"]|[site>name*="{1}"]';
+						path = '[name>text*="{1}"]|[site>name>text*="{1}"]';
 						path = this.experienceController.organization().urlPath() + '/site/offering' + path;
 						path += this.experienceController.getOfferingConstraint();
 					}
@@ -1943,7 +1943,7 @@ var OfferingSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'offering[name>text*="{1}"]|[site>name*="{1}"]|[site>organization>name*="{1}"]';
+					path = 'offering[name>text*="{1}"]|[site>name>text*="{1}"]|[site>organization>name>text*="{1}"]';
 					path += this.experienceController.getOfferingConstraint();
 				}
 				else
