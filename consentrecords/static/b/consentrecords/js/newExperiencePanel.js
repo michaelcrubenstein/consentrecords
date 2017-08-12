@@ -1542,10 +1542,10 @@ var SiteSearchView = (function() {
 			else if (!val)
 			{
 				if (this.typeName === 'Site')
-					return this.experienceController.organization().urlPath() + 'site';
+					return this.experienceController.organization().urlPath() + '/site';
 				else if (this.typeName === 'Offering from Site')
 				{
-					path = this.experienceController.organization().urlPath() + 'site/offering';
+					path = this.experienceController.organization().urlPath() + '/site/offering';
 					path += this.experienceController.getOfferingConstraint();
 					return path;
 				}
@@ -1555,12 +1555,12 @@ var SiteSearchView = (function() {
 				if (this.typeName === 'Offering')
 				{
 					path = '[name>text*="{1}"]|[site>name>text*="{1}"]|[site>organization>name>text*="{1}"]';
-					path = this.experienceController.organization().urlPath() + 'site/offering' + path;
+					path = this.experienceController.organization().urlPath() + '/site/offering' + path;
 					path += this.experienceController.getOfferingConstraint();
 				}
 				else if (this.typeName === 'Site')
 				{
-					path = this.experienceController.organization().urlPath() + 'site[name>text*="{1}"]';
+					path = this.experienceController.organization().urlPath() + '/site[name>text*="{1}"]';
 				}
 			
 				var symbol = "*=";
@@ -1769,7 +1769,12 @@ var SiteSearchView = (function() {
 					leftText.append('div')
 						.classed('title', true).text(d.description());
 
-					orgDiv = leftText.append('div').classed("organization", true);
+					var orgDiv = leftText.append('div')
+						.classed("organization", true);
+					orgDiv.append('div')
+						.classed('address-line', true)
+						.text(d.organization().description());
+						
 					if (d.site().description() != d.organization().description())
 					{
 						orgDiv.append('div')
@@ -2891,8 +2896,18 @@ var NewExperiencePanel = (function () {
 						console.assert(false);
 				}
 			else if (newText != this.experienceController.organizationName())
-				this.experienceController.customOrganization(newText)
-										 .organization(null);
+			{
+				if (this.experienceController.organization())
+				{
+					this.organizationSearchView.clearFromOrganization();
+					this.experienceController.customOrganization(newText);
+				}
+				else
+				{
+					this.experienceController.customOrganization(newText)
+											 .organization(null);
+				}
+			}
 		}
 		else
 			this.organizationSearchView.clearFromOrganization();
@@ -2916,8 +2931,16 @@ var NewExperiencePanel = (function () {
 					console.assert(false);
 			}
 			else if (newText != this.experienceController.siteName())
-				this.experienceController.customSite(newText)
-										 .site(null);
+				if (this.experienceController.site())
+				{
+					this.siteSearchView.clearFromSite();
+					this.experienceController.customSite(newText);
+				}
+				else
+				{
+					this.experienceController.customSite(newText)
+											 .site(null);
+				}
 		}
 		else
 			this.siteSearchView.clearFromSite();
@@ -3042,6 +3065,7 @@ var NewExperiencePanel = (function () {
 			this.checkOrganizationInput();
 			this.organizationSearchView.hideSearch(done);
 			this.updateInputs();
+			this.showTags();
 			return true;
 		}
 		else if (newReveal != this.siteSearchView.reveal &&
@@ -3050,6 +3074,7 @@ var NewExperiencePanel = (function () {
 			this.checkSiteInput();
 			this.siteSearchView.hideSearch(done);
 			this.updateInputs();
+			this.showTags();
 			return true;
 		}
 		else if (newReveal != this.offeringSearchView.reveal &&
@@ -3058,6 +3083,7 @@ var NewExperiencePanel = (function () {
 			this.checkOfferingInput();
 			this.offeringSearchView.hideSearch(done);
 			this.updateInputs();
+			this.showTags();
 			return true;
 		}
 		else if (newReveal != this.tagSearchView.reveal &&
