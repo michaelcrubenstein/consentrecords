@@ -2561,7 +2561,7 @@ var NewExperiencePanel = (function () {
 			var _this = this;
 			new ConfirmDeleteAlert(this.node(), "Delete Experience", 
 				function() { 
-					_this.experienceController.instance.deleteData()
+					_this.experienceController.oldInstance().deleteData()
 						.then(function() { _this.hideDown(unblockClick) },
 							  cr.syncFail);
 				}, 
@@ -2574,7 +2574,7 @@ var NewExperiencePanel = (function () {
 			
 		if (this.experienceController.title())
 			this.title = this.experienceController.title();
-		else if (this.experienceController.instance)
+		else if (this.experienceController.oldInstance())
 			this.title = this.editTitle;
 		else if (this.experienceController.domain())
 			this.title = this.newFromDomainTitle.format(this.experienceController.domain().description());
@@ -2607,7 +2607,7 @@ var NewExperiencePanel = (function () {
 			});
 		backButton.append('span').text(crv.buttonTexts.cancel);
 		
-		if (experienceController.instance)
+		if (experienceController.oldInstance())
 		{
 			var shareButton = navContainer.appendRightButton()
 				.classed("share", true)
@@ -2693,9 +2693,9 @@ var NewExperiencePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		doneButton.append("span").text(experienceController.instance ? crv.buttonTexts.done : "Add");
+		doneButton.append("span").text(experienceController.oldInstance() ? crv.buttonTexts.done : "Add");
 		
-		if (experienceController.instance)
+		if (experienceController.oldInstance())
 		{
 			bottomNavContainer.appendLeftButton()
 				.on("click", 
