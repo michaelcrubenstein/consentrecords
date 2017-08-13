@@ -158,6 +158,7 @@
 	<script src="{% static "datejs/time.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/models.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/controllers.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/views.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}?v={{jsversion}}"></script>
@@ -337,7 +338,7 @@
 								{
 									if (organizations[0] instanceof cr.Organization)
 									{
-										experience.newExperience
+										experience.newInstance()
 											.organization(organizations[0])
 											.customSite(siteName)
 											.customOffering(offeringName);
@@ -356,18 +357,18 @@
 				}
 				else if (organizationName || siteName || offeringName)
 				{
-					experience.newExperience
+					experience
 						.customOrganization(organizationName)
 						.customSite(siteName)
-						.customOffering(offeringName);
-					experience.service(service)
-							  .initPreviousDateRange();
+						.customOffering(offeringName)
+						.service(service)
+						.initPreviousDateRange();
 					var panel = new NewExperiencePanel(experience);
 					panel.showUp();
 				}
 				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 				{
-					experience.createFromService(services[0], pathwayPanel.node(), function(panelNode)
+					experience.createFromService(crp.getInstance(serviceName), pathwayPanel.node(), function(panelNode)
 						{
 							panelNode.sitePanel.showUp();
 						});

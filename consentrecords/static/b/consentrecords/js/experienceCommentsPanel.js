@@ -249,8 +249,8 @@ var ExperienceCommentsPanel = (function() {
 			{
 				try
 				{
-					var experienceController = new ExperienceController(fd.experience.path(), fd.experience);
-					experienceController.instance = fd.experience;
+					var experienceController = new ExperienceController(fd.experience.parent(), fd.experience);
+					experienceController.oldInstance(fd.experience);
 					new NewExperiencePanel(experienceController, revealPanelLeft)
 						.showLeft()
 						.always(unblockClick);

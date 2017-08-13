@@ -508,7 +508,7 @@ var PathView = (function() {
 				try
 				{
 					var experienceController = new ExperienceController(fd.experience.path(), fd.experience);
-					experienceController.replaced(fd.experience);
+					experienceController.oldInstance(fd.experience);
 					
 					var editPanel = new NewExperiencePanel(experienceController, revealPanelLeft);
 					

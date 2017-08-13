@@ -2287,7 +2287,7 @@ cr.IInstance = (function() {
 		}
 	}
 	
-	IInstance.prototype.pushNewElements = function(newElements, oldElements)
+	IInstance.prototype.pullNewElements = function(oldElements, newElements)
 	{
 		var _this = this;
 		newElements.forEach(function(i)
@@ -2397,7 +2397,7 @@ cr.IInstance = (function() {
 		if (Object.keys(changes).length == 0)
 		{
 			var r2 = $.Deferred();
-			r2.resolve();
+			r2.resolve(changes, {});
 			return r2;
 		}
 		
@@ -4140,35 +4140,6 @@ cr.Experience = (function() {
 		}
 	}
 	
-	/* Copies all of the data associated with this experience except the comments.
-	 */
-	Experience.prototype.duplicateData = function(newExperience)
-	{
-		newExperience._path = this._path;
-		newExperience._organization = this._organization;
-		newExperience._customOrganization = this._customOrganization
-		newExperience._site = this._site;
-		newExperience._customSite = this._customSite;
-		newExperience._offering = this._offering;
-		newExperience._customOffering = this._customOffering;
-		newExperience._start = this._start;
-		newExperience._end = this._end;
-		newExperience._timeframe = this._timeframe;
-		newExperience._services = this._services.map(function(i)
-			{
-				target = new cr.ExperienceService();
-				target.mergeData(i);
-				return target;
-			});
-		newExperience._customServices = this._customServices.map(function(i)
-			{
-				target = new cr.ExperienceCustomService();
-				target.mergeData(i);
-				return target;
-			});
-		return this;
-	}
-	
 	Experience.prototype.promiseCopy = function(newExperience)
 	{
 		var _this = this;
@@ -4257,6 +4228,12 @@ cr.Experience = (function() {
 		return this;
 	}
 	
+	Experience.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.experienceServices(), source.experienceServices())
+				   .pullNewElements(this.customServices(), source.customServices());
+	}
+	
 	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
 	Experience.prototype.updateData = function(d, newIDs)
 	{
@@ -4312,6 +4289,36 @@ cr.Experience = (function() {
 		}
 
 		return changed;
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	Experience.prototype.duplicateData = function(newExperience)
+	{
+		newExperience._path = this._path;
+		newExperience._organization = this._organization;
+		newExperience._customOrganization = this._customOrganization
+		newExperience._site = this._site;
+		newExperience._customSite = this._customSite;
+		newExperience._offering = this._offering;
+		newExperience._customOffering = this._customOffering;
+		newExperience._start = this._start;
+		newExperience._end = this._end;
+		newExperience._timeframe = this._timeframe;
+		newExperience._services = this._services.map(function(i)
+			{
+				target = new cr.ExperienceService();
+				target.mergeData(i);
+				return target;
+			});
+		newExperience._customServices = this._customServices.map(function(i)
+			{
+				target = new cr.ExperienceCustomService();
+				target.mergeData(i);
+				return target;
+			});
+		return this;
 	}
 	
 	Experience.prototype.deleted = function()
