@@ -698,7 +698,7 @@ var ExperienceController = (function() {
 		return this;
 	}
 	
-	ExperienceController.prototype.createFromSite = function(d, services, previousNode, done)
+	ExperienceController.prototype.createFromSite = function(d, services)
 	{
 		this.initPreviousDateRange();
 		
@@ -709,12 +709,9 @@ var ExperienceController = (function() {
 		
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
-			
-		var panel = new NewExperiencePanel(this);
-		done(panel.node());
 	}
 
-	ExperienceController.prototype.createFromOffering = function(d, services, previousNode, done)
+	ExperienceController.prototype.createFromOffering = function(d, services)
 	{
 		if (!d.organization())
 			throw new Error("Runtime Error: Organization is not present in offering record.")
@@ -727,18 +724,13 @@ var ExperienceController = (function() {
 		
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
-			
-		var panel = new NewExperiencePanel(this);
-		done(panel.node());
 	}
 	
-	ExperienceController.prototype.createFromService = function(d, previousNode, done)
+	ExperienceController.prototype.createFromService = function(d)
 	{
 		this.initPreviousDateRange();
 		
 		var service = this.addService(d);
-		var panel = new NewExperiencePanel(this);
-		done(panel.node());
 	}
 	
 	ExperienceController.prototype.getOfferingConstraint = function()

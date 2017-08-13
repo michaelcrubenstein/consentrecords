@@ -273,7 +273,7 @@
 			{% else %}var serviceName = null;
 			{% endif %}
 	
-			var experience = pathwayPanel.createExperience();
+			var controller = pathwayPanel.createExperience();
 			var done = function(service)
 			{
 				var panel;
@@ -288,10 +288,9 @@
 								{
 									if (offerings[0] instanceof cr.Offering)
 									{
-										experience.createFromOffering(offerings[0], service, pathwayPanel.node(), function(panelNode)
-											{
-												panelNode.sitePanel.showUp();
-											});
+										controller.createFromOffering(offerings[0], service);
+										var panel = new NewExperiencePanel(controller);
+										panel.showUp();
 									}
 									else
 										cr.asyncFail("The specified offering does not appear to be an offering.");
@@ -312,10 +311,9 @@
 								{
 									if (sites[0] instanceof cr.Site)
 									{
-										experience.createFromSite(sites[0], service, pathwayPanel.node(), function(panelNode)
-											{
-												panelNode.sitePanel.showUp();
-											});
+										controller.createFromSite(sites[0], service);
+										var panel = new NewExperiencePanel(controller);
+										panel.showUp();
 									}
 									else
 										cr.asyncFail("The specified site does not appear to be a site.");
@@ -338,13 +336,13 @@
 								{
 									if (organizations[0] instanceof cr.Organization)
 									{
-										experience.newInstance()
+										controller.newInstance()
 											.organization(organizations[0])
 											.customSite(siteName)
 											.customOffering(offeringName);
-										experience.service(service)
+										controller.service(service)
 												  .initPreviousDateRange();
-										var panel = new NewExperiencePanel(experience);
+										var panel = new NewExperiencePanel(controller);
 										panel.showUp();
 									}
 									else
@@ -357,34 +355,32 @@
 				}
 				else if (organizationName || siteName || offeringName)
 				{
-					experience
+					controller
 						.customOrganization(organizationName)
 						.customSite(siteName)
 						.customOffering(offeringName)
 						.service(service)
 						.initPreviousDateRange();
-					var panel = new NewExperiencePanel(experience);
+					var panel = new NewExperiencePanel(controller);
 					panel.showUp();
 				}
 				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 				{
-					experience.createFromService(crp.getInstance(serviceName), pathwayPanel.node(), function(panelNode)
-						{
-							panelNode.sitePanel.showUp();
-						});
+					controller.createFromService(crp.getInstance(serviceName));
+					new NewExperiencePanel(controller).showUp();
 				}
 				else if (serviceName)
 				{
-					var service = experience.addService({text: serviceName });
-					experience.initPreviousDateRange();
+					controller.addService(serviceName);
+					controller.initPreviousDateRange();
 
-					new NewExperiencePanel(experience, experience.getPhase())
+					new NewExperiencePanel(controller, controller.getPhase())
 						.showUp();
 				}
 				else
 				{
-					experience.initPreviousDateRange();
-					new NewExperiencePanel(experience, experience.getPhase())
+					controller.initPreviousDateRange();
+					new NewExperiencePanel(controller, controller.getPhase())
 						.showUp();
 				}
 			}
