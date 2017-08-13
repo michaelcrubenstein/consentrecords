@@ -532,44 +532,13 @@
 					{
 						if (prepareClick('click', 'Manage Sessions'))
 						{
-							manage_inquiry(organization, sitePanel.node());
+							manage_session(organization, sitePanel.node());
 						}
 					})
 					.classed('first', true);
 			}
 	
 			objectData.promiseData().then(successFunction, cr.asyncFail)
-		}
-		
-		function compareUsers(a, b)
-		{
-			var aDatum = a.emails()[0].text();
-			var bDatum = b.emails()[0].text();
-			if (aDatum)
-			{
-				if (bDatum)
-				{
-					result = aDate.localeCompare(bDatum);
-					if (result == 0)
-						return a.description().localeCompare(b.description());
-					else
-						return result;
-				}
-				else
-					return -1;
-			}
-			else
-			{
-				if (bDatum)
-					return 1;
-				else
-					return a.description().localeCompare(b.description());
-			}
-		}
-		
-		function compareEnrollments(a, b)
-		{
-			return a.description().localeCompare(b.description());
 		}
 		
 		function pickChild(parent, data, previousPanelNode, header, successFunction)
@@ -971,7 +940,7 @@
 			pick_site(organization, previousPanelNode, pickSiteSuccess);
 		}
 		
-		function manage_inquiry(organization, panelDiv)
+		function manage_session(organization, panelDiv)
 		{
 			pickSessionFromOrganization(organization, panelDiv, 
 				function(session, previousPanel)
@@ -979,24 +948,6 @@
 				    var panel = new SessionPanel(session, revealPanelLeft);
 				    revealPanelLeft(panel.node());
 				});
-		}
-		
-		function manage_enrollment(organization, panelDiv)
-		{
-			pickSessionFromOrganization(organization, panelDiv, 
-				function(session, previousPanel)
-				{
-					var enrollmentsCell = session.getCell("Enrollments");
-					var enrollmentsInstances = enrollmentsCell.data;
-					if (enrollmentsInstances.length == 0)
-						syncFailFunction("Session Enrollments are not set up");
-					else
-					{
-						var enrollmentsInstance = enrollmentsInstances[0];
-						showEditObjectPanel(enrollmentsCell, enrollmentsInstance, previousPanel, revealPanelLeft);
-					}
-				}
-				);
 		}
 		
 		function record_participation(organization, previousNode)
@@ -1065,23 +1016,6 @@
 				}
 			}
 			enrollment.promiseData().then(checkSuccessFunction, syncFailFunction);
-		}
-		
-		function manage_participation(organization, previousPanelNode)
-		{
-			pickSessionFromOrganization(organization, previousPanelNode, 
-				function(session, currentPanelNode)
-				{
-					var listCell = session.getCell("Experiences");
-					var listInstances = listCell.data;
-					if (listInstances.length == 0)
-						syncFailFunction("Session Experiences are not set up");
-					else
-					{
-						var instance = listInstances[0];
-						showEditObjectPanel(listCell, instance, currentPanelNode, revealPanelLeft);
-					}
-				});
 		}
 		
 	</script>
