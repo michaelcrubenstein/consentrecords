@@ -36,6 +36,17 @@ var Controller = (function() {
 			console.assert(false); /* Always override */
 		}
 		
+	/* Append all of the data associated with a new instance. */
+	Controller.prototype.appendData = function(initialData)
+	{
+		this.newInstance().appendData(initialData);
+	}
+	
+	Controller.prototype.getUpdateData = function()
+	{
+		return this.oldInstance().getUpdateData(this.newInstance());
+	}
+
 	Controller.prototype.save = function()
 	{
 		var _this = this;
@@ -76,12 +87,10 @@ var Controller = (function() {
 			/* Test case: add an experience to a path. */
 			bootstrap_alert.show($('.alert-container'), this.addingMessage, "alert-info");
 
-			var initialData = {};
+			var initialData = {'add': uuid.v4()};
 
-			this.appendData(initialData, '1');
-		
-			initialData['add'] = '1';
-			this.newInstance().clientID('1');
+			this.appendData(initialData);
+			this.newInstance().clientID(initialData.add);
 			return this.postAdd(initialData)
 				.then(function(changes, newIDs)
 					{
@@ -89,6 +98,7 @@ var Controller = (function() {
 						try
 						{
 							_this.postAddDone(changes, newIDs);
+							$(_this.newInstance()).trigger('added.cr');
 							r2.resolve(changes, newIDs);
 						}
 						catch(err)
@@ -422,7 +432,7 @@ var ExperienceController = (function() {
 				});	
 	}
 	
-	ExperienceController.prototype.appendData = function(initialData, idPrefix)
+	ExperienceController.prototype.appendData = function(initialData)
 	{
 		if (this.start())
 			initialData['start'] = this.start();
@@ -452,23 +462,27 @@ var ExperienceController = (function() {
 		var newServices = this.distinctExperienceServices()
 			.map(function(s)
 				{
-					var addID = '{0}.{1}'.format(idPrefix, i);
-					s.clientID(addID);
-					return {add: addID, position: i++, service: s.service().urlPath()};
+					var d = {add: uuid.v4(), position: i++, service: s.service().urlPath()};
+					s.clientID(d.add);
+					return d;
 				});
 		if (newServices.length)
 		{
-			initialData['services'] = newServices
+			initialData['services'] = newServices;
 		}
 		
 		i = 0;
 		var newCustomServices = this.customServices()
 			.map(function(s)
 				{
-					var addID = '{0}.cs.{1}'.format(idPrefix, i);
-					s.clientID(addID);
-					return {position: i, name: s};
+					var d = {add: uuid.v4(), position: i, name: s};
+					s.clientID(d.add);
+					return d;
 				});
+		if (newCustomServices.length)
+		{
+			initialData['custom services'] = newCustomServices;
+		}
 	}
 	
 	ExperienceController.prototype.getServiceByName = function(name)
@@ -536,95 +550,6 @@ var ExperienceController = (function() {
 		}
 	}
 	
-	ExperienceController.prototype.getUpdateData = function()
-	{
-		var updateData = {};
-		var original = this.oldInstance();
-		var revision = this.newInstance();
-		
-		if (original.organization() != revision.organization())
-			updateData['organization'] = revision.organization().urlPath();
-		if (cr.stringChanged(original.customOrganization(), revision.customOrganization()))
-			updateData['custom organization'] = revision.customOrganization();
-				
-		if (original.site() != revision.site())
-			updateData['site'] = revision.site().urlPath();
-		if (cr.stringChanged(original.customSite(), revision.customSite()))
-			updateData['custom site'] = revision.customSite();
-				
-		if (original.offering() != revision.offering())
-			updateData['offering'] = revision.offering().urlPath();
-		if (cr.stringChanged(original.customOffering(), revision.customOffering()))
-			updateData['custom offering'] = revision.customOffering();
-				
-		if (cr.stringChanged(original.start(), revision.start()))
-			updateData['start'] = revision.start();
-		if (cr.stringChanged(original.end(), revision.end()))
-			updateData['end'] = revision.end();
-		if (cr.stringChanged(original.timeframe(), revision.timeframe()))
-			updateData['timeframe'] = revision.timeframe();
-		
-		var newServices = this.distinctExperienceServices();
-		var oldServices = original.experienceServices();
-		var newCustomServices = this.customServices();
-		var oldCustomServices = original.customServices();
-		
-		var j = 0;
-		var subChanges;
-		subChanges = [];
-		newServices.forEach(function(d)
-			{
-				if (j < oldServices.length)
-				{
-					var oldService = oldServices[j];
-					if (oldService.service().id() != d.service().id())
-						subChanges.push({id: oldService.id(), service: d.service().urlPath()});
-					++j;
-				}
-				else
-				{
-					d.clientID('S{0}'.format(j));
-					subChanges.push({add: d.clientID(), service: d.service().urlPath()});
-				}
-			});
-		while (j < oldServices.length)
-		{
-			var oldService = oldServices[j];
-			subChanges.push({'delete': oldService.id()});
-			++j;
-		}
-		if (subChanges.length > 0)
-			updateData['services'] = subChanges;
-		
-		j=0;	
-		subChanges = [];
-		newCustomServices.forEach(function(d)
-			{
-				if (j < oldCustomServices.length)
-				{
-					var oldService = oldCustomServices[j];
-					if (oldService.name() != d.name())
-						subChanges.push({id: oldService.id(), name: d.name()});
-				}
-				else
-				{
-					d.clientID('CS{0}'.format(j));
-					subChanges.push({add: d.clientID(), name: d.name()});
-				}
-				++j;
-			});
-		while (j < oldCustomServices.length)
-		{
-			var oldService = oldCustomServices[j];
-			subChanges.push({'delete': oldService.id()});
-			++j;
-		}
-		if (subChanges.length > 0)
-			updateData['custom services'] = subChanges;
-			
-		return updateData;
-	}
-
 	ExperienceController.prototype.postAdd = function(initialData)
 	{
 		return this.parent().update({'experiences': [initialData]}, false);
@@ -746,8 +671,6 @@ var ExperienceController = (function() {
 			return "";
 	}
 	
-	ExperienceController.prototype.replaced = Controller.prototype.oldInstance;
-	
 	function ExperienceController(path, source)
 	{
 		console.assert(path instanceof cr.Path);
@@ -756,5 +679,61 @@ var ExperienceController = (function() {
 	}
 	
 	return ExperienceController;
+})();
+
+var OrganizationController = (function() {
+	OrganizationController.prototype = new RootController();
+	
+	OrganizationController.prototype.addingMessage = "Adding Organization...";
+	OrganizationController.prototype.savingMessage = "Saving Organization...";
+	
+	OrganizationController.prototype.webSite = function(newValue)
+	{
+		var value = this.newInstance().webSite(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	OrganizationController.prototype.inquiryAccessGroup = function(newValue)
+	{
+		var value = this.newInstance().inquiryAccessGroup(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	OrganizationController.prototype.names = function(newValue)
+	{
+		var value = this.newInstance().names(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	OrganizationController.prototype.groups = function(newValue)
+	{
+		var value = this.newInstance().groups(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	OrganizationController.prototype.sites = function(newValue)
+	{
+		var value = this.newInstance().sites(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	OrganizationController.prototype.postAdd = function(initialData)
+	{
+		return this.update(initialData, false);
+	}
+	
+	OrganizationController.prototype.postAddDone = function(changes, newIDs)
+	{
+		crp.pushInstance(this.newInstance());
+		this.newInstance().updateData(changes, newIDs);
+		return this;
+	}
+
+	function OrganizationController(source)
+	{
+		RootController.call(this, cr.Organization, source);
+	}
+	
+	return OrganizationController;
 })();
 

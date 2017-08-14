@@ -3120,11 +3120,69 @@ var EditPanel = (function() {
 		this.appendScrollArea();
 	}
 
-	function EditPanel(objectData, header, onShow)
+	function EditPanel()
 	{
 	}
 	
 	return EditPanel;
+})();
+
+var EditItemPanel = (function () {
+	EditItemPanel.prototype = new EditPanel();
+
+	EditItemPanel.prototype._controller = null;
+	
+	EditItemPanel.prototype.newInstance = function()
+	{
+		return this._controller.newInstance();
+	}
+
+	EditItemPanel.prototype.controller = function()
+	{
+		return this._controller;
+	}
+	
+	EditItemPanel.prototype.promiseUpdateChanges = function()
+	{
+		console.assert(false);	/* This must be overwritten. */
+	}
+	
+	EditItemPanel.prototype.createRoot = function(onShow)
+	{
+		var _this = this;
+		EditPanel.prototype.createRoot.call(this, this._controller.newInstance(), this.panelTitle, onShow);
+
+		var doneButton = this.navContainer.appendRightButton();
+			
+		this.navContainer.appendTitle(this.panelTitle);
+		
+		doneButton.on("click", function()
+			{
+				if (prepareClick('click', _this.panelTitle + ' done'))
+				{
+					showClickFeedback(this);
+		
+					try
+					{
+						/* Build up an update for initialData. */
+						_this.promiseUpdateChanges()
+							.then(function() { _this.hide(); },
+								  cr.syncFail)
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+		.append("span").text(this._controller.oldInstance() ? crv.buttonTexts.done : crv.buttonTexts.add);
+		
+	}
+	
+	function EditItemPanel(controller)
+	{
+		this._controller = controller;
+		EditPanel.call(this);
+	}
+	
+	return EditItemPanel;
 })();
 
 /* 

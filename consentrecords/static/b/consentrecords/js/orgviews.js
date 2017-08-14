@@ -438,6 +438,11 @@ var InquirySearchView = (function () {
 		return cr.Inquiry;
 	}
 	
+	InquirySearchView.prototype.controllerType = function()
+	{
+		return InquiryController;
+	}
+	
 	InquirySearchView.prototype.childPanelType = function()
 	{
 		return InquiryPanel;
@@ -489,6 +494,11 @@ var EnrollmentSearchView = (function () {
 	EnrollmentSearchView.prototype.resultType = function()
 	{
 		return cr.Enrollment;
+	}
+	
+	EnrollmentSearchView.prototype.controllerType = function()
+	{
+		return EnrollmentController;
 	}
 	
 	EnrollmentSearchView.prototype.childPanelType = function()
@@ -544,6 +554,11 @@ var EngagementSearchView = (function () {
 		return cr.Engagement;
 	}
 	
+	EngagementSearchView.prototype.controllerType = function()
+	{
+		return EngagementController;
+	}
+	
 	EngagementSearchView.prototype.childPanelType = function()
 	{
 		return EngagementPanel;
@@ -595,6 +610,11 @@ var PeriodSearchView = (function () {
 	PeriodSearchView.prototype.resultType = function()
 	{
 		return cr.Period;
+	}
+	
+	PeriodSearchView.prototype.controllerType = function()
+	{
+		return PeriodController;
 	}
 	
 	PeriodSearchView.prototype.childPanelType = function()
@@ -1443,7 +1463,9 @@ var RootPanelSearchView = (function () {
 			{
 				showClickFeedback(button);
 			
-				var panel = new (this.childPanelType())(d);
+				var controller = new (this.controllerType())(d);
+				controller.oldInstance(d);
+				var panel = new (this.childPanelType())(controller);
 				panel.showLeft().then(unblockClick);
 			}
 			catch (err) { cr.syncFail(err); }
@@ -1470,8 +1492,9 @@ var RootItemsPanel = (function () {
 	RootItemsPanel.prototype.showAddPanel = function()
 	{
 		var _this = this;
-		var panel = new (this.searchView.childPanelType())(this.addPanelTitle);
-		setupOnViewEventHandler(cr, this.addEventType, panel.node(), function(eventObject)
+		var controller = new (this.searchView.controllerType())(null);
+		var panel = new (this.searchView.childPanelType())(controller, this.addPanelTitle);
+		setupOneViewEventHandler(controller.newInstance(), 'added.cr', panel.node(), function(eventObject)
 			{
 				_this.searchView.restartSearchTimeout("");
 			}); 
@@ -1499,7 +1522,7 @@ var RootItemsPanel = (function () {
 						try
 						{
 							showClickFeedback(this);
-							_this.showAddPanel()
+							_this.showAddPanel();
 						}
 						catch(err)
 						{
@@ -1536,11 +1559,10 @@ var RootItemsPanel = (function () {
 
 var EnumerationSectionEditor = (function() {
 
-    function EnumerationSectionEditor(sitePanel, container, oldValue, label, pickPanelType)
+    function EnumerationSectionEditor(sitePanel, container, valueFunction, label, pickPanelType)
     {
     	var _this = this;
 		this.textContainer = null;
-		this.newValue = oldValue;
 		
 		this.section = sitePanel.mainDiv.append('section')
 			.classed('cell edit unique', true)
@@ -1552,14 +1574,15 @@ var EnumerationSectionEditor = (function() {
 						try
 						{
 							var panel = new pickPanelType();
-							panel.createRoot(container, _this.newValue ? _this.newValue.description() : "", label)
+							var oldValue = valueFunction.call(container)
+							panel.createRoot(container, oldValue ? oldValue.description() : "", label)
 								 .showLeft()
 								 .then(unblockClick, cr.syncFail);
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newValue)
 								{
 									_this.textContainer.text(newValue ? newValue.description() : "");
-									_this.newValue = newValue;
+									valueFunction.call(container, newValue);
 								});
 						}
 						catch(err)
@@ -1571,9 +1594,10 @@ var EnumerationSectionEditor = (function() {
 		
 		this.section.append('label')
 			.text(label);
-			
-		var oldDescription = this.newValue ? 
-						this.newValue.description() :
+		
+		var oldValue = valueFunction.call(container);	
+		var oldDescription = oldValue ? 
+						oldValue.description() :
 						"";
 		var items = sitePanel.appendEnumerationEditor(this.section, oldDescription);
 		this.textContainer = items.selectAll('div.description-text');
@@ -1583,8 +1607,9 @@ var EnumerationSectionEditor = (function() {
     
 	return EnumerationSectionEditor;
 })();
+
 var OrganizationPanel = (function () {
-	OrganizationPanel.prototype = new EditPanel();
+	OrganizationPanel.prototype = new EditItemPanel();
 	OrganizationPanel.prototype.organization = null;
 	OrganizationPanel.prototype.panelTitle = "Organization";
 	OrganizationPanel.prototype.namesLabel = "Names";
@@ -1598,70 +1623,29 @@ var OrganizationPanel = (function () {
 	OrganizationPanel.prototype.inquiryAccessGroupLabel = "Inquiry Access Group";
 	OrganizationPanel.prototype.readLabel = "Public";
 	OrganizationPanel.prototype.hiddenLabel = "Hidden";
-
+	
     OrganizationPanel.prototype.promiseUpdateChanges = function()
     {
 		var changes = {};
-		var getPublicAccessValue = function(enumValue)
-		{
-			if (enumValue == OrganizationPanel.prototype.readLabel)
-				return 'read';
-			else
-				return '';
-		}
-		
 		var _this = this;
-		this.appendTextChanges(this.webSiteSection, this.organization.webSite(), 
+		this.appendTextChanges(this.webSiteSection, this.newInstance().webSite(), 
 								changes, 'web site')
-			.appendEnumerationChanges(this.inquiryAccessGroupEditor.section, 
-									  function() { return _this.inquiryAccessGroupEditor.newValue ? 
-									  					  _this.inquiryAccessGroupEditor.newValue.urlPath() 
-									  					  : null; },
-									  this.organization.inquiryAccessGroup() ?
-									  	this.organization.inquiryAccessGroup().urlPath() : null,
-									  changes, 'inquiry access group')
-			.appendEnumerationChanges(this.primaryAdministratorEditor.section, 
-									  function() { return _this.primaryAdministratorEditor.newValue ?
-									  					  _this.primaryAdministratorEditor.newValue.urlPath() 
-									  					  : null; },
-									  this.organization.primaryAdministrator() ?
-									  	this.organization.primaryAdministrator().urlPath() : null,
-									  changes, 'primary administrator')
-			.appendEnumerationChanges(this.publicAccessSection, getPublicAccessValue, 
-									  this.organization.publicAccess(),
-							   		  changes, 'public access')
-			.appendTranslationChanges(this.namesSection, this.organization.names, changes, 'names');
-		return this.organization.update(changes, false)
-				.then(function(changes, newIDs)
-					{
-						var r2 = $.Deferred();
-						try
-						{
-							if (changes)
-							{
-								/* Munge the objects so that objects are present as appropriate. */
-								if ('primary administrator' in changes && _this.primaryAdministratorEditor.newValue)
-									changes['primary administrator'] = {id: _this.primaryAdministratorEditor.newValue.id()};
-								if ('inquiry access group' in changes && _this.inquiryAccessGroupEditor.newValue)
-									changes['inquiry access group'] = {id: _this.inquiryAccessGroupEditor.newValue.id()};
-								if ('names' in changes)
-									_this.pushTranslationChanges(_this.organization, _this.organization.names(), changes['names'], cr.OrganizationName);
-								
-								_this.organization.updateData(changes, newIDs)
-							}
-							r2.resolve(changes, newIDs);
-						}
-						catch(err)
-						{
-							r2.reject(err);
-						}
-						return r2;
-					});
+			.appendTranslationChanges(this.namesSection, this.newInstance().names, changes, 'names');
+		
+		return this.controller().save();
     }
     
+	OrganizationPanel.prototype.publicAccessValue = function(enumValue)
+	{
+		if (enumValue == OrganizationPanel.prototype.readLabel)
+			return 'read';
+		else
+			return '';
+	}
+		
     OrganizationPanel.prototype.publicAccessDescription = function()
     {
-    	if (this.organization.publicAccess() == 'read')
+    	if (this.controller().newInstance().publicAccess() == 'read')
     		return this.readLabel;
     	else
     		return this.hiddenLabel;
@@ -1673,59 +1657,37 @@ var OrganizationPanel = (function () {
 		return false;
 	}
 	
-	function OrganizationPanel(organization, onShow) {
+	function OrganizationPanel(controller, onShow) {
 		var _this = this;
-		this.organization = organization;
+		EditItemPanel.call(this, controller);
 
-		this.createRoot(organization, this.panelTitle, "edit", onShow);
+		this.createRoot(onShow);
 
-		var doneButton = this.navContainer.appendRightButton();
-			
-		this.navContainer.appendTitle(this.panelTitle);
-		
-		doneButton.on("click", function()
-			{
-				if (prepareClick('click', _this.panelTitle + ' done'))
-				{
-					showClickFeedback(this);
-		
-					try
-					{
-						/* Build up an update for initialData. */
-						_this.promiseUpdateChanges()
-							.then(function() { _this.hide(); },
-								  cr.syncFail)
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-		.append("span").text(crv.buttonTexts.done);
-		
 		this.namesSection = this.mainDiv.append('section')
-			.datum(this.organization)
+			.datum(controller.newInstance())
 			.classed('cell edit multiple', true);
 		this.namesSection.append('label')
 			.text(this.namesLabel);
-		this.appendTranslationEditor(this.namesSection, this.organization, this.namesLabel, this.nameLabel, 
+		this.appendTranslationEditor(this.namesSection, controller.newInstance(), this.namesLabel, this.nameLabel, 
 									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr changed.cr", 
-									 this.organization.names(),
+									 controller.newInstance().names(),
 									 cr.SessionName);
 
 		this.webSiteSection = this.mainDiv.append('section')
-			.datum(this.organization)
+			.datum(controller.newInstance())
 			.classed('cell edit unique first', true);
 		this.webSiteSection.append('label')
 			.text(this.webSiteLabel);
 		this.appendTextEditor(this.webSiteSection, 
 							  this.webSitePlaceholder,
-							  this.organization.webSite(),
+							  controller.newInstance().webSite(),
 							  'text');
 				 
 		var publicAccessTextContainer = null;
 		
 		this.publicAccessSection = this.mainDiv.append('section')
 			.classed('cell edit unique first', true)
-			.datum(this.organization)
+			.datum(controller.newInstance())
 			.on('click', 
 				function() {
 					if (prepareClick('click', 'pick ' + _this.publicAccessLabel))
@@ -1733,11 +1695,12 @@ var OrganizationPanel = (function () {
 						try
 						{
 							var panel = new PickPublicAccessPanel();
-							panel.createRoot(_this.organization, publicAccessTextContainer.text())
+							panel.createRoot(controller.newInstance(), publicAccessTextContainer.text())
 								 .showLeft().then(unblockClick);
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
 								{
+									controller.newInstance().publicAccess(_this.publicAccessValue(newDescription));
 									publicAccessTextContainer.text(newDescription);
 								});
 						}
@@ -1758,7 +1721,7 @@ var OrganizationPanel = (function () {
 		crf.appendRightChevrons(items);	
 		
 		this.primaryAdministratorEditor = new EnumerationSectionEditor(
-			this, organization, organization.primaryAdministrator(), this.primaryAdministratorLabel,
+			this, controller.newInstance(), controller.newInstance().primaryAdministrator, this.primaryAdministratorLabel,
 			PickPrimaryAdministratorPanel
 			);
 		
@@ -1769,7 +1732,7 @@ var OrganizationPanel = (function () {
 					showClickFeedback(this);
 					try
 					{
-						var panel = new SitesPanel(organization, revealPanelLeft);
+						var panel = new SitesPanel(controller.newInstance(), revealPanelLeft);
 						panel.showLeft().then(unblockClick);
 					}
 					catch(err) { cr.syncFail(err); }
@@ -1785,7 +1748,7 @@ var OrganizationPanel = (function () {
 					showClickFeedback(this);
 					try
 					{
-						var panel = new GroupsPanel(organization, revealPanelLeft);
+						var panel = new GroupsPanel(controller.newInstance(), revealPanelLeft);
 						panel.showLeft().then(unblockClick);
 					}
 					catch(err) { cr.syncFail(err); }
@@ -1796,7 +1759,7 @@ var OrganizationPanel = (function () {
 		crf.appendRightChevrons(childrenButton.selectAll('li'));	
 
 		this.inquiryAccessGroupEditor = new EnumerationSectionEditor(
-			this, organization, organization.inquiryAccessGroup(), this.inquiryAccessGroupLabel,
+			this, controller.newInstance(), controller.newInstance().inquiryAccessGroup, this.inquiryAccessGroupLabel,
 			PickInquiryAccessGroupPanel
 			);
 	}
@@ -2087,6 +2050,11 @@ var OrganizationSearchView = (function () {
 		return cr.Organization;
 	}
 	
+	OrganizationSearchView.prototype.controllerType = function()
+	{
+		return OrganizationController;
+	}
+	
 	OrganizationSearchView.prototype.childPanelType = function()
 	{
 		return OrganizationPanel;
@@ -2123,6 +2091,11 @@ var ServiceSearchView = (function () {
 	ServiceSearchView.prototype.resultType = function()
 	{
 		return cr.Service;
+	}
+	
+	ServiceSearchView.prototype.controllerType = function()
+	{
+		return ServiceController;
 	}
 	
 	ServiceSearchView.prototype.childPanelType = function()
@@ -2164,6 +2137,11 @@ var UserSearchView = (function () {
 		return cr.User;
 	}
 	
+	UserSearchView.prototype.controllerType = function()
+	{
+		return UserController;
+	}
+	
 	UserSearchView.prototype.childPanelType = function()
 	{
 		return UserPanel;
@@ -2203,6 +2181,11 @@ var CommentPromptSearchView = (function () {
 		return cr.CommentPrompt;
 	}
 	
+	CommentPromptSearchView.prototype.controllerType = function()
+	{
+		return CommentPromptController;
+	}
+	
 	CommentPromptSearchView.prototype.childPanelType = function()
 	{
 		return CommentPromptPanel;
@@ -2240,6 +2223,11 @@ var ExperiencePromptSearchView = (function () {
 	ExperiencePromptSearchView.prototype.resultType = function()
 	{
 		return cr.ExperiencePrompt;
+	}
+	
+	ExperiencePromptSearchView.prototype.controllerType = function()
+	{
+		return ExperiencePromptController;
 	}
 	
 	ExperiencePromptSearchView.prototype.childPanelType = function()

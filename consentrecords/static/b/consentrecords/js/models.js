@@ -2367,6 +2367,39 @@ cr.IInstance = (function() {
 		}
 	}
 	
+	IInstance.prototype.appendUpdateList = function(oldItems, newItems, updateData, key)
+	{
+		var j = 0;
+		var subChanges = [];
+		newItems.forEach(function(d)
+			{
+				if (j < oldItems.length)
+				{
+					var oldItem = oldItems[j];
+					var subItemChange = oldItem.getUpdateData(d);
+					if (Object.keys(subItemChange).length > 0)
+					{
+						subItemChange.id = oldItem.id();
+						subChanges.push(subItemChanges);
+					}
+					++j;
+				}
+				else
+				{
+					d.clientID(uuid.v4());
+					var changes = {add: d.clientID()};
+					d.appendData(changes);
+					subChanges.push(d);
+				}
+			});
+		while (j < oldItems.length)
+		{
+			subChanges.push({'delete': oldItems[j++].id()});
+		}
+		if (subChanges.length > 0)
+			updateData[key] = subChanges;
+	}
+	
 	IInstance.prototype.updateData = function(d, newIDs)
 	{
 		if ('id' in d)
@@ -2496,6 +2529,26 @@ cr.TranslationInstance = (function() {
 		this._language = null;
 	}
 	
+	TranslationInstance.prototype.appendData = function(initialData)
+	{
+		if (this._text)
+			initialData.text = this._text;
+		if (this._language)
+			initialData.languageCode = this._language;	
+	}
+	
+	TranslationInstance.prototype.getUpdateData = function(revision)
+	{
+		var updateData = {};
+		
+		if (cr.stringChanged(this.text(), revision.text()))
+			updateData.text = revision.text();
+		if (cr.stringChanged(this.language(), revision.language()))
+			updateData['language code'] = revision.language();
+		
+		return updateData;
+	}
+	
 	TranslationInstance.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -2505,7 +2558,6 @@ cr.TranslationInstance = (function() {
 	
 	TranslationInstance.prototype.mergeData = function(source)
 	{
-		cr.IInstance.mergeData.call(this, source);
 		if (!this._text) this._text = source._text;
 		if (!this._language) this._language = source._language;
 		return this;
@@ -2735,6 +2787,12 @@ cr.UserLinkInstance = (function() {
 		}
 	}
 	
+	UserLinkInstance.prototype.appendData = function(initialData)
+	{
+		if (this._user)
+			initialData.user = this._user.urlPath();
+	}
+	
 	UserLinkInstance.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -2847,6 +2905,25 @@ cr.Grantable = (function() {
 		}
 	}
 	
+	Grantable.prototype.getUpdateData = function(revision)
+	{
+		var updateData = {};
+		
+		if (cr.stringChanged(this.publicAccess(), revision.publicAccess()))
+			updateData['public access'] = revision.publicAccess();
+				
+		if (this.primaryAdministrator() != revision.primaryAdministrator())
+			updateData['primary administrator'] = revision.primaryAdministrator() && revision.primaryAdministrator().urlPath();
+		
+		if (revision.userGrants())
+			this.appendUpdateList(this.userGrants(), revision.userGrants(), updateData, 'user grants');	
+			
+		if (revision.groupGrants())	
+			this.appendUpdateList(this.groupGrants(), revision.groupGrants(), updateData, 'group grants');		
+					
+		return updateData;
+	}
+	
 	Grantable.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -2922,6 +2999,18 @@ cr.Grantable = (function() {
 		}
 		
 		return changed;
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	Grantable.prototype.duplicateData = function(newInstance)
+	{
+		newInstance._primaryAdministrator = this._primaryAdministrator;
+		newInstance._publicAccess = this._publicAccess;
+		
+		/* User grants and group grants are handled in their own context. */
+		return this;
 	}
 	
     Grantable.prototype.promiseGrants = function()
@@ -3023,6 +3112,19 @@ cr.Grant = (function() {
 		}
 	}
 	
+	Grant.prototype.getUpdateData = function(revision)
+	{
+		var updateData = {};
+		
+		if (this.grantee() != revision.grantee())
+			updateData['grantee'] = revision.grantee() && revision.grantee().urlPath();
+		
+		if (cr.stringChanged(this.privilege(), revision.privilege()))
+			updateData['privilege'] = revision.privilege();
+				
+		return updateData;
+	}
+	
 	Grant.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -3080,6 +3182,20 @@ cr.NamedInstance = (function() {
 		cr.IInstance.prototype.setChildren.call(this, d, 'names', nameType, NamedInstance.prototype.names);
 	}
 
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	NamedInstance.prototype.duplicateData = function(newInstance, nameType)
+	{
+		newInstance._names = this._names.map(function(i)
+			{
+				target = new nameType();
+				target.mergeData(i);
+				return target;
+			});
+		return this;
+	}
+	
 	function NamedInstance() {};
 	return NamedInstance;
 })();
@@ -4177,6 +4293,96 @@ cr.Experience = (function() {
 		this._comments = [];
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Experience.prototype.getUpdateData = function(revision)
+	{
+		var updateData = {};
+		
+		if (this.organization() != revision.organization())
+			updateData['organization'] = revision.organization().urlPath();
+		if (cr.stringChanged(this.customOrganization(), revision.customOrganization()))
+			updateData['custom organization'] = revision.customOrganization();
+				
+		if (this.site() != revision.site())
+			updateData['site'] = revision.site().urlPath();
+		if (cr.stringChanged(this.customSite(), revision.customSite()))
+			updateData['custom site'] = revision.customSite();
+				
+		if (this.offering() != revision.offering())
+			updateData['offering'] = revision.offering().urlPath();
+		if (cr.stringChanged(this.customOffering(), revision.customOffering()))
+			updateData['custom offering'] = revision.customOffering();
+				
+		if (cr.stringChanged(this.start(), revision.start()))
+			updateData['start'] = revision.start();
+		if (cr.stringChanged(this.end(), revision.end()))
+			updateData['end'] = revision.end();
+		if (cr.stringChanged(this.timeframe(), revision.timeframe()))
+			updateData['timeframe'] = revision.timeframe();
+		
+		var newServices = this.distinctExperienceServices();
+		var oldServices = this.experienceServices();
+		var newCustomServices = this.customServices();
+		var oldCustomServices = this.customServices();
+		
+		var j = 0;
+		var subChanges;
+		subChanges = [];
+		newServices.forEach(function(d)
+			{
+				if (j < oldServices.length)
+				{
+					var oldService = oldServices[j];
+					if (oldService.service().id() != d.service().id())
+						subChanges.push({id: oldService.id(), service: d.service().urlPath()});
+					++j;
+				}
+				else
+				{
+					d.clientID('S{0}'.format(j));
+					subChanges.push({add: d.clientID(), service: d.service().urlPath()});
+				}
+			});
+		while (j < oldServices.length)
+		{
+			var oldService = oldServices[j];
+			subChanges.push({'delete': oldService.id()});
+			++j;
+		}
+		if (subChanges.length > 0)
+			updateData['services'] = subChanges;
+		
+		j=0;	
+		subChanges = [];
+		newCustomServices.forEach(function(d)
+			{
+				if (j < oldCustomServices.length)
+				{
+					var oldService = oldCustomServices[j];
+					if (oldService.name() != d.name())
+						subChanges.push({id: oldService.id(), name: d.name()});
+				}
+				else
+				{
+					d.clientID('CS{0}'.format(j));
+					subChanges.push({add: d.clientID(), name: d.name()});
+				}
+				++j;
+			});
+		while (j < oldCustomServices.length)
+		{
+			var oldService = oldCustomServices[j];
+			subChanges.push({'delete': oldService.id()});
+			++j;
+		}
+		if (subChanges.length > 0)
+			updateData['custom services'] = subChanges;
+			
+		return updateData;
+	}
+	
 	Experience.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -4945,6 +5151,10 @@ cr.Group = (function() {
 		}
 	}
 	
+	Group.prototype.appendData = function(initialData, idPrefix)
+	{
+	}
+	
 	Group.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -5650,6 +5860,74 @@ cr.Organization = (function() {
 		}
 	}
 	
+	Organization.prototype.appendData = function(initialData, idPrefix)
+	{
+		if (this.webSite())
+			initialData['web site'] = this.webSite();
+		
+		var newNames = this.names()
+			.map(function(s)
+				{
+					var d = {add: uuid.v4()};
+					s.clientID(d.add);
+					s.appendData(d);
+					return d;
+				});
+		if (newNames.length)
+		{
+			initialData['names'] = newNames;
+		}
+		
+		var newGroups = this.groups()
+			.map(function(s)
+				{
+					var d = {add: uuid.v4()};
+					s.clientID(d.add);
+					s.appendData(d);
+					return d;
+				});
+		if (newGroups.length)
+		{
+			initialData['groups'] = newGroups;
+		}
+		
+		if (this.inquiryAccessGroup())
+			initialData['inquiry access group'] = 'group/' + this.inquiryAccessGroup().clientID();
+		
+		i = 0;
+		var newSites = this.sites()
+			.map(function(s)
+				{
+					var d = {add: uuid.v4()};
+					s.clientID(d.id());
+					s.appendData(d);
+					return d;
+				});
+		if (newSites.length)
+		{
+			initialData['sites'] = newSites;
+		}
+		
+	}
+	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Organization.prototype.getUpdateData = function(revision)
+	{
+		var updateData = cr.Grantable.prototype.getUpdateData(revision);
+		
+		if (cr.stringChanged(this.webSite(), revision.webSite()))
+			updateData['web site'] = revision.webSite();
+				
+		if (this.inquiryAccessGroup() != revision.inquiryAccessGroup())
+			updateData['inquiry access group'] = revision.inquiryAccessGroup() && revision.inquiryAccessGroup().urlPath();
+		
+		this.appendUpdateList(this.names(), revision.names(), updateData, 'names');		
+					
+		return updateData;
+	}
+	
 	/** Sets the data for this Organization based on a dictionary of data that
 		came from the server.
 	 */
@@ -5766,6 +6044,19 @@ cr.Organization = (function() {
 		}
 		
 		return changed;
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	Organization.prototype.duplicateData = function(newInstance)
+	{
+		cr.Grantable.prototype.duplicateData.call(this, newInstance);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		
+		newInstance._webSite = this._webSite;
+		newInstance._inquiryAccessGroup = this._inquiryAccessGroup;
+		return this;
 	}
 	
     Organization.prototype.getData = function(fields)
