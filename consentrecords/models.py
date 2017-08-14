@@ -819,6 +819,9 @@ class ServiceLinkInstance(ChildInstance):
                                              instance=self,
                                              service=self.service)
         
+    def revert(self, h):
+        self.service = h.service 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -847,6 +850,10 @@ class OrderedServiceLinkInstance(ServiceLinkInstance):
                                              instance=self,
                                              position=self.position,
                                              service=self.service)
+
+    def revert(self, h):
+        self.position = h.position 
+        self.service = h.service 
 
 class PublicInstance():
     def getSubClause(qs, user, accessType):
@@ -3408,6 +3415,11 @@ class Address(ChildInstance, dbmodels.Model):
                                              state=self.state,
                                              zipCode=self.zipCode)
         
+    def revert(self, h):
+        self.city = h.city 
+        self.state = h.state 
+        self.zipCode = h.zipCode 
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -3571,6 +3583,11 @@ class Comment(ChildInstance, dbmodels.Model):
                                              question=self.question,
                                              asker=self.asker)
         
+    def revert(self, h):
+        self.text = h.text 
+        self.question = h.question 
+        self.asker = h.asker 
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise PermissionDenied('you do not have permission to complete this update')
@@ -3828,6 +3845,11 @@ class Engagement(ChildInstance, dbmodels.Model):
                                              start=self.start,
                                              end=self.end)
         
+    def revert(self, h):
+        self.user = h.user 
+        self.start = h.start 
+        self.end = h.end 
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -3922,6 +3944,9 @@ class Enrollment(ChildInstance, dbmodels.Model):
                                              instance=self,
                                              user=self.user)
         
+    def revert(self, h):
+        self.user = h.user 
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -4152,6 +4177,17 @@ class Experience(ChildInstance, dbmodels.Model):
                                              end=self.end,
                                              timeframe=self.timeframe)
         
+    def revert(self, h):
+        self.organization = h.organization 
+        self.customOrganization = h.customOrganization 
+        self.site = h.site 
+        self.customSite = h.customSite 
+        self.offering = h.offering 
+        self.customOffering = h.customOffering 
+        self.start = h.start 
+        self.end = h.end 
+        self.timeframe = h.timeframe 
+           
     def update(self, changes, context, newIDs={}):
         history = None
 
@@ -4317,6 +4353,10 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
                                              position=self.position,
                                              name=self.name)
         
+    def revert(self, h):
+        self.position = h.position 
+        self.name = h.name 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -4536,6 +4576,15 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
                                              stage=self.stage,
                                              timeframe=self.timeframe)
         
+    def revert(self, h):
+        self.name = h.name 
+        self.organization = h.organization 
+        self.site = h.site 
+        self.offering = h.offering 
+        self.domain = h.domain 
+        self.stage = h.stage 
+        self.timeframe = h.timeframe 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -4849,6 +4898,9 @@ class GroupMember(ChildInstance, dbmodels.Model):
                                              instance=self,
                                              user=self.user)
         
+    def revert(self, h):
+        self.user = h.user 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -4953,6 +5005,9 @@ class Inquiry(ChildInstance, dbmodels.Model):
                                              instance=self,
                                              user=self.user)
         
+    def revert(self, h):
+        self.user = h.user 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -5075,6 +5130,10 @@ class Notification(ChildInstance, dbmodels.Model):
                                              name=self.name,
                                              isFresh=self.isFresh)
         
+    def revert(self, h):
+        self.name = h.name 
+        self.isFresh = h.isFresh 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -5302,6 +5361,13 @@ class Offering(ChildInstance, dbmodels.Model):
                                              minimumGrade=self.minimumGrade,
                                              maximumGrade=self.maximumGrade)
         
+    def revert(self, h):
+        self.webSite = h.webSite 
+        self.minimumAge = h.minimumAge 
+        self.maximumAge = h.maximumAge 
+        self.minimumGrade = h.minimumGrade 
+        self.maximumGrade = h.maximumGrade 
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -5988,6 +6054,11 @@ class Period(ChildInstance, dbmodels.Model):
                                              startTime=self.startTime,
                                              endTime=self.endTime)
         
+    def revert(self, h):
+        self.weekday = h.weekday 
+        self.startTime = h.startTime 
+        self.endTime = h.endTime 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6153,6 +6224,9 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
                                              instance=self,
                                              stage=self.stage)
         
+    def revert(self, h):
+        self.stage = h.stage 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6373,6 +6447,9 @@ class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
                                              instance=self,
                                              impliedService=self.impliedService)
         
+    def revert(self, h):
+        self.impliedService = h.impliedService 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6567,6 +6644,12 @@ class Session(ChildInstance, dbmodels.Model):
                                              end=self.end,
                                              canRegister=self.canRegister)
         
+    def revert(self, h):
+        self.registrationDeadline = h.registrationDeadline 
+        self.start = h.start 
+        self.end = h.end 
+        self.canRegister = h.canRegister 
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise PermissionDenied('you do not have permission to complete this update')
@@ -6763,6 +6846,9 @@ class Site(ChildInstance, dbmodels.Model):
                                              instance=self,
                                              webSite=self.webSite)
         
+    def revert(self, h):
+        self.webSite = h.webSite 
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6891,6 +6977,10 @@ class Street(ChildInstance, dbmodels.Model):
                                              position=self.position,
                                              text=self.text)
         
+    def revert(self, h):
+        self.position = h.position 
+        self.text = h.text 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -7242,6 +7332,10 @@ class UserEmail(ChildInstance, dbmodels.Model):
                                              text=self.text,
                                              position=self.position)
         
+    def revert(self, h):
+        self.position = h.position 
+        self.text = h.text 
+
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -7306,6 +7400,9 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
                                              instance=self,
                                              grantee=self.grantee)
         
+    def revert(self, h):
+        self.grantee = h.grantee 
+
     def update(self, changes, context, newIDs={}):
         if not context.canAdminister(self):
             raise RuntimeError('you do not have permission to complete this update')
