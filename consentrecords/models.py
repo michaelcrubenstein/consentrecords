@@ -505,6 +505,19 @@ class RootInstance(IInstance):
         else:
             raise ValueError("unrecognized root token: %s" % tokens[0])
     
+    def parseUpdateData(subChanges, subClass, context, newIDs):
+        if 'delete' in subChanges:
+            subItem = subClass.objects.get(pk=subChanges['delete'])
+            subItem.markDeleted(context)
+        elif 'id' in subChanges:
+            subItem = subClass.objects.get(pk=subChanges['id'])
+            subItem.update(subChanges, context, newIDs)
+        elif 'add' in subChanges:
+            subItem = subClass.create(subChanges, context, newIDs=newIDs)
+            newIDs[subChanges['add']] = subItem.id.hex
+        else:
+            raise ValueError('subChange has no action key (delete, id or add): %s' % subChanges) 
+
 # An instance that is a secure root: User and Organization
 class SecureRootInstance(RootInstance):
 
@@ -5510,7 +5523,7 @@ class Organization(SecureRootInstance, dbmodels.Model):
 
     def create(data, context, newIDs={}):
         if not context.is_administrator:
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
            
         # Handle special case for primary administrator when creating a new SecureRootInstance subclass.
         if 'primary administrator' in data and data['primary administrator'] == 'user/%s' % id.hex:

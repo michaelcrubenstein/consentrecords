@@ -758,15 +758,53 @@ class api:
             with transaction.atomic():
                 context = Context(language, user, hostURL=hostURL)
                 
-                tokens = cssparser.tokenizeHTML(path)
-                qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-                if qs.count() == 0:
-                    raise ValueError("path was not recognized: %s" % path)
-                else:
-                    root = qs[0]
+                if path:
+                    tokens = cssparser.tokenizeHTML(path)
+                    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+                    if qs.count() == 0:
+                        raise ValueError("path was not recognized: %s" % path)
+                    else:
+                        root = qs[0]
+                        newIDs = {}
+                        root.update(changes, context, newIDs)
+                        results = {'new IDs': newIDs}
+                elif 'organizations' in changes:
+                    if not context.is_administrator:
+                        raise PermissionDenied("write permission failed")
                     newIDs = {}
-                    root.update(changes, context, newIDs)
+                    for d in changes['organizations']:
+                        RootInstance.parseUpdateData(d, Organization, context, newIDs)
                     results = {'new IDs': newIDs}
+                elif 'services' in changes:
+                    if not context.is_administrator:
+                        raise PermissionDenied("write permission failed")
+                    newIDs = {}
+                    for d in changes['services']:
+                        RootInstance.parseUpdateData(d, Service, context, newIDs)
+                    results = {'new IDs': newIDs}
+                elif 'users' in changes:
+                    if not context.is_administrator:
+                        raise PermissionDenied("write permission failed")
+                    newIDs = {}
+                    for d in changes['users']:
+                        RootInstance.parseUpdateData(d, User, context, newIDs)
+                    results = {'new IDs': newIDs}
+                elif 'comment prompts' in changes:
+                    if not context.is_administrator:
+                        raise PermissionDenied("write permission failed")
+                    newIDs = {}
+                    for d in changes['comment prompts']:
+                        RootInstance.parseUpdateData(d, CommentPrompt, context, newIDs)
+                    results = {'new IDs': newIDs}
+                elif 'experience prompts' in changes:
+                    if not context.is_administrator:
+                        raise PermissionDenied("write permission failed")
+                    newIDs = {}
+                    for d in changes['experience prompts']:
+                        RootInstance.parseUpdateData(d, ExperiencePrompt, context, newIDs)
+                    results = {'new IDs': newIDs}
+                else:
+                	results = {'new IDs': {}}
             
             return JsonResponse(results)
         
