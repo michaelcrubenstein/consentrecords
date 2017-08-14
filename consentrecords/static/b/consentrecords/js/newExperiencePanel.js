@@ -2693,7 +2693,7 @@ var NewExperiencePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		doneButton.append("span").text(experienceController.oldInstance() ? crv.buttonTexts.done : "Add");
+		doneButton.append("span").text(experienceController.oldInstance() ? crv.buttonTexts.done : crv.buttonTexts.add);
 		
 		if (experienceController.oldInstance())
 		{

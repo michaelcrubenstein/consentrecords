@@ -368,7 +368,7 @@ var PickSharingUserPanel = (function() {
 				}
 				d3.event.preventDefault();
 			})
-		    .append("span").text("Add");
+		    .append("span").text(crv.buttonTexts.add);
 		
 		navContainer.appendTitle(this.title);
 

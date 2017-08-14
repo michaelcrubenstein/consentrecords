@@ -156,6 +156,7 @@ var crv = {
 		done: "Done",
 		edit: "Edit",
 		cancel: "Cancel",
+		add: "Add",
 	},
 
 	appendLoadingMessage: function(node)
@@ -2728,7 +2729,7 @@ var EditPanel = (function() {
 			}
 			d3.event.preventDefault();
 		});
-		doneButton.append("span").text("Add");
+		doneButton.append("span").text(crv.buttonTexts.add);
 		return doneButton;
 	}
 	
