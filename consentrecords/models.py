@@ -5224,6 +5224,11 @@ class Offering(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
 
+    def order_by(queryset, context):
+        return queryset.filter(Q(names__deleteTransaction__isnull=True)& 
+                               (Q(names__languageCode=context.languageCode)|(Q(names__languageCode='en')&~Q(names__parent__names__languageCode=context.languageCode))))\
+                       .order_by('names__text')
+    
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
             name.markDeleted(context)
@@ -6708,6 +6713,11 @@ class Site(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
+    def order_by(queryset, context):
+        return queryset.filter(Q(names__deleteTransaction__isnull=True)& 
+                               (Q(names__languageCode=context.languageCode)|(Q(names__languageCode='en')&~Q(names__parent__names__languageCode=context.languageCode))))\
+                       .order_by('names__text')
+    
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
             name.markDeleted(context)
