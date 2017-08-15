@@ -53,7 +53,7 @@ var Controller = (function() {
 	
 		if (this.oldInstance())
 		{
-			updateData = this.getUpdateData();
+			var updateData = this.getUpdateData();
 			
 			if (Object.keys(updateData).length == 0)
 			{
