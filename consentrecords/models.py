@@ -4410,13 +4410,17 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
             
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
-           raise PermissionDenied
-           
+           raise PermissionDenied("write permission failed")
+        
+        service = _orNoneForeignKey(data, 'service', context, Service)
+        if not service:
+            raise ValueError("service of a new experience service is not specified")
+            
         newItem = ExperienceService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
                                  position=_newPosition(parent.services, data, 'position'),
-                                 service=_orNoneForeignKey(data, 'service', context, Service),
+                                 service=service,
                                 )
                                 
         newItem.createImplications()
@@ -4542,7 +4546,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
     
     def create(data, context, newIDs={}):
         if not context.is_administrator:
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
         
         if 'name' not in data or not data['name']:
             raise ValueError('name of experience prompt is not specified')
@@ -4668,7 +4672,7 @@ class ExperiencePromptService(OrderedServiceLinkInstance, PublicInstance, dbmode
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
            
         newItem = ExperiencePromptService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -4777,7 +4781,7 @@ class Group(ChildInstance, dbmodels.Model):
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
            
         newItem = Group.objects.create(transaction=context.transaction,
                                  parent=parent,
@@ -4884,7 +4888,7 @@ class GroupMember(ChildInstance, dbmodels.Model):
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
            
         newItem = GroupMember.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -5335,7 +5339,7 @@ class Offering(ChildInstance, dbmodels.Model):
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
            
         newItem = Offering.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -5486,7 +5490,7 @@ class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
            
         newItem = OfferingService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -6032,7 +6036,7 @@ class Period(ChildInstance, dbmodels.Model):
     
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
         
         Period.validateWeekday(data, 'weekday')
         Period.validateTime(data, 'start time')
@@ -6194,7 +6198,7 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
 
     def create(data, context, newIDs={}):
         if not context.is_administrator:
-           raise PermissionDenied
+           raise PermissionDenied("write permission failed")
         
         Service.validateStage(data, 'stage')
              
