@@ -6849,6 +6849,10 @@ class Site(ChildInstance, dbmodels.Model):
         
     def revert(self, h):
         self.webSite = h.webSite 
+    
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, self.webSite)
            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -6873,6 +6877,10 @@ class SiteHistory(dbmodels.Model):
     instance = historyInstanceField(Site)
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, self.webSite)
+           
 class SiteName(TranslationInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdSiteNames')

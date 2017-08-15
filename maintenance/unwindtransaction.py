@@ -12,6 +12,14 @@ from consentrecords.models import *
 
 nullString = "-"
 
+def printAddress(i):
+    print("%s\t%s\t%s\t%s" % \
+        (i.id, 
+         i.city or nullString,
+         i.state or nullString,
+         i.zipCode or nullString,
+         ))
+         
 def printComment(i):
     print("%s\t%s\n\t%s\n\t%s" % \
         (i.id, 
@@ -111,12 +119,10 @@ def printUserUserGrantRequest(i):
           (
             i.id, str(i.parent), str(i.grantee)
           ))
+          
+def printInstance(i):
+	print(i.dataString)
          
-def revertComment(h, i):
-    i.text = h.text
-    i.question = h.question
-    i.asker = h.asker
-
 def revertExperience(h, i):
     i.organization = h.organization
     i.customOrganization = h.customOrganization
@@ -136,10 +142,6 @@ def revertExperienceService(h, i):
 
 def revertExperienceCustomService(h, i):
     i.position = h.position
-    i.name = h.name
-
-def revertNotification(h, i):
-    i.isFresh = h.isFresh
     i.name = h.name
 
 def revertInstance(h, i):
@@ -189,6 +191,12 @@ def printTable(fieldsTitle, pluralName, singularName, f, created, changed, delet
 def printTransaction(t):
     print("Transaction\t%s\t%s\t%s" % (t.id, t.user, t.creation_time))
     
+    printTable("\tcity\tstate\tzip code",
+               "Addresses", "Address",
+               printAddress,
+               t.createdAddresses, t.changedAddresses, 
+               t.deletedAddresses, t.addressHistories)
+
     printTable("\ttext/asker/comments",
                "Comments", "Comment",
                printComment,
@@ -237,6 +245,18 @@ def printTransaction(t):
                t.createdPaths, t.changedPaths, 
                t.deletedPaths, t.pathHistories)
 
+    printTable("\tweb site",
+               "Sites", "Site",
+               printInstance,
+               t.createdSites, t.changedSites, 
+               t.deletedSites, t.siteHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Site Names", "Site Name",
+               printTranslation,
+               t.createdSiteNames, t.changedSiteNames, 
+               t.deletedSiteNames, t.siteNameHistories)
+
     printTable("\tfirst name\tlast name\tbirthday",
                "Users", "User",
                printUser,
@@ -261,7 +281,7 @@ if __name__ == "__main__":
         
         printTransaction(t)
         if '-yes' in sys.argv:
-            revertChanged(t.changedComments, revertComment)
+            revertChanged(t.changedComments, revertInstance)
             revertDeleted(t.deletedComments)
                 
             revertChanged(t.changedExperiences, revertExperience)
@@ -279,7 +299,7 @@ if __name__ == "__main__":
             revertChanged(t.changedExperienceCustomServices, revertExperienceCustomService)
             revertDeleted(t.deletedExperienceCustomServices)
 
-            revertChanged(t.changedNotifications, revertNotification)
+            revertChanged(t.changedNotifications, revertInstance)
             revertDeleted(t.deletedNotifications)
 
             revertDeleted(t.deletedNotificationArguments)
@@ -292,6 +312,12 @@ if __name__ == "__main__":
 
             revertChanged(t.changedPaths, revertInstance)
             revertDeleted(t.deletedPaths)
+
+            revertChanged(t.changedSites, revertInstance)
+            revertDeleted(t.deletedSites)
+
+            revertChanged(t.changedSiteNames, revertInstance)
+            revertDeleted(t.deletedSiteNames)
 
             revertChanged(t.changedUsers, revertInstance)
             revertDeleted(t.deletedUsers)
