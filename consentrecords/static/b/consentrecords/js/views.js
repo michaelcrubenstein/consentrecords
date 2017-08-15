@@ -1081,19 +1081,19 @@ function _appendUpdateTimeCommands(sectionObj, initialData, sourceObjects)
 function _getTranslationValue()
 {
 	var d3This = d3.select(this);
-	var textInput = d3This.selectAll("input");
-	var languageInput = d3This.selectAll("select");
+	var textInput = d3This.selectAll('input');
+	var languageInput = d3This.selectAll('select');
 	var sel = languageInput.node();
 	var selectedOption = sel.options[sel.selectedIndex];
 	var languageCode = d3.select(selectedOption).datum().code;
 
-	return {text: textInput.property("value").trim(),
+	return {text: textInput.property('value').trim(),
 				languageCode: languageCode};
 }
 
 function _appendUpdateTranslationCommands(sectionObj, initialData, sourceObjects)
 {
-	d3.select(sectionObj).selectAll("li").each(function(d, i)
+	d3.select(sectionObj).selectAll('li').each(function(d, i)
 		{
 			var newValue = _getTranslationValue.call(this);
 			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
@@ -2698,6 +2698,7 @@ var EditPanel = (function() {
 		checkItemsDisplay(node);
 	}
 
+/* Obsolete
 	EditPanel.prototype.appendAddButton = function(promise, containerCell, objectData, cells)
 	{
 		var doneButton;
@@ -2732,6 +2733,7 @@ var EditPanel = (function() {
 		doneButton.append("span").text(crv.buttonTexts.add);
 		return doneButton;
 	}
+*/
 	
 	EditPanel.prototype.appendTextChanges = function(section, oldValue, changes, key)
 	{
@@ -2951,10 +2953,10 @@ var EditPanel = (function() {
 	
 		function appendInputControls(items)
 		{
-			items.append("input")
-				.classed("growable", true)
-				.attr("type", "text")
-				.attr("placeholder", placeholder)
+			items.append('input')
+				.classed('growable', true)
+				.attr('type', 'text')
+				.attr('placeholder', placeholder)
 				.property('value', function(d) { return d.text(); })
 				.on('focusout', function(d)
 					{
@@ -3163,6 +3165,17 @@ var EditItemPanel = (function () {
 		var _this = this;
 		EditPanel.prototype.createRoot.call(this, this._controller.newInstance(), this.panelTitle, onShow);
 
+		this.navContainer.appendLeftButton()
+			.on("click", function()
+				{
+					if (prepareClick('click', _this.panelTitle + ' Cancel'))
+					{
+						_this.hide();
+					}
+					d3.event.preventDefault();
+				})
+			.append('span').text(crv.buttonTexts.cancel);
+		
 		var doneButton = this.navContainer.appendRightButton();
 			
 		this.navContainer.appendTitle(this.panelTitle);
@@ -3273,6 +3286,7 @@ var PickFromListPanel = (function () {
 
 })();
 
+/* Obsolete
 function showEditObjectPanel(containerCell, objectData, backText, onShow, getSavePromise) {
 	var successFunction = function(cells)
 	{
@@ -3305,13 +3319,13 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 				f = getSavePromise;
 			else if (objectData)
 			{
-				/* Test case: Set the address for a site where the site
-				   has been previously saved without an address. */
+				// Test case: Set the address for a site where the site
+				// has been previously saved without an address.
 				f = promiseSaveCells;
 			}
 			else
 			{
-				/* Test case: add a new service to the services panel. */
+				// Test case: add a new service to the services panel.
 				f = promiseCreateObjectFromCells;
 			}
 			
@@ -3331,14 +3345,14 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 					successFunction(objectData.getCells());
 				}, cr.syncFail);
 	else
-		/* Test case: Add a new site to an organization. */
+		/* Test case: Add a new site to an organization. * /
 		containerCell.getConfiguration()
 			.then(successFunction, cr.syncFail);
 }
 
 /* 
 	Displays a panel for adding a root object. 
- */
+ * /
 function showAddRootPanel(containerCell, onShow) {
 	var successFunction = function(cells)
 	{
@@ -3355,7 +3369,7 @@ function showAddRootPanel(containerCell, onShow) {
 		onShow(sitePanel.node());
 	}
 	
-	/* Test case: Display panel to add a new term. */
+	// Test case: Display panel to add a new term. * /
 	containerCell.getConfiguration()
 			.then(successFunction, cr.syncFail);
 }
@@ -3415,13 +3429,13 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 			var val = this.value.toLocaleLowerCase();
 			if (val.length === 0)
 			{
-				/* Show all of the items. */
+				/* Show all of the items. * /
 				panel2Div.selectAll("li")
 					.style('display', null);
 			}
 			else
 			{
-				/* Show the items whose description is this.value */
+				/* Show the items whose description is this.value * /
 				panel2Div.selectAll("li")
 					.style('display', function(d)
 						{
@@ -3521,13 +3535,13 @@ function showEditRootObjectsPanel(cell, header, sortFunction)
 		var val = this.value.toLocaleLowerCase();
 		if (val.length === 0)
 		{
-			/* Show all of the items. */
+			/* Show all of the items. * /
 			panel2Div.selectAll("li")
 				.style('display', null);
 		}
 		else
 		{
-			/* Show the items whose description is this.value */
+			/* Show the items whose description is this.value * /
 			panel2Div.selectAll("li")
 				.style('display', function(d)
 					{
@@ -3636,7 +3650,7 @@ function showEditRootObjectsPanel(cell, header, sortFunction)
 
 /* Displays a panel from which a user can select an object of the kind required 
 	for objects in the specified cell.
- */
+ * /
 function showPickObjectPanel(cell, oldData) {
 	var failFunction = syncFailFunction;
 	
@@ -3651,9 +3665,9 @@ function showPickObjectPanel(cell, oldData) {
 	
 		var panelDatum;
 		if (oldData && oldData.id)
-			panelDatum = oldData;	/* Replacing an existing object. */
+			panelDatum = oldData;	// Replacing an existing object.
 		else
-			panelDatum = cell;		/* Adding a new object. */
+			panelDatum = cell;		// Adding a new object.
 		var sitePanel = new SitePanel();
 		sitePanel.createRoot(panelDatum, cell.field.name, "list");
 
@@ -3678,13 +3692,13 @@ function showPickObjectPanel(cell, oldData) {
 			var val = this.value.toLocaleLowerCase();
 			if (val.length === 0)
 			{
-				/* Show all of the items. */
+				// Show all of the items.
 				panel2Div.selectAll("li")
 					.style('display', null);
 			}
 			else
 			{
-				/* Show the items whose description is this.value */
+				// Show the items whose description is this.value
 				panel2Div.selectAll("li")
 					.style('display', function(d)
 						{
@@ -3701,7 +3715,7 @@ function showPickObjectPanel(cell, oldData) {
 		var panel2Div = sitePanel.appendScrollArea();
 		
 		function buttonClicked(d) {
-			/* d is the ObjectValue that the user clicked. */
+			// d is the ObjectValue that the user clicked.
 			var successFunction = function()
 			{
 				sitePanel.hideRight(unblockClick);
@@ -3713,12 +3727,10 @@ function showPickObjectPanel(cell, oldData) {
 				{
 					if (!oldData)
 					{
-						/* Test case: Add an item to a cell that can contain multiple items. 
-						 */
-						if (cell.parent && cell.parent.id())	/* In this case, we are adding an object to an existing object. */
+						// Test case: Add an item to a cell that can contain multiple items. 
+						if (cell.parent && cell.parent.id())	// In this case, we are adding an object to an existing object.
 						{
-							/* Test case: Add a service to an offering that has been saved. 
-						 	 */
+							// Test case: Add a service to an offering that has been saved.
 							cr.updateValues([cell.getAddCommand(d)], [cell])
 								.then(successFunction, cr.syncFail);
 						}
@@ -3726,50 +3738,46 @@ function showPickObjectPanel(cell, oldData) {
 						{
 							oldData = cell.addNewValue();
 							
-							/* In this case, we are replacing an old value for
-							   an item that was added to the cell but not saved;
-							   a placeholder or a previously picked value.
-							 */
+							// In this case, we are replacing an old value for
+							// an item that was added to the cell but not saved;
+							// a placeholder or a previously picked value.
 							oldData.updateData({instanceID: d.id(), description: d.description()});
 							oldData.triggerDataChanged();
 							successFunction();
 						}
 					}
 					else if (d.id() === oldData.id()) {
-						/* Test case: Choose the same item as was previously selected for this item. */
+						// Test case: Choose the same item as was previously selected for this item.
 						successFunction();
 					}
 					else if (oldData.id)
 					{
 						if (d.id())
 						{
-							/* Test case: Choose a different item as was previously selected for this item. */
+							// Test case: Choose a different item as was previously selected for this item.
 							cr.updateObjectValue(oldData, d, -1, successFunction, cr.syncFail);
 						}
 						else
 						{
-							/* Test case: Choose none for a unique item that was previously specified. */
+							// Test case: Choose none for a unique item that was previously specified.
 							oldData.deleteValue()
 								.then(successFunction, cr.syncFail);
 						}
 					}
 					else if (d.id())
 					{
-						/* Test case: Set the value of a unique item in a cell where the current value is None.
-						 */
-						if (cell.parent && cell.parent.id())	/* In this case, we are adding an object to an existing object. */
+						// Test case: Set the value of a unique item in a cell where the current value is None.
+						if (cell.parent && cell.parent.id())	// In this case, we are adding an object to an existing object.
 						{
-							/* Test case: Set the state of an address that was previously saved without a state. 
-						 	 */
+							// Test case: Set the state of an address that was previously saved without a state. 
 							cr.updateValues([cell.getAddCommand(d)], [oldData])
 								.then(successFunction, cr.syncFail);
 						}
 						else 
 						{
-							/* In this case, we are replacing an old value for
-							   an item that was added to the cell but not saved;
-							   a placeholder or a previously picked value.
-							 */
+							// In this case, we are replacing an old value for
+							// an item that was added to the cell but not saved;
+							// a placeholder or a previously picked value.
 							oldData.instance(d.instance());
 							oldData.triggerDataChanged();
 							successFunction();
@@ -3818,18 +3826,18 @@ function showPickObjectPanel(cell, oldData) {
 			{
 				currentObject = currentObject.cell.parent;
 				pickObjectPath = pickObjectPath.slice("::reference(".length);
-				/* While the next string is quoted, skip it. */
+				// While the next string is quoted, skip it.
 				while (pickObjectPath[0] === '"')
 				{
 					pickObjectPath = pickObjectPath.slice(1);
 					pickObjectPath = pickObjectPath.slice(pickObjectPath.indexOf('"')+1);
 				}
-				/* Skip over the next close parenthesis */
+				// Skip over the next close parenthesis
 				pickObjectPath = pickObjectPath.slice(pickObjectPath.indexOf(')')+1);
 			}
 			if (currentObject != null && currentObject.id())
 			{
-				/* Test case: edit the inquiry access group of an organization */
+				// Test case: edit the inquiry access group of an organization
 				pickObjectPath = currentObject.id()+pickObjectPath;
 				cr.getData({path: pickObjectPath, fields: ['none']})
 					.then(selectAllSuccessFunction, cr.syncFail);
@@ -3838,13 +3846,14 @@ function showPickObjectPanel(cell, oldData) {
 				cr.syncFail("The container has not yet been saved.");
 		}
 		else
-			/* Test case: edit the public access of an organization. */
+			// Test case: edit the public access of an organization.
 			cr.getData({path: pickObjectPath, fields: ['none']})
 				.then(selectAllSuccessFunction, cr.syncFail);
 	}
 	else
-		/* Test case: edit the name of a field of a configuration of a term. */
+		// Test case: edit the name of a field of a configuration of a term.
 		cr.getData({path: cell.field.ofKind, fields: ['none']})
 			.then(selectAllSuccessFunction, cr.syncFail);
 }
-		
+Obsolete */
+
