@@ -5592,7 +5592,8 @@ class Organization(SecureRootInstance, dbmodels.Model):
            raise PermissionDenied("write permission failed")
            
         # Handle special case for primary administrator when creating a new SecureRootInstance subclass.
-        if 'primary administrator' in data and data['primary administrator'] == 'user/%s' % id.hex:
+        if 'primary administrator' in data and data['primary administrator'].startswith('user/'):
+            id = data['primary administrator'][len('user/'):]
             primaryAdministrator = User.objects.get(pk=id)
         else:
             primaryAdministrator = _orNoneForeignKey(data, 'primary administrator', context, User)
