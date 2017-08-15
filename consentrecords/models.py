@@ -402,7 +402,8 @@ class IInstance():
                 raise ValueError('%s element of data is not a list: %s' % (key, data[key]))
             for subData in data[key]:
                 subItem = subClass.create(self, subData, context, newIDs=newIDs)
-                newIDs[subData['add']] = subItem.id.hex
+                if 'add' in subData:
+                    newIDs[subData['add']] = subItem.id.hex
     
     def updateChildren(self, changes, key, context, subClass, children, newIDs={}):
         if key in changes:
@@ -5898,8 +5899,6 @@ class Path(IInstance, dbmodels.Model):
                                  publicAccess = _orNone(data, 'public access'),
                                  canAnswerExperience = _orNone(data, 'can answer experience'),
                                 )
-        
-        newItem.save()
         
         newItem.createChildren(data, 'experiences', context, Experience, newIDs)
         
