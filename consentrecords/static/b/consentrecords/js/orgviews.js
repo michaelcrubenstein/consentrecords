@@ -1987,7 +1987,7 @@ var PickPrimaryAdministratorPanel = (function() {
 							}
 							else
 							{
-								$(_this.node()).trigger('itemPicked.cr', null);
+								$(_this.node()).trigger('itemPicked.cr', [null]);
 								_this.hide();
 							}
 						}
