@@ -423,72 +423,7 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.distinctExperienceServices = function()
 	{
-		var existingServices = null;
-		if (this.offering() && this.offering().offeringServices())
-			existingServices = this.offering().offeringServices()
-				.map(function(os) { return os.service(); });
-		
-		return this.newInstance().experienceServices().filter(
-			function(s)
-				{
-					return !existingServices || 
-						   !existingServices.find(function(d) { 
-							return s.service().id() == d.id(); 
-						});
-				});	
-	}
-	
-	ExperienceController.prototype.appendData = function(initialData)
-	{
-		if (this.start())
-			initialData['start'] = this.start();
-		if (this.end())
-			initialData['end'] = this.end();
-		
-		if (this.organization())
-			initialData['organization'] = this.organization().urlPath();
-		else if (this.customOrganization())
-			initialData['custom organization'] = this.customOrganization();
-			
-		if (this.site())
-			initialData['site'] = this.site().urlPath();
-		else if (this.customSite())
-			initialData['custom site'] = this.customSite();
-			
-		if (this.offering())
-			initialData['offering'] = this.offering().urlPath();
-		else if (this.customOffering())
-			initialData['custom offering'] = this.customOffering();
-		
-		if (this.timeframe())
-			initialData['timeframe'] = this.timeframe();
-		
-		var i = 0;
-		
-		var newServices = this.distinctExperienceServices()
-			.map(function(s)
-				{
-					var d = {add: uuid.v4(), position: i++, service: s.service().urlPath()};
-					s.clientID(d.add);
-					return d;
-				});
-		if (newServices.length)
-		{
-			initialData['services'] = newServices;
-		}
-		
-		i = 0;
-		var newCustomServices = this.customServices()
-			.map(function(s)
-				{
-					var d = {add: uuid.v4(), position: i, name: s};
-					s.clientID(d.add);
-					return d;
-				});
-		if (newCustomServices.length)
-		{
-			initialData['custom services'] = newCustomServices;
-		}
+	    return this.newInstance().distinctExperienceServices();
 	}
 	
 	ExperienceController.prototype.getServiceByName = function(name)

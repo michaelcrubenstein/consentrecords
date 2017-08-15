@@ -2704,6 +2704,27 @@ cr.ServiceLinkInstance = (function() {
 		return this;
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	ServiceLinkInstance.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (this.service().id() != revision.service().id())
+			changes.service = revision.service().urlPath();
+			
+		return changes;
+	}
+		
+	ServiceLinkInstance.prototype.appendData = function(initialData)
+	{
+		cr.ServiceLinkInstance.prototype.appendData.call(this, initialData);
+		
+		if (this.service() != null)
+			initialData.service = this.service().urlPath();
+	}
+	
 	/** Called after the contents of the ServiceLinkInstance have been updated on the server. */
 	ServiceLinkInstance.prototype.updateData = function(d, newIDs)
 	{
@@ -2781,6 +2802,27 @@ cr.OrderedServiceLinkInstance = (function() {
 		cr.ServiceLinkInstance.prototype.mergeData.call(this, source);
 		if (!this._position) this._position = source._position;
 		return this;
+	}
+	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	OrderedServiceLinkInstance.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = cr.ServiceLinkInstance.prototype.getUpdateData.call(this, revision, changes);
+			
+		if (this.position() != revision.position())
+			changes.position = revision.position();
+
+		return changes;
+	}
+		
+	OrderedServiceLinkInstance.prototype.appendData = function(initialData)
+	{
+		cr.ServiceLinkInstance.prototype.appendData.call(this, initialData);
+		
+		if (this.position() != null)
+			initialData.position = this.position();
 	}
 	
 	/** Called after the contents of the OrderedServiceLinkInstance have been updated on the server. */
@@ -2957,23 +2999,23 @@ cr.Grantable = (function() {
 	}
 
 	
-	Grantable.prototype.getUpdateData = function(revision)
+	Grantable.prototype.getUpdateData = function(revision, changes)
 	{
-		var updateData = {};
+		changes = changes !== undefined ? changes : {};
 		
 		if (cr.stringChanged(this.publicAccess(), revision.publicAccess()))
-			updateData['public access'] = revision.publicAccess();
+			changes['public access'] = revision.publicAccess();
 				
 		if (this.primaryAdministrator() != revision.primaryAdministrator())
-			updateData['primary administrator'] = revision.primaryAdministrator() && revision.primaryAdministrator().urlPath();
+			changes['primary administrator'] = revision.primaryAdministrator() && revision.primaryAdministrator().urlPath();
 		
 		if (revision.userGrants())
-			this.appendUpdateList(this.userGrants(), revision.userGrants(), updateData, 'user grants');	
+			this.appendUpdateList(this.userGrants(), revision.userGrants(), changes, 'user grants');	
 			
 		if (revision.groupGrants())	
-			this.appendUpdateList(this.groupGrants(), revision.groupGrants(), updateData, 'group grants');		
+			this.appendUpdateList(this.groupGrants(), revision.groupGrants(), changes, 'group grants');		
 					
-		return updateData;
+		return changes;
 	}
 	
 	Grantable.prototype.setData = function(d)
@@ -3164,17 +3206,17 @@ cr.Grant = (function() {
 		}
 	}
 	
-	Grant.prototype.getUpdateData = function(revision)
+	Grant.prototype.getUpdateData = function(revision, changes)
 	{
-		var updateData = {};
+		changes = changes !== undefined ? changes : {};
 		
 		if (this.grantee() != revision.grantee())
-			updateData['grantee'] = revision.grantee() && revision.grantee().urlPath();
+			changes['grantee'] = revision.grantee() && revision.grantee().urlPath();
 		
 		if (cr.stringChanged(this.privilege(), revision.privilege()))
-			updateData['privilege'] = revision.privilege();
+			changes['privilege'] = revision.privilege();
 				
-		return updateData;
+		return changes;
 	}
 	
 	Grant.prototype.setData = function(d)
@@ -4164,12 +4206,6 @@ cr.Experience = (function() {
 	Experience.prototype.site = cr.SiteLinkInstance.prototype.site;
 	Experience.prototype.offering = cr.OfferingLinkInstance.prototype.offering;
 	
-	Experience.prototype.appendUpdateOrganizationCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateReferenceCommand(newValue, 
-			this.organization, 'organization', initialData, sourceObjects);
-	}
-
 	Experience.prototype.customOrganization = function(newValue)
 	{
 		if (newValue === undefined)
@@ -4184,18 +4220,6 @@ cr.Experience = (function() {
 		}
 	}
 	
-	Experience.prototype.appendUpdateCustomOrganizationCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateValueCommand(newValue, 
-			this.customOrganization, 'custom organization', initialData, sourceObjects);
-	}
-
-	Experience.prototype.appendUpdateSiteCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateReferenceCommand(newValue, 
-			this.site, 'site', initialData, sourceObjects);
-	}
-
 	Experience.prototype.customSite = function(newValue)
 	{
 		if (newValue === undefined)
@@ -4210,18 +4234,6 @@ cr.Experience = (function() {
 		}
 	}
 	
-	Experience.prototype.appendUpdateCustomSiteCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateValueCommand(newValue, 
-			this.customSite, 'custom site', initialData, sourceObjects);
-	}
-
-	Experience.prototype.appendUpdateOfferingCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateReferenceCommand(newValue, 
-			this.offering, 'offering', initialData, sourceObjects);
-	}
-
 	Experience.prototype.customOffering = function(newValue)
 	{
 		if (newValue === undefined)
@@ -4236,28 +4248,10 @@ cr.Experience = (function() {
 		}
 	}
 	
-	Experience.prototype.appendUpdateCustomOfferingCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateValueCommand(newValue, 
-			this.customOffering, 'custom offering', initialData, sourceObjects);
-	}
-
 	Experience.prototype.start = cr.DateRangeInstance.prototype.start;
 	Experience.prototype.end = cr.DateRangeInstance.prototype.end;
 	Experience.prototype.dateRange = cr.DateRangeInstance.prototype.dateRange;
 	
-	Experience.prototype.appendUpdateStartCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateValueCommand(newValue, 
-			this.start, 'start', initialData, sourceObjects);
-	}
-	
-	Experience.prototype.appendUpdateEndCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateValueCommand(newValue, 
-			this.end, 'end', initialData, sourceObjects);
-	}
-
 	Experience.prototype.timeframe = function(newValue)
 	{
 		if (newValue === undefined)
@@ -4272,12 +4266,6 @@ cr.Experience = (function() {
 		}
 	}
 	
-	Experience.prototype.appendUpdateTimeframeCommand = function(newValue, initialData, sourceObjects)
-	{
-		this.appendUpdateValueCommand(newValue, 
-			this.timeframe, 'timeframe', initialData, sourceObjects);
-	}
-
 	Experience.prototype.experienceServices = function(newValue)
 	{
 		if (newValue === undefined)
@@ -4295,6 +4283,23 @@ cr.Experience = (function() {
 			}
 			return this;
 		}
+	}
+	
+	Experience.prototype.distinctExperienceServices = function()
+	{
+		var existingServices = null;
+		if (this.offering() && this.offering().offeringServices())
+			existingServices = this.offering().offeringServices()
+				.map(function(os) { return os.service(); });
+		
+		return this.experienceServices().filter(
+			function(s)
+				{
+					return !existingServices || 
+						   !existingServices.find(function(d) { 
+							return s.service().id() == d.id(); 
+						});
+				});	
 	}
 	
 	Experience.prototype.customServices = function(newValue)
@@ -4362,94 +4367,92 @@ cr.Experience = (function() {
 		this._comments = [];
 	}
 	
+	Experience.prototype.appendData = function(initialData)
+	{
+		if (this.start())
+			initialData['start'] = this.start();
+		if (this.end())
+			initialData['end'] = this.end();
+		
+		if (this.organization())
+			initialData['organization'] = this.organization().urlPath();
+		else if (this.customOrganization())
+			initialData['custom organization'] = this.customOrganization();
+			
+		if (this.site())
+			initialData['site'] = this.site().urlPath();
+		else if (this.customSite())
+			initialData['custom site'] = this.customSite();
+			
+		if (this.offering())
+			initialData['offering'] = this.offering().urlPath();
+		else if (this.customOffering())
+			initialData['custom offering'] = this.customOffering();
+		
+		if (this.timeframe())
+			initialData['timeframe'] = this.timeframe();
+		
+		var i = 0;
+		
+		var newServices = this.distinctExperienceServices()
+			.map(function(s)
+				{
+					var d = {add: uuid.v4(), position: i++, service: s.service().urlPath()};
+					s.clientID(d.add);
+					return d;
+				});
+		if (newServices.length)
+		{
+			initialData['services'] = newServices;
+		}
+		
+		i = 0;
+		var newCustomServices = this.customServices()
+			.map(function(s)
+				{
+					var d = {add: uuid.v4(), position: i, name: s};
+					s.clientID(d.add);
+					return d;
+				});
+		if (newCustomServices.length)
+		{
+			initialData['custom services'] = newCustomServices;
+		}
+	}
+	
 	/* Returns a dictionary that describes all of the operations needed to change
 		the data in this object to the data in the revision.
 	 */
-	Experience.prototype.getUpdateData = function(revision)
+	Experience.prototype.getUpdateData = function(revision, changes)
 	{
-		var updateData = {};
+		changes = changes !== undefined ? changes : {}
 		
 		if (this.organization() != revision.organization())
-			updateData['organization'] = revision.organization().urlPath();
+			changes['organization'] = revision.organization().urlPath();
 		if (cr.stringChanged(this.customOrganization(), revision.customOrganization()))
-			updateData['custom organization'] = revision.customOrganization();
+			changes['custom organization'] = revision.customOrganization();
 				
 		if (this.site() != revision.site())
-			updateData['site'] = revision.site().urlPath();
+			changes['site'] = revision.site().urlPath();
 		if (cr.stringChanged(this.customSite(), revision.customSite()))
-			updateData['custom site'] = revision.customSite();
+			changes['custom site'] = revision.customSite();
 				
 		if (this.offering() != revision.offering())
-			updateData['offering'] = revision.offering().urlPath();
+			changes['offering'] = revision.offering().urlPath();
 		if (cr.stringChanged(this.customOffering(), revision.customOffering()))
-			updateData['custom offering'] = revision.customOffering();
+			changes['custom offering'] = revision.customOffering();
 				
 		if (cr.stringChanged(this.start(), revision.start()))
-			updateData['start'] = revision.start();
+			changes['start'] = revision.start();
 		if (cr.stringChanged(this.end(), revision.end()))
-			updateData['end'] = revision.end();
+			changes['end'] = revision.end();
 		if (cr.stringChanged(this.timeframe(), revision.timeframe()))
-			updateData['timeframe'] = revision.timeframe();
+			changes['timeframe'] = revision.timeframe();
 		
-		var newServices = this.distinctExperienceServices();
-		var oldServices = this.experienceServices();
-		var newCustomServices = this.customServices();
-		var oldCustomServices = this.customServices();
-		
-		var j = 0;
-		var subChanges;
-		subChanges = [];
-		newServices.forEach(function(d)
-			{
-				if (j < oldServices.length)
-				{
-					var oldService = oldServices[j];
-					if (oldService.service().id() != d.service().id())
-						subChanges.push({id: oldService.id(), service: d.service().urlPath()});
-					++j;
-				}
-				else
-				{
-					d.clientID('S{0}'.format(j));
-					subChanges.push({add: d.clientID(), service: d.service().urlPath()});
-				}
-			});
-		while (j < oldServices.length)
-		{
-			var oldService = oldServices[j];
-			subChanges.push({'delete': oldService.id()});
-			++j;
-		}
-		if (subChanges.length > 0)
-			updateData['services'] = subChanges;
-		
-		j=0;	
-		subChanges = [];
-		newCustomServices.forEach(function(d)
-			{
-				if (j < oldCustomServices.length)
-				{
-					var oldService = oldCustomServices[j];
-					if (oldService.name() != d.name())
-						subChanges.push({id: oldService.id(), name: d.name()});
-				}
-				else
-				{
-					d.clientID('CS{0}'.format(j));
-					subChanges.push({add: d.clientID(), name: d.name()});
-				}
-				++j;
-			});
-		while (j < oldCustomServices.length)
-		{
-			var oldService = oldCustomServices[j];
-			subChanges.push({'delete': oldService.id()});
-			++j;
-		}
-		if (subChanges.length > 0)
-			updateData['custom services'] = subChanges;
+		this.appendUpdateList(this.experienceServices(), revision.distinctExperienceServices(), changes, 'services');
+		this.appendUpdateList(this.customServices(), revision.customServices(), changes, 'custom services');
 			
-		return updateData;
+		return changes;
 	}
 	
 	Experience.prototype.setData = function(d)
@@ -4782,7 +4785,7 @@ cr.ExperienceCustomService = (function() {
 		{
 		    if (newValue != this._position)
 		    {
-				this._position = newValue.id();
+				this._position = newValue;
 			}
 			return this;
 		}
@@ -4831,6 +4834,31 @@ cr.ExperienceCustomService = (function() {
 		$(experience).trigger("customServiceDeleted.cr", this);
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	ExperienceCustomService.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (this.name() != revision.name())
+			changes.name = revision.name();
+			
+		if (this.position() != revision.position())
+			changes.position = revision.position();
+			
+		return changes;
+	}
+		
+	ExperienceCustomService.prototype.appendData = function(initialData)
+	{
+		if (this.name())
+			initialData.name = this.name();
+		
+		if (this.position() != null)
+			initialData.position = this.position();
+	}
+	
 	ExperienceCustomService.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -4838,18 +4866,27 @@ cr.ExperienceCustomService = (function() {
 		if ('name' in d)
 		{
 			this._name = d['name'];
+			this._description = this._name;
 			changed = true;
 		}
 		if ('position' in d)
 		{
-			this._name = d['position'];
+			this._position = d['position'];
 			changed = true;
 		}
 		
 		if (changed)
-			$(this).trigger('changed.cr');
+			this.triggerChanged();
 	
 		return changed;
+	}
+	
+	ExperienceCustomService.prototype.triggerChanged = function()
+	{
+		cr.IInstance.prototype.triggerChanged.call(this);
+
+		var experience = this.parent();
+		$(experience).trigger('changed.cr');
 	}
 	
 	function ExperienceCustomService() {
