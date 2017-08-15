@@ -22,7 +22,6 @@ from custom_user.emailer import Emailer
 from consentrecords.models import *
 from consentrecords import instancecreator
 from consentrecords import pathparser
-from consentrecords.userfactory import UserFactory
 
 templateDirectory = 'b/consentrecords/'
 logPrefix = 'b/'
