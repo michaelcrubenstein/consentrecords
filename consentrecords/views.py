@@ -804,7 +804,7 @@ class api:
                         RootInstance.parseUpdateData(d, ExperiencePrompt, context, newIDs)
                     results = {'new IDs': newIDs}
                 else:
-                	results = {'new IDs': {}}
+                	raise ValueError('root object changes are unrecognized: %s' % str(changes))
             
             return JsonResponse(results)
         
@@ -875,7 +875,7 @@ class api:
             
         return JsonResponse(results)
         
-def updateValues(request, urlPath):
+def updateValues(request, urlPath=None):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
     

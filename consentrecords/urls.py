@@ -54,6 +54,7 @@ urlpatterns = [
     url(r'^user/requestAccess/', views.requestAccess, name='requestAccess'),
 
     url(r'^local/updatevalues/([^?]*)/', views.updateValues, name='updateValues'),
+    url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
     
     url(r'^api/updatevalues/([^?]*)/', views.updateValues),
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),
