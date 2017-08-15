@@ -2410,6 +2410,11 @@ cr.IInstance = (function() {
 			updateData[key] = subChanges;
 	}
 	
+	IInstance.prototype.pullElements = function(source)
+	{
+		return this;
+	}
+	
 	IInstance.prototype.updateData = function(d, newIDs)
 	{
 		if ('id' in d)
