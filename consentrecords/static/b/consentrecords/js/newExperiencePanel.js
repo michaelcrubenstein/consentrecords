@@ -1986,10 +1986,17 @@ var NewExperiencePanel = (function () {
 			.classed('tag', true)
 			.attr('placeholder', 'Tag')
 			.attr('value', instance && instance.description());
-			
-		$(input.node()).on('click', function(e)
+		
+		var startFocus;	
+		$(input.node())
+			.on('mousedown', function(e)
 			{
-				this.setSelectionRange(0, this.value.length);
+				startFocus = (this != document.activeElement);
+			})
+			.on('click', function(e)
+			{
+				if (startFocus && this.selectionStart == this.selectionEnd)
+					this.setSelectionRange(0, this.value.length);
 				e.preventDefault();
 			});
 		
