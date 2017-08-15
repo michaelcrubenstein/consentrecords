@@ -719,13 +719,13 @@ var OrganizationController = (function() {
 
 	OrganizationController.prototype.postAdd = function(initialData)
 	{
-		return this.update(initialData, false);
+		return cr.IInstance.updateRoots({'organizations': [initialData]});
 	}
 	
 	OrganizationController.prototype.postAddDone = function(changes, newIDs)
 	{
 		crp.pushInstance(this.newInstance());
-		this.newInstance().updateData(changes, newIDs);
+		this.newInstance().updateData(changes['organizations'][0], newIDs);
 		return this;
 	}
 

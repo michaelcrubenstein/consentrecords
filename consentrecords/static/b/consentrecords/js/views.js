@@ -2955,7 +2955,11 @@ var EditPanel = (function() {
 				.classed("growable", true)
 				.attr("type", "text")
 				.attr("placeholder", placeholder)
-				.property("value", function(d) { return d.text(); });
+				.property('value', function(d) { return d.text(); })
+				.on('focusout', function(d)
+					{
+						d.text(this.value);
+					});
 
 			var languageSelect = items.append("select");
 			languageSelect.selectAll('option')
@@ -2975,6 +2979,11 @@ var EditPanel = (function() {
 					}
 				}
 			});
+			
+			languageSelect.on('change', function(d)
+				{
+					d.language(crv.languages[this.selectedIndex].code);
+				});
 		}
 	
 		itemsDiv.classed('deletable-items', true);
@@ -2988,8 +2997,8 @@ var EditPanel = (function() {
 				if (prepareClick('click', 'confirm delete: ' + d.description()))
 				{
 					try {
-					    _thisItem.setAttribute('isDeleted', true);
-					    hideItem(_thisItem, unblockClick);
+						cr.removeElement(translations, d);
+					    removeItem(_thisItem, unblockClick);
 					} catch(err) { cr.syncFail(err); }
 				}
 			}
@@ -3014,9 +3023,11 @@ var EditPanel = (function() {
 
 		crv.appendAddButton(section, placeholder, function()
 			{
-				var newValue = new cr.SessionName();
+				var newValue = new nameType();
 				newValue.setDefaultValues();
-				
+				container.names().push(newValue);
+				newValue.parentID(container.id());
+					
 				var item = itemsDiv.append('li')
 					.datum(newValue);
 				appendItemControls(item);
@@ -3144,7 +3155,7 @@ var EditItemPanel = (function () {
 	
 	EditItemPanel.prototype.promiseUpdateChanges = function()
 	{
-		console.assert(false);	/* This must be overwritten. */
+		return this.controller().save();
 	}
 	
 	EditItemPanel.prototype.createRoot = function(onShow)
@@ -3160,11 +3171,12 @@ var EditItemPanel = (function () {
 			{
 				if (prepareClick('click', _this.panelTitle + ' done'))
 				{
+					this.focus();	// To eliminate focus from a previously selected item.
 					showClickFeedback(this);
 		
 					try
 					{
-						/* Build up an update for initialData. */
+						// Build up an update for initialData.
 						_this.promiseUpdateChanges()
 							.then(function() { _this.hide(); },
 								  cr.syncFail)

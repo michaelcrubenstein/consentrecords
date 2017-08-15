@@ -2369,13 +2369,27 @@ cr.IInstance = (function() {
 	
 	IInstance.prototype.appendUpdateList = function(oldItems, newItems, updateData, key)
 	{
-		var j = 0;
 		var subChanges = [];
+		var remainingItems = [];
+		oldItems.forEach(function(d)
+		{
+			var item = newItems.find(function(e)
+				{
+					return e.id() == d.id();
+				});
+			
+			if (item)
+				remainingItems.push(d);
+			else
+				subChanges.push({'delete': d.id()});
+		});
+		
+		var j = 0;
 		newItems.forEach(function(d)
 			{
-				if (j < oldItems.length)
+				if (j < remainingItems.length)
 				{
-					var oldItem = oldItems[j];
+					var oldItem = remainingItems[j];
 					var subItemChange = oldItem.getUpdateData(d);
 					if (Object.keys(subItemChange).length > 0)
 					{
@@ -2389,13 +2403,9 @@ cr.IInstance = (function() {
 					d.clientID(uuid.v4());
 					var changes = {add: d.clientID()};
 					d.appendData(changes);
-					subChanges.push(d);
+					subChanges.push(changes);
 				}
 			});
-		while (j < oldItems.length)
-		{
-			subChanges.push({'delete': oldItems[j++].id()});
-		}
 		if (subChanges.length > 0)
 			updateData[key] = subChanges;
 	}
@@ -2481,6 +2491,37 @@ cr.IInstance = (function() {
 	function IInstance() {
 	};
 	
+	IInstance.updateRoots = function(changes)
+	{
+		var _this = this;
+		if (Object.keys(changes).length == 0)
+		{
+			var r2 = $.Deferred();
+			r2.resolve(changes, {});
+			return r2;
+		}
+		
+		return $.post(cr.urls.updateValues, 
+			{ commands: JSON.stringify(changes)
+			})
+			.then(function(json)
+				{
+					var r2 = $.Deferred();
+					try
+					{
+					    /* If the server succeeds, then update this with the changes and any new IDs. */
+						newIDs = json['new IDs'];
+						r2.resolve(changes, newIDs);
+					}
+					catch (err)
+					{
+						r2.reject(err);
+					}
+					return r2;
+				},
+				cr.thenFail);
+	}
+	
 	return IInstance;
 
 })();
@@ -2558,6 +2599,7 @@ cr.TranslationInstance = (function() {
 	
 	TranslationInstance.prototype.mergeData = function(source)
 	{
+		cr.IInstance.prototype.mergeData.call(this, source);
 		if (!this._text) this._text = source._text;
 		if (!this._language) this._language = source._language;
 		return this;
@@ -2905,6 +2947,16 @@ cr.Grantable = (function() {
 		}
 	}
 	
+	Grantable.prototype.appendData = function(initialData)
+	{
+		if (this.publicAccess())
+			initialData['public access'] = this.publicAccess();
+			
+		if (this.primaryAdministrator())
+			initialData['primary administrator'] = this.primaryAdministrator().urlPath();
+	}
+
+	
 	Grantable.prototype.getUpdateData = function(revision)
 	{
 		var updateData = {};
@@ -2932,7 +2984,7 @@ cr.Grantable = (function() {
 		{
 		    this._primaryAdministrator = new cr.User();
 		    this._primaryAdministrator.setData(d['primary administrator']);
-		    this._primaryAdministrator = crp.getInstance(this._primaryAdministrator.id());
+		    this._primaryAdministrator = crp.pushInstance(this._primaryAdministrator);
 		}
 		if ('user grants' in d)
 			this._userGrants = d['user grants'].map(function(d) {
@@ -2981,9 +3033,9 @@ cr.Grantable = (function() {
 				this._primaryAdministrator = null;
 			else
 			{
-				this._primaryAdministrator = new cr.User();
-				this._primaryAdministrator.setData(d['primary administrator']);
-				this._primaryAdministrator = crp.pushInstance(this._primaryAdministrator);
+				console.assert(d['primary administrator'].startsWith("user/"));
+				var userID = d['primary administrator'].substring(5);
+				this._primaryAdministrator = crp.getInstance(userID);
 			}
 		    changed = true;
 		}
@@ -5151,7 +5203,7 @@ cr.Group = (function() {
 		}
 	}
 	
-	Group.prototype.appendData = function(initialData, idPrefix)
+	Group.prototype.appendData = function(initialData)
 	{
 	}
 	
@@ -5860,8 +5912,9 @@ cr.Organization = (function() {
 		}
 	}
 	
-	Organization.prototype.appendData = function(initialData, idPrefix)
+	Organization.prototype.appendData = function(initialData)
 	{
+		cr.Grantable.prototype.appendData.call(this, initialData);
 		if (this.webSite())
 			initialData['web site'] = this.webSite();
 		
@@ -5894,7 +5947,6 @@ cr.Organization = (function() {
 		if (this.inquiryAccessGroup())
 			initialData['inquiry access group'] = 'group/' + this.inquiryAccessGroup().clientID();
 		
-		i = 0;
 		var newSites = this.sites()
 			.map(function(s)
 				{
@@ -5907,7 +5959,6 @@ cr.Organization = (function() {
 		{
 			initialData['sites'] = newSites;
 		}
-		
 	}
 	
 	/* Returns a dictionary that describes all of the operations needed to change
@@ -5915,7 +5966,7 @@ cr.Organization = (function() {
 	 */
 	Organization.prototype.getUpdateData = function(revision)
 	{
-		var updateData = cr.Grantable.prototype.getUpdateData(revision);
+		var updateData = cr.Grantable.prototype.getUpdateData.call(this, revision);
 		
 		if (cr.stringChanged(this.webSite(), revision.webSite()))
 			updateData['web site'] = revision.webSite();
@@ -5950,11 +6001,10 @@ cr.Organization = (function() {
 								i.setData(d);
 								return crp.pushInstance(i);
 							});
-		if ('inquiry access group' in d && this._groups)
-			this._inquiryAccessGroup = this._groups.find(function(group)
-				{
-					return group.id() == d['inquiry access group']['id'];
-				});
+		if ('inquiry access group' in d && 
+			'id' in d['inquiry access group'] &&
+			this._groups)
+			this._inquiryAccessGroup = crp.getInstance(d['inquiry access group']['id']);
     }
     
     /** Merge the contents of the specified source into this Organization for
@@ -5989,6 +6039,11 @@ cr.Organization = (function() {
 		this._groups = [];
 		this._sites = [];
 		this._inquiryAccessGroup = null;
+	}
+	
+	Organization.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.names(), source.names());
 	}
 	
 	/** Called after the contents of the Organization have been updated on the server. */

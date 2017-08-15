@@ -1624,17 +1624,6 @@ var OrganizationPanel = (function () {
 	OrganizationPanel.prototype.readLabel = "Public";
 	OrganizationPanel.prototype.hiddenLabel = "Hidden";
 	
-    OrganizationPanel.prototype.promiseUpdateChanges = function()
-    {
-		var changes = {};
-		var _this = this;
-		this.appendTextChanges(this.webSiteSection, this.newInstance().webSite(), 
-								changes, 'web site')
-			.appendTranslationChanges(this.namesSection, this.newInstance().names, changes, 'names');
-		
-		return this.controller().save();
-    }
-    
 	OrganizationPanel.prototype.publicAccessValue = function(enumValue)
 	{
 		if (enumValue == OrganizationPanel.prototype.readLabel)
@@ -1675,7 +1664,11 @@ var OrganizationPanel = (function () {
 
 		this.webSiteSection = this.mainDiv.append('section')
 			.datum(controller.newInstance())
-			.classed('cell edit unique first', true);
+			.classed('cell edit unique first', true)
+			.on('focusout', function(d)
+				{
+					d.webSite(d3.select(this).select('input').property('value'));
+				});
 		this.webSiteSection.append('label')
 			.text(this.webSiteLabel);
 		this.appendTextEditor(this.webSiteSection, 
@@ -1689,18 +1682,18 @@ var OrganizationPanel = (function () {
 			.classed('cell edit unique first', true)
 			.datum(controller.newInstance())
 			.on('click', 
-				function() {
+				function(d) {
 					if (prepareClick('click', 'pick ' + _this.publicAccessLabel))
 					{
 						try
 						{
 							var panel = new PickPublicAccessPanel();
-							panel.createRoot(controller.newInstance(), publicAccessTextContainer.text())
+							panel.createRoot(d, publicAccessTextContainer.text())
 								 .showLeft().then(unblockClick);
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
 								{
-									controller.newInstance().publicAccess(_this.publicAccessValue(newDescription));
+									d.publicAccess(_this.publicAccessValue(newDescription));
 									publicAccessTextContainer.text(newDescription);
 								});
 						}
