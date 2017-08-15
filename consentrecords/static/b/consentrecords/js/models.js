@@ -2390,11 +2390,11 @@ cr.IInstance = (function() {
 				if (j < remainingItems.length)
 				{
 					var oldItem = remainingItems[j];
-					var subItemChange = oldItem.getUpdateData(d);
-					if (Object.keys(subItemChange).length > 0)
+					var changes = oldItem.getUpdateData(d);
+					if (Object.keys(changes).length > 0)
 					{
-						subItemChange.id = oldItem.id();
-						subChanges.push(subItemChanges);
+						changes.id = oldItem.id();
+						subChanges.push(changes);
 					}
 					++j;
 				}
@@ -2563,11 +2563,12 @@ cr.TranslationInstance = (function() {
 		}
 	}
 	
+	/** For a newly created DateRangeInstance, set its contents to valid values. */
 	TranslationInstance.prototype.setDefaultValues = function()
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._text = "";
-		this._language = null;
+		this._language = cr.language || 'en';
 	}
 	
 	TranslationInstance.prototype.appendData = function(initialData)
@@ -2605,13 +2606,6 @@ cr.TranslationInstance = (function() {
 		return this;
 	}
 	
-	/** For a newly created DateRangeInstance, set its contents to valid values. */
-	TranslationInstance.prototype.setDefaultValues = function()
-	{
-		this._text = "";
-		this._language = "en";
-	}
-	
 	/** Called after the contents of the TranslationInstance have been updated on the server. */
 	TranslationInstance.prototype.updateData = function(d, newIDs)
 	{
@@ -2621,6 +2615,7 @@ cr.TranslationInstance = (function() {
 		if ('text' in d)
 		{
 			this._text = d['text'];
+			this._description = this._text;
 			changed = true;
 		}
 		if ('languageCode' in d)
@@ -3248,6 +3243,23 @@ cr.NamedInstance = (function() {
 		return this;
 	}
 	
+    NamedInstance.prototype.calculateDescription = function()
+    {
+    	var language = cr.language === undefined ? 'en' : cr.language;
+    	var enName = null;
+    	var n = this.names().find(function(i)
+    		{
+    			if (i.language() == 'en')
+    				enName = i;
+    			return i.language() == language;
+    		});
+    	n = n || enName;
+    	if (n)
+    		this.description(n.text());
+    	else
+    		this.description('');
+    }
+    
 	function NamedInstance() {};
 	return NamedInstance;
 })();
@@ -6060,14 +6072,16 @@ cr.Organization = (function() {
 			changed = true;
 		}
 		
+		if ('names' in d)
+		{
+			this.updateList(this.names, d['names'], newIDs, cr.OrganizationName, "nameAdded.cr", "nameDeleted.cr");
+			changed = true;
+			this.calculateDescription();
+		}
+
 		if (changed)
 			this.triggerChanged();
 			
-		if ('names' in d)
-		{
-			if (this.updateList(this.names, d['names'], newIDs, cr.OrganizationName, "nameAdded.cr", "nameDeleted.cr"))
-				changed = true;
-		}
 		if ('groups' in d)
 		{
 			if (this.updateList(this.groups, d['groups'], newIDs, cr.Group, "groupAdded.cr", "groupDeleted.cr"))
@@ -6134,6 +6148,8 @@ cr.Organization = (function() {
         	});
     }
     
+    Organization.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
+
 	function Organization() {
 	    cr.Grantable.call(this);
 	};
