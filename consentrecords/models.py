@@ -856,6 +856,9 @@ class OrderedServiceLinkInstance(ServiceLinkInstance):
         self.position = h.position 
         self.service = h.service 
 
+    def order_by(queryset, context):
+        return queryset.order_by('position')
+                
 class PublicInstance():
     def getSubClause(qs, user, accessType):
         return qs, accessType
@@ -4331,18 +4334,21 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
 
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, prefix='parent__parent')
-            
+    
+    def order_by(queryset, context):
+        return queryset.order_by('position')
+                
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied
         
         if 'name' not in data or not data['name']:
             raise ValueError('the name of a custom service is required.')
-             
+        
         newItem = ExperienceCustomService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 position=_newPosition(parent.services, data, 'position'),
+                                 position=data['position'],
                                  name=data['name'],
                                 )
         
@@ -4419,7 +4425,7 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
         newItem = ExperienceService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 position=_newPosition(parent.services, data, 'position'),
+                                 position=data['position'],
                                  service=service,
                                 )
                                 
@@ -4677,7 +4683,7 @@ class ExperiencePromptService(OrderedServiceLinkInstance, PublicInstance, dbmode
         newItem = ExperiencePromptService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 position=_newPosition(parent.services, data, 'position'),
+                                 position=data['position'],
                                  service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
         
@@ -5495,7 +5501,7 @@ class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
         newItem = OfferingService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 position=_newPosition(parent.services, data, 'position'),
+                                 position=data['position'],
                                  service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
         
@@ -6977,7 +6983,7 @@ class Street(ChildInstance, dbmodels.Model):
         newItem = Street.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 position=_newPosition(parent.streets, data, 'position'),
+                                 position=data['position'],
                                  text=_orNone(data, 'text'),
                                 )
         
@@ -7332,7 +7338,7 @@ class UserEmail(ChildInstance, dbmodels.Model):
         newItem = UserEmail.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 position=_newPosition(parent.emails, data, 'position'),
+                                 position=data['position'],
                                  text=data['text'],
                                 )
         
