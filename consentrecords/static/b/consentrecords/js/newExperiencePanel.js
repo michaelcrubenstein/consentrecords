@@ -2692,8 +2692,9 @@ var NewExperiencePanel = (function () {
 				_this.checkTagInput();
 						
 				if (!experienceController.offeringName() &&
-					experienceController.experienceServices().length == 0)
-					asyncFailFunction(_this.nameOrTagRequiredMessage);
+					experienceController.experienceServices().length == 0 &&
+					experienceController.customServices().length == 0)
+					cr.asyncFail(_this.nameOrTagRequiredMessage);
 				else
 				{
 					doAdd();
