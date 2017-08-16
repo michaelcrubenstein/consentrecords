@@ -682,6 +682,9 @@ class TranslationInstance(ChildInstance):
     def ValueCheckText(self, value):
         return
     
+    def order_by(queryset, context):
+        return queryset.order_by('languageCode', 'text')
+                
     def buildHistory(self, context):
         return self.historyType.objects.create(transaction=self.lastTransaction,
                                              instance=self,
@@ -815,6 +818,11 @@ class ServiceLinkInstance(ChildInstance):
             
         return data
 
+    def order_by(queryset, context):
+        return queryset.filter(Q(service__names__deleteTransaction__isnull=True)& 
+                               (Q(service__names__languageCode=context.languageCode)|(Q(service__names__languageCode='en')&~Q(service__names__parent__names__languageCode=context.languageCode))))\
+                       .order_by('service__names__text')
+    
     def buildHistory(self, context):
         return self.historyType.objects.create(transaction=self.lastTransaction,
                                              instance=self,
@@ -3189,6 +3197,11 @@ class UserGrant(AccessInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return UserGrant.getSubClause(qs, user, accessType)[0]
             
+    def order_by(queryset, context):
+        return queryset.filter(Q(grantee__emails__deleteTransaction__isnull=True)& 
+                               Q(grantee__emails__position=0))\
+                       .order_by('grantee__emails__text')
+    
     def create(parent, data, context, newIDs={}):
         if not context.canAdminister(parent):
            raise PermissionDenied('you do not have permission to administer this user')
@@ -3279,6 +3292,11 @@ class GroupGrant(AccessInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return GroupGrant.getSubClause(qs, user, accessType)[0]
             
+    def order_by(queryset, context):
+        return queryset.filter(Q(grantee__names__deleteTransaction__isnull=True)& 
+                               (Q(grantee__names__languageCode=context.languageCode)|(Q(grantee__names__languageCode='en')&~Q(grantee__names__parent__names__languageCode=context.languageCode))))\
+                       .order_by('grantee__names__text')
+    
     def create(parent, data, context, newIDs={}):
         if not context.canAdminister(parent):
            raise PermissionDenied('you do not have permission to administer this user')
@@ -3653,6 +3671,11 @@ class CommentPrompt(RootInstance, PublicInstance, dbmodels.Model):
         data['translations'] = [i.getData([], context) for i in self.currentNames]
         return data
         
+    def order_by(queryset, context):
+        return queryset.filter(Q(texts__deleteTransaction__isnull=True)& 
+                               (Q(texts__languageCode=context.languageCode)|(Q(texts__languageCode='en')&~Q(texts__parent__texts__languageCode=context.languageCode))))\
+                       .order_by('texts__text')
+    
     def markDeleted(self, context):
         for i in self.texts.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -4502,6 +4525,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
         return querySet
         
     def select_related(querySet, fields=[]):
+    	# Disqualifying tags cannot be sorted without a context. 
         return ExperiencePrompt.select_head_related(querySet)\
                     .select_related('organization')\
                     .select_related('site')\
@@ -4511,7 +4535,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
                                                ExperiencePromptService.select_related(ExperiencePromptService.objects.filter(deleteTransaction__isnull=True)).order_by('position'),
                                                to_attr='fetchedServices'))\
                     .prefetch_related(Prefetch('texts',
-                                               ExperiencePromptText.select_related(ExperiencePromptText.objects.filter(deleteTransaction__isnull=True)),
+                                               ExperiencePromptText.select_related(ExperiencePromptText.objects.filter(deleteTransaction__isnull=True)).order_by('languageCode', 'text'),
                                                to_attr='fetchedTexts'))\
                     .prefetch_related(Prefetch('disqualifyingTags',
                                                DisqualifyingTag.select_related(DisqualifyingTag.objects.filter(deleteTransaction__isnull=True)),
@@ -4534,9 +4558,17 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
             data['timeframe'] = self.timeframe
         data['services'] = [i.getData([], context) for i in self.fetchedServices]
         data['translations'] = [i.getData([], context) for i in self.fetchedTexts]
+        
         data['disqualifying tags'] = [i.getData([], context) for i in self.fetchedDisqualifyingTags]
+        data['disqualifying tags'].sort(key=lambda s: s['description'])
+        
         return data
         
+    def order_by(queryset, context):
+        return queryset.filter(Q(texts__deleteTransaction__isnull=True)& 
+                               (Q(texts__languageCode=context.languageCode)|(Q(texts__languageCode='en')&~Q(texts__parent__texts__languageCode=context.languageCode))))\
+                       .order_by('texts__text')
+    
     def markDeleted(self, context):
         for i in self.texts.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -4778,6 +4810,11 @@ class Group(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
+    def order_by(queryset, context):
+        return queryset.filter(Q(names__deleteTransaction__isnull=True)& 
+                               (Q(names__languageCode=context.languageCode)|(Q(names__languageCode='en')&~Q(names__parent__names__languageCode=context.languageCode))))\
+                       .order_by('names__text')
+    
     def markDeleted(self, context):
         for i in self.names.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -4892,6 +4929,11 @@ class GroupMember(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
 
+    def order_by(queryset, context):
+        return queryset.filter(Q(user__emails__deleteTransaction__isnull=True)& 
+                               Q(user__emails__position=0))\
+                       .order_by('user__emails__text')
+    
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied("write permission failed")
@@ -5105,6 +5147,9 @@ class Notification(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
+    def order_by(queryset, context):
+        return queryset.order_by('transaction__creation_time')
+    
     def markDeleted(self, context):
         for i in self.notificationArguments.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -6440,6 +6485,13 @@ class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
                   'service': ('impliedService__', "Service", 'impliedServiceImplications'),
                  }
                  
+    def order_by(queryset, context):
+        return queryset.filter(Q(impliedService__names__deleteTransaction__isnull=True)& 
+                               (Q(impliedService__names__languageCode=context.languageCode)|
+                                (Q(impliedService__names__languageCode='en')&
+                                 ~Q(impliedService__names__parent__names__languageCode=context.languageCode))))\
+                       .order_by('impliedService__names__text')
+    
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
             raise PermissionError
@@ -6979,6 +7031,9 @@ class Street(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
+    def order_by(queryset, context):
+        return queryset.order_by('position')
+        
     def create(parent, data, context, newIDs={}):
         newItem = Street.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -7075,7 +7130,7 @@ class User(SecureRootInstance, dbmodels.Model):
         
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('emails',
-                                                  queryset=UserEmail.objects.filter(deleteTransaction__isnull=True),
+                                                  queryset=UserEmail.objects.filter(deleteTransaction__isnull=True).order_by('position'),
                                                   to_attr='currentEMails'))
 
     def select_related(querySet, fields=[]):
@@ -7107,7 +7162,7 @@ class User(SecureRootInstance, dbmodels.Model):
             elif context.is_staff:
                 data['system access'] = 'write'
 
-        emails = self.emails.filter(deleteTransaction__isnull=True).order_by('position')
+        emails = self.currentEMails
         if 'emails' in fields: 
             data['emails'] = [i.getData([], context) for i in emails]
         else:
@@ -7308,6 +7363,9 @@ class UserEmail(ChildInstance, dbmodels.Model):
     def getData(self, fields, context):
         return self.headData(context)
         
+    def order_by(queryset, context):
+        return queryset.order_by('position')
+    
     fieldMap = {'text': 'text',
                 'position': 'position',
                }
@@ -7404,6 +7462,11 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
+    def order_by(queryset, context):
+        return queryset.filter(Q(grantee__emails__deleteTransaction__isnull=True)& 
+                               Q(grantee__emails__position=0))\
+                       .order_by('grantee__emails__text')
+    
     def create(parent, data, context, newIDs={}):
         newItem = UserUserGrantRequest.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
