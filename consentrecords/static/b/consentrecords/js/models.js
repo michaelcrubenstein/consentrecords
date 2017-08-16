@@ -1306,6 +1306,7 @@ cr.ServiceLinkInstance = (function() {
 	
 	ServiceLinkInstance.prototype.setDefaultValues = function()
 	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._serviceID = null;
 	}
 	
@@ -1487,6 +1488,7 @@ cr.UserLinkInstance = (function() {
 	
 	UserLinkInstance.prototype.setDefaultValues = function()
 	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._user = null;
 	}
 	
@@ -1837,6 +1839,13 @@ cr.Grant = (function() {
 			}
 			return this;
 		}
+	}
+	
+	Grant.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._privilege = "";
+		this._grantee = null;
 	}
 	
 	Grant.prototype.appendData = function(initialData)
@@ -2529,6 +2538,14 @@ cr.Comment = (function() {
 		return this;
     }
     
+	Comment.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._text = "";
+		this._question = "";
+		this._asker = null;
+	}
+	
 	Comment.prototype.appendData = function(initialData)
 	{
 		if (this.text())
@@ -2631,12 +2648,6 @@ cr.CommentPrompt = (function() {
 							});
     }
     
-	CommentPrompt.prototype.setDefaultValues = function()
-	{
-		cr.IInstance.prototype.setDefaultValues.call(this);
-		this._translations = [];
-	}
-	
 	CommentPrompt.prototype.mergeData = function(source)
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
@@ -2645,6 +2656,12 @@ cr.CommentPrompt = (function() {
 		return this;
     }
     
+	CommentPrompt.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._translations = [];
+	}
+	
 	CommentPrompt.prototype.appendData = function(initialData)
 	{
 		this.appendList(this.translations(), initialData, 'translations');
@@ -2788,7 +2805,13 @@ cr.Engagement = (function() {
         	});
     }
     
-    Engagement.prototype.appendData = function(initialData)
+	Engagement.prototype.setDefaultValues = function()
+	{
+    	cr.UserLinkInstance.prototype.setDefaultValues.call(this);
+    	cr.DateRangeInstance.prototype.setDefaultValues.call(this);
+	}
+	
+	Engagement.prototype.appendData = function(initialData)
     {
     	cr.UserLinkInstance.prototype.appendData.call(this, initialData);
     	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
@@ -3738,20 +3761,6 @@ cr.ExperiencePrompt = (function() {
 		}
 	}
 	
-	ExperiencePrompt.prototype.setDefaultValues = function()
-	{
-		this._name = "";
-		this._organization = null;
-		this._site = null;
-		this._offering = null;
-		this._domainID = null;
-		this._stage = "";
-		this._timeframe = "";
-		this._translations = [];
-		this._services = [];
-		this._disqualifyingTags = [];
-	}
-	
 	/** Sets the data for this ExperiencePrompt based on a dictionary of data that
 		came from the server.
 	 */
@@ -3801,6 +3810,20 @@ cr.ExperiencePrompt = (function() {
 		if (!this._services) this._services = source._services;
 		if (!this._disqualifyingTags) this._disqualifyingTags = source._disqualifyingTags;
 		return this;
+	}
+	
+	ExperiencePrompt.prototype.setDefaultValues = function()
+	{
+		this._name = "";
+		this._organization = null;
+		this._site = null;
+		this._offering = null;
+		this._domainID = null;
+		this._stage = "";
+		this._timeframe = "";
+		this._translations = [];
+		this._services = [];
+		this._disqualifyingTags = [];
 	}
 	
 	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
@@ -5466,6 +5489,18 @@ cr.Service = (function() {
 			this.serviceImplications(d['services']);
 	}
 	
+	/** For a newly created Period, set its contents to valid values. */
+	Service.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this.stage = "";
+		this._names = [];
+		this._organizationLabels = [];
+		this._siteLabels = [];
+		this._offeringLabels = [];
+		this._serviceImplications = [];
+	}
+	
 	Service.prototype.appendData = function(initialData)
 	{
 		if (this.stage() != null)
@@ -6536,6 +6571,7 @@ cr.User = (function() {
 	
 	User.prototype.setDefaultValues = function()
 	{
+		cr.Grantable.prototype.setDefaultValues.call(this);
 		this._firstName = "";
 		this._lastName = "";
 		this._birthday = "";
@@ -7050,6 +7086,7 @@ cr.UserEmail = (function() {
 	
 	UserEmail.prototype.setDefaultValues = function()
 	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._text = "";
 		this._position = 0;
 	}
@@ -7163,6 +7200,7 @@ cr.UserUserGrantRequest = (function() {
 	
 	UserUserGrantRequest.prototype.setDefaultValues = function()
 	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._grantee = null;
 	}
 	
