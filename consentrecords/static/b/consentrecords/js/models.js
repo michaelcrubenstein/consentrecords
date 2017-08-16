@@ -1839,6 +1839,14 @@ cr.Grant = (function() {
 		}
 	}
 	
+	Grant.prototype.appendData = function(initialData)
+	{
+		if (this.privilege())
+			initialData['privilege'] = this.privilege();
+		if (this.grantee())
+			initialData['grantee'] = this.grantee().urlPath();
+	}
+	
 	Grant.prototype.getUpdateData = function(revision, changes)
 	{
 		changes = changes !== undefined ? changes : {};
@@ -1997,6 +2005,12 @@ cr.OrganizationLinkInstance = (function() {
 		return this;
 	}
 	
+	OrganizationLinkInstance.prototype.appendData = function(initialData)
+	{
+		if (this.organization())
+			initialData['organization'] = this.organization().urlPath();
+	}
+	
 	OrganizationLinkInstance.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2065,6 +2079,12 @@ cr.SiteLinkInstance = (function() {
 		return this;
 	}
 	
+	SiteLinkInstance.prototype.appendData = function(initialData)
+	{
+		if (this.site())
+			initialData['site'] = this.site().urlPath();
+	}
+	
 	SiteLinkInstance.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2131,6 +2151,12 @@ cr.OfferingLinkInstance = (function() {
 		if (!this._offering)
 			this._offering = source._offering;
 		return this;
+	}
+	
+	OfferingLinkInstance.prototype.appendData = function(initialData)
+	{
+		if (this.offering())
+			initialData['offering'] = this.offering().urlPath();
 	}
 	
 	OfferingLinkInstance.prototype.updateData = function(d, newIDs)
@@ -2229,6 +2255,14 @@ cr.DateRangeInstance = (function() {
 		this._end = "";
 	}
 	
+    DateRangeInstance.prototype.appendData = function(initialData)
+    {
+		if (this.start())
+			initialData['start'] = this.start();
+		if (this.end())
+			initialData['end'] = this.end();
+    }
+		
 	DateRangeInstance.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2319,6 +2353,17 @@ cr.Address = (function() {
 			}
 			return this;
 		}
+	}
+	
+	Address.prototype.appendData = function(initialData)
+	{
+		if (this.city())
+			initialData['city'] = this.city();
+		if (this.state())
+			initialData['state'] = this.state();
+		if (this.zipCode())
+			initialData['zip code'] = this.zipCode();
+		this.appendList(this.streets(), initialData, 'streets');
 	}
 	
 	/** Sets the data for this address based on a dictionary of data that
@@ -2484,6 +2529,16 @@ cr.Comment = (function() {
 		return this;
     }
     
+	Comment.prototype.appendData = function(initialData)
+	{
+		if (this.text())
+			initialData['text'] = this.text();
+		if (this.question())
+			initialData['question'] = this.question();
+		if (this.asker())
+			initialData['asker'] = this.asker().urlPath();
+	}
+	
 	Comment.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2590,6 +2645,11 @@ cr.CommentPrompt = (function() {
 		return this;
     }
     
+	CommentPrompt.prototype.appendData = function(initialData)
+	{
+		this.appendList(this.translations(), initialData, 'translations');
+	}
+	
 	/** Called after the contents of the CommentPrompt have been updated on the server. */
 	CommentPrompt.prototype.updateData = function(d, newIDs)
 	{
@@ -2726,6 +2786,12 @@ cr.Engagement = (function() {
         		fields: [fields],
         		resultType: cr.Engagement
         	});
+    }
+    
+    Engagement.prototype.appendData = function(initialData)
+    {
+    	cr.UserLinkInstance.prototype.appendData.call(this, initialData);
+    	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
     }
     
 	Engagement.prototype.updateData = function(d, newIDs)
@@ -3002,24 +3068,18 @@ cr.Experience = (function() {
 	
 	Experience.prototype.appendData = function(initialData)
 	{
-		if (this.start())
-			initialData['start'] = this.start();
-		if (this.end())
-			initialData['end'] = this.end();
-		
-		if (this.organization())
-			initialData['organization'] = this.organization().urlPath();
-		else if (this.customOrganization())
+    	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
+    
+		cr.OrganizationLinkInstance.prototype.appendData.call(this, initialData);
+		if (this.customOrganization())
 			initialData['custom organization'] = this.customOrganization();
 			
-		if (this.site())
-			initialData['site'] = this.site().urlPath();
-		else if (this.customSite())
+		cr.SiteLinkInstance.prototype.appendData.call(this, initialData);
+		if (this.customSite())
 			initialData['custom site'] = this.customSite();
 			
-		if (this.offering())
-			initialData['offering'] = this.offering().urlPath();
-		else if (this.customOffering())
+		cr.OfferingLinkInstance.prototype.appendData.call(this, initialData);
+		if (this.customOffering())
 			initialData['custom offering'] = this.customOffering();
 		
 		if (this.timeframe())
@@ -3744,6 +3804,25 @@ cr.ExperiencePrompt = (function() {
 	}
 	
 	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
+	ExperiencePrompt.prototype.appendData = function(initialData)
+	{
+		if (this.name())
+			initialData['name'] = this.name().urlPath();
+		cr.OrganizationLinkInstance.prototype.appendData.call(this, initialData);
+		cr.SiteLinkInstance.prototype.appendData.call(this, initialData);
+		cr.OfferingLinkInstance.prototype.appendData.call(this, initialData);
+		if (this.domain())
+			initialData['domain'] = this.domain().urlPath();
+		if (this.stage())
+			initialData['stage'] = this.stage();
+		if (this.timeframe())
+			initialData['timeframe'] = this.timeframe();
+			
+		this.appendList(this.translations(), initialData, 'translations');
+		this.appendList(this.experiencePromptServices(), initialData, 'services');
+		this.appendList(this.disqualifyingTags(), initialData, 'disqualifying tags');
+	}
+	
 	ExperiencePrompt.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -3790,7 +3869,7 @@ cr.ExperiencePrompt = (function() {
 		}
 		if ('disqualifyingTags' in d)
 		{
-			if (this.updateList(this.disqualifyingTags, d['disqualifyingTags'], newIDs, cr.DisqualifyingTag, "disqualifyingTagAdded.cr", "disqualifyingTagDeleted.cr"))
+			if (this.updateList(this.disqualifyingTags, d['disqualifying tags'], newIDs, cr.DisqualifyingTag, "disqualifyingTagAdded.cr", "disqualifyingTagDeleted.cr"))
 				changed = true;
 		}
 		
@@ -3868,6 +3947,8 @@ cr.Group = (function() {
 	
 	Group.prototype.appendData = function(initialData)
 	{
+		this.appendList(this.members(), initialData, 'members');
+		this.appendList(this.names(), initialData, 'names');
 	}
 	
 	Group.prototype.setData = function(d)
@@ -4338,6 +4419,24 @@ cr.Offering = (function() {
 		this._maximumGrade = "";
 		this._services = [];
 		this._sessions = [];
+	}
+	
+	Offering.prototype.appendData = function(initialData)
+	{
+		if (this.webSite())
+			initialData['web site'] = this.webSite();
+		if (this.minimumAge())
+			initialData['minimum age'] = this.minimumAge();
+		if (this.maximumAge())
+			initialData['maximum age'] = this.maximumAge();
+		if (this.minimumGrade())
+			initialData['minimum grade'] = this.minimumGrade();
+		if (this.maximumGrade())
+			initialData['maximum grade'] = this.maximumGrade();
+		
+		this.appendList(this.names(), initialData, 'names');
+		this.appendList(this.offeringServices(), initialData, 'services');
+		this.appendList(this.sessions(), initialData, 'sessions');
 	}
 	
 	/** Called after the contents of the Offering have been updated on the server. */
@@ -5202,6 +5301,16 @@ cr.Period = (function() {
 			Date.CultureInfo.dayNames[parseInt(this._weekday)];
 	}
 	
+	Period.prototype.appendData = function(initialData)
+	{
+		if (this.weekday() != null)
+			initialData['weekday'] = this.weekday();
+		if (this.startTime() != null)
+			initialData['start time'] = this.startTime();
+		if (this.endTime() != null)
+			initialData['end time'] = this.endTime();
+	}
+	
 	/** Called after the contents of the Period have been updated on the server. */
 	Period.prototype.updateData = function(d, newIDs)
 	{
@@ -5355,6 +5464,18 @@ cr.Service = (function() {
 			this.offeringLabels(d['offering labels']);
 		if ('services' in d)
 			this.serviceImplications(d['services']);
+	}
+	
+	Service.prototype.appendData = function(initialData)
+	{
+		if (this.stage() != null)
+			initialData['stage'] = this.stage();
+			
+		this.appendList(this.names(), initialData, 'names');
+		this.appendList(this.organizationLabels(), initialData, 'organization labels');
+		this.appendList(this.siteLabels(), initialData, 'site labels');
+		this.appendList(this.offeringLabels(), initialData, 'offering labels');
+		this.appendList(this.serviceImplications(), initialData, 'services');
 	}
 	
     Service.servicesPromise = function()
@@ -5921,6 +6042,24 @@ cr.Session = (function() {
 		this._periods = [];
 	}
 	
+	Session.prototype.appendData = function(initialData)
+	{
+    	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
+		
+		if (this.webSite())
+			initialData['web site'] = this.webSite();
+		if (this.registrationDeadline())
+			initialData['registration deadline'] = this.registrationDeadline();
+		if (this.canRegister())
+			initialData['can register'] = this.canRegister();
+
+		this.appendList(this.names(), initialData, 'names');
+		this.appendList(this.inquiries(), initialData, 'inquiries');
+		this.appendList(this.enrollments(), initialData, 'enrollments');
+		this.appendList(this.engagements(), initialData, 'engagements');
+		this.appendList(this.periods(), initialData, 'engagements');
+	}
+	
 	Session.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -6128,6 +6267,23 @@ cr.Site = (function() {
 		this._offerings = [];
 	}
 	
+	Site.prototype.appendData = function(initialData)
+	{
+		if (this.webSite())
+			initialData['web site'] = this.webSite();
+		
+		this.appendList(this.names(), initialData, 'names');
+		
+		if (this.address())
+		{
+			var addressData = {};
+			this.address().appendData(addressData);
+			initialData['address'] = addressData;
+		}
+		
+		this.appendList(this.offerings(), initialData, 'offerings');
+	}
+	
 	/** Called after the contents of the Site have been updated on the server. */
 	Site.prototype.updateData = function(d, newIDs)
 	{
@@ -6301,6 +6457,14 @@ cr.Street = (function() {
 		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._position = "";
 		this._text = "";
+	}
+	
+	Street.prototype.appendData = function(initialData)
+	{
+		if (this.position() != null)
+			initialData.position = this.position();
+		if (this.text() != null)
+			initialData.text = this.text();
 	}
 	
 	/** Called after the contents of the Street have been updated on the server. */
@@ -6896,6 +7060,14 @@ cr.UserEmail = (function() {
 		this._position = 'position' in d ? parseInt(d['position']) : 0;
 	}
 	
+	UserEmail.prototype.appendData = function(initialData)
+	{
+		if (this._position != null)
+			initialData.position = this._position;
+		if (this.text() != null)
+			initialData.text = this.text();
+	}
+	
 	function UserEmail() {
 	    cr.IInstance.call(this);
 	};
@@ -6935,11 +7107,6 @@ cr.UserUserGrantRequest = (function() {
 	{
 		console.assert(this.id());
 		return 'user user grant request/{0}'.format(this.id());
-	}
-	
-	UserUserGrantRequest.prototype.setDefaultValues = function()
-	{
-		this._grantee = null;
 	}
 	
 	UserUserGrantRequest.prototype.grantee = function(newValue)
@@ -6992,6 +7159,17 @@ cr.UserUserGrantRequest = (function() {
 		if (!this._grantee)
 			this._grantee = source._grantee;
 		return this;
+	}
+	
+	UserUserGrantRequest.prototype.setDefaultValues = function()
+	{
+		this._grantee = null;
+	}
+	
+	UserUserGrantRequest.prototype.appendData = function(initialData)
+	{
+		if (this.grantee())
+			initialData['grantee'] = this.grantee().urlPath();
 	}
 	
 	UserUserGrantRequest.prototype.deleted = function()
