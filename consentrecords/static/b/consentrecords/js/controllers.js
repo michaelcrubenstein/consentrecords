@@ -42,18 +42,13 @@ var Controller = (function() {
 		this.newInstance().appendData(initialData);
 	}
 	
-	Controller.prototype.getUpdateData = function()
-	{
-		return this.oldInstance().getUpdateData(this.newInstance());
-	}
-
 	Controller.prototype.save = function()
 	{
 		var _this = this;
 	
 		if (this.oldInstance())
 		{
-			var updateData = this.getUpdateData();
+			var updateData = this.oldInstance().getUpdateData(this.newInstance());
 			
 			if (Object.keys(updateData).length == 0)
 			{

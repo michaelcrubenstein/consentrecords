@@ -2565,6 +2565,11 @@ cr.Address = (function() {
 	}
 	
 	/** Called after the contents of the Address have been updated on the server. */
+	Address.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.streets(), source.streets());
+	}
+	
 	Address.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2723,8 +2728,6 @@ cr.Comment = (function() {
 		if (cr.linkChanged(this.asker(), revision.asker()))
 			changes.asker = revision.asker() && revision.asker().urlPath();
 		
-		this.appendUpdateList(this.streets(), revision.streets(), changes, 'streets');		
-
 		return changes;
 	}
 	
@@ -4089,6 +4092,14 @@ cr.ExperiencePrompt = (function() {
 		return changes;
 	}
 	
+	/** For a newly updated item, add any new elements created to this. */
+	ExperiencePrompt.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.translations(), source.translations())
+				   .pullNewElements(this.experiencePromptServices(), source.experiencePromptServices())
+				   .pullNewElements(this.disqualifyingTags(), source.disqualifyingTags());
+	}
+	
 	ExperiencePrompt.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -4268,6 +4279,12 @@ cr.Group = (function() {
 		if (!this._members && source._members)
 			this._members = source._members;
 		return this;
+	}
+	
+	/** For a newly updated item, add any new elements created to this. */
+	Group.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.names(), source.names());
 	}
 	
 	/** For a newly created Group, set its contents to valid values. */
@@ -4765,6 +4782,13 @@ cr.Offering = (function() {
 		this.appendUpdateList(this.services(), revision.services(), changes, 'services');		
 					
 		return changes;
+	}
+	
+	/** For a newly updated item, add any new elements created to this. */
+	Offering.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.names(), source.names())
+				   .pullNewElements(this.offeringServices(), source.offeringServices());
 	}
 	
 	/** Called after the contents of the Offering have been updated on the server. */
@@ -5936,6 +5960,16 @@ cr.Service = (function() {
 		return changes;
 	}
 	
+	/** For a newly updated item, add any new elements created to this. */
+	Service.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.names(), source.names())
+				   .pullNewElements(this.organizationLabels(), source.organizationLabels())
+				   .pullNewElements(this.siteLabels(), source.siteLabels())
+				   .pullNewElements(this.offeringLabels(), source.offeringLabels())
+				   .pullNewElements(this.serviceImplications(), source.serviceImplications());
+	}
+	
     Service.servicesPromise = function()
     {
         if (cr.Service._servicesPromise)
@@ -6551,6 +6585,12 @@ cr.Session = (function() {
 		return changes;
 	}
 	
+	/** For a newly updated item, add any new elements created to this. */
+	Session.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.names(), source.names());
+	}
+	
 	Session.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -6808,9 +6848,14 @@ cr.Site = (function() {
 		}
 				
 		this.appendUpdateList(this.names(), revision.names(), changes, 'names');		
-		this.appendUpdateList(this.offerings(), revision.offerings(), changes, 'offerings');		
 					
 		return changes;
+	}
+	
+	/** For a newly updated item, add any new elements created to this. */
+	Site.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.names(), source.names());
 	}
 	
 	/** Called after the contents of the Site have been updated on the server. */
