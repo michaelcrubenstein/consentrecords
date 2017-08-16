@@ -1031,6 +1031,20 @@ cr.IInstance = (function() {
 			updateData[key] = subChanges;
 	}
 	
+	IInstance.prototype.appendList = function(items, initialData, key)
+	{
+		var f = function(s)
+				{
+					var d = {add: uuid.v4()};
+					s.clientID(d.add);
+					s.appendData(d);
+					return d;
+				}
+		var newData = items.map(f);
+		if (newData.length)
+			initialData[key] = newData;
+	}
+	
 	IInstance.prototype.pullElements = function(source)
 	{
 		return this;
@@ -1340,8 +1354,6 @@ cr.ServiceLinkInstance = (function() {
 		
 	ServiceLinkInstance.prototype.appendData = function(initialData)
 	{
-		cr.ServiceLinkInstance.prototype.appendData.call(this, initialData);
-		
 		if (this.service() != null)
 			initialData.service = this.service().urlPath();
 	}
@@ -3015,30 +3027,8 @@ cr.Experience = (function() {
 		
 		var i = 0;
 		
-		var newServices = this.distinctExperienceServices()
-			.map(function(s)
-				{
-					var d = {add: uuid.v4(), position: i++, service: s.service().urlPath()};
-					s.clientID(d.add);
-					return d;
-				});
-		if (newServices.length)
-		{
-			initialData['services'] = newServices;
-		}
-		
-		i = 0;
-		var newCustomServices = this.customServices()
-			.map(function(s)
-				{
-					var d = {add: uuid.v4(), position: i, name: s};
-					s.clientID(d.add);
-					return d;
-				});
-		if (newCustomServices.length)
-		{
-			initialData['custom services'] = newCustomServices;
-		}
+		this.appendList(this.distinctExperienceServices(), initialData, 'services');
+		this.appendList(this.customServices(), initialData, 'custom services');
 	}
 	
 	/* Returns a dictionary that describes all of the operations needed to change
@@ -3506,8 +3496,7 @@ cr.ExperienceCustomService = (function() {
 	{
 		cr.IInstance.prototype.triggerChanged.call(this);
 
-		var experience = this.parent();
-		$(experience).trigger('changed.cr');
+		$(this.parent()).trigger('changed.cr');
 	}
 	
 	function ExperienceCustomService() {
@@ -3543,8 +3532,7 @@ cr.ExperienceService = (function() {
 		
 		cr.IInstance.prototype.triggerChanged.call(this);
 
-		var experience = this.parent();
-		$(experience).trigger('changed.cr');
+		$(this.parent()).trigger('changed.cr');
 	}
 	
 	ExperienceService.prototype.deleted = function()
@@ -4593,25 +4581,13 @@ cr.Organization = (function() {
 		if (this.webSite())
 			initialData['web site'] = this.webSite();
 		
-					s.appendData(d);
-					return d;
-				});
-		if (newGroups.length)
-		{
-			initialData['groups'] = newGroups;
 		this.appendList(this.names(), initialData, 'names');
 		this.appendList(this.groups(), initialData, 'groups');
 		
 		if (this.inquiryAccessGroup())
 			initialData['inquiry access group'] = 'group/' + this.inquiryAccessGroup().clientID();
 		
-					s.appendData(d);
-					return d;
-				});
-		if (newSites.length)
-		{
-			initialData['sites'] = newSites;
-		}
+		this.appendList(this.sites(), initialData, 'sites');
 	}
 	
 	/* Returns a dictionary that describes all of the operations needed to change
