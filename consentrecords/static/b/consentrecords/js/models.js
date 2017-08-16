@@ -816,6 +816,12 @@ cr.IInstance = (function() {
 		this._privilege = 'write';
 	}
 	
+	IInstance.prototype.duplicateData = function(newInstance)
+	{
+		newInstance._description = this._description;
+		return this;
+	}
+	
 	IInstance.prototype.mergeData = function(source)
 	{
 		// Do nothing.
@@ -1036,6 +1042,16 @@ cr.IInstance = (function() {
 			changes[key] = subChanges;
 	}
 	
+	IInstance.prototype.duplicateList = function(items, itemType)
+	{
+		return items.map(function(i)
+			{
+				target = new itemType();
+				i.duplicateData(target);
+				return target;
+			});
+	}
+
 	IInstance.prototype.appendList = function(items, initialData, key)
 	{
 		var f = function(s)
@@ -1216,6 +1232,14 @@ cr.TranslationInstance = (function() {
 		this._language = cr.language || 'en';
 	}
 	
+	TranslationInstance.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._text = this._text;
+		newInstance._language = this._language;
+		return this;
+	}
+	
 	TranslationInstance.prototype.appendData = function(initialData)
 	{
 		if (this._text)
@@ -1358,6 +1382,17 @@ cr.ServiceLinkInstance = (function() {
 		return changes;
 	}
 		
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	ServiceLinkInstance.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._serviceID = this._serviceID;
+		
+		return this;
+	}
+	
 	ServiceLinkInstance.prototype.appendData = function(initialData)
 	{
 		if (this.service() != null)
@@ -1456,6 +1491,17 @@ cr.OrderedServiceLinkInstance = (function() {
 		return changes;
 	}
 		
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	OrderedServiceLinkInstance.prototype.duplicateData = function(newInstance)
+	{
+		cr.ServiceLinkInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._position = this._position;
+		
+		return this;
+	}
+	
 	OrderedServiceLinkInstance.prototype.appendData = function(initialData)
 	{
 		cr.ServiceLinkInstance.prototype.appendData.call(this, initialData);
@@ -1511,12 +1557,6 @@ cr.UserLinkInstance = (function() {
 		}
 	}
 	
-	UserLinkInstance.prototype.appendData = function(initialData)
-	{
-		if (this._user)
-			initialData.user = this._user.urlPath();
-	}
-	
 	UserLinkInstance.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -1528,6 +1568,23 @@ cr.UserLinkInstance = (function() {
 		}
     }
     
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	UserLinkInstance.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._user = this._user;
+		
+		return this;
+	}
+	
+	UserLinkInstance.prototype.appendData = function(initialData)
+	{
+		if (this._user)
+			initialData.user = this._user.urlPath();
+	}
+	
 	UserLinkInstance.prototype.mergeData = function(source)
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
@@ -1753,6 +1810,7 @@ cr.Grantable = (function() {
 	 */
 	Grantable.prototype.duplicateData = function(newInstance)
 	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
 		newInstance._primaryAdministrator = this._primaryAdministrator;
 		newInstance._publicAccess = this._publicAccess;
 		
@@ -1866,6 +1924,14 @@ cr.Grant = (function() {
 		this._grantee = null;
 	}
 	
+	Grant.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._privilege = this._privilege;
+		newInstance._grantee = this._grantee;
+		return this;
+	}
+	
 	Grant.prototype.appendData = function(initialData)
 	{
 		if (this.privilege())
@@ -1949,12 +2015,7 @@ cr.NamedInstance = (function() {
 	 */
 	NamedInstance.prototype.duplicateData = function(newInstance, nameType)
 	{
-		newInstance._names = this._names.map(function(i)
-			{
-				target = new nameType();
-				target.mergeData(i);
-				return target;
-			});
+		newInstance._names = this.duplicateList(this._names, nameType);
 		return this;
 	}
 	
@@ -2300,6 +2361,15 @@ cr.DateRangeInstance = (function() {
 		this._end = "";
 	}
 	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	DateRangeInstance.prototype.duplicateData = function(newInstance)
+	{
+		newInstance._start = this._start;
+		newInstance._end = this._end;
+	}
+	
     DateRangeInstance.prototype.appendData = function(initialData)
     {
 		if (this.start())
@@ -2408,33 +2478,6 @@ cr.Address = (function() {
 		}
 	}
 	
-	Address.prototype.appendData = function(initialData)
-	{
-		if (this.city())
-			initialData['city'] = this.city();
-		if (this.state())
-			initialData['state'] = this.state();
-		if (this.zipCode())
-			initialData['zip code'] = this.zipCode();
-		this.appendList(this.streets(), initialData, 'streets');
-	}
-	
-	Address.prototype.getUpdateData = function(revision, changes)
-	{
-		changes = changes !== undefined ? changes : {};
-		
-		if (cr.stringChanged(this.city(), revision.city()))
-			changes.city = revision.city();
-		if (cr.stringChanged(this.state(), revision.state()))
-			changes.state = revision.state();
-		if (cr.stringChanged(this.zipCode(), revision.zipCode()))
-			changes['zip code'] = revision.zipCode();
-		
-		this.appendUpdateList(this.streets(), revision.streets(), changes, 'streets');		
-
-		return changes;
-	}
-	
 	/** Sets the data for this address based on a dictionary of data that
 		came from the server.
 	 */
@@ -2479,6 +2522,46 @@ cr.Address = (function() {
 		this._state = "";
 		this._zipCode = "";
 		this._streets = [];
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+	 */
+	Address.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		
+		newInstance._city = this._city;
+		newInstance._state = this._state;
+		newInstance._zipCode = this._zipCode;
+		newInstance._streets = this.duplicateList(this._streets, cr.Street);
+		return this;
+	}
+	
+	Address.prototype.appendData = function(initialData)
+	{
+		if (this.city())
+			initialData['city'] = this.city();
+		if (this.state())
+			initialData['state'] = this.state();
+		if (this.zipCode())
+			initialData['zip code'] = this.zipCode();
+		this.appendList(this.streets(), initialData, 'streets');
+	}
+	
+	Address.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.city(), revision.city()))
+			changes.city = revision.city();
+		if (cr.stringChanged(this.state(), revision.state()))
+			changes.state = revision.state();
+		if (cr.stringChanged(this.zipCode(), revision.zipCode()))
+			changes['zip code'] = revision.zipCode();
+		
+		this.appendUpdateList(this.streets(), revision.streets(), changes, 'streets');		
+
+		return changes;
 	}
 	
 	/** Called after the contents of the Address have been updated on the server. */
@@ -2604,6 +2687,18 @@ cr.Comment = (function() {
 		this._text = "";
 		this._question = "";
 		this._asker = null;
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+	 */
+	Comment.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		
+		newInstance._text = this._text;
+		newInstance._question = this._question;
+		newInstance._asker = this._asker;
+		return this;
 	}
 	
 	Comment.prototype.appendData = function(initialData)
@@ -2737,6 +2832,16 @@ cr.CommentPrompt = (function() {
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._translations = [];
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+	 */
+	CommentPrompt.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		
+		newInstance._translations = this.duplicateList(this._translations, cr.CommentPromptText);
+		return this;
 	}
 	
 	CommentPrompt.prototype.appendData = function(initialData)
@@ -2895,6 +3000,14 @@ cr.Engagement = (function() {
 	{
     	cr.UserLinkInstance.prototype.setDefaultValues.call(this);
     	cr.DateRangeInstance.prototype.setDefaultValues.call(this);
+	}
+	
+	Engagement.prototype.duplicateData = function(newInstance)
+	{
+		cr.UserLinkInstance.prototype.duplicateData.call(this, newInstance);
+    	cr.DateRangeInstance.prototype.duplicateData.call(this, newInstance);
+		
+		return this;
 	}
 	
 	Engagement.prototype.appendData = function(initialData)
@@ -3357,30 +3470,20 @@ cr.Experience = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	Experience.prototype.duplicateData = function(newExperience)
+	Experience.prototype.duplicateData = function(newInstance)
 	{
-		newExperience._path = this._path;
-		newExperience._organization = this._organization;
-		newExperience._customOrganization = this._customOrganization
-		newExperience._site = this._site;
-		newExperience._customSite = this._customSite;
-		newExperience._offering = this._offering;
-		newExperience._customOffering = this._customOffering;
-		newExperience._start = this._start;
-		newExperience._end = this._end;
-		newExperience._timeframe = this._timeframe;
-		newExperience._services = this._services.map(function(i)
-			{
-				target = new cr.ExperienceService();
-				target.mergeData(i);
-				return target;
-			});
-		newExperience._customServices = this._customServices.map(function(i)
-			{
-				target = new cr.ExperienceCustomService();
-				target.mergeData(i);
-				return target;
-			});
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+    	cr.DateRangeInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._path = this._path;
+		newInstance._organization = this._organization;
+		newInstance._customOrganization = this._customOrganization
+		newInstance._site = this._site;
+		newInstance._customSite = this._customSite;
+		newInstance._offering = this._offering;
+		newInstance._customOffering = this._customOffering;
+		newInstance._timeframe = this._timeframe;
+		newInstance._services = this.duplicateList(this._services, cr.ExperienceService);
+		newInstance._customServices = this.duplicateList(this._customServices, cr.ExperienceCustomService);
 		return this;
 	}
 	
@@ -3635,6 +3738,20 @@ cr.ExperienceCustomService = (function() {
 		return changes;
 	}
 		
+	ExperienceCustomService.prototype.setDefaultValues = function()
+	{
+		newInstance._name = "";
+		newInstance._position = 0;
+	}
+	
+	ExperienceCustomService.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._name = this._name;
+		newInstance._position = this._position;
+		return this;
+	}
+	
 	ExperienceCustomService.prototype.appendData = function(initialData)
 	{
 		if (this.name())
@@ -3917,6 +4034,26 @@ cr.ExperiencePrompt = (function() {
 		this._disqualifyingTags = [];
 	}
 	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	ExperiencePrompt.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		
+		newInstance._name = this._name;
+		newInstance._organization = this._organization;
+		newInstance._site = this._site;
+		newInstance._offering = this._offering;
+		newInstance._domainID = this._domainID;
+		newInstance._stage = this._stage;
+		newInstance._timeframe = this._timeframe;
+		newInstance._translations = this.duplicateList(this._translations, cr.ExperiencePromptText);
+		newInstance._services = this.duplicateList(this._services, cr.ExperiencePromptService);
+		newInstance._disqualifyingTags = this.duplicateList(this._disqualifyingTags, cr.DisqualifyingTag);
+		return this;
+	}
+	
 	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
 	ExperiencePrompt.prototype.appendData = function(initialData)
 	{
@@ -4081,6 +4218,24 @@ cr.Group = (function() {
 		}
 	}
 	
+	Group.prototype.setDefaultValues = function()
+	{
+		cr.IInstance.prototype.setDefaultValues.call(this);
+		this._names = [];
+		this._members = [];
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+	 */
+	Group.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._names = this.duplicateList(this._names, cr.GroupName);
+		newInstance._members = this.duplicateList(this._members, cr.GroupMember);
+		
+		return this;
+	}
+	
 	Group.prototype.appendData = function(initialData)
 	{
 		this.appendList(this.members(), initialData, 'members');
@@ -4123,13 +4278,6 @@ cr.Group = (function() {
 	}
 	
 	/** For a newly created Group, set its contents to valid values. */
-	Group.prototype.setDefaultValues = function()
-	{
-		cr.IInstance.prototype.setDefaultValues.call(this);
-		this._names = [];
-		this._members = [];
-	}
-	
 	/** Called after the contents of the Group have been updated on the server. */
 	Group.prototype.updateData = function(d, newIDs)
 	{
@@ -4567,6 +4715,23 @@ cr.Offering = (function() {
 		this._sessions = [];
 	}
 	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For offerings, sessions are not copied.
+	 */
+	Offering.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		
+		newInstance._webSite = this._webSite;
+		newInstance._minimumAge = this._minimumAge;
+		newInstance._maximumAge = this._maximumAge;
+		newInstance._minimumGrade = this._minimumGrade;
+		newInstance._maximumGrade = this._maximumGrade;
+		newInstance._services = this.duplicateList(this._services, cr.OfferingService);
+		return this;
+	}
+	
 	Offering.prototype.appendData = function(initialData)
 	{
 		if (this.webSite())
@@ -4844,6 +5009,29 @@ cr.Organization = (function() {
 		}
 	}
 	
+	Organization.prototype.setDefaultValues = function()
+	{
+		cr.Grantable.prototype.setDefaultValues.call(this);
+		this._webSite = "";
+		this._names = [];
+		this._groups = [];
+		this._sites = [];
+		this._inquiryAccessGroup = null;
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	Organization.prototype.duplicateData = function(newInstance)
+	{
+		cr.Grantable.prototype.duplicateData.call(this, newInstance);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		
+		newInstance._webSite = this._webSite;
+		newInstance._inquiryAccessGroup = this._inquiryAccessGroup;
+		return this;
+	}
+	
 	Organization.prototype.appendData = function(initialData)
 	{
 		cr.Grantable.prototype.appendData.call(this, initialData);
@@ -4929,16 +5117,6 @@ cr.Organization = (function() {
 	}
 	
 	/** For a newly created Organization, set its contents to valid values. */
-	Organization.prototype.setDefaultValues = function()
-	{
-		cr.Grantable.prototype.setDefaultValues.call(this);
-		this._webSite = "";
-		this._names = [];
-		this._groups = [];
-		this._sites = [];
-		this._inquiryAccessGroup = null;
-	}
-	
 	Organization.prototype.pullElements = function(source)
 	{
 		return this.pullNewElements(this.names(), source.names());
@@ -4999,19 +5177,6 @@ cr.Organization = (function() {
 		}
 		
 		return changed;
-	}
-	
-	/* Copies all of the data associated with this instance prior to making changes.
-		For experiences, comments are not copied.
-	 */
-	Organization.prototype.duplicateData = function(newInstance)
-	{
-		cr.Grantable.prototype.duplicateData.call(this, newInstance);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
-		
-		newInstance._webSite = this._webSite;
-		newInstance._inquiryAccessGroup = this._inquiryAccessGroup;
-		return this;
 	}
 	
     Organization.prototype.getData = function(fields)
@@ -5243,6 +5408,20 @@ cr.Path = (function() {
 				this._experiences.forEach(function(e) { e.path(_this); });
 		}
 		if (!this._user) this._user = source._user;
+		return this;
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	Path.prototype.duplicateData = function(newInstance)
+	{
+		cr.Grantable.prototype.duplicateData.call(this, newInstance);
+		
+		newInstance._name = this._name;
+		newInstance._specialAccess = this._specialAccess;
+		newInstance._canAnswerExperience = this._canAnswerExperience;
+		
 		return this;
 	}
 	
@@ -5498,6 +5677,19 @@ cr.Period = (function() {
 			initialData['end time'] = this.endTime();
 	}
 	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	Period.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._weekday = this._weekday;
+		newInstance._startTime = this._startTime;
+		newInstance._endTime = this._endTime;
+		
+		return this;
+	}
+	
 	/* Returns a dictionary that describes all of the operations needed to change
 		the data in this object to the data in the revision.
 	 */
@@ -5692,6 +5884,23 @@ cr.Service = (function() {
 		this.appendList(this.siteLabels(), initialData, 'site labels');
 		this.appendList(this.offeringLabels(), initialData, 'offering labels');
 		this.appendList(this.serviceImplications(), initialData, 'services');
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	Service.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.ServiceName);
+		
+		newInstance._stage = this._stage;
+		newInstance._organizationLabels = this.duplicateList(this._organizationLabels, cr.OrganizationLabel);
+		newInstance._siteLabels = this.duplicateList(this._siteLabels, cr.SiteLabel);
+		newInstance._offeringLabels = this.duplicateList(this._offeringLabels, cr.OfferingLabel);
+		newInstance._serviceImplications = this.duplicateList(this._serviceImplications, cr.ServiceImplication);
+		
+		return this;
 	}
 	
 	/* Returns a dictionary that describes all of the operations needed to change
@@ -6277,6 +6486,20 @@ cr.Session = (function() {
 		this._periods = [];
 	}
 	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For sessions, inquiries, enrollments, engagements and periods are not copied.
+	 */
+	Session.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		
+		newInstance._webSite = this._webSite;
+		newInstance._registrationDeadline = this._registrationDeadline;
+		newInstance._canRegister = this._canRegister;
+		return this;
+	}
+	
 	Session.prototype.appendData = function(initialData)
 	{
     	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
@@ -6521,6 +6744,21 @@ cr.Site = (function() {
 		this._offerings = [];
 	}
 	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For sites, offerings are not copied.
+	 */
+	Site.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		
+		newInstance._webSite = this._webSite;
+		if (newInstance._address == null)
+			newInstance._address = new cr.Address();
+		this._address.duplicateData(newInstance._address);
+		return this;
+	}
+	
 	Site.prototype.appendData = function(initialData)
 	{
 		if (this.webSite())
@@ -6736,6 +6974,14 @@ cr.Street = (function() {
 		this._text = "";
 	}
 	
+	Street.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._text = this._text;
+		newInstance._position = this._position;
+		return this;
+	}
+	
 	Street.prototype.appendData = function(initialData)
 	{
 		if (this.position() != null)
@@ -6874,6 +7120,25 @@ cr.User = (function() {
 		if (!this._lastName) this._lastName = source._lastName;
 		if (!this._birthday) this._birthday = source._birthday;
 		if (!this._systemAccess) this._systemAccess = source._systemAccess;
+		return this;
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	User.prototype.duplicateData = function(newInstance)
+	{
+		cr.Grantable.prototype.duplicateData.call(this, newInstance);
+		
+		newInstance._firstName = this._firstName;
+		newInstance._lastName = this._lastName;
+		newInstance._birthday = this._birthday;
+		newInstance._systemAccess = this._systemAccess;
+		
+		if (newInstance._path == null)
+			newInstance._path = new cr.Path();
+		this._path.duplicateData(newInstance._path);
+		
 		return this;
 	}
 	
@@ -7376,6 +7641,14 @@ cr.UserEmail = (function() {
 		this._position = 'position' in d ? parseInt(d['position']) : 0;
 	}
 	
+	UserEmail.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._text = this._text;
+		newInstance._position = this._position;
+		return this;
+	}
+	
 	UserEmail.prototype.appendData = function(initialData)
 	{
 		if (this._position != null)
@@ -7494,6 +7767,13 @@ cr.UserUserGrantRequest = (function() {
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._grantee = null;
+	}
+	
+	UserUserGrantRequest.prototype.duplicateData = function(newInstance)
+	{
+		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		newInstance._grantee = this._grantee;
+		return this;
 	}
 	
 	UserUserGrantRequest.prototype.appendData = function(initialData)
