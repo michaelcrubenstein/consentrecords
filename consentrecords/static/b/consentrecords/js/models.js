@@ -3707,14 +3707,7 @@ cr.ExperienceCustomService = (function() {
     	if (this._position === null) this._position = source._position;
 		return this;
     }
-    
-    ExperienceCustomService.prototype.copyData = function(target)
-    {
-    	cr.IInstance.prototype.copyData.call(this, target);
-    	target._name = this._name;
-    	target._position = this._position;
-    }
-    
+        
 	ExperienceCustomService.prototype.deleted = function()
 	{
 		var experience = this.parent();
@@ -3725,19 +3718,6 @@ cr.ExperienceCustomService = (function() {
 	/* Returns a dictionary that describes all of the operations needed to change
 		the data in this object to the data in the revision.
 	 */
-	ExperienceCustomService.prototype.getUpdateData = function(revision, changes)
-	{
-		changes = changes !== undefined ? changes : {};
-		
-		if (cr.stringChanged(this.name(), revision.name()))
-			changes.name = revision.name();
-			
-		if (this.position() != revision.position())
-			changes.position = revision.position();
-			
-		return changes;
-	}
-		
 	ExperienceCustomService.prototype.setDefaultValues = function()
 	{
 		newInstance._name = "";
@@ -3761,6 +3741,19 @@ cr.ExperienceCustomService = (function() {
 			initialData.position = this.position();
 	}
 	
+	ExperienceCustomService.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.name(), revision.name()))
+			changes.name = revision.name();
+			
+		if (this.position() != revision.position())
+			changes.position = revision.position();
+			
+		return changes;
+	}
+		
 	ExperienceCustomService.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -5862,11 +5855,32 @@ cr.Service = (function() {
 			this.serviceImplications(d['services']);
 	}
 	
+    /** Merge the contents of the specified source into this Street for
+    	values that are not specified herein.
+     */
+	Service.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._names && source._names)
+			this._names = source._names;
+		if (!this._stage) this._stage = source._stage;
+		if (!this._organizationLabels && source._organizationLabels)
+			this._organizationLabels = source._organizationLabels;
+		if (!this._siteLabels && source._siteLabels)
+			this._siteLabels = source._siteLabels;
+		if (!this._offeringLabels && source._offeringLabels)
+			this._offeringLabels = source._offeringLabels;
+		if (!this._serviceImplications && source._serviceImplications)
+			this._serviceImplications = source._serviceImplications;
+		
+		return this;
+	}
+	
 	/** For a newly created Period, set its contents to valid values. */
 	Service.prototype.setDefaultValues = function()
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
-		this.stage = "";
+		this._stage = "";
 		this._names = [];
 		this._organizationLabels = [];
 		this._siteLabels = [];
@@ -7120,6 +7134,7 @@ cr.User = (function() {
 		if (!this._lastName) this._lastName = source._lastName;
 		if (!this._birthday) this._birthday = source._birthday;
 		if (!this._systemAccess) this._systemAccess = source._systemAccess;
+		if (!this._emails) this._emails = source._emails;
 		return this;
 	}
 	
@@ -7626,6 +7641,17 @@ cr.UserEmail = (function() {
 			}
 			return this;
 		}
+	}
+	
+    /** Merge the contents of the specified source into this Street for
+    	values that are not specified herein.
+     */
+	UserEmail.prototype.mergeData = function(source)
+	{
+		cr.IInstance.prototype.mergeData.call(this, source);
+		if (this._position === null) this._position = source._position;
+		if (!this._text) this._text = source._text;
+		return this;
 	}
 	
 	UserEmail.prototype.setDefaultValues = function()
