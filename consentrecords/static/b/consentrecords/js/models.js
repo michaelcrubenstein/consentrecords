@@ -1400,8 +1400,10 @@ cr.ServiceLinkInstance = (function() {
 	}
 	
 	/** Called after the contents of the ServiceLinkInstance have been updated on the server. */
-	ServiceLinkInstance.prototype.updateData = function(d, newIDs)
+	ServiceLinkInstance.prototype.updateData = function(d, newIDs, canTrigger)
 	{
+		canTrigger = canTrigger !== undefined ? canTrigger : true;
+
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
@@ -1426,7 +1428,11 @@ cr.ServiceLinkInstance = (function() {
 				this._serviceID = serviceID;
 				changed = true;
 			}
+			this._description = this.service() ? this.service().description() : "";
 		}
+		
+		if (changed && canTrigger)
+			this.triggerChanged();
 		
 		return changed;
 	}
@@ -1511,17 +1517,22 @@ cr.OrderedServiceLinkInstance = (function() {
 	}
 	
 	/** Called after the contents of the OrderedServiceLinkInstance have been updated on the server. */
-	OrderedServiceLinkInstance.prototype.updateData = function(d, newIDs)
+	OrderedServiceLinkInstance.prototype.updateData = function(d, newIDs, canTrigger)
 	{
+		canTrigger = canTrigger !== undefined ? canTrigger : true;
+
 		var changed = false;
 		
-		if (cr.ServiceLinkInstance.prototype.updateData.call(this, d, newIDs))
+		if (cr.ServiceLinkInstance.prototype.updateData.call(this, d, newIDs, false))
 			changed = true;
 		if ('position' in d)
 		{
 			this._position = d['position'];
 			changed = true;
 		}
+		
+		if (changed && canTrigger)
+			this.triggerChanged();
 		
 		return changed;
 	}
@@ -1605,8 +1616,10 @@ cr.UserLinkInstance = (function() {
 		return changes;
 	}
 		
-	UserLinkInstance.prototype.updateData = function(d, newIDs)
+	UserLinkInstance.prototype.updateData = function(d, newIDs, canTrigger)
 	{
+		canTrigger = canTrigger !== undefined ? canTrigger : true;
+
 		var changed = false;
 		if ('user' in d) {
 			var userData = d['user'];
@@ -1629,7 +1642,11 @@ cr.UserLinkInstance = (function() {
 				this._user = newUser;
 				changed = true;
 			}
+			this._description = this._user ? this._user.description() : "";
 		}
+		
+		if (changed && canTrigger)
+			this.triggerChanged();
 		
 		return changed;
 	}
@@ -1917,6 +1934,18 @@ cr.Grant = (function() {
 		}
 	}
 	
+	Grant.prototype.setData = function(d)
+	{
+		cr.IInstance.prototype.setData.call(this, d);
+		if ('grantee' in d)
+		{
+			this._grantee = new (this.granteeType())();
+			this._grantee.setData(d['grantee']);
+			this._grantee = crp.pushInstance(this._grantee);
+		}
+		this._privilege = 'privilege' in d ? d['privilege'] : "";
+	}
+	
 	Grant.prototype.setDefaultValues = function()
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
@@ -1953,18 +1982,6 @@ cr.Grant = (function() {
 		return changes;
 	}
 	
-	Grant.prototype.setData = function(d)
-	{
-		cr.IInstance.prototype.setData.call(this, d);
-		if ('grantee' in d)
-		{
-			this._grantee = new (this.granteeType())();
-			this._grantee.setData(d['grantee']);
-			this._grantee = crp.pushInstance(this._grantee);
-		}
-		this._privilege = 'privilege' in d ? d['privilege'] : "";
-	}
-	
 	Grant.prototype.mergeData = function(source)
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
@@ -1975,15 +1992,45 @@ cr.Grant = (function() {
 		return this;
 	}
 	
-	/** Returns whether or not this object can be stored in the global
-		instance cache.
-	 */
-	Grant.prototype.canCache = function()
+	Grant.prototype.updateData = function(d, newIDs)
 	{
-		/* Don't cache these, because they have the same IDs as their grantables. */
-		return false;
+		var changed = false;
+		if ('grantee' in d) {
+			var granteeData = d['grantee'];
+			var granteeID;
+			if (typeof(granteeData) == "string")
+			{
+				if (/\/[A-Za-z0-9]{32}$/.test(granteeData))
+					granteeID = granteeData.substring(granteeData.length - 32);
+				else
+					console.assert(false);
+			}
+			else if ('id' in granteeData)
+				granteeID = granteeData['id'];
+			else
+				console.assert(false);
+				
+			var newGrantee = crp.getInstance(granteeID);
+			if (this._grantee != newGrantee)
+			{
+				this._grantee = newGrantee;
+				changed = true;
+			}
+			this._description = this._grantee ? this._grantee.description() : "";
+		}
+		
+		if ('privilege' in d)
+		{
+			this._privilege = d['privilege'];
+			changed = true;
+		}
+		
+		if (changed)
+			this.triggerChanged();
+			
+		return changed;
 	}
-	
+
 	function Grant() {
 	    cr.IInstance.call(this);
 	};
@@ -2570,6 +2617,14 @@ cr.Address = (function() {
 		return this.pullNewElements(this.streets(), source.streets());
 	}
 	
+	Address.prototype.calculateDescription = function()
+	{
+		this.description(this.streets().map(function(s) { return s.text(); }).join(" ")
+						 + (this.city() ? " " : "") + this.city() 
+						 + (this.state() ? " " : "") + this.state()
+						 + (this.zipCode() ? "  " : "") + this.zipCode());
+	}
+	
 	Address.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2592,12 +2647,15 @@ cr.Address = (function() {
 		}
 		if ('streets' in d)
 		{
-			if (this.updateList(this.streets, d['streets'], newIDs, cr.Street, "streetAdded.cr", "streetDeleted.cr"))
-				changed = true;
+			this.updateList(this.streets, d['streets'], newIDs, cr.Street, "streetAdded.cr", "streetDeleted.cr");
+			changed = true;
 		}
 		
 		if (changed)
+		{
+			this._description = this.calculateDescription();
 			this.triggerChanged();
+		}
 			
 		return changed;
 	}
@@ -2747,6 +2805,7 @@ cr.Comment = (function() {
 			if (this._text != d['text'])
 			{
 				this._text = d['text'];
+				this._description = this._text;
 				changed = true;
 			}
 		}
@@ -2812,6 +2871,8 @@ cr.CommentPrompt = (function() {
 		}
 	}
 	
+	CommentPrompt.prototype.names = CommentPrompt.prototype.translations;
+	
 	CommentPrompt.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -2861,6 +2922,8 @@ cr.CommentPrompt = (function() {
 		return changes;
 	}
 	
+    CommentPrompt.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
+
 	/** Called after the contents of the CommentPrompt have been updated on the server. */
 	CommentPrompt.prototype.updateData = function(d, newIDs)
 	{
@@ -2869,8 +2932,9 @@ cr.CommentPrompt = (function() {
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('translations' in d)
 		{
-			if (this.updateList(this.translations, d['translations'], newIDs, cr.CommentPromptText, "translationAdded.cr", "translationDeleted.cr"))
-				changed = true;
+			this.updateList(this.translations, d['translations'], newIDs, cr.CommentPromptText, "translationAdded.cr", "translationDeleted.cr");
+			changed = true;
+			this.calculateDescription();
 		}
 		
 		if (changed)
@@ -3034,11 +3098,8 @@ cr.Engagement = (function() {
 	{
 		var changed = false;
 		
-		if (cr.UserLinkInstance.prototype.updateData.call(this, d, newIDs))
-		{
+		if (cr.UserLinkInstance.prototype.updateData.call(this, d, newIDs, false))
 			changed = true;
-			this.description(this.user().description());
-		}
 			
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
@@ -3413,10 +3474,11 @@ cr.Experience = (function() {
 				   .pullNewElements(this.customServices(), source.customServices());
 	}
 	
-	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
+	/** Called after the contents of the Experience have been updated on the server. */
 	Experience.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
+		var changedDescription = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if (cr.OrganizationLinkInstance.prototype.updateData.call(this, d, newIDs))
@@ -3424,7 +3486,7 @@ cr.Experience = (function() {
 		if (cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		if (cr.OfferingLinkInstance.prototype.updateData.call(this, d, newIDs))
-			changed = true;
+			changedDescription = true;
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		if ('custom organization' in d)
@@ -3440,7 +3502,7 @@ cr.Experience = (function() {
 		if ('custom offering' in d)
 		{
 			this._customOffering = d['custom offering'];
-			changed = true;
+			changedDescription = true;
 		}
 		if ('timeframe' in d)
 		{
@@ -3448,7 +3510,10 @@ cr.Experience = (function() {
 			changed = true;
 		}
 		
-		if (changed)
+		if (changedDescription)
+			this.calculateDescription();
+		
+		if (changed || changedDescription)
 			this.triggerChanged();
 			
 		if ('services' in d)
@@ -3493,8 +3558,8 @@ cr.Experience = (function() {
 	Experience.prototype.deleted = function()
 	{
 		path = this.parent();
-		cr.removeElement(path.experiences(), this);
-		$(path).trigger("experienceDeleted.cr", this);
+		cr.removeElement(this.parent().experiences(), this);
+		$(this.parent()).trigger("experienceDeleted.cr", this);
 	}
 	
 	Experience.prototype.calculateDescription = function(language)
@@ -3803,16 +3868,6 @@ cr.ExperienceService = (function() {
 		return 'experience service/{0}'.format(this.id());
 	}
 	
-	ExperienceService.prototype.updateData = function(d, newIDs)
-	{
-		var changed = cr.OrderedServiceLinkInstance.prototype.updateData.call(this, d, newIDs);
-
-		if (changed)
-			this.triggerChanged();
-	
-		return changed;
-	}
-	
 	ExperienceService.prototype.triggerChanged = function()
 	{
 		this.description(this.service().description());
@@ -4004,6 +4059,7 @@ cr.ExperiencePrompt = (function() {
 	ExperiencePrompt.prototype.mergeData = function(source)
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
+		if (!this._name) this._name = source._name;
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
 		cr.OfferingLinkInstance.prototype.mergeData.call(this, source);
@@ -4050,7 +4106,6 @@ cr.ExperiencePrompt = (function() {
 		return this;
 	}
 	
-	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
 	ExperiencePrompt.prototype.appendData = function(initialData)
 	{
 		if (this.name())
@@ -4074,6 +4129,9 @@ cr.ExperiencePrompt = (function() {
 	{
 		changes = changes !== undefined ? changes : {};
 		
+		if (cr.stringChanged(this.name(), revision.name()))
+			changes.name = revision.name();
+			
 		cr.OrganizationLinkInstance.prototype.getUpdateData.call(this, revision, changes);
 		cr.SiteLinkInstance.prototype.getUpdateData.call(this, revision, changes);
 		cr.OfferingLinkInstance.prototype.getUpdateData.call(this, revision, changes);
@@ -4100,11 +4158,19 @@ cr.ExperiencePrompt = (function() {
 				   .pullNewElements(this.disqualifyingTags(), source.disqualifyingTags());
 	}
 	
+	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
 	ExperiencePrompt.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		if ('name' in d)
+		{
+			this._name = d.name;
+			this._description = this._name;
+			changed = true;
+		}
+		
 		if (cr.OrganizationLinkInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		if (cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs))
@@ -4222,6 +4288,7 @@ cr.Group = (function() {
 		}
 	}
 	
+	/** For a newly created Group, set its contents to valid values. */
 	Group.prototype.setDefaultValues = function()
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
@@ -4287,7 +4354,8 @@ cr.Group = (function() {
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
-	/** For a newly created Group, set its contents to valid values. */
+    Group.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
+
 	/** Called after the contents of the Group have been updated on the server. */
 	Group.prototype.updateData = function(d, newIDs)
 	{
@@ -4295,14 +4363,16 @@ cr.Group = (function() {
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 
+		if ('names' in d)
+		{
+			this.updateList(this.names, d['names'], newIDs, cr.GroupName, "nameAdded.cr", "nameDeleted.cr");
+			changed = true;
+			this.calculateDescription();
+		}
+		
 		if (changed)
 			this.triggerChanged();
 			
-		if ('names' in d)
-		{
-			if (this.updateList(this.names, d['names'], newIDs, cr.GroupName, "nameAdded.cr", "nameDeleted.cr"))
-				changed = true;
-		}
 		if ('members' in d)
 		{
 			if (this.updateList(this.members, d['members'], newIDs, cr.GroupMember, "memberAdded.cr", "memberDeleted.cr"))
@@ -4791,6 +4861,8 @@ cr.Offering = (function() {
 				   .pullNewElements(this.offeringServices(), source.offeringServices());
 	}
 	
+    Offering.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
+
 	/** Called after the contents of the Offering have been updated on the server. */
 	Offering.prototype.updateData = function(d, newIDs)
 	{
@@ -4799,9 +4871,11 @@ cr.Offering = (function() {
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('names' in d)
 		{
-			if (this.updateList(this.names, d['names'], newIDs, cr.OfferingName, "nameAdded.cr", "nameDeleted.cr"))
-				changed = true;
+			this.updateList(this.names, d['names'], newIDs, cr.OfferingName, "nameAdded.cr", "nameDeleted.cr");
+			changed = true;
+			this.calculateDescription();
 		}
+		
 		if ('web site' in d)
 		{
 			this._city = d['web site'];
@@ -5139,6 +5213,8 @@ cr.Organization = (function() {
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
+    Organization.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
+
 	/** Called after the contents of the Organization have been updated on the server. */
 	Organization.prototype.updateData = function(d, newIDs)
 	{
@@ -5216,8 +5292,6 @@ cr.Organization = (function() {
         	});
     }
     
-    Organization.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
-
 	function Organization() {
 	    cr.Grantable.call(this);
 	};
@@ -5753,7 +5827,7 @@ cr.Period = (function() {
 					this._startTime,
 					this._endTime
 				));
-			$(this).trigger("changed.cr", this);
+			this.triggerChanged();
 		}
 		
 		return changed;
@@ -5968,6 +6042,50 @@ cr.Service = (function() {
 				   .pullNewElements(this.siteLabels(), source.siteLabels())
 				   .pullNewElements(this.offeringLabels(), source.offeringLabels())
 				   .pullNewElements(this.serviceImplications(), source.serviceImplications());
+	}
+	
+    Service.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
+
+	/** Called after the contents of the Service have been updated on the server. */
+	Service.prototype.updateData = function(d, newIDs)
+	{
+		var changed = false;
+		
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+			
+		if ('names' in d)
+		{
+			this.updateList(this.names, d['names'], newIDs, cr.ServiceName, "nameAdded.cr", "nameDeleted.cr");
+			changed = true;
+			this.calculateDescription();
+		}
+
+		if ('stage' in d)
+		{
+			this._stage = d['stage'];
+			changed = true;
+		}
+		
+		if (changed)
+			this.triggerChanged();
+			
+		if ('organization labels' in d)
+		{
+			if (this.updateList(this.organizationLabels, d['organization labels'], newIDs, cr.OrganizationLabel, "organizationLabelAdded.cr", "organizationLabelDeleted.cr"))
+				changed = true;
+		}
+		if ('site labels' in d)
+		{
+			if (this.updateList(this.siteLabels, d['site labels'], newIDs, cr.SiteLabel, "siteLabelAdded.cr", "siteLabelDeleted.cr"))
+				changed = true;
+		}
+		if ('offering labels' in d)
+		{
+			if (this.updateList(this.offeringLabels, d['offering labels'], newIDs, cr.OfferingLabel, "offeringLabelAdded.cr", "offeringLabelDeleted.cr"))
+				changed = true;
+		}
+		
+		return changed;
 	}
 	
     Service.servicesPromise = function()
@@ -6599,6 +6717,12 @@ cr.Session = (function() {
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		
+		if ('names' in d)
+		{
+			this.updateList(this.names, d['names'], newIDs, cr.SessionName, "nameAdded.cr", "nameDeleted.cr");
+			changed = true;
+			this.calculateDescription();
+		}
 		if ('web site' in d)
 		{
 			this._webSite = d['web site'];
@@ -6613,11 +6737,6 @@ cr.Session = (function() {
 		{
 			this._canRegister = d['can register'];
 			changed = true;
-		}
-		if ('names' in d)
-		{
-			if (this.updateList(this.names, d['names'], newIDs, cr.SessionName, "nameAdded.cr", "nameDeleted.cr"))
-				changed = true;
 		}
 		if ('inquiries' in d)
 		{
@@ -6644,9 +6763,7 @@ cr.Session = (function() {
 		}
 		
 		if (changed)
-		{
-			$(this).trigger("changed.cr", this);
-		}
+			this.triggerChanged();
 		
 		return changed;
 	}
@@ -6858,12 +6975,21 @@ cr.Site = (function() {
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
+    Site.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
+    
 	/** Called after the contents of the Site have been updated on the server. */
 	Site.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
 
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		if ('names' in d)
+		{
+			this.updateList(this.names, d['names'], newIDs, cr.SiteName, "nameAdded.cr", "nameDeleted.cr");
+			changed = true;
+			this.calculateDescription();
+		}
+		
 		if ('web site' in d)
 		{
 			this._city = d['web site'];
@@ -6878,11 +7004,6 @@ cr.Site = (function() {
 		if (changed)
 			this.triggerChanged();
 			
-		if ('names' in d)
-		{
-			if (this.updateList(this.names, d['names'], newIDs, cr.SiteName, "nameAdded.cr", "nameDeleted.cr"))
-				changed = true;
-		}
 		if ('offerings' in d)
 		{
 			if (this.updateList(this.offerings, d['offerings'], newIDs, cr.Offering, "offeringAdded.cr", "offeringDeleted.cr"))
@@ -7077,6 +7198,7 @@ cr.Street = (function() {
 		{
 			this._text = d['text'];
 			changed = true;
+			this._description = this._text;
 		}
 		
 		if (changed)
@@ -7232,6 +7354,8 @@ cr.User = (function() {
 		
 		if (cr.Grantable.prototype.updateData.call(this, d, newIDs))
 			changed = true;
+			
+		/* Emails are handled separately. */
 		
 		if ('first name' in d)
 		{
@@ -7741,6 +7865,29 @@ cr.UserEmail = (function() {
 		return changes;
 	}
 		
+	UserEmail.prototype.updateData = function(d, newIDs)
+	{
+		var changed = false;
+
+		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		if ('position' in d)
+		{
+			this._position = d['position'];
+			changed = true;
+		}
+		if ('text' in d)
+		{
+			this._text = d['text'];
+			changed = true;
+			this._description = this._text;
+		}
+		
+		if (changed)
+			this.triggerChanged();
+			
+		return changed;
+	}
+	
 	function UserEmail() {
 	    cr.IInstance.call(this);
 	};
@@ -7866,6 +8013,39 @@ cr.UserUserGrantRequest = (function() {
 		return changes;
 	}
 		
+	UserUserGrantRequest.prototype.updateData = function(d, newIDs)
+	{
+		var changed = false;
+		if ('grantee' in d) {
+			var granteeData = d['grantee'];
+			var granteeID;
+			if (typeof(granteeData) == "string")
+			{
+				if (/\/[A-Za-z0-9]{32}$/.test(granteeData))
+					granteeID = granteeData.substring(granteeData.length - 32);
+				else
+					console.assert(false);
+			}
+			else if ('id' in granteeData)
+				granteeID = granteeData['id'];
+			else
+				console.assert(false);
+				
+			var newGrantee = crp.getInstance(granteeID);
+			if (this._grantee != newGrantee)
+			{
+				this._grantee = newGrantee;
+				changed = true;
+			}
+			this._description = this._grantee ? this._grantee.description() : "";
+		}
+		
+		if (changed)
+			this.triggerChanged();
+			
+		return changed;
+	}
+
 	UserUserGrantRequest.prototype.deleted = function()
 	{
 		/* Delete from the container first, so that other objects know the container may be empty. */
