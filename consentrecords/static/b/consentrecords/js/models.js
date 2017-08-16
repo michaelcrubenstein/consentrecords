@@ -673,6 +673,11 @@ cr.stringChanged = function(source, target)
 	return source != target;
 }
 	
+cr.linkChanged = function(source, target)
+{
+	return (source && source.id()) != (target && target.id());
+}
+	
 cr.IInstance = (function() {
 	IInstance.prototype = new cr.ModelObject();
 	IInstance.prototype._id = null;
@@ -988,7 +993,7 @@ cr.IInstance = (function() {
 		}
 	}
 	
-	IInstance.prototype.appendUpdateList = function(oldItems, newItems, updateData, key)
+	IInstance.prototype.appendUpdateList = function(oldItems, newItems, changes, key)
 	{
 		var subChanges = [];
 		var remainingItems = [];
@@ -1028,7 +1033,7 @@ cr.IInstance = (function() {
 				}
 			});
 		if (subChanges.length > 0)
-			updateData[key] = subChanges;
+			changes[key] = subChanges;
 	}
 	
 	IInstance.prototype.appendList = function(items, initialData, key)
@@ -1219,16 +1224,16 @@ cr.TranslationInstance = (function() {
 			initialData.languageCode = this._language;	
 	}
 	
-	TranslationInstance.prototype.getUpdateData = function(revision)
+	TranslationInstance.prototype.getUpdateData = function(revision, changes)
 	{
-		var updateData = {};
+		changes = changes !== undefined ? changes : {};
 		
 		if (cr.stringChanged(this.text(), revision.text()))
-			updateData.text = revision.text();
+			changes.text = revision.text();
 		if (cr.stringChanged(this.language(), revision.language()))
-			updateData['language code'] = revision.language();
+			changes['language code'] = revision.language();
 		
-		return updateData;
+		return changes;
 	}
 	
 	TranslationInstance.prototype.setData = function(d)
@@ -1347,7 +1352,7 @@ cr.ServiceLinkInstance = (function() {
 	{
 		changes = changes !== undefined ? changes : {};
 		
-		if (this.service().id() != revision.service().id())
+		if (cr.linkChanged(this.service(), revision.service()))
 			changes.service = revision.service().urlPath();
 			
 		return changes;
@@ -1530,6 +1535,19 @@ cr.UserLinkInstance = (function() {
 		return this;
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	UserLinkInstance.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.linkChanged(this.user(), revision.user()))
+			changes.user = revision.user().urlPath();
+			
+		return changes;
+	}
+		
 	UserLinkInstance.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -1641,7 +1659,7 @@ cr.Grantable = (function() {
 		if (cr.stringChanged(this.publicAccess(), revision.publicAccess()))
 			changes['public access'] = revision.publicAccess();
 				
-		if (this.primaryAdministrator() != revision.primaryAdministrator())
+		if (cr.linkChanged(this.primaryAdministrator(), revision.primaryAdministrator()))
 			changes['primary administrator'] = revision.primaryAdministrator() && revision.primaryAdministrator().urlPath();
 		
 		if (revision.userGrants())
@@ -1860,7 +1878,7 @@ cr.Grant = (function() {
 	{
 		changes = changes !== undefined ? changes : {};
 		
-		if (this.grantee() != revision.grantee())
+		if (cr.linkChanged(this.grantee(), revision.grantee()))
 			changes['grantee'] = revision.grantee() && revision.grantee().urlPath();
 		
 		if (cr.stringChanged(this.privilege(), revision.privilege()))
@@ -2020,6 +2038,12 @@ cr.OrganizationLinkInstance = (function() {
 			initialData['organization'] = this.organization().urlPath();
 	}
 	
+	OrganizationLinkInstance.prototype.getUpdateData = function(revision, changes)
+	{
+		if (cr.linkChanged(this.organization(), revision.organization()))
+			changes['organization'] = revision.organization() && revision.organization().urlPath();
+	}
+	
 	OrganizationLinkInstance.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2092,6 +2116,12 @@ cr.SiteLinkInstance = (function() {
 	{
 		if (this.site())
 			initialData['site'] = this.site().urlPath();
+	}
+	
+	SiteLinkInstance.prototype.getUpdateData = function(revision, changes)
+	{
+		if (cr.linkChanged(this.site(), revision.site()))
+			changes['site'] = revision.site() && revision.site().urlPath();
 	}
 	
 	SiteLinkInstance.prototype.updateData = function(d, newIDs)
@@ -2168,6 +2198,12 @@ cr.OfferingLinkInstance = (function() {
 			initialData['offering'] = this.offering().urlPath();
 	}
 	
+	OfferingLinkInstance.prototype.getUpdateData = function(revision, changes)
+	{
+		if (cr.linkChanged(this.offering(), revision.offering()))
+			changes['offering'] = revision.offering() && revision.offering().urlPath();
+	}
+
 	OfferingLinkInstance.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2271,7 +2307,15 @@ cr.DateRangeInstance = (function() {
 		if (this.end())
 			initialData['end'] = this.end();
     }
-		
+	
+	DateRangeInstance.prototype.getUpdateData = function(revision, changes)
+	{	
+		if (cr.stringChanged(this.start(), revision.start()))
+			changes['start'] = revision.start();
+		if (cr.stringChanged(this.end(), revision.end()))
+			changes['end'] = revision.end();
+	}
+	
 	DateRangeInstance.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2373,6 +2417,22 @@ cr.Address = (function() {
 		if (this.zipCode())
 			initialData['zip code'] = this.zipCode();
 		this.appendList(this.streets(), initialData, 'streets');
+	}
+	
+	Address.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.city(), revision.city()))
+			changes.city = revision.city();
+		if (cr.stringChanged(this.state(), revision.state()))
+			changes.state = revision.state();
+		if (cr.stringChanged(this.zipCode(), revision.zipCode()))
+			changes['zip code'] = revision.zipCode();
+		
+		this.appendUpdateList(this.streets(), revision.streets(), changes, 'streets');		
+
+		return changes;
 	}
 	
 	/** Sets the data for this address based on a dictionary of data that
@@ -2556,6 +2616,23 @@ cr.Comment = (function() {
 			initialData['asker'] = this.asker().urlPath();
 	}
 	
+	Comment.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.text(), revision.text()))
+			changes.text = revision.text();
+		if (cr.stringChanged(this.question(), revision.question()))
+			changes.question = revision.question();
+			
+		if (cr.linkChanged(this.asker(), revision.asker()))
+			changes.asker = revision.asker() && revision.asker().urlPath();
+		
+		this.appendUpdateList(this.streets(), revision.streets(), changes, 'streets');		
+
+		return changes;
+	}
+	
 	Comment.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2665,6 +2742,15 @@ cr.CommentPrompt = (function() {
 	CommentPrompt.prototype.appendData = function(initialData)
 	{
 		this.appendList(this.translations(), initialData, 'translations');
+	}
+	
+	CommentPrompt.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+				
+		this.appendUpdateList(this.translations(), revision.translations(), changes, 'translations');		
+
+		return changes;
 	}
 	
 	/** Called after the contents of the CommentPrompt have been updated on the server. */
@@ -2817,6 +2903,17 @@ cr.Engagement = (function() {
     	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
     }
     
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Engagement.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = cr.UserLinkInstance.prototype.getUpdateData.call(this, revision, changes);
+		cr.DateRangeInstance.prototype.getUpdateData.call(this, revision, changes);
+			
+		return changes;
+	}
+		
 	Engagement.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -3119,27 +3216,21 @@ cr.Experience = (function() {
 	 */
 	Experience.prototype.getUpdateData = function(revision, changes)
 	{
-		changes = changes !== undefined ? changes : {}
+		changes = changes !== undefined ? changes : {};
 		
-		if (this.organization() != revision.organization())
-			changes['organization'] = revision.organization().urlPath();
+		cr.OrganizationLinkInstance.prototype.getUpdateData.call(this, revision, changes);
+		cr.SiteLinkInstance.prototype.getUpdateData.call(this, revision, changes);
+		cr.OfferingLinkInstance.prototype.getUpdateData.call(this, revision, changes);
 		if (cr.stringChanged(this.customOrganization(), revision.customOrganization()))
 			changes['custom organization'] = revision.customOrganization();
 				
-		if (this.site() != revision.site())
-			changes['site'] = revision.site().urlPath();
 		if (cr.stringChanged(this.customSite(), revision.customSite()))
 			changes['custom site'] = revision.customSite();
 				
-		if (this.offering() != revision.offering())
-			changes['offering'] = revision.offering().urlPath();
 		if (cr.stringChanged(this.customOffering(), revision.customOffering()))
 			changes['custom offering'] = revision.customOffering();
 				
-		if (cr.stringChanged(this.start(), revision.start()))
-			changes['start'] = revision.start();
-		if (cr.stringChanged(this.end(), revision.end()))
-			changes['end'] = revision.end();
+		cr.DateRangeInstance.prototype.getUpdateData.call(this, revision, changes);
 		if (cr.stringChanged(this.timeframe(), revision.timeframe()))
 			changes['timeframe'] = revision.timeframe();
 		
@@ -3535,7 +3626,7 @@ cr.ExperienceCustomService = (function() {
 	{
 		changes = changes !== undefined ? changes : {};
 		
-		if (this.name() != revision.name())
+		if (cr.stringChanged(this.name(), revision.name()))
 			changes.name = revision.name();
 			
 		if (this.position() != revision.position())
@@ -3830,7 +3921,7 @@ cr.ExperiencePrompt = (function() {
 	ExperiencePrompt.prototype.appendData = function(initialData)
 	{
 		if (this.name())
-			initialData['name'] = this.name().urlPath();
+			initialData['name'] = this.name();
 		cr.OrganizationLinkInstance.prototype.appendData.call(this, initialData);
 		cr.SiteLinkInstance.prototype.appendData.call(this, initialData);
 		cr.OfferingLinkInstance.prototype.appendData.call(this, initialData);
@@ -3844,6 +3935,28 @@ cr.ExperiencePrompt = (function() {
 		this.appendList(this.translations(), initialData, 'translations');
 		this.appendList(this.experiencePromptServices(), initialData, 'services');
 		this.appendList(this.disqualifyingTags(), initialData, 'disqualifying tags');
+	}
+	
+	ExperiencePrompt.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		cr.OrganizationLinkInstance.prototype.getUpdateData.call(this, revision, changes);
+		cr.SiteLinkInstance.prototype.getUpdateData.call(this, revision, changes);
+		cr.OfferingLinkInstance.prototype.getUpdateData.call(this, revision, changes);
+		
+		if (cr.stringChanged(this.domain(), revision.domain()))
+			changes.domain = revision.domain().urlPath();
+		if (cr.stringChanged(this.stage(), revision.stage()))
+			changes.stage = revision.stage();
+		if (cr.stringChanged(this.timeframe(), revision.timeframe()))
+			changes.timeframe = revision.timeframe();
+				
+		this.appendUpdateList(this.translations(), revision.translations(), changes, 'translations');		
+		this.appendUpdateList(this.experiencePromptServices(), revision.experiencePromptServices(), changes, 'services');		
+		this.appendUpdateList(this.disqualifyingTags(), revision.disqualifyingTags(), changes, 'disqualifying tags');		
+
+		return changes;
 	}
 	
 	ExperiencePrompt.prototype.updateData = function(d, newIDs)
@@ -3972,6 +4085,16 @@ cr.Group = (function() {
 	{
 		this.appendList(this.members(), initialData, 'members');
 		this.appendList(this.names(), initialData, 'names');
+	}
+	
+	Group.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		this.appendUpdateList(this.members(), revision.members(), changes, 'members');		
+		this.appendUpdateList(this.names(), revision.names(), changes, 'names');		
+
+		return changes;
 	}
 	
 	Group.prototype.setData = function(d)
@@ -4462,6 +4585,30 @@ cr.Offering = (function() {
 		this.appendList(this.sessions(), initialData, 'sessions');
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Offering.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.webSite(), revision.webSite()))
+			changes['web site'] = revision.webSite();
+		if (cr.stringChanged(this.minimumAge(), revision.minimumAge()))
+			changes['minimum age'] = revision.minimumAge();
+		if (cr.stringChanged(this.maximumAge(), revision.maximumAge()))
+			changes['maximum age'] = revision.maximumAge();
+		if (cr.stringChanged(this.minimumGrade(), revision.minimumGrade()))
+			changes['minimum grade'] = revision.minimumGrade();
+		if (cr.stringChanged(this.maximumGrade(), revision.maximumGrade()))
+			changes['maximum grade'] = revision.maximumGrade();
+		
+		this.appendUpdateList(this.names(), revision.names(), changes, 'names');		
+		this.appendUpdateList(this.services(), revision.services(), changes, 'services');		
+					
+		return changes;
+	}
+	
 	/** Called after the contents of the Offering have been updated on the server. */
 	Offering.prototype.updateData = function(d, newIDs)
 	{
@@ -4715,19 +4862,19 @@ cr.Organization = (function() {
 	/* Returns a dictionary that describes all of the operations needed to change
 		the data in this object to the data in the revision.
 	 */
-	Organization.prototype.getUpdateData = function(revision)
+	Organization.prototype.getUpdateData = function(revision, changes)
 	{
-		var updateData = cr.Grantable.prototype.getUpdateData.call(this, revision);
+		changes = cr.Grantable.prototype.getUpdateData.call(this, revision, changes);
 		
 		if (cr.stringChanged(this.webSite(), revision.webSite()))
-			updateData['web site'] = revision.webSite();
+			changes['web site'] = revision.webSite();
 				
-		if (this.inquiryAccessGroup() != revision.inquiryAccessGroup())
-			updateData['inquiry access group'] = revision.inquiryAccessGroup() && revision.inquiryAccessGroup().urlPath();
+		if (cr.linkChanged(this.inquiryAccessGroup(), revision.inquiryAccessGroup()))
+			changes['inquiry access group'] = revision.inquiryAccessGroup() && revision.inquiryAccessGroup().urlPath();
 		
-		this.appendUpdateList(this.names(), revision.names(), updateData, 'names');		
+		this.appendUpdateList(this.names(), revision.names(), changes, 'names');		
 					
-		return updateData;
+		return changes;
 	}
 	
 	/** Sets the data for this Organization based on a dictionary of data that
@@ -5099,6 +5246,23 @@ cr.Path = (function() {
 		return this;
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Path.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = cr.Grantable.prototype.getUpdateData.call(this, revision, changes);
+		
+		if (cr.stringChanged(this.name(), revision.name()))
+			changes['screen name'] = revision.name();
+		if (cr.stringChanged(this.specialAccess(), revision.specialAccess()))
+			changes['special access'] = revision.specialAccess();
+		if (cr.stringChanged(this.canAnswerExperience(), revision.canAnswerExperience()))
+			changes['can answer experience'] = revision.canAnswerExperience();
+		
+		return changes;
+	}
+	
 	/** Called after the contents of the Path have been updated on the server. */
 	Path.prototype.updateData = function(d, newIDs)
 	{
@@ -5334,6 +5498,23 @@ cr.Period = (function() {
 			initialData['end time'] = this.endTime();
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Period.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.weekday(), revision.weekday()))
+			changes['weekday'] = revision.weekday();
+		if (cr.stringChanged(this.startTime(), revision.startTime()))
+			changes['start time'] = revision.startTime();
+		if (cr.stringChanged(this.endTime(), revision.endTime()))
+			changes['end time'] = revision.endTime();
+		
+		return changes;
+	}
+	
 	/** Called after the contents of the Period have been updated on the server. */
 	Period.prototype.updateData = function(d, newIDs)
 	{
@@ -5511,6 +5692,25 @@ cr.Service = (function() {
 		this.appendList(this.siteLabels(), initialData, 'site labels');
 		this.appendList(this.offeringLabels(), initialData, 'offering labels');
 		this.appendList(this.serviceImplications(), initialData, 'services');
+	}
+	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Service.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.stage(), revision.stage()))
+			changes['stage'] = revision.stage();
+		
+		this.appendUpdateList(this.names(), revision.names(), changes, 'names');		
+		this.appendUpdateList(this.organizationLabels(), revision.organizationLabels(), changes, 'organization labels');		
+		this.appendUpdateList(this.siteLabels(), revision.siteLabels(), changes, 'site labels');		
+		this.appendUpdateList(this.offeringLabels(), revision.offeringLabels(), changes, 'offering labels');		
+		this.appendUpdateList(this.serviceImplications(), revision.serviceImplications(), changes, 'services');		
+
+		return changes;
 	}
 	
     Service.servicesPromise = function()
@@ -6092,7 +6292,26 @@ cr.Session = (function() {
 		this.appendList(this.inquiries(), initialData, 'inquiries');
 		this.appendList(this.enrollments(), initialData, 'enrollments');
 		this.appendList(this.engagements(), initialData, 'engagements');
-		this.appendList(this.periods(), initialData, 'engagements');
+		this.appendList(this.periods(), initialData, 'periods');
+	}
+	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Session.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.webSite(), revision.webSite()))
+			changes['web site'] = revision.webSite();
+		if (cr.stringChanged(this.registrationDeadline(), revision.registrationDeadline()))
+			changes['registration deadline'] = revision.registrationDeadline();
+		if (cr.stringChanged(this.canRegister(), revision.canRegister()))
+			changes['can register'] = revision.canRegister();
+		
+		this.appendUpdateList(this.names(), revision.names(), changes, 'names');		
+
+		return changes;
 	}
 	
 	Session.prototype.updateData = function(d, newIDs)
@@ -6319,6 +6538,29 @@ cr.Site = (function() {
 		this.appendList(this.offerings(), initialData, 'offerings');
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	Site.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.stringChanged(this.webSite(), revision.webSite()))
+			changes['web site'] = revision.webSite();
+			
+		var addressChanges = this.address().getUpdateData(revision.address());
+		if (Object.keys(addressChanges).length > 0)
+		{
+			addressChanges.id = this.address().id();
+			changes['address'] = addressChanges;
+		}
+				
+		this.appendUpdateList(this.names(), revision.names(), changes, 'names');		
+		this.appendUpdateList(this.offerings(), revision.offerings(), changes, 'offerings');		
+					
+		return changes;
+	}
+	
 	/** Called after the contents of the Site have been updated on the server. */
 	Site.prototype.updateData = function(d, newIDs)
 	{
@@ -6502,6 +6744,19 @@ cr.Street = (function() {
 			initialData.text = this.text();
 	}
 	
+	Street.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (this.position() != revision.position())
+			changes.position = revision.position();
+
+		if (cr.stringChanged(this.text(), revision.text()))
+			changes.text = revision.text();
+			
+		return changes;
+	}
+		
 	/** Called after the contents of the Street have been updated on the server. */
 	Street.prototype.updateData = function(d, newIDs)
 	{
@@ -6620,6 +6875,30 @@ cr.User = (function() {
 		if (!this._birthday) this._birthday = source._birthday;
 		if (!this._systemAccess) this._systemAccess = source._systemAccess;
 		return this;
+	}
+	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	User.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = cr.Grantable.prototype.getUpdateData.call(this, revision, changes);
+		
+		if (cr.stringChanged(this.firstName(), revision.firstName()))
+			changes['first name'] = revision.firstName();
+		if (cr.stringChanged(this.lastName(), revision.lastName()))
+			changes['last name'] = revision.lastName();
+		if (cr.stringChanged(this.birthday(), revision.birthday()))
+			changes['birthday'] = revision.birthday();
+			
+		var pathChanges = this.path().getUpdateData(revision.path());
+		if (Object.keys(pathChanges).length > 0)
+		{
+			pathChanges.id = this.path().id();
+			changes['path'] = pathChanges;
+		}
+				
+		return changes;
 	}
 	
 	User.prototype.updateData = function(d, newIDs)
@@ -7105,6 +7384,19 @@ cr.UserEmail = (function() {
 			initialData.text = this.text();
 	}
 	
+	UserEmail.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (this.position() != revision.position())
+			changes.position = revision.position();
+
+		if (cr.stringChanged(this.text(), revision.text()))
+			changes.text = revision.text();
+			
+		return changes;
+	}
+		
 	function UserEmail() {
 	    cr.IInstance.call(this);
 	};
@@ -7210,6 +7502,19 @@ cr.UserUserGrantRequest = (function() {
 			initialData['grantee'] = this.grantee().urlPath();
 	}
 	
+	/* Returns a dictionary that describes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
+	UserUserGrantRequest.prototype.getUpdateData = function(revision, changes)
+	{
+		changes = changes !== undefined ? changes : {};
+		
+		if (cr.linkChanged(this.grantee(), revision.grantee()))
+			changes.grantee = revision.grantee() && revision.grantee().urlPath();
+			
+		return changes;
+	}
+		
 	UserUserGrantRequest.prototype.deleted = function()
 	{
 		/* Delete from the container first, so that other objects know the container may be empty. */
