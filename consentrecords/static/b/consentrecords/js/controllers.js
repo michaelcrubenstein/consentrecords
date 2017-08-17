@@ -382,7 +382,7 @@ var ExperienceController = (function() {
 		{
 			var i = new cr.ExperienceService();
 			i.description(args.description())
-			 .parentID(this.newInstance().id())
+			 .parent(this.newInstance())
 			 .service(args)
 			 .position(this.experienceServices().length
 			           ? this.experienceServices()[this.experienceServices().length - 1].position() + 1
@@ -394,7 +394,7 @@ var ExperienceController = (function() {
 		{
 			var i = new cr.ExperienceCustomService();
 			i.description(args)
-			 .parentID(this.newInstance().id())
+			 .parent(this.newInstance())
 			 .name(args)
 			 .position(this.customServices().length
 			           ? this.customServices()[this.customServices().length - 1].position() + 1

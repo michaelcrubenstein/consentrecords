@@ -685,6 +685,7 @@ cr.IInstance = (function() {
 	IInstance.prototype._description = "";
 	IInstance.prototype._privilege = null;
 	IInstance.prototype._parentID = null;
+	IInstance.prototype._parent = null;
 	IInstance.prototype._dataLoaded = false;
 	
 	IInstance.prototype.id = function(newID)
@@ -739,7 +740,7 @@ cr.IInstance = (function() {
 		}
 	}
 	
-	/** if parentID is undefined, returns the parent of this instance. The parent off
+	/** if parentID is undefined, returns the parent of this instance. The parent of
 	 * an instance is the instance that, when deleted, will automatically delete this instance.
 	 *
 	 * If parentID is defined, then set the parentID of this instance and return this so that
@@ -752,13 +753,26 @@ cr.IInstance = (function() {
 		else
 		{
 			this._parentID = newParentID;
+			this._parent = null;	/* The parent may or may not be on the client tier. */
 			return this;
 		}
 	}
 	
-	IInstance.prototype.parent = function()
+	IInstance.prototype.parent = function(newValue)
 	{
-		return crp.getInstance(this._parentID);
+		if (newValue === undefined)
+		{
+			/* Cache the parent if necessary. */
+			if (!this._parent && this._parentID)
+				this._parent = crp.getInstance(this._parentID);
+			return this._parent;
+		}
+		else
+		{
+			this._parent = newValue;
+			this._parentID = null;
+			return this;
+		}
 	}
 	
     IInstance.prototype.promiseData = function(fields)
@@ -927,7 +941,7 @@ cr.IInstance = (function() {
 				if (i.clientID())
 				{
 					oldElements.push(i);
-					i.parentID(_this.id());
+					i.parent(_this);
 				}
 			});
 		return this;
@@ -962,7 +976,7 @@ cr.IInstance = (function() {
 						{
 							item.id(newIDs[d['add']])
 								.clientID(null)
-								.parentID(_this.id());
+								.parent(_this);
 							item = crp.pushInstance(item);
 							
 							/* Call updateData so that sub-items also get their IDs */
@@ -3557,7 +3571,6 @@ cr.Experience = (function() {
 	
 	Experience.prototype.deleted = function()
 	{
-		path = this.parent();
 		cr.removeElement(this.parent().experiences(), this);
 		$(this.parent()).trigger("experienceDeleted.cr", this);
 	}
@@ -5641,7 +5654,7 @@ cr.Path = (function() {
         			_this._experiences = experiences;
         			experiences.forEach(function(e)
         				{
-        					e.parentID(_this.id())
+        					e.parent(_this)
         					 .path(_this);
         					e.calculateDescription();
         				});
@@ -7522,7 +7535,7 @@ cr.User = (function() {
 		{
 			this._path = new cr.Path();
 			this._path.setData(newData);
-			this._path.parentID(this.id());
+			this._path.parent(this);
 			this._path.user(this);
 			this._path = crp.pushInstance(this._path);
 			return this;
