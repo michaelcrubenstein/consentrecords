@@ -274,8 +274,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 }
 		
 var PickOfferingSearchView = (function () {
-	PickOfferingPanel.prototype = Object.create(SitePanel.prototype);
-	PickOfferingPanel.prototype.constructor = PickOfferingPanel;
+	PickOfferingSearchView.prototype = Object.create(PanelSearchView.prototype);
+	PickOfferingSearchView.prototype.constructor = PickOfferingSearchView;
 
 	PickOfferingSearchView.prototype.tag = null;
 	PickOfferingSearchView.prototype.user = null;
