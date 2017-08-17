@@ -693,3 +693,19 @@ var OrganizationController = (function() {
 	return OrganizationController;
 })();
 
+var SiteController = (function() {
+	SiteController.prototype = new ChildController();
+	
+	SiteController.prototype.addingMessage = "Adding Site...";
+	SiteController.prototype.savingMessage = "Saving Site...";
+	SiteController.prototype.groupKey = 'sites';
+	SiteController.prototype.addEventType = 'siteAdded.cr';
+
+	function SiteController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, cr.Site, source, duplicateForEdit);
+	}
+	
+	return SiteController;
+})();
+
