@@ -442,6 +442,12 @@ var ChildrenPanel = (function () {
 		addButton.append('span').text("+");
 		
 		this.navContainer.appendTitle(this.panelTitle);
+
+		this.searchView = new (this.searchViewType)(this, this.parent);
+		$(this.node()).one('revealing.cr', function() { 
+				_this.searchView.search(""); 
+				_this.searchView.inputBox.focus();
+			});
 	}
 	
 	ChildrenPanel.prototype.showAddPanel = function()
@@ -2288,6 +2294,7 @@ var SitePanel = (function () {
 	SitePanel.prototype.constructor = SitePanel;
 
 	SitePanel.prototype.panelTitle = "Site";
+	SitePanel.prototype.deleteLabel = "Delete Site";
 
     SitePanel.prototype.promiseUpdateChanges = function()
     {
@@ -2355,18 +2362,13 @@ var SitesPanel = (function () {
 	SitesPanel.prototype.panelTitle = "Sites";
 	SitesPanel.prototype.addPanelTitle = "Add Site";
 	SitesPanel.prototype.addedEvent = 'siteAdded.cr';
+	SitesPanel.prototype.searchViewType = SiteChildSearchView;
 	
 	function SitesPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
 		var _this = this;
 
 		this.createRoot(parent, this.panelTitle, 'list', onShow);
-
-		this.searchView = new SiteChildSearchView(this, parent);
-		$(this.node()).one('revealing.cr', function() { 
-				_this.searchView.search(""); 
-				_this.searchView.inputBox.focus();
-			});
 	}
 	
 	return SitesPanel;
