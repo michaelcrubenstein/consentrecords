@@ -4,8 +4,6 @@ var SessionPanel = (function () {
 
 	SessionPanel.prototype.session = null;
 	SessionPanel.prototype.panelTitle = "Session";
-	SessionPanel.prototype.namesLabel = "Names";
-	SessionPanel.prototype.nameLabel = "Name";
 	SessionPanel.prototype.datePlaceholder = "(None)";
 	SessionPanel.prototype.registrationDeadlineLabel = "Registration Deadline";
 	SessionPanel.prototype.startLabel = "Start";
@@ -109,8 +107,8 @@ var SessionPanel = (function () {
 			.datum(this.session)
 			.classed('cell edit multiple', true);
 		this.namesSection.append('label')
-			.text(this.namesLabel);
-		this.appendTranslationEditor(this.namesSection, this.session, this.namesLabel, this.nameLabel, 
+			.text(crv.buttonTexts.names);
+		this.appendTranslationEditor(this.namesSection, this.session, crv.buttonTexts.names, crv.buttonTexts.name, 
 									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr changed.cr", 
 									 this.session.names(),
 									 cr.SessionName);
@@ -441,7 +439,7 @@ var ChildrenPanel = (function () {
 				});
 		addButton.append('span').text("+");
 		
-		this.navContainer.appendTitle(this.panelTitle);
+		this.navContainer.appendTitle(header);
 
 		this.searchView = new (this.searchViewType)(this, this.parent);
 		$(this.node()).one('revealing.cr', function() { 
@@ -961,7 +959,7 @@ var PeriodPanel = (function () {
 
 	PeriodPanel.prototype.session = null;
 	PeriodPanel.prototype.period = null;
-	PeriodPanel.prototype.panelTitle = "Participation";
+	PeriodPanel.prototype.panelTitle = "Period";
 	PeriodPanel.prototype.weekdayLabel = "Weekday";
 	PeriodPanel.prototype.startTimeLabel = "Start Time";
 	PeriodPanel.prototype.endTimeLabel = "End Time";
@@ -1645,14 +1643,14 @@ var RootItemsPanel = (function () {
 				});
 		addButton.append('span').text("+");
 		
-		this.navContainer.appendTitle(this.panelTitle);
+		this.navContainer.appendTitle(header);
 	}
 	
-	function RootItemsPanel(onShow)
+	function RootItemsPanel(header, onShow)
 	{
 		EditPanel.call(this);
 		
-		this.createRoot(null, this.panelTitle, "edit", onShow);
+		this.createRoot(null, header, "edit", onShow);
 
 		var _this = this;
 		if (this.searchViewType)
@@ -1720,19 +1718,110 @@ var EnumerationSectionEditor = (function() {
 	return EnumerationSectionEditor;
 })();
 
+var GroupChildSearchView = (function () {
+	GroupChildSearchView.prototype = Object.create(ChildSearchView.prototype);
+	GroupChildSearchView.prototype.constructor = GroupChildSearchView;
+
+	GroupChildSearchView.prototype.textPath = 'name>text';
+	GroupChildSearchView.prototype.pathType = 'group';
+	
+	GroupChildSearchView.prototype.resultType = function()
+	{
+		return cr.Group;
+	}
+	
+	GroupChildSearchView.prototype.controllerType = function()
+	{
+		return GroupController;
+	}
+	
+	GroupChildSearchView.prototype.childPanelType = function()
+	{
+		return GroupPanel;
+	}
+	
+	function GroupChildSearchView(groupPanel, parent) {
+		ChildSearchView.call(this, groupPanel, parent);
+	}
+	
+	return GroupChildSearchView;
+})();
+
+var GroupsPanel = (function () {
+	GroupsPanel.prototype = Object.create(ChildrenPanel.prototype);
+	GroupsPanel.prototype.constructor = GroupsPanel;
+
+	GroupsPanel.prototype.addPanelTitle = "Add Group";
+	GroupsPanel.prototype.addedEvent = 'groupAdded.cr';
+	GroupsPanel.prototype.searchViewType = GroupChildSearchView;
+	
+	function GroupsPanel(parent, onShow) {
+		ChildrenPanel.call(this, parent, onShow);
+		var _this = this;
+
+		this.createRoot(parent, crv.buttonTexts.groups, 'list', onShow);
+	}
+	
+	return GroupsPanel;
+	
+})();
+
+var OfferingChildSearchView = (function () {
+	OfferingChildSearchView.prototype = Object.create(ChildSearchView.prototype);
+	OfferingChildSearchView.prototype.constructor = OfferingChildSearchView;
+
+	OfferingChildSearchView.prototype.textPath = 'name>text';
+	OfferingChildSearchView.prototype.pathType = 'offering';
+	
+	OfferingChildSearchView.prototype.resultType = function()
+	{
+		return cr.Offering;
+	}
+	
+	OfferingChildSearchView.prototype.controllerType = function()
+	{
+		return OfferingController;
+	}
+	
+	OfferingChildSearchView.prototype.childPanelType = function()
+	{
+		return OfferingPanel;
+	}
+	
+	function OfferingChildSearchView(offeringPanel, parent) {
+		ChildSearchView.call(this, offeringPanel, parent);
+	}
+	
+	return OfferingChildSearchView;
+})();
+
+var OfferingsPanel = (function () {
+	OfferingsPanel.prototype = Object.create(ChildrenPanel.prototype);
+	OfferingsPanel.prototype.constructor = OfferingsPanel;
+
+	OfferingsPanel.prototype.addPanelTitle = "Add Offering";
+	OfferingsPanel.prototype.addedEvent = 'offeringAdded.cr';
+	OfferingsPanel.prototype.searchViewType = OfferingChildSearchView;
+	
+	function OfferingsPanel(parent, onShow) {
+		ChildrenPanel.call(this, parent, onShow);
+		var _this = this;
+
+		this.createRoot(parent, crv.buttonTexts.offerings, 'list', onShow);
+	}
+	
+	return OfferingsPanel;
+	
+})();
+
 var OrganizationPanel = (function () {
 	OrganizationPanel.prototype = Object.create(EditItemPanel.prototype);
 	OrganizationPanel.prototype.constructor = OrganizationPanel;
 
 	OrganizationPanel.prototype.organization = null;
 	OrganizationPanel.prototype.panelTitle = "Organization";
-	OrganizationPanel.prototype.namesLabel = "Names";
-	OrganizationPanel.prototype.nameLabel = "Name";
 	OrganizationPanel.prototype.publicAccessLabel = "Public Access";
 	OrganizationPanel.prototype.primaryAdministratorLabel = "Primary Administrator";
-	OrganizationPanel.prototype.webSiteLabel = "Web Site";
-	OrganizationPanel.prototype.webSitePlaceholder = "Web Site";
-	OrganizationPanel.prototype.sitesLabel = "Sites";
 	OrganizationPanel.prototype.groupsLabel = "Groups";
 	OrganizationPanel.prototype.inquiryAccessGroupLabel = "Inquiry Access Group";
 	OrganizationPanel.prototype.readLabel = "Public";
@@ -1764,17 +1853,17 @@ var OrganizationPanel = (function () {
 		var _this = this;
 		EditItemPanel.call(this, controller);
 
-		this.createRoot(onShow);
+		this.createRoot(crv.buttonTexts.organization, onShow);
 
 		this.namesSection = this.mainDiv.append('section')
 			.datum(controller.newInstance())
 			.classed('cell edit multiple', true);
 		this.namesSection.append('label')
 			.text(this.namesLabel);
-		this.appendTranslationEditor(this.namesSection, controller.newInstance(), this.namesLabel, this.nameLabel, 
+		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
 									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr changed.cr", 
 									 controller.newInstance().names(),
-									 cr.SessionName);
+									 cr.OrganizationName);
 
 		this.webSiteSection = this.mainDiv.append('section')
 			.datum(controller.newInstance())
@@ -1784,9 +1873,9 @@ var OrganizationPanel = (function () {
 					d.webSite(d3.select(this).select('input').property('value'));
 				});
 		this.webSiteSection.append('label')
-			.text(this.webSiteLabel);
+			.text(crv.buttonTexts.webSite);
 		this.appendTextEditor(this.webSiteSection, 
-							  this.webSitePlaceholder,
+							  crv.buttonTexts.webSite,
 							  controller.newInstance().webSite(),
 							  'text');
 				 
@@ -1832,38 +1921,8 @@ var OrganizationPanel = (function () {
 			PickPrimaryAdministratorPanel
 			);
 		
-		var childrenButton;
-		childrenButton = this.appendActionButton(this.sitesLabel, function() {
-				if (prepareClick('click', 'Sites'))
-				{
-					showClickFeedback(this);
-					try
-					{
-						var panel = new SitesPanel(controller.newInstance(), revealPanelLeft);
-						panel.showLeft().then(unblockClick);
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-			.classed('first', true);
-		childrenButton.selectAll('li>div').classed('description-text', true);
-		crf.appendRightChevrons(childrenButton.selectAll('li'));	
-
-		childrenButton = this.appendActionButton(this.groupsLabel, function() {
-				if (prepareClick('click', 'Groups'))
-				{
-					showClickFeedback(this);
-					try
-					{
-						var panel = new GroupsPanel(controller.newInstance(), revealPanelLeft);
-						panel.showLeft().then(unblockClick);
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-			.classed('first', true);
-		childrenButton.selectAll('li>div').classed('description-text', true);
-		crf.appendRightChevrons(childrenButton.selectAll('li'));	
+		this.appendChildrenPanelButton(crv.buttonTexts.sites, SitesPanel);
+		this.appendChildrenPanelButton(crv.buttonTexts.groups, GroupsPanel);
 
 		this.inquiryAccessGroupEditor = new EnumerationSectionEditor(
 			this, controller.newInstance(), controller.newInstance().inquiryAccessGroup, this.inquiryAccessGroupLabel,
@@ -2195,7 +2254,7 @@ var OrganizationsPanel = (function () {
 	
 	function OrganizationsPanel(onShow)
 	{
-		RootItemsPanel.call(this);
+		RootItemsPanel.call(this, this.panelTitle, onShow);
 	}
 	
 	return OrganizationsPanel;
@@ -2242,7 +2301,7 @@ var ServicesPanel = (function () {
 	
 	function ServicesPanel(onShow)
 	{
-		RootItemsPanel.call(this);
+		RootItemsPanel.call(this, this.panelTitle, onShow);
 	}
 	
 	return ServicesPanel;
@@ -2315,10 +2374,63 @@ var SitePanel = (function () {
 		
 		var _this = this;
 
-		this.createRoot(onShow);
+		this.createRoot(crv.buttonTexts.site, onShow);
 		
 		/* Fill in the controls for editing */
-		
+		this.namesSection = this.mainDiv.append('section')
+			.datum(controller.newInstance())
+			.classed('cell edit multiple', true);
+		this.namesSection.append('label')
+			.text(this.namesLabel);
+		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
+									 'nameAdded.cr', 'nameDeleted.cr', 'addName.cr nameDeleted.cr changed.cr', 
+									 controller.newInstance().names(),
+									 cr.SiteName);
+
+		this.webSiteSection = this.mainDiv.append('section')
+			.datum(controller.newInstance())
+			.classed('cell edit unique first', true)
+			.on('focusout', function(d)
+				{
+					d.webSite(d3.select(this).select('input').property('value'));
+				});
+		this.webSiteSection.append('label')
+			.text(crv.buttonTexts.webSite);
+		this.appendTextEditor(this.webSiteSection, 
+							  crv.buttonTexts.webSite,
+							  controller.newInstance().webSite(),
+							  'text');
+				 
+		this.addressSection = this.mainDiv.append('section')
+			.datum(controller.newInstance())
+			.classed('cell edit unique first', true)
+			.on('click', function(d) {
+				if (prepareClick('click', 'Address'))
+				{
+					showClickFeedback(this);
+					try
+					{
+						var address = d.address();
+						var addressController = new AddressController(d, address);
+						addressController.oldInstance(address);
+						var panel = new AddressPanel(addressController, revealPanelLeft);
+						panel.showLeft().then(unblockClick);
+						setupOnViewEventHandler(address, 'changed.cr', this, function(eventObject)
+							{
+								d3.select(eventObject.data).selectAll('div.description-text')
+									.text(address.description() || crv.buttonTexts.nullString);
+							});
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			});
+		this.addressSection.append('label')
+			.text(crv.buttonTexts.address);
+		this.appendEnumerationEditor(this.addressSection, controller.newInstance().address().description() || crv.buttonTexts.nullString);
+		crf.appendRightChevrons(this.addressSection.selectAll('li'));	
+
+		this.appendChildrenPanelButton(crv.buttonTexts.offerings, OfferingsPanel);
+
 		/* Add a delete button. */
 		this.appendDeleteButton();
 	}
@@ -2359,7 +2471,6 @@ var SitesPanel = (function () {
 	SitesPanel.prototype = Object.create(ChildrenPanel.prototype);
 	SitesPanel.prototype.constructor = SitesPanel;
 
-	SitesPanel.prototype.panelTitle = "Sites";
 	SitesPanel.prototype.addPanelTitle = "Add Site";
 	SitesPanel.prototype.addedEvent = 'siteAdded.cr';
 	SitesPanel.prototype.searchViewType = SiteChildSearchView;
@@ -2368,7 +2479,7 @@ var SitesPanel = (function () {
 		ChildrenPanel.call(this, parent, onShow);
 		var _this = this;
 
-		this.createRoot(parent, this.panelTitle, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.sites, 'list', onShow);
 	}
 	
 	return SitesPanel;
@@ -2416,7 +2527,7 @@ var UsersPanel = (function () {
 	
 	function UsersPanel(onShow)
 	{
-		RootItemsPanel.call(this);
+		RootItemsPanel.call(this, this.panelTitle, onShow);
 	}
 	
 	return UsersPanel;
@@ -2464,7 +2575,7 @@ var CommentPromptsPanel = (function () {
 	
 	function CommentPromptsPanel(onShow)
 	{
-		RootItemsPanel.call(this);
+		RootItemsPanel.call(this, this.panelTitle, onShow);
 	}
 	
 	return CommentPromptsPanel;
@@ -2512,7 +2623,7 @@ var ExperiencePromptsPanel = (function () {
 	
 	function ExperiencePromptsPanel(onShow)
 	{
-		RootItemsPanel.call(this);
+		RootItemsPanel.call(this, this.panelTitle, onShow);
 	}
 	
 	return ExperiencePromptsPanel;

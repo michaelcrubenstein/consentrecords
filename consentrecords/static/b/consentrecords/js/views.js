@@ -153,10 +153,23 @@ var crv = {
 			    {code: 'zh', name: "Chinese"}],
 			    
 	buttonTexts: {
+		add: "Add",
+		address: "Address",
+		cancel: "Cancel",
 		done: "Done",
 		edit: "Edit",
-		cancel: "Cancel",
-		add: "Add",
+		groups: "Groups",
+		names: "Names",
+		name: "Name",
+		nullString: "(None)",
+		offering: "Offering", 
+		offerings: "Offerings", 
+		organization: "Organization",
+		organizations: "Organizations",
+		settings: "Settings",
+		sites: "Site",
+		sites: "Sites",
+		webSite: "Web Site",
 	},
 
 	appendLoadingMessage: function(node)
@@ -2812,15 +2825,35 @@ var EditItemPanel = (function () {
 		return this.controller().save();
 	}
 	
-	EditItemPanel.prototype.createRoot = function(onShow)
+	EditItemPanel.prototype.appendChildrenPanelButton = function(label, panelType)
 	{
 		var _this = this;
-		EditPanel.prototype.createRoot.call(this, this._controller.newInstance(), this.panelTitle, onShow);
+		var childrenButton = this.appendActionButton(label, function() {
+				if (prepareClick('click', label))
+				{
+					showClickFeedback(this);
+					try
+					{
+						var panel = new panelType(_this.controller().newInstance(), revealPanelLeft);
+						panel.showLeft().then(unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+		childrenButton.selectAll('li>div').classed('description-text', true);
+		crf.appendRightChevrons(childrenButton.selectAll('li'));	
+	}
+	
+	EditItemPanel.prototype.createRoot = function(header, onShow)
+	{
+		var _this = this;
+		EditPanel.prototype.createRoot.call(this, this._controller.newInstance(), header, onShow);
 
 		this.navContainer.appendLeftButton()
 			.on("click", function()
 				{
-					if (prepareClick('click', _this.panelTitle + ' Cancel'))
+					if (prepareClick('click', header + ' Cancel'))
 					{
 						_this.hide();
 					}
@@ -2830,11 +2863,11 @@ var EditItemPanel = (function () {
 		
 		var doneButton = this.navContainer.appendRightButton();
 			
-		this.navContainer.appendTitle(this.panelTitle);
+		this.navContainer.appendTitle(header);
 		
 		doneButton.on("click", function()
 			{
-				if (prepareClick('click', _this.panelTitle + ' done'))
+				if (prepareClick('click', header + ' done'))
 				{
 					this.focus();	// To eliminate focus from a previously selected item.
 					showClickFeedback(this);
