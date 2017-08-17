@@ -1,5 +1,5 @@
 var SharingPanel = (function() {
-	SharingPanel.prototype = Object.create(SitePanel.prototype);
+	SharingPanel.prototype = Object.create(crv.SitePanel.prototype);
 	SharingPanel.prototype.constructor = SharingPanel;
 
 	SharingPanel.prototype.privilegesByID = null;
@@ -317,7 +317,7 @@ var SharingPanel = (function() {
 	This function should be called within a prepareClick block. 
  */
 var PickSharingUserPanel = (function() {
-	PickSharingUserPanel.prototype = Object.create(SitePanel.prototype);
+	PickSharingUserPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PickSharingUserPanel.prototype.constructor = PickSharingUserPanel;
 
 	PickSharingUserPanel.prototype.title = "User Or Group"

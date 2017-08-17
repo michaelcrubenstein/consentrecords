@@ -1,5 +1,5 @@
 var UpdatePasswordPanel = (function () {
-	UpdatePasswordPanel.prototype = Object.create(SitePanel.prototype);
+	UpdatePasswordPanel.prototype = Object.create(crv.SitePanel.prototype);
 	UpdatePasswordPanel.prototype.constructor = UpdatePasswordPanel;
 
 	function UpdatePasswordPanel() {
@@ -94,7 +94,7 @@ var UpdatePasswordPanel = (function () {
 })();
 
 var UpdateUsernamePanel = (function () {
-	UpdateUsernamePanel.prototype = Object.create(SitePanel.prototype);
+	UpdateUsernamePanel.prototype = Object.create(crv.SitePanel.prototype);
 	UpdateUsernamePanel.prototype.constructor = UpdateUsernamePanel;
 
 	function UpdateUsernamePanel(user) {

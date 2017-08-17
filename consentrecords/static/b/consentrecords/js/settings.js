@@ -769,7 +769,7 @@ crn.ExperienceSuggestion = (function() {
 })();
 
 var NotificationsPanel = (function () {
-	NotificationsPanel.prototype = Object.create(SitePanel.prototype);
+	NotificationsPanel.prototype = Object.create(crv.SitePanel.prototype);
 	NotificationsPanel.prototype.constructor = NotificationsPanel;
 
 	NotificationsPanel.prototype.panelTitle = "Notifications";

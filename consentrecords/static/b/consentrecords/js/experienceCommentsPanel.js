@@ -1,7 +1,7 @@
 /* experienceCommentsPanel.js */
 
 var ExperienceCommentsPanel = (function() {
-	ExperienceCommentsPanel.prototype = Object.create(SitePanel.prototype);
+	ExperienceCommentsPanel.prototype = Object.create(crv.SitePanel.prototype);
 	ExperienceCommentsPanel.prototype.constructor = ExperienceCommentsPanel;
 
 	ExperienceCommentsPanel.prototype.fd = null;

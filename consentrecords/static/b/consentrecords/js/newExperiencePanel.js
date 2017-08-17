@@ -1792,7 +1792,7 @@ var ExperienceShareOptions = (function () {
 })();
 
 var NewExperiencePanel = (function () {
-	NewExperiencePanel.prototype = Object.create(SitePanel.prototype);
+	NewExperiencePanel.prototype = Object.create(crv.SitePanel.prototype);
 	NewExperiencePanel.prototype.constructor = NewExperiencePanel;
 
 	NewExperiencePanel.prototype.allServices = null;

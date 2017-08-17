@@ -7,7 +7,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	var offering = session.offering();
 	var site = session.site();
 	
-	var sitePanel = new SitePanel();
+	var sitePanel = new crv.SitePanel();
 	sitePanel.createRoot(session, offering.description(), "session");
 	var panel = sitePanel.node();
 	
@@ -363,7 +363,7 @@ var PickOfferingSearchView = (function () {
 })();
 
 var PickOfferingPanel = (function() {
-	PickOfferingPanel.prototype = Object.create(SitePanel.prototype);
+	PickOfferingPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PickOfferingPanel.prototype.constructor = PickOfferingPanel;
 
 	PickOfferingPanel.prototype.offeringID = null;
@@ -470,7 +470,7 @@ var FindExperienceSearchView = (function () {
 })();
 
 var FindExperiencePanel = (function () {
-	FindExperiencePanel.prototype = Object.create(SitePanel.prototype);
+	FindExperiencePanel.prototype = Object.create(crv.SitePanel.prototype);
 	FindExperiencePanel.prototype.constructor = FindExperiencePanel;
 
 	function FindExperiencePanel(user, serviceValueID, offeringID) {

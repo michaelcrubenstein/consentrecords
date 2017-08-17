@@ -1231,7 +1231,7 @@ var SiteNavContainer = (function() {
 })();
 
 /* Creates a panel that sits atop the specified containerPanel in the same container. */
-var SitePanel = (function () {
+crv.SitePanel = (function () {
 	SitePanel.prototype.panelDiv = undefined;
 	SitePanel.prototype.navContainer = undefined;
 	SitePanel.prototype.panel2Div = undefined;
@@ -2189,7 +2189,7 @@ function showViewOnlyObjectPanel(objectData, backText) {
 	objectData.promiseCells()
 		.then(function ()
 			{
-				var sitePanel = new SitePanel();
+				var sitePanel = new crv.SitePanel();
 				sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "view");
 
 				var navContainer = sitePanel.appendNavContainer();
@@ -2217,7 +2217,7 @@ function showViewObjectPanel(cell, objectData, backText, showFunction) {
 	objectData.promiseCells()
 		.then(function ()
 			{
-				var sitePanel = new SitePanel();
+				var sitePanel = new crv.SitePanel();
 				var header = getViewPanelHeader(objectData);
 				sitePanel.createRoot(objectData, header, "view", showFunction);
 
@@ -2329,7 +2329,7 @@ function promiseCreateObjectFromCells(containerCell, objectData, cells)
 }
 
 var EditPanel = (function() {
-	EditPanel.prototype = Object.create(SitePanel.prototype);
+	EditPanel.prototype = Object.create(crv.SitePanel.prototype);
 	EditPanel.prototype.constructor = EditPanel;
 
 	EditPanel.prototype.navContainer = null;
@@ -2779,7 +2779,7 @@ var EditPanel = (function() {
 	
 	EditPanel.prototype.createRoot = function(objectData, header, onShow)
 	{
-		SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
+		crv.SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
 		this.navContainer = this.appendNavContainer();
 		this.appendScrollArea();
 	}
@@ -2866,12 +2866,12 @@ var EditItemPanel = (function () {
 	Displays a panel for editing the specified object. 
  */
 var PickFromListPanel = (function () {
-	PickFromListPanel.prototype = Object.create(SitePanel.prototype);
+	PickFromListPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PickFromListPanel.prototype.constructor = PickFromListPanel;
 
 	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
 	{
-		SitePanel.prototype.createRoot.call(this, datum, headerText, "list", revealPanelLeft);
+		crv.SitePanel.prototype.createRoot.call(this, datum, headerText, "list", revealPanelLeft);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();

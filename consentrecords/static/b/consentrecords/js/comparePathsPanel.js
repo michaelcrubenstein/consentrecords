@@ -579,7 +579,7 @@ var ComparePath = (function() {
 })();
 
 var ComparePathsPanel = (function () {
-	ComparePathsPanel.prototype = Object.create(SitePanel.prototype);
+	ComparePathsPanel.prototype = Object.create(crv.SitePanel.prototype);
 	ComparePathsPanel.prototype.constructor = ComparePathsPanel;
 
 	ComparePathsPanel.prototype.leftUser = null;

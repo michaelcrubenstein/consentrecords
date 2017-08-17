@@ -207,7 +207,7 @@ var SearchTagPoolView = (function () {
 })();
 
 var SearchPathsPanel = (function () {
-	SearchPathsPanel.prototype = Object.create(SitePanel.prototype);
+	SearchPathsPanel.prototype = Object.create(crv.SitePanel.prototype);
 	SearchPathsPanel.prototype.constructor = SearchPathsPanel;
 
 	SearchPathsPanel.prototype.selectedPool = null;

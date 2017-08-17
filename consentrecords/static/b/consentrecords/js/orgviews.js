@@ -1200,7 +1200,7 @@ var NewInquirySearchView = (function()
 
 var NewInquiryPanel = (function()
 {
-	NewInquiryPanel.prototype = Object.create(SitePanel.prototype);
+	NewInquiryPanel.prototype = Object.create(crv.SitePanel.prototype);
 	NewInquiryPanel.prototype.constructor = NewInquiryPanel;
 
 	NewInquiryPanel.prototype.session = null;
@@ -1287,7 +1287,7 @@ var NewEnrollmentSearchView = (function()
 
 var NewEnrollmentPanel = (function()
 {
-	NewEnrollmentPanel.prototype = Object.create(SitePanel.prototype);
+	NewEnrollmentPanel.prototype = Object.create(crv.SitePanel.prototype);
 	NewEnrollmentPanel.prototype.constructor = NewEnrollmentPanel;
 
 	NewEnrollmentPanel.prototype.session = null;
@@ -1367,7 +1367,7 @@ var PickEngagementUserSearchView = (function()
 
 var PickEngagementUserPanel = (function()
 {
-	PickEngagementUserPanel.prototype = Object.create(SitePanel.prototype);
+	PickEngagementUserPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PickEngagementUserPanel.prototype.constructor = PickEngagementUserPanel;
 
 	PickEngagementUserPanel.prototype.session = null;
@@ -1927,7 +1927,7 @@ var PickInquiryAccessGroupSearchView = (function () {
 
 var PickInquiryAccessGroupPanel = (function()
 {
-	PickInquiryAccessGroupPanel.prototype = Object.create(SitePanel.prototype);
+	PickInquiryAccessGroupPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PickInquiryAccessGroupPanel.prototype.constructor = PickInquiryAccessGroupPanel;
 
 	PickInquiryAccessGroupPanel.prototype.organization = null;
@@ -1935,7 +1935,7 @@ var PickInquiryAccessGroupPanel = (function()
 	PickInquiryAccessGroupPanel.prototype.createRoot = function(organization, oldDescription, title)
 	{
 		var _this = this;
-		SitePanel.prototype.createRoot.call(this, organization, title, 'list', revealPanelLeft);
+		crv.SitePanel.prototype.createRoot.call(this, organization, title, 'list', revealPanelLeft);
 		this.navContainer = this.appendNavContainer();
 
 		var _this = this;

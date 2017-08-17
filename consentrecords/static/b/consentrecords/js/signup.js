@@ -1,5 +1,5 @@
 var Signup = (function () {
-	Signup.prototype = Object.create(SitePanel.prototype);
+	Signup.prototype = Object.create(crv.SitePanel.prototype);
 	Signup.prototype.constructor = Signup;
 
 	Signup.prototype.dots = null;
@@ -417,7 +417,7 @@ var Signup = (function () {
 
 var SigninPanel = (function()
 {
-	SigninPanel.prototype = Object.create(SitePanel.prototype);
+	SigninPanel.prototype = Object.create(crv.SitePanel.prototype);
 	SigninPanel.prototype.constructor = SigninPanel;
 
 	SigninPanel.prototype.canSubmit = function() {
@@ -681,7 +681,7 @@ var SigninPanel = (function()
 
 var ForgotPasswordPanel = (function()
 {
-	ForgotPasswordPanel.prototype = Object.create(SitePanel.prototype);
+	ForgotPasswordPanel.prototype = Object.create(crv.SitePanel.prototype);
 	ForgotPasswordPanel.prototype.constructor = ForgotPasswordPanel;
 
 	ForgotPasswordPanel.prototype.submitButton = null;

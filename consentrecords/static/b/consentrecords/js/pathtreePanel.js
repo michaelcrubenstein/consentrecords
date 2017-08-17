@@ -1488,7 +1488,7 @@ var NotificationsButton = (function() {
 })();
 
 var PathlinesPanel = (function () {
-	PathlinesPanel.prototype = Object.create(SitePanel.prototype);
+	PathlinesPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PathlinesPanel.prototype.constructor = PathlinesPanel;
 
 	PathlinesPanel.prototype.user = null;
@@ -2186,7 +2186,7 @@ var OtherPathlines = (function() {
 })();
 
 var OtherPathPanel = (function () {
-	OtherPathPanel.prototype = Object.create(SitePanel.prototype);
+	OtherPathPanel.prototype = Object.create(crv.SitePanel.prototype);
 	OtherPathPanel.prototype.constructor = OtherPathPanel;
 
 	OtherPathPanel.prototype.path = null;
