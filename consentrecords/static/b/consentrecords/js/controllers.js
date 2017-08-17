@@ -129,6 +129,23 @@ var RootController = (function() {
 		this.newInstance().privilege("write");
 	}
 	
+	/** Posts a new instance of this type to the middle tier and returns a promise. */
+	RootController.prototype.postAdd = function(initialData)
+	{
+		console.assert(this.groupKey !== undefined);
+		var changes = {};
+		changes[this.groupKey] = [initialData];
+		return cr.IInstance.updateRoots(changes);
+	}
+	
+	RootController.prototype.postAddDone = function(changes, newIDs)
+	{
+		this.newInstance().id(newIDs[this.newInstance().clientID()]);
+		crp.pushInstance(this.newInstance());
+		this.newInstance().updateData(changes[this.groupKey][0], newIDs);
+		return this;
+	}
+
 	function RootController(instanceType, source)
 	{
 		Controller.call(this, instanceType, source);
@@ -160,6 +177,14 @@ var ChildController = (function() {
 		this.newInstance().privilege(this._parent.privilege());
 	}
 	
+	ChildController.prototype.postAdd = function(initialData)
+	{
+		console.assert(this.groupKey !== undefined);
+		var changes = {};
+		changes[this.groupKey] = [initialData];
+		return this.parent().update(changes, false);
+	}
+	
 	function ChildController(parent, instanceType, source)
 	{
 		this.parent(parent);
@@ -174,6 +199,7 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.addingMessage = "Adding Experience To Your Pathway...";
 	ExperienceController.prototype.savingMessage = "Saving Experience...";
+	ExperienceController.prototype.groupKey = 'experiences';
 	
 	ExperienceController.prototype._domain = null;
 	ExperienceController.prototype._stage = null;
@@ -486,18 +512,14 @@ var ExperienceController = (function() {
 		}
 	}
 	
-	ExperienceController.prototype.postAdd = function(initialData)
-	{
-		return this.parent().update({'experiences': [initialData]}, false);
-	}
-	
 	ExperienceController.prototype.postAddDone = function(changes, newIDs)
 	{
-		this.parent().experiences().push(this.newInstance());
 		/* Remove from the experience any experiences that are
 			duplicated in the offering services */
 		this.newInstance().experienceServices(this.distinctExperienceServices());
 		this.newInstance().path(this.parent());
+		
+		this.parent().experiences().push(this.newInstance());
 		this.parent().updateData(changes, newIDs);
 		return this;
 	}
@@ -622,6 +644,7 @@ var OrganizationController = (function() {
 	
 	OrganizationController.prototype.addingMessage = "Adding Organization...";
 	OrganizationController.prototype.savingMessage = "Saving Organization...";
+	OrganizationController.prototype.groupKey = 'organizations';
 	
 	OrganizationController.prototype.webSite = function(newValue)
 	{
@@ -651,18 +674,6 @@ var OrganizationController = (function() {
 	{
 		var value = this.newInstance().sites(newValue);
 		return newValue === undefined ? value : this;
-	}
-
-	OrganizationController.prototype.postAdd = function(initialData)
-	{
-		return cr.IInstance.updateRoots({'organizations': [initialData]});
-	}
-	
-	OrganizationController.prototype.postAddDone = function(changes, newIDs)
-	{
-		crp.pushInstance(this.newInstance());
-		this.newInstance().updateData(changes['organizations'][0], newIDs);
-		return this;
 	}
 
 	function OrganizationController(source)
