@@ -279,45 +279,50 @@ var PickCanRegisterPanel = (function () {
 	return PickCanRegisterPanel;
 })();
 
-var SessionChildSearchView = (function () {
-	SessionChildSearchView.prototype = Object.create(PanelSearchView.prototype);
-	SessionChildSearchView.prototype.constructor = SessionChildSearchView;
-
-	SessionChildSearchView.prototype.session = null;
+var ChildSearchView = (function () {
+	ChildSearchView.prototype = Object.create(PanelSearchView.prototype);
+	ChildSearchView.prototype.constructor = ChildSearchView;
+	
+	ChildSearchView.prototype.pathType = null;
+	ChildSearchView.prototype.textPath = null;
+	ChildSearchView.prototype.parent = null;
 	
 	/* Overrides SearchView.searchPath */
-	SessionChildSearchView.prototype.searchPath = function(val)
+	ChildSearchView.prototype.searchPath = function(val)
 	{
-		var s = this.pathType;
+		console.assert(this.pathType);	/* Make sure it is defined. */
+		console.assert(this.textPath);	/* Make sure it is defined. */
+		
+		var s = this.parent.urlPath() + '/' + this.pathType;
 		if (val.length == 0)
 			return s;
 		else
 		{
 			if (val.length < 3)
-				return s + '[user>email>text^="' + encodeURIComponent(val) + '"]';
+				return s + '[' + this.textPath + '^="' + encodeURIComponent(val) + '"]';
 			else
-				return s + '[user>email>text*="' + encodeURIComponent(val) + '"]';
+				return s + '[' + this.textPath + '*="' + encodeURIComponent(val) + '"]';
 		}
 	}
 	
-	SessionChildSearchView.prototype.increment = function()
+	ChildSearchView.prototype.increment = function()
 	{
 		return 10;
 	}
 	
-	SessionChildSearchView.prototype.fields = function()
+	ChildSearchView.prototype.fields = function()
 	{
 		return ["parents"];
 	}
 	
-	SessionChildSearchView.prototype.textCleared = function()
+	ChildSearchView.prototype.textCleared = function()
 	{
 		SearchView.prototype.textCleared.call(this);
 		
 		this.startSearchTimeout("");
 	}
 	
-	SessionChildSearchView.prototype.fillItems = function(items)
+	ChildSearchView.prototype.fillItems = function(items)
 	{
 		var deleteControls = crf.appendDeleteControls(items);
 		PanelSearchView.prototype.fillItems.call(this, items);
@@ -344,7 +349,7 @@ var SessionChildSearchView = (function () {
 			});
 	}
 	
-	SessionChildSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	ChildSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		if (compareText.length === 0)
 			return true;
@@ -357,42 +362,54 @@ var SessionChildSearchView = (function () {
 	}
 	
 	/* Overrides SearchView.prototype.onClickButton */
-	SessionChildSearchView.prototype.onClickButton = function(d, i, button) {
+	ChildSearchView.prototype.onClickButton = function(d, i, button) {
+		var _this = this;
+		
 		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
 		{
 			try
 			{
 				showClickFeedback(button);
-			
-				var panel = new (this.childPanelType())(this.session, d);
-				panel.showLeft().then(unblockClick);
+				d.promiseData()
+					.then(function()
+						{
+							try
+							{
+								var controller = new (this.controllerType())(this.parent, d, true);
+								controller.oldInstance(d);
+								var panel = new (this.childPanelType())(controller, revealPanelLeft);
+								panel.showLeft().then(unblockClick);
+							}
+							catch(err) { cr.syncFail(err); }
+						},
+						cr.syncFail);
 			}
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
 	}
 	
-	SessionChildSearchView.prototype.appendSearchArea = function()
+	ChildSearchView.prototype.appendSearchArea = function()
 	{
 		return PanelSearchView.prototype.appendSearchArea.call(this)
 			.classed('deletable-items', true);
 	}
 	
-	function SessionChildSearchView(sitePanel, session) {
-		this.session = session;
+	function ChildSearchView(sitePanel, parent) {
+		this.parent = parent;
 		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
 	}
 	
 	return SessionChildSearchView;
 })();
 
-var SessionChildrenPanel = (function () {
-	SessionChildrenPanel.prototype = Object.create(EditPanel.prototype);
-	SessionChildrenPanel.prototype.constructor = SessionChildrenPanel;
+var ChildrenPanel = (function () {
+	ChildrenPanel.prototype = Object.create(EditPanel.prototype);
+	ChildrenPanel.prototype.constructor = ChildrenPanel;
 
-	SessionChildrenPanel.prototype.session = null;
+	ChildrenPanel.prototype.parent = null;
 	
-	SessionChildrenPanel.prototype.createRoot = function(objectData, header, onShow)
+	ChildrenPanel.prototype.createRoot = function(objectData, header, onShow)
 	{
 		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
 
@@ -413,7 +430,7 @@ var SessionChildrenPanel = (function () {
 						try
 						{
 							showClickFeedback(this);
-							_this.showAddPanel()
+							_this.showAddPanel();
 						}
 						catch(err)
 						{
@@ -427,10 +444,53 @@ var SessionChildrenPanel = (function () {
 		this.navContainer.appendTitle(this.panelTitle);
 	}
 	
-	function SessionChildrenPanel(session, onShow)
+	ChildrenPanel.prototype.showAddPanel = function()
+	{
+		var _this = this;
+		var controller = new (this.searchView.controllerType())(this.parent);
+		var panel = new (this.searchView.childPanelType())(controller, revealPanelUp);
+		setupOnViewEventHandler(this.parent, this.addedEvent, panel.node(), function(eventObject)
+			{
+				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+			}); 
+		panel.showUp().then(unblockClick);
+	}
+
+	function ChildrenPanel(parent, onShow)
 	{
 		EditPanel.call(this);
+		this.parent = parent;
+	}
+	
+	return ChildrenPanel;
+	
+})();
+
+var SessionChildSearchView = (function () {
+	SessionChildSearchView.prototype = Object.create(ChildSearchView.prototype);
+	SessionChildSearchView.prototype.constructor = SessionChildSearchView;
+
+	SessionChildSearchView.prototype.textPath = 'user>email>text';
+	SessionChildSearchView.prototype.session = null;
+	
+	function SessionChildSearchView(sitePanel, session) {
 		this.session = session;
+		ChildSearchView.call(this, sitePanel, session);
+	}
+	
+	return SessionChildSearchView;
+})();
+
+var SessionChildrenPanel = (function () {
+	SessionChildrenPanel.prototype = Object.create(ChildrenPanel.prototype);
+	SessionChildrenPanel.prototype.constructor = SessionChildrenPanel;
+
+	SessionChildrenPanel.prototype.session = null;
+	
+	function SessionChildrenPanel(parent, onShow)
+	{
+		ChildrenPanel.call(this, parent, onShow);
+		this.session = parent;
 	}
 	
 	return SessionChildrenPanel;
@@ -441,7 +501,7 @@ var InquirySearchView = (function () {
 	InquirySearchView.prototype = Object.create(SessionChildSearchView.prototype);
 	InquirySearchView.prototype.constructor = InquirySearchView;
 
-	InquirySearchView.prototype.pathType = "inquiry";
+	InquirySearchView.prototype.pathType = 'inquiry';
 	
 	InquirySearchView.prototype.resultType = function()
 	{
@@ -475,21 +535,21 @@ var InquiriesPanel = (function () {
 	InquiriesPanel.prototype.showAddPanel = function()
 	{
 		var _this = this;
-		var panel = new NewInquiryPanel(this.session, this.addPanelTitle);
-		setupOnViewEventHandler(this.session, 'inquiryAdded.cr', panel.node(), function(eventObject)
+		var panel = new NewInquiryPanel(this.parent, this.addPanelTitle);
+		setupOnViewEventHandler(this.parent, 'inquiryAdded.cr', panel.node(), function(eventObject)
 			{
-				_this.searchView.restartSearchTimeout("");
+				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
 			}); 
 		panel.showLeft().then(unblockClick);
 	}
 
-	function InquiriesPanel(session, onShow) {
-		SessionChildrenPanel.call(this, session, onShow);
+	function InquiriesPanel(parent, onShow) {
+		SessionChildrenPanel.call(this, parent, onShow);
 		var _this = this;
 
-		this.createRoot(session, this.panelTitle, 'list', onShow);
+		this.createRoot(parent, this.panelTitle, 'list', onShow);
 
-		this.searchView = new InquirySearchView(this, session);
+		this.searchView = new InquirySearchView(this, parent);
 		$(this.node()).one('revealing.cr', function() { 
 				_this.searchView.search(""); 
 				_this.searchView.inputBox.focus();
@@ -503,7 +563,7 @@ var EnrollmentSearchView = (function () {
 	EnrollmentSearchView.prototype = Object.create(SessionChildSearchView.prototype);
 	EnrollmentSearchView.prototype.constructor = EnrollmentSearchView;
 
-	EnrollmentSearchView.prototype.pathType = "enrollment";
+	EnrollmentSearchView.prototype.pathType = 'enrollment';
 	
 	EnrollmentSearchView.prototype.resultType = function()
 	{
@@ -520,8 +580,8 @@ var EnrollmentSearchView = (function () {
 		return EnrollmentPanel;
 	}
 	
-	function EnrollmentSearchView(sitePanel, session) {
-		SessionChildSearchView.call(this, sitePanel, session);
+	function EnrollmentSearchView(sitePanel, parent) {
+		SessionChildSearchView.call(this, sitePanel, parent);
 	}
 	
 	return EnrollmentSearchView;
@@ -537,21 +597,21 @@ var EnrollmentsPanel = (function () {
 	EnrollmentsPanel.prototype.showAddPanel = function()
 	{
 		var _this = this;
-		var panel = new NewEnrollmentPanel(this.session, this.addPanelTitle);
-		setupOnViewEventHandler(this.session, 'enrollmentAdded.cr', panel.node(), function(eventObject)
+		var panel = new NewEnrollmentPanel(this.parent, this.addPanelTitle);
+		setupOnViewEventHandler(this.parent, 'enrollmentAdded.cr', panel.node(), function(eventObject)
 			{
-				_this.searchView.restartSearchTimeout("");
+				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
 			}); 
 		panel.showLeft().then(unblockClick);
 	}
 
-	function EnrollmentsPanel(session, onShow) {
-		SessionChildrenPanel.call(this, session, onShow);
+	function EnrollmentsPanel(parent, onShow) {
+		SessionChildrenPanel.call(this, parent, onShow);
 		var _this = this;
 
-		this.createRoot(session, this.panelTitle, 'list', onShow);
+		this.createRoot(parent, this.panelTitle, 'list', onShow);
 
-		this.searchView = new EnrollmentSearchView(this, session);
+		this.searchView = new EnrollmentSearchView(this, parent);
 		$(this.node()).one('revealing.cr', function() { 
 				_this.searchView.search(""); 
 				_this.searchView.inputBox.focus();
@@ -565,7 +625,7 @@ var EngagementSearchView = (function () {
 	EngagementSearchView.prototype = Object.create(SessionChildSearchView.prototype);
 	EngagementSearchView.prototype.constructor = EngagementSearchView;
 
-	EngagementSearchView.prototype.pathType = "engagement";
+	EngagementSearchView.prototype.pathType = 'engagement';
 	
 	EngagementSearchView.prototype.resultType = function()
 	{
@@ -582,8 +642,8 @@ var EngagementSearchView = (function () {
 		return EngagementPanel;
 	}
 	
-	function EngagementSearchView(sitePanel, session) {
-		SessionChildSearchView.call(this, sitePanel, session);
+	function EngagementSearchView(sitePanel, parent) {
+		SessionChildSearchView.call(this, sitePanel, parent);
 	}
 	
 	return EngagementSearchView;
@@ -594,26 +654,27 @@ var EngagementsPanel = (function () {
 	EngagementsPanel.prototype.constructor = EngagementsPanel;
 
 	EngagementsPanel.prototype.panelTitle = "Engagements";
+	EngagementsPanel.prototype.addedEvent = 'engagementAdded.cr';
 
 	EngagementsPanel.prototype.showAddPanel = function()
 	{
 		var _this = this;
-		var engagement = new cr.Engagement();
-		var panel = new EngagementPanel(this.session, engagement, revealPanelUp);
-		setupOnViewEventHandler(this.session, 'engagementAdded.cr', panel.node(), function(eventObject)
+		var child = new (this.searchView.resultType())();
+		var panel = new (this.searchView.childPanelType())(this.parent, child, revealPanelUp);
+		setupOnViewEventHandler(this.parent, this.addedEvent, panel.node(), function(eventObject)
 			{
-				_this.searchView.restartSearchTimeout("");
+				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
 			}); 
-		panel.showLeft().then(unblockClick);
+		panel.showUp().then(unblockClick);
 	}
 
-	function EngagementsPanel(session, onShow) {
-		SessionChildrenPanel.call(this, session, onShow);
+	function EngagementsPanel(parent, onShow) {
+		SessionChildrenPanel.call(this, parent, onShow);
 		var _this = this;
 
-		this.createRoot(session, this.panelTitle, "list", onShow);
+		this.createRoot(parent, this.panelTitle, "list", onShow);
 
-		this.searchView = new EngagementSearchView(this, session);
+		this.searchView = new EngagementSearchView(this, parent);
 		$(this.node()).one("revealing.cr", function() { 
 				_this.searchView.search(""); 
 				_this.searchView.inputBox.focus();
@@ -627,7 +688,7 @@ var PeriodSearchView = (function () {
 	PeriodSearchView.prototype = Object.create(SessionChildSearchView.prototype);
 	PeriodSearchView.prototype.constructor = PeriodSearchView;
 
-	PeriodSearchView.prototype.pathType = "period";
+	PeriodSearchView.prototype.pathType = 'period';
 	
 	PeriodSearchView.prototype.resultType = function()
 	{
@@ -659,8 +720,8 @@ var PeriodSearchView = (function () {
 			});
 	}
 	
-	function PeriodSearchView(sitePanel, session) {
-		SessionChildSearchView.call(this, sitePanel, session);
+	function PeriodSearchView(sitePanel, parent) {
+		SessionChildSearchView.call(this, sitePanel, parent);
 	}
 	
 	return PeriodSearchView;
@@ -675,24 +736,24 @@ var PeriodsPanel = (function () {
 	PeriodsPanel.prototype.showAddPanel = function()
 	{
 		var period = new cr.Period();
-		var panel = new PeriodPanel(this.session, period, revealPanelUp);
+		var panel = new PeriodPanel(this.parent, period, revealPanelUp);
 		panel.showLeft().then(unblockClick);
 	}
 
-	function PeriodsPanel(session, onShow) {
-		SessionChildrenPanel.call(this, session, onShow);
+	function PeriodsPanel(parent, onShow) {
+		SessionChildrenPanel.call(this, parent, onShow);
 		var _this = this;
 
-		this.createRoot(session, this.panelTitle, "list", onShow);
+		this.createRoot(parent, this.panelTitle, "list", onShow);
 
-		this.searchView = new PeriodSearchView(this, session);
+		this.searchView = new PeriodSearchView(this, parent);
 		$(this.node()).one("revealing.cr", function() { 
 				_this.searchView.search(""); 
 				_this.searchView.inputBox.focus();
 			});
-		setupOnViewEventHandler(this.session, 'periodAdded.cr', this.node(), function(eventObject)
+		setupOnViewEventHandler(this.parent, 'periodAdded.cr', this.node(), function(eventObject)
 			{
-				_this.searchView.restartSearchTimeout("");
+				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
 			}); 
 	}
 	
@@ -775,12 +836,12 @@ var EngagementPanel = (function () {
 			return false;
 	}
 	
-	function EngagementPanel(session, engagement, onShow) {
+	function EngagementPanel(parent, engagement, onShow) {
 		var _this = this;
-		this.session = session;
+		this.session = parent;
 		this.engagement = engagement;
 
-		this.createRoot(session, this.panelTitle, "edit", onShow);
+		this.createRoot(parent, this.panelTitle, "edit", onShow);
 		
 		this.appendBackButton();
 
@@ -964,12 +1025,12 @@ var PeriodPanel = (function () {
 		return false;
 	}
 	
-	function PeriodPanel(session, period, onShow) {
+	function PeriodPanel(parent, period, onShow) {
 		var _this = this;
-		this.session = session;
+		this.session = parent;
 		this.period = period;
 
-		this.createRoot(session, this.panelTitle, "edit", onShow);
+		this.createRoot(parent, this.panelTitle, "edit", onShow);
 		
 		this.appendBackButton();
 
@@ -1206,7 +1267,7 @@ var NewInquiryPanel = (function()
 	NewInquiryPanel.prototype.session = null;
 	function NewInquiryPanel(session, title)
 	{
-		SitePanel.call(this);
+		crv.SitePanel.call(this);
 		this.createRoot(session, title, 'list');
 
 		var navContainer = this.appendNavContainer();
@@ -1293,7 +1354,7 @@ var NewEnrollmentPanel = (function()
 	NewEnrollmentPanel.prototype.session = null;
 	function NewEnrollmentPanel(session, title)
 	{
-		SitePanel.call(this);
+		crv.SitePanel.call(this);
 		this.createRoot(session, title, 'list');
 
 		var navContainer = this.appendNavContainer();
@@ -1374,7 +1435,7 @@ var PickEngagementUserPanel = (function()
 
 	function PickEngagementUserPanel(session, engagement, title)
 	{
-		SitePanel.call(this);
+		crv.SitePanel.call(this);
 		this.createRoot(session, title, 'list');
 
 		this.navContainer = this.appendNavContainer();
@@ -1541,7 +1602,7 @@ var RootItemsPanel = (function () {
 		var panel = new (this.searchView.childPanelType())(controller, this.addPanelTitle);
 		setupOneViewEventHandler(controller.newInstance(), 'added.cr', panel.node(), function(eventObject)
 			{
-				_this.searchView.restartSearchTimeout("");
+				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
 			}); 
 		panel.showLeft().then(unblockClick);
 	}
@@ -1952,7 +2013,7 @@ var PickInquiryAccessGroupPanel = (function()
 	}
 	function PickInquiryAccessGroupPanel()
 	{
-		SitePanel.call(this);
+		crv.SitePanel.call(this);
 	}
 	
 	return PickInquiryAccessGroupPanel;
