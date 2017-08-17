@@ -723,7 +723,7 @@ crn.ExperienceSuggestion = (function() {
 											showClickFeedback(this);
 					
 											var phase = "Previous";
-											var experience = new ExperienceController(cr.signedinUser.path())
+											var experience = new ExperienceController(cr.signedinUser.path(), null, false)
 											experience.initDateRange(phase);
 											var tag = crp.getInstance(args[1].id());
 											var services = [new ExperienceService()];

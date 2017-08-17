@@ -1725,7 +1725,7 @@ var ExperienceShareOptions = (function () {
 					{
 						if (prepareClick('click', duplicateText))
 						{
-							var experienceController = new ExperienceController(experience.path(), experience);
+							var experienceController = new ExperienceController(experience.path(), experience, false);
 							var newPanel = new NewExperiencePanel(experienceController);
 							newPanel.showUp()
 								.done(function()

@@ -105,13 +105,14 @@ var Controller = (function() {
 		}
 	}
 	
-	function Controller(instanceType, source)
+	function Controller(instanceType, source, duplicateForEdit)
 	{
+		console.assert(source);
 		if (instanceType)
 		{
 			this._newInstance = new instanceType();
 			if (source)
-				source.duplicateData(this._newInstance);
+				source.duplicateData(this._newInstance, duplicateForEdit);
 			else
 				this._newInstance.setDefaultValues();
 			this.setupPrivilege();
@@ -146,9 +147,9 @@ var RootController = (function() {
 		return this;
 	}
 
-	function RootController(instanceType, source)
+	function RootController(instanceType, source, duplicateForEdit)
 	{
-		Controller.call(this, instanceType, source);
+		Controller.call(this, instanceType, source, duplicateForEdit);
 	}
 	
 	return RootController;
@@ -192,10 +193,10 @@ var ChildController = (function() {
 		return this;
 	}
 
-	function ChildController(parent, instanceType, source)
+	function ChildController(parent, instanceType, source, duplicateForEdit)
 	{
 		this.parent(parent);
-		Controller.call(this, instanceType, source);
+		Controller.call(this, instanceType, source, duplicateForEdit);
 	}
 	
 	return ChildController;
@@ -637,11 +638,11 @@ var ExperienceController = (function() {
 			return "";
 	}
 	
-	function ExperienceController(path, source)
+	function ExperienceController(path, source, duplicateForEdit)
 	{
 		console.assert(path instanceof cr.Path);
 			
-		ChildController.call(this, path, cr.Experience, source);
+		ChildController.call(this, path, cr.Experience, source, duplicateForEdit);
 	}
 	
 	return ExperienceController;
@@ -684,9 +685,9 @@ var OrganizationController = (function() {
 		return newValue === undefined ? value : this;
 	}
 
-	function OrganizationController(source)
+	function OrganizationController(source, duplicateForEdit)
 	{
-		RootController.call(this, cr.Organization, source);
+		RootController.call(this, cr.Organization, source, duplicateForEdit);
 	}
 	
 	return OrganizationController;

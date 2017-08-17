@@ -507,7 +507,7 @@ var PathView = (function() {
 			{
 				try
 				{
-					var experienceController = new ExperienceController(fd.experience.path(), fd.experience);
+					var experienceController = new ExperienceController(fd.experience.path(), fd.experience, true);
 					experienceController.oldInstance(fd.experience);
 					
 					var editPanel = new NewExperiencePanel(experienceController, revealPanelLeft);
@@ -1535,7 +1535,7 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.createExperience = function()
 	{
-		return new ExperienceController(this.pathtree.path);
+		return new ExperienceController(this.pathtree.path, null, false);
 	}
 	
 	PathlinesPanel.prototype.startNewExperience = function(phase, done, fail)
@@ -2001,7 +2001,7 @@ var ExperienceIdeas = (function() {
 							{
 								var datum = {name: d.name(),
 											 prompt: d.text(),
-											 experience: new ExperienceController(path)};
+											 experience: new ExperienceController(path, null, false)};
 								if (d.experiencePromptServices().length)
 								{
 									var s = d.experiencePromptServices()[0].service();
@@ -2158,7 +2158,7 @@ var OtherPathlines = (function() {
 		{
 			try
 			{
-				var tempExperience = new ExperienceController(cr.signedinUser.path(), fd.experience);
+				var tempExperience = new ExperienceController(cr.signedinUser.path(), fd.experience, false);
 				new NewExperiencePanel(tempExperience)
 					.showUp()
 					.always(unblockClick);

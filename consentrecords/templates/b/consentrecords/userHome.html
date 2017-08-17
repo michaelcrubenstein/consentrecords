@@ -502,7 +502,7 @@
 									{
 										console.assert (experiences[0] instanceof cr.Experience);
 
-										var experienceController = new ExperienceController(cr.signedinUser.path(), experiences[0]);
+										var experienceController = new ExperienceController(cr.signedinUser.path(), experiences[0], false);
 										var newPanel = new NewExperiencePanel(experienceController);
 										newPanel.showUp();
 									}

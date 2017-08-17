@@ -249,7 +249,7 @@ var ExperienceCommentsPanel = (function() {
 			{
 				try
 				{
-					var experienceController = new ExperienceController(fd.experience.parent(), fd.experience);
+					var experienceController = new ExperienceController(fd.experience.parent(), fd.experience, true);
 					experienceController.oldInstance(fd.experience);
 					new NewExperiencePanel(experienceController, revealPanelLeft)
 						.showLeft()

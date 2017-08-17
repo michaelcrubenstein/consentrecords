@@ -830,15 +830,28 @@ cr.IInstance = (function() {
 		this._privilege = 'write';
 	}
 	
-	IInstance.prototype.duplicateData = function(newInstance)
+	IInstance.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
+		/* duplicateForEdit means that this copy is intended to be an edited
+			version of the original, so that you can cancel changes.
+			If duplicateForEdit is false, then the duplicate is going to be added,
+			in which case the IDs shouldn't be copied over.
+		 */
+		duplicateForEdit = (duplicateForEdit !== undefined) ? duplicateForEdit : true;
+		
 		newInstance._description = this._description;
+		
+		if (duplicateForEdit)
+		{
+			newInstance._id = this._id;
+			newInstance._privilege = this._privilege;
+			newInstance._parentID = this._parentID;
+		}
 		return this;
 	}
 	
 	IInstance.prototype.mergeData = function(source)
 	{
-		// Do nothing.
 		if (!this._id) this._id = source._id;
 		if (!this._description) this._description = source._description;
 		if (!this._privilege) this._privilege = source._privilege;
@@ -1061,12 +1074,12 @@ cr.IInstance = (function() {
 			changes[key] = subChanges;
 	}
 	
-	IInstance.prototype.duplicateList = function(items, itemType)
+	IInstance.prototype.duplicateList = function(items, itemType, duplicateForEdit)
 	{
 		return items.map(function(i)
 			{
 				target = new itemType();
-				i.duplicateData(target);
+				i.duplicateData(target, duplicateForEdit);
 				return target;
 			});
 	}
@@ -1251,9 +1264,9 @@ cr.TranslationInstance = (function() {
 		this._language = cr.language || 'en';
 	}
 	
-	TranslationInstance.prototype.duplicateData = function(newInstance)
+	TranslationInstance.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._text = this._text;
 		newInstance._language = this._language;
 		return this;
@@ -1404,9 +1417,9 @@ cr.ServiceLinkInstance = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	ServiceLinkInstance.prototype.duplicateData = function(newInstance)
+	ServiceLinkInstance.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._serviceID = this._serviceID;
 		
 		return this;
@@ -1519,9 +1532,9 @@ cr.OrderedServiceLinkInstance = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	OrderedServiceLinkInstance.prototype.duplicateData = function(newInstance)
+	OrderedServiceLinkInstance.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.ServiceLinkInstance.prototype.duplicateData.call(this, newInstance);
+		cr.ServiceLinkInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._position = this._position;
 		
 		return this;
@@ -1601,9 +1614,9 @@ cr.UserLinkInstance = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	UserLinkInstance.prototype.duplicateData = function(newInstance)
+	UserLinkInstance.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._user = this._user;
 		
 		return this;
@@ -1844,9 +1857,9 @@ cr.Grantable = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	Grantable.prototype.duplicateData = function(newInstance)
+	Grantable.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._primaryAdministrator = this._primaryAdministrator;
 		newInstance._publicAccess = this._publicAccess;
 		
@@ -1972,9 +1985,9 @@ cr.Grant = (function() {
 		this._grantee = null;
 	}
 	
-	Grant.prototype.duplicateData = function(newInstance)
+	Grant.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._privilege = this._privilege;
 		newInstance._grantee = this._grantee;
 		return this;
@@ -2079,9 +2092,9 @@ cr.NamedInstance = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	NamedInstance.prototype.duplicateData = function(newInstance, nameType)
+	NamedInstance.prototype.duplicateData = function(newInstance, nameType, duplicateForEdit)
 	{
-		newInstance._names = this.duplicateList(this._names, nameType);
+		newInstance._names = this.duplicateList(this._names, nameType, duplicateForEdit);
 		return this;
 	}
 	
@@ -2446,6 +2459,7 @@ cr.DateRangeInstance = (function() {
 	{
 		newInstance._start = this._start;
 		newInstance._end = this._end;
+		return this;
 	}
 	
     DateRangeInstance.prototype.appendData = function(initialData)
@@ -2604,9 +2618,9 @@ cr.Address = (function() {
 	
 	/* Copies all of the data associated with this instance prior to making changes.
 	 */
-	Address.prototype.duplicateData = function(newInstance)
+	Address.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._city = this._city;
 		newInstance._state = this._state;
@@ -2785,9 +2799,9 @@ cr.Comment = (function() {
 	
 	/* Copies all of the data associated with this instance prior to making changes.
 	 */
-	Comment.prototype.duplicateData = function(newInstance)
+	Comment.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._text = this._text;
 		newInstance._question = this._question;
@@ -2931,9 +2945,9 @@ cr.CommentPrompt = (function() {
 	
 	/* Copies all of the data associated with this instance prior to making changes.
 	 */
-	CommentPrompt.prototype.duplicateData = function(newInstance)
+	CommentPrompt.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._translations = this.duplicateList(this._translations, cr.CommentPromptText);
 		return this;
@@ -3100,9 +3114,9 @@ cr.Engagement = (function() {
     	cr.DateRangeInstance.prototype.setDefaultValues.call(this);
 	}
 	
-	Engagement.prototype.duplicateData = function(newInstance)
+	Engagement.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.UserLinkInstance.prototype.duplicateData.call(this, newInstance);
+		cr.UserLinkInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
     	cr.DateRangeInstance.prototype.duplicateData.call(this, newInstance);
 		
 		return this;
@@ -3357,26 +3371,6 @@ cr.Experience = (function() {
 		}
 	}
 	
-	Experience.prototype.promiseCopy = function(newExperience)
-	{
-		var _this = this;
-		return this.promiseComments()
-			.then(function()
-				{
-					_this.duplicateData(newExperience);
-					newExperience._comments = this._comments.map(function(i)
-						{
-							target = new cr.Comment();
-							target.mergeData(i);
-							return target;
-						});
-						
-					r = $.Deferred();
-					r.resolve(newExperience);
-					return r;
-				});
-	}
-	
 	Experience.prototype.setDefaultValues = function()
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
@@ -3569,9 +3563,9 @@ cr.Experience = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	Experience.prototype.duplicateData = function(newInstance)
+	Experience.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
     	cr.DateRangeInstance.prototype.duplicateData.call(this, newInstance);
 		newInstance._path = this._path;
 		newInstance._organization = this._organization;
@@ -3822,9 +3816,9 @@ cr.ExperienceCustomService = (function() {
 		newInstance._position = 0;
 	}
 	
-	ExperienceCustomService.prototype.duplicateData = function(newInstance)
+	ExperienceCustomService.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._name = this._name;
 		newInstance._position = this._position;
 		return this;
@@ -4119,9 +4113,9 @@ cr.ExperiencePrompt = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	ExperiencePrompt.prototype.duplicateData = function(newInstance)
+	ExperiencePrompt.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._name = this._name;
 		newInstance._organization = this._organization;
@@ -4328,9 +4322,9 @@ cr.Group = (function() {
 	
 	/* Copies all of the data associated with this instance prior to making changes.
 	 */
-	Group.prototype.duplicateData = function(newInstance)
+	Group.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._names = this.duplicateList(this._names, cr.GroupName);
 		newInstance._members = this.duplicateList(this._members, cr.GroupMember);
 		
@@ -4823,10 +4817,10 @@ cr.Offering = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For offerings, sessions are not copied.
 	 */
-	Offering.prototype.duplicateData = function(newInstance)
+	Offering.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OfferingName, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		newInstance._minimumAge = this._minimumAge;
@@ -5134,10 +5128,10 @@ cr.Organization = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	Organization.prototype.duplicateData = function(newInstance)
+	Organization.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.Grantable.prototype.duplicateData.call(this, newInstance);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		newInstance._inquiryAccessGroup = this._inquiryAccessGroup;
@@ -5522,9 +5516,9 @@ cr.Path = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	Path.prototype.duplicateData = function(newInstance)
+	Path.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.Grantable.prototype.duplicateData.call(this, newInstance);
+		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._name = this._name;
 		newInstance._specialAccess = this._specialAccess;
@@ -5788,9 +5782,9 @@ cr.Period = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	Period.prototype.duplicateData = function(newInstance)
+	Period.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._weekday = this._weekday;
 		newInstance._startTime = this._startTime;
 		newInstance._endTime = this._endTime;
@@ -6018,10 +6012,10 @@ cr.Service = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	Service.prototype.duplicateData = function(newInstance)
+	Service.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.ServiceName);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.ServiceName, duplicateForEdit);
 		
 		newInstance._stage = this._stage;
 		newInstance._organizationLabels = this.duplicateList(this._organizationLabels, cr.OrganizationLabel);
@@ -6668,10 +6662,10 @@ cr.Session = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For sessions, inquiries, enrollments, engagements and periods are not copied.
 	 */
-	Session.prototype.duplicateData = function(newInstance)
+	Session.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.SessionName, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		newInstance._registrationDeadline = this._registrationDeadline;
@@ -6928,15 +6922,15 @@ cr.Site = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For sites, offerings are not copied.
 	 */
-	Site.prototype.duplicateData = function(newInstance)
+	Site.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.SiteName, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		if (newInstance._address == null)
 			newInstance._address = new cr.Address();
-		this._address.duplicateData(newInstance._address);
+		this._address.duplicateData(newInstance._address, duplicateForEdit);
 		return this;
 	}
 	
@@ -7160,9 +7154,9 @@ cr.Street = (function() {
 		this._text = "";
 	}
 	
-	Street.prototype.duplicateData = function(newInstance)
+	Street.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._text = this._text;
 		newInstance._position = this._position;
 		return this;
@@ -7314,9 +7308,9 @@ cr.User = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	User.prototype.duplicateData = function(newInstance)
+	User.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.Grantable.prototype.duplicateData.call(this, newInstance);
+		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._firstName = this._firstName;
 		newInstance._lastName = this._lastName;
@@ -7325,7 +7319,7 @@ cr.User = (function() {
 		
 		if (newInstance._path == null)
 			newInstance._path = new cr.Path();
-		this._path.duplicateData(newInstance._path);
+		this._path.duplicateData(newInstance._path, duplicateForEdit);
 		
 		return this;
 	}
@@ -7842,9 +7836,9 @@ cr.UserEmail = (function() {
 		this._position = 'position' in d ? parseInt(d['position']) : 0;
 	}
 	
-	UserEmail.prototype.duplicateData = function(newInstance)
+	UserEmail.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._text = this._text;
 		newInstance._position = this._position;
 		return this;
@@ -7993,9 +7987,9 @@ cr.UserUserGrantRequest = (function() {
 		this._grantee = null;
 	}
 	
-	UserUserGrantRequest.prototype.duplicateData = function(newInstance)
+	UserUserGrantRequest.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance);
+		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		newInstance._grantee = this._grantee;
 		return this;
 	}
