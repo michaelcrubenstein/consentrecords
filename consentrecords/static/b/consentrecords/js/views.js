@@ -2675,7 +2675,7 @@ var EditPanel = (function() {
 				var newValue = new nameType();
 				newValue.setDefaultValues();
 				container.names().push(newValue);
-				newValue.parentID(container.id());
+				newValue.parent(container);
 					
 				var item = itemsDiv.append('li')
 					.datum(newValue);
@@ -2766,7 +2766,7 @@ var EditPanel = (function() {
 			{
 				var d = new resultType();
 				d.clientID(change['add']);
-				d.parentID(parent.id());
+				d.parent(parent);
 				translations.push(d);
 			}
 		});
