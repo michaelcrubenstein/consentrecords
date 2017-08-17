@@ -3126,7 +3126,7 @@ cr.Engagement = (function() {
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: [fields],
+        		fields: fields,
         		resultType: cr.Engagement
         	});
     }
@@ -3218,7 +3218,7 @@ cr.Enrollment = (function() {
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: [fields],
+        		fields: fields,
         		resultType: cr.Enrollment
         	});
     }
@@ -4793,7 +4793,7 @@ cr.Offering = (function() {
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: [fields],
+        		fields: fields,
         		resultType: cr.Offering
         	});
     }
@@ -5340,7 +5340,7 @@ cr.Organization = (function() {
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: [fields],
+        		fields: fields,
         		resultType: cr.Organization
         	})
         	.then(function()
@@ -6844,7 +6844,7 @@ cr.Session = (function() {
     	return cr.getData(
         	{
         		path: this.urlPath(),
-        		fields: [fields],
+        		fields: fields,
         		resultType: cr.Session
         	})
         	.then(function()
