@@ -375,9 +375,9 @@ var ChildSearchView = (function () {
 						{
 							try
 							{
-								var controller = new (this.controllerType())(this.parent, d, true);
+								var controller = new (_this.controllerType())(_this.parent, d, true);
 								controller.oldInstance(d);
-								var panel = new (this.childPanelType())(controller, revealPanelLeft);
+								var panel = new (_this.childPanelType())(controller, revealPanelLeft);
 								panel.showLeft().then(unblockClick);
 							}
 							catch(err) { cr.syncFail(err); }
@@ -400,7 +400,7 @@ var ChildSearchView = (function () {
 		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
 	}
 	
-	return SessionChildSearchView;
+	return ChildSearchView;
 })();
 
 var ChildrenPanel = (function () {
@@ -2240,6 +2240,136 @@ var ServicesPanel = (function () {
 	}
 	
 	return ServicesPanel;
+	
+})();
+
+var ChildPanel = (function () {
+	ChildPanel.prototype = Object.create(EditItemPanel.prototype);
+	ChildPanel.prototype.constructor = ChildPanel;
+
+	ChildPanel.prototype.appendDeleteButton = function()
+	{
+		if (this.controller().oldInstance())	
+		{	 
+			childrenButton = this.appendActionButton(this.deleteLabel, function() {
+				if (prepareClick('click', this.deleteLabel))
+				{
+					showClickFeedback(this);
+					try
+					{
+						new ConfirmDeleteAlert(_this.node(), _this.deleteLabel, 
+							function() { 
+								_this.controller().oldInstance().deleteData()
+									.then(function() { _this.hide() },
+										  cr.syncFail);
+							}, 
+							unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+			childrenButton.selectAll('li>div')
+				.classed('site-active-text', false)
+				.classed('text-danger', true);
+		}
+	}
+	
+	function ChildPanel(controller)
+	{
+		EditItemPanel.call(this, controller);
+	}
+	
+	return ChildPanel;
+})();
+
+var SitePanel = (function () {
+	SitePanel.prototype = Object.create(ChildPanel.prototype);
+	SitePanel.prototype.constructor = SitePanel;
+
+	SitePanel.prototype.panelTitle = "Site";
+
+    SitePanel.prototype.promiseUpdateChanges = function()
+    {
+    	/* Ensure all input is valid */
+
+    	/* update from the controller */
+    	return ChildPanel.prototype.promiseUpdateChanges.call(this);
+    }
+    
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	SitePanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+			return false;
+	}
+	
+	function SitePanel(controller, onShow) {
+		ChildPanel.call(this, controller);
+		
+		var _this = this;
+
+		this.createRoot(onShow);
+		
+		/* Fill in the controls for editing */
+		
+		/* Add a delete button. */
+		this.appendDeleteButton();
+	}
+	
+	return SitePanel;
+})();
+
+var SiteChildSearchView = (function () {
+	SiteChildSearchView.prototype = Object.create(ChildSearchView.prototype);
+	SiteChildSearchView.prototype.constructor = SiteChildSearchView;
+
+	SiteChildSearchView.prototype.textPath = 'name>text';
+	SiteChildSearchView.prototype.pathType = 'site';
+	
+	SiteChildSearchView.prototype.resultType = function()
+	{
+		return cr.Site;
+	}
+	
+	SiteChildSearchView.prototype.controllerType = function()
+	{
+		return SiteController;
+	}
+	
+	SiteChildSearchView.prototype.childPanelType = function()
+	{
+		return SitePanel;
+	}
+	
+	function SiteChildSearchView(sitePanel, parent) {
+		ChildSearchView.call(this, sitePanel, parent);
+	}
+	
+	return SiteChildSearchView;
+})();
+
+var SitesPanel = (function () {
+	SitesPanel.prototype = Object.create(ChildrenPanel.prototype);
+	SitesPanel.prototype.constructor = SitesPanel;
+
+	SitesPanel.prototype.panelTitle = "Sites";
+	SitesPanel.prototype.addPanelTitle = "Add Site";
+	SitesPanel.prototype.addedEvent = 'siteAdded.cr';
+	
+	function SitesPanel(parent, onShow) {
+		ChildrenPanel.call(this, parent, onShow);
+		var _this = this;
+
+		this.createRoot(parent, this.panelTitle, 'list', onShow);
+
+		this.searchView = new SiteChildSearchView(this, parent);
+		$(this.node()).one('revealing.cr', function() { 
+				_this.searchView.search(""); 
+				_this.searchView.inputBox.focus();
+			});
+	}
+	
+	return SitesPanel;
 	
 })();
 
