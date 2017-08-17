@@ -185,6 +185,13 @@ var ChildController = (function() {
 		return this.parent().update(changes, false);
 	}
 	
+	ChildController.prototype.postAddDone = function(changes, newIDs)
+	{
+		this.parent().childAdded(this.newInstance(), 
+			changes[this.groupKey][0], newIDs, this.addEventType);
+		return this;
+	}
+
 	function ChildController(parent, instanceType, source)
 	{
 		this.parent(parent);
@@ -200,6 +207,7 @@ var ExperienceController = (function() {
 	ExperienceController.prototype.addingMessage = "Adding Experience To Your Pathway...";
 	ExperienceController.prototype.savingMessage = "Saving Experience...";
 	ExperienceController.prototype.groupKey = 'experiences';
+	ExperienceController.prototype.addEventType = 'experienceAdded.cr';
 	
 	ExperienceController.prototype._domain = null;
 	ExperienceController.prototype._stage = null;
@@ -520,8 +528,8 @@ var ExperienceController = (function() {
 		this.newInstance().path(this.parent());
 		
 		this.parent().experiences().push(this.newInstance());
-		this.parent().updateData(changes, newIDs);
-		return this;
+
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
 	}
 
 	ExperienceController.prototype.initPreviousDateRange = function()

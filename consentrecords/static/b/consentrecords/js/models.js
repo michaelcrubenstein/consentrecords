@@ -946,6 +946,18 @@ cr.IInstance = (function() {
 			});
 		return this;
 	}
+	
+	IInstance.prototype.childAdded = function(item, d, newIDs, addEventType)
+	{
+		item.id(newIDs[d['add']])
+			.clientID(null)
+			.parent(this);
+		item = crp.pushInstance(item);
+		
+		/* Call updateData so that sub-items also get their IDs */
+		item.updateData(d, newIDs);
+		$(this).trigger(addEventType, item);
+	}
 							
 	IInstance.prototype.updateList = function(items, data, newIDs, resultType, addEventType, deletedEventType)
 	{
@@ -974,14 +986,7 @@ cr.IInstance = (function() {
 							});
 						if (item)
 						{
-							item.id(newIDs[d['add']])
-								.clientID(null)
-								.parent(_this);
-							item = crp.pushInstance(item);
-							
-							/* Call updateData so that sub-items also get their IDs */
-							item.updateData(d, newIDs);
-							$(_this).trigger(addEventType, item);
+							_this.childAdded(item, d, newIDs, addEventType);
 						}
 						else
 						{
