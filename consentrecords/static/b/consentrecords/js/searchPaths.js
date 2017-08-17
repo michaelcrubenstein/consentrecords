@@ -1,5 +1,7 @@
 var SearchPathsResultsView = (function () {
-	SearchPathsResultsView.prototype = new SearchOptionsView();
+	SearchPathsResultsView.prototype = Object.create(SearchOptionsView.prototype);
+	SearchPathsResultsView.prototype.constructor = SearchPathsResultsView;
+
 	SearchPathsResultsView.prototype.searchPathsPanel = null;
 	SearchPathsResultsView.prototype.inputBox = null;
 	
@@ -173,8 +175,9 @@ var SearchPathsResultsView = (function () {
 })();
 
 var SearchTagPoolView = (function () {
-	SearchTagPoolView.prototype = new TagPoolView();
-	
+	SearchTagPoolView.prototype = Object.create(TagPoolView.prototype);
+	SearchTagPoolView.prototype.constructor = SearchTagPoolView;
+
 	SearchTagPoolView.prototype.sitePanel = null;
 	
 	SearchTagPoolView.prototype.setFlagVisibles = function()
@@ -204,7 +207,9 @@ var SearchTagPoolView = (function () {
 })();
 
 var SearchPathsPanel = (function () {
-	SearchPathsPanel.prototype = new SitePanel();
+	SearchPathsPanel.prototype = Object.create(SitePanel.prototype);
+	SearchPathsPanel.prototype.constructor = SearchPathsPanel;
+
 	SearchPathsPanel.prototype.selectedPool = null;
 	
 	SearchPathsPanel.prototype.topBox = null;
