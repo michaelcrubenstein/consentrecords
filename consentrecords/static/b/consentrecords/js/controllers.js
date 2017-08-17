@@ -105,18 +105,20 @@ var Controller = (function() {
 		}
 	}
 	
-	function Controller(instanceType, source, duplicateForEdit)
+	function Controller(source, duplicateForEdit)
 	{
-		console.assert(source || instanceType);
-		if (instanceType)
+		console.assert(source);
+		if (typeof(source) == "object")
 		{
-			this._newInstance = new instanceType();
-			if (source)
-				source.duplicateData(this._newInstance, duplicateForEdit);
-			else
-				this._newInstance.setDefaultValues();
-			this.setupPrivilege();
+			this._newInstance = new source.constructor();
+			source.duplicateData(this._newInstance, duplicateForEdit);
 		}
+		else if (typeof(source) == "function")
+		{
+			this._newInstance = new source();
+			this._newInstance.setDefaultValues();
+		}
+		this.setupPrivilege();
 	}
 	
 	return Controller;
@@ -148,9 +150,9 @@ var RootController = (function() {
 		return this;
 	}
 
-	function RootController(instanceType, source, duplicateForEdit)
+	function RootController(source, duplicateForEdit)
 	{
-		Controller.call(this, instanceType, source, duplicateForEdit);
+		Controller.call(this, source, duplicateForEdit);
 	}
 	
 	return RootController;
@@ -195,10 +197,10 @@ var ChildController = (function() {
 		return this;
 	}
 
-	function ChildController(parent, instanceType, source, duplicateForEdit)
+	function ChildController(parent, source, duplicateForEdit)
 	{
 		this.parent(parent);
-		Controller.call(this, instanceType, source, duplicateForEdit);
+		Controller.call(this, source, duplicateForEdit);
 	}
 	
 	return ChildController;
@@ -645,7 +647,7 @@ var ExperienceController = (function() {
 	{
 		console.assert(path instanceof cr.Path);
 			
-		ChildController.call(this, path, cr.Experience, source, duplicateForEdit);
+		ChildController.call(this, path, source || cr.Experience, duplicateForEdit);
 	}
 	
 	return ExperienceController;
@@ -691,7 +693,7 @@ var OrganizationController = (function() {
 
 	function OrganizationController(source, duplicateForEdit)
 	{
-		RootController.call(this, cr.Organization, source, duplicateForEdit);
+		RootController.call(this, source || cr.Organization, duplicateForEdit);
 	}
 	
 	return OrganizationController;
@@ -708,7 +710,7 @@ var SiteController = (function() {
 
 	function SiteController(parent, source, duplicateForEdit)
 	{
-		ChildController.call(this, parent, cr.Site, source, duplicateForEdit);
+		ChildController.call(this, parent, source || cr.Site, duplicateForEdit);
 	}
 	
 	return SiteController;
