@@ -274,7 +274,9 @@ function showSessionDetails(user, session, service, previousPanelNode)
 }
 		
 var PickOfferingSearchView = (function () {
-	PickOfferingSearchView.prototype = new PanelSearchView();
+	PickOfferingPanel.prototype = Object.create(SitePanel.prototype);
+	PickOfferingPanel.prototype.constructor = PickOfferingPanel;
+
 	PickOfferingSearchView.prototype.tag = null;
 	PickOfferingSearchView.prototype.user = null;
 	
@@ -361,7 +363,9 @@ var PickOfferingSearchView = (function () {
 })();
 
 var PickOfferingPanel = (function() {
-	PickOfferingPanel.prototype = new SitePanel();
+	PickOfferingPanel.prototype = Object.create(SitePanel.prototype);
+	PickOfferingPanel.prototype.constructor = PickOfferingPanel;
+
 	PickOfferingPanel.prototype.offeringID = null;
 	
 	function PickOfferingPanel(user, tag, offeringID) {
@@ -390,7 +394,9 @@ var PickOfferingPanel = (function() {
 })();
 
 var FindExperienceSearchView = (function () {
-	FindExperienceSearchView.prototype = new PanelSearchView();
+	FindExperienceSearchView.prototype = Object.create(PanelSearchView.prototype);
+	FindExperienceSearchView.prototype.constructor = FindExperienceSearchView;
+
 	FindExperienceSearchView.prototype.offeringID = null;
 	FindExperienceSearchView.prototype.user = null;
 	
@@ -464,8 +470,9 @@ var FindExperienceSearchView = (function () {
 })();
 
 var FindExperiencePanel = (function () {
-	FindExperiencePanel.prototype = new SitePanel();
-	
+	FindExperiencePanel.prototype = Object.create(SitePanel.prototype);
+	FindExperiencePanel.prototype.constructor = FindExperiencePanel;
+
 	function FindExperiencePanel(user, serviceValueID, offeringID) {
 		var _this = this;
 

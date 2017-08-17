@@ -1,5 +1,7 @@
 var Signup = (function () {
-	Signup.prototype = new SitePanel();
+	Signup.prototype = Object.create(SitePanel.prototype);
+	Signup.prototype.constructor = Signup;
+
 	Signup.prototype.dots = null;
 
 	Signup.prototype.checkUnusedEmail = function(email, successFunction, failFunction) {
@@ -415,8 +417,9 @@ var Signup = (function () {
 
 var SigninPanel = (function()
 {
-	SigninPanel.prototype = new SitePanel();
-	
+	SigninPanel.prototype = Object.create(SitePanel.prototype);
+	SigninPanel.prototype.constructor = SigninPanel;
+
 	SigninPanel.prototype.canSubmit = function() {
 	return $(this.passwordInput).val() !== "" &&
 		$(this.emailInput).val() !== "";
@@ -678,7 +681,9 @@ var SigninPanel = (function()
 
 var ForgotPasswordPanel = (function()
 {
-	ForgotPasswordPanel.prototype = new SitePanel();
+	ForgotPasswordPanel.prototype = Object.create(SitePanel.prototype);
+	ForgotPasswordPanel.prototype.constructor = ForgotPasswordPanel;
+
 	ForgotPasswordPanel.prototype.submitButton = null;
 	ForgotPasswordPanel.prototype.emailGroup = null;
 	ForgotPasswordPanel.prototype.emailInput = null;

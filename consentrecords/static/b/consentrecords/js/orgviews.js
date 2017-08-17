@@ -1,5 +1,7 @@
 var SessionPanel = (function () {
-	SessionPanel.prototype = new EditPanel();
+	SessionPanel.prototype = Object.create(EditPanel.prototype);
+	SessionPanel.prototype.constructor = SessionPanel;
+
 	SessionPanel.prototype.session = null;
 	SessionPanel.prototype.panelTitle = "Session";
 	SessionPanel.prototype.namesLabel = "Names";
@@ -248,7 +250,9 @@ var SessionPanel = (function () {
 })();
 
 var PickCanRegisterPanel = (function () {
-	PickCanRegisterPanel.prototype = new PickFromListPanel();
+	PickCanRegisterPanel.prototype = Object.create(PickFromListPanel.prototype);
+	PickCanRegisterPanel.prototype.constructor = PickCanRegisterPanel;
+
 	PickCanRegisterPanel.prototype.title = SessionPanel.prototype.canRegisterLabel;
 	
 	PickCanRegisterPanel.prototype.data = function()
@@ -276,7 +280,9 @@ var PickCanRegisterPanel = (function () {
 })();
 
 var SessionChildSearchView = (function () {
-	SessionChildSearchView.prototype = new PanelSearchView();
+	SessionChildSearchView.prototype = Object.create(PanelSearchView.prototype);
+	SessionChildSearchView.prototype.constructor = SessionChildSearchView;
+
 	SessionChildSearchView.prototype.session = null;
 	
 	/* Overrides SearchView.searchPath */
@@ -381,7 +387,9 @@ var SessionChildSearchView = (function () {
 })();
 
 var SessionChildrenPanel = (function () {
-	SessionChildrenPanel.prototype = new EditPanel();
+	SessionChildrenPanel.prototype = Object.create(EditPanel.prototype);
+	SessionChildrenPanel.prototype.constructor = SessionChildrenPanel;
+
 	SessionChildrenPanel.prototype.session = null;
 	
 	SessionChildrenPanel.prototype.createRoot = function(objectData, header, onShow)
@@ -430,7 +438,9 @@ var SessionChildrenPanel = (function () {
 })();
 
 var InquirySearchView = (function () {
-	InquirySearchView.prototype = new SessionChildSearchView();
+	InquirySearchView.prototype = Object.create(SessionChildSearchView.prototype);
+	InquirySearchView.prototype.constructor = InquirySearchView;
+
 	InquirySearchView.prototype.pathType = "inquiry";
 	
 	InquirySearchView.prototype.resultType = function()
@@ -456,7 +466,9 @@ var InquirySearchView = (function () {
 })();
 
 var InquiriesPanel = (function () {
-	InquiriesPanel.prototype = new SessionChildrenPanel();
+	InquiriesPanel.prototype = Object.create(SessionChildrenPanel.prototype);
+	InquiriesPanel.prototype.constructor = InquiriesPanel;
+
 	InquiriesPanel.prototype.panelTitle = "Inquiries";
 	InquiriesPanel.prototype.addPanelTitle = "Add Inquiry";
 	
@@ -488,7 +500,9 @@ var InquiriesPanel = (function () {
 })();
 
 var EnrollmentSearchView = (function () {
-	EnrollmentSearchView.prototype = new SessionChildSearchView();
+	EnrollmentSearchView.prototype = Object.create(SessionChildSearchView.prototype);
+	EnrollmentSearchView.prototype.constructor = EnrollmentSearchView;
+
 	EnrollmentSearchView.prototype.pathType = "enrollment";
 	
 	EnrollmentSearchView.prototype.resultType = function()
@@ -514,7 +528,9 @@ var EnrollmentSearchView = (function () {
 })();
 
 var EnrollmentsPanel = (function () {
-	EnrollmentsPanel.prototype = new SessionChildrenPanel();
+	EnrollmentsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
+	EnrollmentsPanel.prototype.constructor = EnrollmentsPanel;
+
 	EnrollmentsPanel.prototype.panelTitle = "Enrollments";
 	EnrollmentsPanel.prototype.addPanelTitle = "Add Enrollment";
 
@@ -546,7 +562,9 @@ var EnrollmentsPanel = (function () {
 })();
 
 var EngagementSearchView = (function () {
-	EngagementSearchView.prototype = new SessionChildSearchView();
+	EngagementSearchView.prototype = Object.create(SessionChildSearchView.prototype);
+	EngagementSearchView.prototype.constructor = EngagementSearchView;
+
 	EngagementSearchView.prototype.pathType = "engagement";
 	
 	EngagementSearchView.prototype.resultType = function()
@@ -572,7 +590,9 @@ var EngagementSearchView = (function () {
 })();
 
 var EngagementsPanel = (function () {
-	EngagementsPanel.prototype = new SessionChildrenPanel();
+	EngagementsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
+	EngagementsPanel.prototype.constructor = EngagementsPanel;
+
 	EngagementsPanel.prototype.panelTitle = "Engagements";
 
 	EngagementsPanel.prototype.showAddPanel = function()
@@ -604,7 +624,9 @@ var EngagementsPanel = (function () {
 })();
 
 var PeriodSearchView = (function () {
-	PeriodSearchView.prototype = new SessionChildSearchView();
+	PeriodSearchView.prototype = Object.create(SessionChildSearchView.prototype);
+	PeriodSearchView.prototype.constructor = PeriodSearchView;
+
 	PeriodSearchView.prototype.pathType = "period";
 	
 	PeriodSearchView.prototype.resultType = function()
@@ -645,7 +667,9 @@ var PeriodSearchView = (function () {
 })();
 
 var PeriodsPanel = (function () {
-	PeriodsPanel.prototype = new SessionChildrenPanel();
+	PeriodsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
+	PeriodsPanel.prototype.constructor = PeriodsPanel;
+
 	PeriodsPanel.prototype.panelTitle = "Periods";
 
 	PeriodsPanel.prototype.showAddPanel = function()
@@ -676,7 +700,9 @@ var PeriodsPanel = (function () {
 })();
 
 var EngagementPanel = (function () {
-	EngagementPanel.prototype = new EditPanel();
+	EngagementPanel.prototype = Object.create(EditPanel.prototype);
+	EngagementPanel.prototype.constructor = EngagementPanel;
+
 	EngagementPanel.prototype.session = null;
 	EngagementPanel.prototype.engagement = null;
 	EngagementPanel.prototype.panelTitle = "Participation";
@@ -863,7 +889,9 @@ var EngagementPanel = (function () {
 })();
 
 var PeriodPanel = (function () {
-	PeriodPanel.prototype = new EditPanel();
+	PeriodPanel.prototype = Object.create(EditPanel.prototype);
+	PeriodPanel.prototype.constructor = PeriodPanel;
+
 	PeriodPanel.prototype.session = null;
 	PeriodPanel.prototype.period = null;
 	PeriodPanel.prototype.panelTitle = "Participation";
@@ -1058,7 +1086,9 @@ var PeriodPanel = (function () {
 })();
 
 var PickUserSearchView = (function () {
-	PickUserSearchView.prototype = new PanelSearchView();
+	PickUserSearchView.prototype = Object.create(PanelSearchView.prototype);
+	PickUserSearchView.prototype.constructor = PickUserSearchView;
+
 	PickUserSearchView.prototype.session = null;
 	
 	/* Overrides SearchView.searchPath */
@@ -1113,8 +1143,9 @@ var PickUserSearchView = (function () {
 
 var NewInquirySearchView = (function()
 {
-	NewInquirySearchView.prototype = new PickUserSearchView();
-	
+	NewInquirySearchView.prototype = Object.create(PickUserSearchView.prototype);
+	NewInquirySearchView.prototype.constructor = NewInquirySearchView;
+
 	/* Overrides SearchView.prototype.onClickButton */
 	NewInquirySearchView.prototype.onClickButton = function(user, i, button) {
 		if (prepareClick('click', 'user: ' + user.description()))
@@ -1169,7 +1200,9 @@ var NewInquirySearchView = (function()
 
 var NewInquiryPanel = (function()
 {
-	NewInquiryPanel.prototype = new SitePanel();
+	NewInquiryPanel.prototype = Object.create(SitePanel.prototype);
+	NewInquiryPanel.prototype.constructor = NewInquiryPanel;
+
 	NewInquiryPanel.prototype.session = null;
 	function NewInquiryPanel(session, title)
 	{
@@ -1197,8 +1230,9 @@ var NewInquiryPanel = (function()
 
 var NewEnrollmentSearchView = (function()
 {
-	NewEnrollmentSearchView.prototype = new PickUserSearchView();
-	
+	NewEnrollmentSearchView.prototype = Object.create(PickUserSearchView.prototype);
+	NewEnrollmentSearchView.prototype.constructor = NewEnrollmentSearchView;
+
 	/* Overrides SearchView.prototype.onClickButton */
 	NewEnrollmentSearchView.prototype.onClickButton = function(user, i, button) {
 		if (prepareClick('click', 'user: ' + user.description()))
@@ -1253,7 +1287,9 @@ var NewEnrollmentSearchView = (function()
 
 var NewEnrollmentPanel = (function()
 {
-	NewEnrollmentPanel.prototype = new SitePanel();
+	NewEnrollmentPanel.prototype = Object.create(SitePanel.prototype);
+	NewEnrollmentPanel.prototype.constructor = NewEnrollmentPanel;
+
 	NewEnrollmentPanel.prototype.session = null;
 	function NewEnrollmentPanel(session, title)
 	{
@@ -1281,7 +1317,9 @@ var NewEnrollmentPanel = (function()
 
 var PickEngagementUserSearchView = (function()
 {
-	PickEngagementUserSearchView.prototype = new PickUserSearchView();
+	PickEngagementUserSearchView.prototype = Object.create(PickUserSearchView.prototype);
+	PickEngagementUserSearchView.prototype.constructor = PickEngagementUserSearchView;
+
 	PickEngagementUserSearchView.prototype.engagement = null;
 	
 	/* Overrides SearchView.prototype.onClickButton */
@@ -1329,7 +1367,9 @@ var PickEngagementUserSearchView = (function()
 
 var PickEngagementUserPanel = (function()
 {
-	PickEngagementUserPanel.prototype = new SitePanel();
+	PickEngagementUserPanel.prototype = Object.create(SitePanel.prototype);
+	PickEngagementUserPanel.prototype.constructor = PickEngagementUserPanel;
+
 	PickEngagementUserPanel.prototype.session = null;
 
 	function PickEngagementUserPanel(session, engagement, title)
@@ -1355,7 +1395,9 @@ var PickEngagementUserPanel = (function()
 })();
 
 var PickWeekdayPanel = (function () {
-	PickWeekdayPanel.prototype = new PickFromListPanel();
+	PickWeekdayPanel.prototype = Object.create(PickFromListPanel.prototype);
+	PickWeekdayPanel.prototype.constructor = PickWeekdayPanel;
+
 	PickWeekdayPanel.prototype.title = PeriodPanel.prototype.weekdayLabel;
 	PickWeekdayPanel.prototype.data = function()
 	{
@@ -1381,7 +1423,9 @@ var PickWeekdayPanel = (function () {
 })();
 
 var RootPanelSearchView = (function () {
-	RootPanelSearchView.prototype = new PanelSearchView();
+	RootPanelSearchView.prototype = Object.create(PanelSearchView.prototype);
+	RootPanelSearchView.prototype.constructor = RootPanelSearchView;
+
 	RootPanelSearchView.prototype.searchPathTextField = 'name>text';
 	
 	/* Overrides SearchView.searchPath */
@@ -1487,7 +1531,8 @@ var RootPanelSearchView = (function () {
 })();
 
 var RootItemsPanel = (function () {
-	RootItemsPanel.prototype = new EditPanel();
+	RootItemsPanel.prototype = Object.create(EditPanel.prototype);
+	RootItemsPanel.prototype.constructor = RootItemsPanel;
 
 	RootItemsPanel.prototype.showAddPanel = function()
 	{
@@ -1609,7 +1654,9 @@ var EnumerationSectionEditor = (function() {
 })();
 
 var OrganizationPanel = (function () {
-	OrganizationPanel.prototype = new EditItemPanel();
+	OrganizationPanel.prototype = Object.create(EditItemPanel.prototype);
+	OrganizationPanel.prototype.constructor = OrganizationPanel;
+
 	OrganizationPanel.prototype.organization = null;
 	OrganizationPanel.prototype.panelTitle = "Organization";
 	OrganizationPanel.prototype.namesLabel = "Names";
@@ -1761,7 +1808,9 @@ var OrganizationPanel = (function () {
 })();
 
 var PickPublicAccessPanel = (function () {
-	PickPublicAccessPanel.prototype = new PickFromListPanel();
+	PickPublicAccessPanel.prototype = Object.create(PickFromListPanel.prototype);
+	PickPublicAccessPanel.prototype.constructor = PickPublicAccessPanel;
+
 	PickPublicAccessPanel.prototype.title = OrganizationPanel.prototype.publicAccessLabel;
 	
 	PickPublicAccessPanel.prototype.data = function()
@@ -1789,7 +1838,9 @@ var PickPublicAccessPanel = (function () {
 })();
 
 var PickInquiryAccessGroupSearchView = (function () {
-	PickInquiryAccessGroupSearchView.prototype = new PanelSearchView();
+	PickInquiryAccessGroupSearchView.prototype = Object.create(PanelSearchView.prototype);
+	PickInquiryAccessGroupSearchView.prototype.constructor = PickInquiryAccessGroupSearchView;
+
 	PickInquiryAccessGroupSearchView.prototype.organization = null;
 	
 	/* Overrides SearchView.searchPath */
@@ -1876,7 +1927,9 @@ var PickInquiryAccessGroupSearchView = (function () {
 
 var PickInquiryAccessGroupPanel = (function()
 {
-	PickInquiryAccessGroupPanel.prototype = new SitePanel();
+	PickInquiryAccessGroupPanel.prototype = Object.create(SitePanel.prototype);
+	PickInquiryAccessGroupPanel.prototype.constructor = PickInquiryAccessGroupPanel;
+
 	PickInquiryAccessGroupPanel.prototype.organization = null;
 
 	PickInquiryAccessGroupPanel.prototype.createRoot = function(organization, oldDescription, title)
@@ -1911,7 +1964,9 @@ var PickInquiryAccessGroupPanel = (function()
 	This function should be called within a prepareClick block. 
  */
 var PickPrimaryAdministratorPanel = (function() {
-	PickPrimaryAdministratorPanel.prototype = new EditPanel();
+	PickPrimaryAdministratorPanel.prototype = Object.create(EditPanel.prototype);
+	PickPrimaryAdministratorPanel.prototype.constructor = PickPrimaryAdministratorPanel;
+
 	PickPrimaryAdministratorPanel.prototype.badEmailMessage =
 		'Please specify a valid email address.';
 	PickPrimaryAdministratorPanel.prototype.emailDocumentation = 
@@ -2034,7 +2089,9 @@ var PickPrimaryAdministratorPanel = (function() {
 })();
 
 var OrganizationSearchView = (function () {
-	OrganizationSearchView.prototype = new RootPanelSearchView();
+	OrganizationSearchView.prototype = Object.create(RootPanelSearchView.prototype);
+	OrganizationSearchView.prototype.constructor = OrganizationSearchView;
+
 	OrganizationSearchView.prototype.searchPathType = 'organization';
 	
 	/* Overrides SearchView.searchPath */
@@ -2061,7 +2118,9 @@ var OrganizationSearchView = (function () {
 })();
 
 var OrganizationsPanel = (function () {
-	OrganizationsPanel.prototype = new RootItemsPanel();
+	OrganizationsPanel.prototype = Object.create(RootItemsPanel.prototype);
+	OrganizationsPanel.prototype.constructor = OrganizationsPanel;
+
 	OrganizationsPanel.prototype.panelTitle = "Organizations";
 	OrganizationsPanel.prototype.addPanelTitle = "Add Organization";
 	OrganizationsPanel.prototype.searchViewType = OrganizationSearchView;
@@ -2077,7 +2136,9 @@ var OrganizationsPanel = (function () {
 })();
 
 var ServiceSearchView = (function () {
-	ServiceSearchView.prototype = new RootPanelSearchView();
+	ServiceSearchView.prototype = Object.create(RootPanelSearchView.prototype);
+	ServiceSearchView.prototype.constructor = ServiceSearchView;
+
 	ServiceSearchView.prototype.searchPathType = 'service';
 	
 	/* Overrides SearchView.searchPath */
@@ -2104,7 +2165,9 @@ var ServiceSearchView = (function () {
 })();
 
 var ServicesPanel = (function () {
-	ServicesPanel.prototype = new RootItemsPanel();
+	ServicesPanel.prototype = Object.create(RootItemsPanel.prototype);
+	ServicesPanel.prototype.constructor = ServicesPanel;
+
 	ServicesPanel.prototype.panelTitle = "Services";
 	ServicesPanel.prototype.addPanelTitle = "Add Service";
 	ServicesPanel.prototype.searchViewType = ServiceSearchView;
@@ -2120,7 +2183,9 @@ var ServicesPanel = (function () {
 })();
 
 var UserSearchView = (function () {
-	UserSearchView.prototype = new RootPanelSearchView();
+	UserSearchView.prototype = Object.create(RootPanelSearchView.prototype);
+	UserSearchView.prototype.constructor = UserSearchView;
+
 	UserSearchView.prototype.searchPathType = 'user';
 	UserSearchView.prototype.searchPathTextField = 'email>text';
 	
@@ -2148,7 +2213,9 @@ var UserSearchView = (function () {
 })();
 
 var UsersPanel = (function () {
-	UsersPanel.prototype = new RootItemsPanel();
+	UsersPanel.prototype = Object.create(RootItemsPanel.prototype);
+	UsersPanel.prototype.constructor = UsersPanel;
+
 	UsersPanel.prototype.panelTitle = "Users";
 	UsersPanel.prototype.addPanelTitle = "Add User";
 	UsersPanel.prototype.searchViewType = UserSearchView;
@@ -2164,7 +2231,9 @@ var UsersPanel = (function () {
 })();
 
 var CommentPromptSearchView = (function () {
-	CommentPromptSearchView.prototype = new RootPanelSearchView();
+	CommentPromptSearchView.prototype = Object.create(RootPanelSearchView.prototype);
+	CommentPromptSearchView.prototype.constructor = CommentPromptSearchView;
+
 	CommentPromptSearchView.prototype.searchPathType = 'comment prompt';
 	CommentPromptSearchView.prototype.searchPathTextField = 'translation>text';
 	
@@ -2192,7 +2261,9 @@ var CommentPromptSearchView = (function () {
 })();
 
 var CommentPromptsPanel = (function () {
-	CommentPromptsPanel.prototype = new RootItemsPanel();
+	CommentPromptsPanel.prototype = Object.create(RootItemsPanel.prototype);
+	CommentPromptsPanel.prototype.constructor = CommentPromptsPanel;
+
 	CommentPromptsPanel.prototype.panelTitle = "Comment Prompts";
 	CommentPromptsPanel.prototype.addPanelTitle = "Add Comment Prompt";
 	CommentPromptsPanel.prototype.searchViewType = CommentPromptSearchView;
@@ -2208,7 +2279,9 @@ var CommentPromptsPanel = (function () {
 })();
 
 var ExperiencePromptSearchView = (function () {
-	ExperiencePromptSearchView.prototype = new RootPanelSearchView();
+	ExperiencePromptSearchView.prototype = Object.create(RootPanelSearchView.prototype);
+	ExperiencePromptSearchView.prototype.constructor = ExperiencePromptSearchView;
+
 	ExperiencePromptSearchView.prototype.searchPathType = 'experience prompt';
 	ExperiencePromptSearchView.prototype.searchPathTextField = 'translation>text';
 	
@@ -2236,7 +2309,9 @@ var ExperiencePromptSearchView = (function () {
 })();
 
 var ExperiencePromptsPanel = (function () {
-	ExperiencePromptsPanel.prototype = new RootItemsPanel();
+	ExperiencePromptsPanel.prototype = Object.create(RootItemsPanel.prototype);
+	ExperiencePromptsPanel.prototype.constructor = ExperiencePromptsPanel;
+
 	ExperiencePromptsPanel.prototype.panelTitle = "Experience Prompts";
 	ExperiencePromptsPanel.prototype.addPanelTitle = "Add Experience Prompt";
 	ExperiencePromptsPanel.prototype.searchViewType = ExperiencePromptSearchView;

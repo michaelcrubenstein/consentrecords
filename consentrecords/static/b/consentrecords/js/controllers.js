@@ -107,7 +107,7 @@ var Controller = (function() {
 	
 	function Controller(instanceType, source, duplicateForEdit)
 	{
-		console.assert(source);
+		console.assert(source || instanceType);
 		if (instanceType)
 		{
 			this._newInstance = new instanceType();
@@ -123,7 +123,8 @@ var Controller = (function() {
 })();
 
 var RootController = (function() {
-	RootController.prototype = new Controller();
+	RootController.prototype = Object.create(Controller.prototype);
+	RootController.prototype.constructor = RootController;
 	
 	RootController.prototype.setupPrivilege = function()
 	{
@@ -156,7 +157,8 @@ var RootController = (function() {
 })();
 
 var ChildController = (function() {
-	ChildController.prototype = new Controller();
+	ChildController.prototype = Object.create(Controller.prototype);
+	ChildController.prototype.constructor = ChildController;
 	ChildController.prototype._parent = null;
 	
 	Controller.prototype.parent = function(newValue)
@@ -203,7 +205,8 @@ var ChildController = (function() {
 })();
 
 var ExperienceController = (function() {
-	ExperienceController.prototype = new ChildController();
+	ExperienceController.prototype = Object.create(ChildController.prototype);
+	ExperienceController.prototype.constructor = ExperienceController;
 	
 	ExperienceController.prototype.addingMessage = "Adding Experience To Your Pathway...";
 	ExperienceController.prototype.savingMessage = "Saving Experience...";
@@ -649,7 +652,8 @@ var ExperienceController = (function() {
 })();
 
 var OrganizationController = (function() {
-	OrganizationController.prototype = new RootController();
+	OrganizationController.prototype = Object.create(RootController.prototype);
+	OrganizationController.prototype.constructor = OrganizationController;
 	
 	OrganizationController.prototype.addingMessage = "Adding Organization...";
 	OrganizationController.prototype.savingMessage = "Saving Organization...";
@@ -694,7 +698,8 @@ var OrganizationController = (function() {
 })();
 
 var SiteController = (function() {
-	SiteController.prototype = new ChildController();
+	SiteController.prototype = Object.create(ChildController.prototype);
+	SiteController.prototype.constructor = SiteController;
 	
 	SiteController.prototype.addingMessage = "Adding Site...";
 	SiteController.prototype.savingMessage = "Saving Site...";

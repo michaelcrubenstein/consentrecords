@@ -1,5 +1,7 @@
 var Settings = (function () {
-	Settings.prototype = new EditPanel();
+	Settings.prototype = Object.create(EditPanel.prototype);
+	Settings.prototype.constructor = Settings;
+
 	Settings.prototype.panelTitle = "Settings";
 	Settings.prototype.firstNameLabel = "First Name";
 	Settings.prototype.lastNameLabel = "Last Name";
@@ -337,7 +339,9 @@ var Settings = (function () {
 	functionality.
  */ 
 var PickUserAccessPanel = (function () {
-	PickUserAccessPanel.prototype = new PickFromListPanel();
+	PickUserAccessPanel.prototype = Object.create(PickFromListPanel.prototype);
+	PickUserAccessPanel.prototype.constructor = PickUserAccessPanel;
+
 	PickUserAccessPanel.prototype.title = Settings.prototype.userPublicAccessLabel;
 	PickUserAccessPanel.prototype.data = function()
 	{
@@ -437,7 +441,9 @@ crn.Notification = (function() {
 
 /* This is a message to inform you that you have been accepted as a follower by another user. */
 crn.FollowerAccept = (function() {
-	FollowerAccept.prototype = new crn.Notification();
+	FollowerAccept.prototype = Object.create(crn.Notification.prototype);
+	FollowerAccept.prototype.constructor = FollowerAccept;
+
 	FollowerAccept.prototype.buttonText = "<b>{0}</b> has accepted you as a follower.";
 	
 	FollowerAccept.parseArguments = function(d)
@@ -504,7 +510,9 @@ crn.FollowerAccept = (function() {
 		comment instance being requested.
  */
 crn.ExperienceCommentRequested = (function() {
-	ExperienceCommentRequested.prototype = new crn.Notification();
+	ExperienceCommentRequested.prototype = Object.create(crn.Notification.prototype);
+	ExperienceCommentRequested.prototype.constructor = ExperienceCommentRequested;
+
 	ExperienceCommentRequested.prototype.buttonText = "<b>{0}</b> has a question about your {1} experience.";
 
 	ExperienceCommentRequested.parseArguments = function(d)
@@ -598,7 +606,9 @@ crn.ExperienceCommentRequested = (function() {
 })();
 
 crn.ExperienceQuestionAnswered = (function() {
-	ExperienceQuestionAnswered.prototype = new crn.Notification();
+	ExperienceQuestionAnswered.prototype = Object.create(crn.Notification.prototype);
+	ExperienceQuestionAnswered.prototype.constructor = ExperienceQuestionAnswered;
+
 	ExperienceQuestionAnswered.prototype.buttonText = "<b>{0}</b> has answered a question you asked about their {1} experience.";
 
 	ExperienceQuestionAnswered.parseArguments = function(d)
@@ -677,7 +687,9 @@ crn.ExperienceQuestionAnswered = (function() {
 })();
 
 crn.ExperienceSuggestion = (function() {
-	ExperienceSuggestion.prototype = new crn.Notification();
+	ExperienceSuggestion.prototype = Object.create(crn.Notification.prototype);
+	ExperienceSuggestion.prototype.constructor = ExperienceSuggestion;
+
 	ExperienceSuggestion.prototype.buttonText = "<b>{0}</b> suggests: add {2} with the {1} tag to your path.";
 
 	ExperienceSuggestion.parseArguments = function(d)
@@ -757,7 +769,9 @@ crn.ExperienceSuggestion = (function() {
 })();
 
 var NotificationsPanel = (function () {
-	NotificationsPanel.prototype = new SitePanel();
+	NotificationsPanel.prototype = Object.create(SitePanel.prototype);
+	NotificationsPanel.prototype.constructor = NotificationsPanel;
+
 	NotificationsPanel.prototype.panelTitle = "Notifications";
 	NotificationsPanel.prototype.noItemsDescription = "You have no notifications.";
 	

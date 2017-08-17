@@ -61,8 +61,9 @@ var AgeCalculator = (function() {
 })();
 
 var CompareFlag = (function() {
-	CompareFlag.prototype = new FlagController();
-	
+	CompareFlag.prototype = Object.create(FlagController.prototype);
+	CompareFlag.prototype.constructor = CompareFlag;
+
 	CompareFlag.prototype.getEndAge = function()
 	{
 		endDate = new Date(this.getEndDate());
@@ -129,8 +130,9 @@ var CompareFlag = (function() {
 })();
 
 var ComparePath = (function() {
-	ComparePath.prototype = new PathView();
-	
+	ComparePath.prototype = Object.create(PathView.prototype);
+	ComparePath.prototype.constructor = ComparePath;
+
 	ComparePath.prototype.youName = "You";
 	
 	ComparePath.prototype.poleSpacing = 4;
@@ -577,7 +579,9 @@ var ComparePath = (function() {
 })();
 
 var ComparePathsPanel = (function () {
-	ComparePathsPanel.prototype = new SitePanel();
+	ComparePathsPanel.prototype = Object.create(SitePanel.prototype);
+	ComparePathsPanel.prototype.constructor = ComparePathsPanel;
+
 	ComparePathsPanel.prototype.leftUser = null;
 	ComparePathsPanel.prototype.rightUser = null;
 	ComparePathsPanel.prototype.pathtree = null;

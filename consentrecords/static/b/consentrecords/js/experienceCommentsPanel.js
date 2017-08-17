@@ -1,7 +1,9 @@
 /* experienceCommentsPanel.js */
 
 var ExperienceCommentsPanel = (function() {
-	ExperienceCommentsPanel.prototype = new SitePanel();
+	ExperienceCommentsPanel.prototype = Object.create(SitePanel.prototype);
+	ExperienceCommentsPanel.prototype.constructor = ExperienceCommentsPanel;
+
 	ExperienceCommentsPanel.prototype.fd = null;
 	ExperienceCommentsPanel.prototype.inEditMode = false;
 	ExperienceCommentsPanel.prototype.detailGroup = null;

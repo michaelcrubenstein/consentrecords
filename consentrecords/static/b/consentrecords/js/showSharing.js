@@ -1,5 +1,7 @@
 var SharingPanel = (function() {
-	SharingPanel.prototype = new SitePanel();
+	SharingPanel.prototype = Object.create(SitePanel.prototype);
+	SharingPanel.prototype.constructor = SharingPanel;
+
 	SharingPanel.prototype.privilegesByID = null;
 	SharingPanel.prototype.privileges = null;
 	SharingPanel.prototype.user = null;
@@ -315,7 +317,9 @@ var SharingPanel = (function() {
 	This function should be called within a prepareClick block. 
  */
 var PickSharingUserPanel = (function() {
-	PickSharingUserPanel.prototype = new SitePanel();
+	PickSharingUserPanel.prototype = Object.create(SitePanel.prototype);
+	PickSharingUserPanel.prototype.constructor = PickSharingUserPanel;
+
 	PickSharingUserPanel.prototype.title = "User Or Group"
 	PickSharingUserPanel.prototype.badEmailMessage =
 		'Please specify a valid email address.';

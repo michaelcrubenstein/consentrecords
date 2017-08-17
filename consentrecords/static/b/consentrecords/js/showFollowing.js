@@ -1,7 +1,9 @@
 /* RequestFollowPanel is used to specify the email address of a user the currently logged-in
 	user wants to follow. */
 var RequestFollowPanel = (function() {
-	RequestFollowPanel.prototype = new SitePanel();
+	RequestFollowPanel.prototype = Object.create(SitePanel.prototype);
+	RequestFollowPanel.prototype.constructor = RequestFollowPanel;
+
 	RequestFollowPanel.prototype.followingPanel = null;
 	RequestFollowPanel.prototype.title = "Ask to Follow";
 	RequestFollowPanel.prototype.emailDocumentation = 
@@ -102,7 +104,9 @@ var RequestFollowPanel = (function() {
 /* FollowingPanel is used to identify and manage the users that the currently logged-in
 	user is following. */
 var FollowingPanel = (function() {
-	FollowingPanel.prototype = new SitePanel();
+	FollowingPanel.prototype = Object.create(SitePanel.prototype);
+	FollowingPanel.prototype.constructor = FollowingPanel;
+
 	FollowingPanel.prototype.user = null;
 	FollowingPanel.prototype._pendingSection = null;
 	FollowingPanel.prototype._noPendingResultsDiv = null;

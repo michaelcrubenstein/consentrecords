@@ -1,5 +1,7 @@
 var MultiTypeOptionView = (function() {
-	MultiTypeOptionView.prototype = new SearchOptionsView();
+	MultiTypeOptionView.prototype = Object.create(SearchOptionsView.prototype);
+	MultiTypeOptionView.prototype.constructor = MultiTypeOptionView;
+
 	MultiTypeOptionView.prototype.containerNode = null;
 	MultiTypeOptionView.prototype.experienceController = null;
 	MultiTypeOptionView.prototype.typeName = "";
@@ -87,7 +89,9 @@ var MultiTypeOptionView = (function() {
 })();
 
 var ExperienceDatumSearchView = (function() {
-	ExperienceDatumSearchView.prototype = new MultiTypeOptionView();
+	ExperienceDatumSearchView.prototype = Object.create(MultiTypeOptionView.prototype);
+	ExperienceDatumSearchView.prototype.constructor = ExperienceDatumSearchView;
+
 	ExperienceDatumSearchView.prototype.typeNames = null;
 	ExperienceDatumSearchView.prototype.initialTypeName = null;
 	ExperienceDatumSearchView.prototype.typeName = null;
@@ -378,8 +382,9 @@ var ExperienceDatumSearchView = (function() {
 	search view should never need to interact with the server.
  */
 var TagSearchView = (function() {
-	TagSearchView.prototype = new TagPoolView();
-	
+	TagSearchView.prototype = Object.create(TagPoolView.prototype);
+	TagSearchView.prototype.constructor = TagSearchView;
+
 	TagSearchView.prototype.reveal = null;
 	TagSearchView.prototype.focusNode = null;
 	TagSearchView.prototype.sitePanel = null;
@@ -684,8 +689,9 @@ var TagSearchView = (function() {
 
 /* Displays site or organization */
 var OrganizationSearchView = (function() {
-	OrganizationSearchView.prototype = new ExperienceDatumSearchView();
-	
+	OrganizationSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	OrganizationSearchView.prototype.constructor = OrganizationSearchView;
+
 	OrganizationSearchView.prototype.clearFromOrganization = function()
 	{
 		if (this.experienceController.organization())
@@ -847,8 +853,9 @@ var OrganizationSearchView = (function() {
 
 /* Displays organization, site, offering */
 var SiteSearchView = (function() {
-	SiteSearchView.prototype = new ExperienceDatumSearchView();
-	
+	SiteSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	SiteSearchView.prototype.constructor = SiteSearchView;
+
 	SiteSearchView.prototype.clearFromSite = function()
 	{
 		if (this.experienceController.site())
@@ -1169,8 +1176,9 @@ var SiteSearchView = (function() {
 
 /* Typenames can be "Offering" or "Offering from Site" or "Service". The return types can be Offerings. */
 var OfferingSearchView = (function() {
-	OfferingSearchView.prototype = new ExperienceDatumSearchView();
-	
+	OfferingSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	OfferingSearchView.prototype.constructor = OfferingSearchView;
+
 	OfferingSearchView.prototype.clearFromOffering = function()
 	{
 		this.experienceController.clearOffering();
@@ -1784,7 +1792,9 @@ var ExperienceShareOptions = (function () {
 })();
 
 var NewExperiencePanel = (function () {
-	NewExperiencePanel.prototype = new SitePanel();
+	NewExperiencePanel.prototype = Object.create(SitePanel.prototype);
+	NewExperiencePanel.prototype.constructor = NewExperiencePanel;
+
 	NewExperiencePanel.prototype.allServices = null;
 	
 	NewExperiencePanel.prototype.organizationSearchView = null;

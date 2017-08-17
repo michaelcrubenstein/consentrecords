@@ -1,5 +1,6 @@
 var UpdatePasswordPanel = (function () {
-	UpdatePasswordPanel.prototype = new SitePanel();
+	UpdatePasswordPanel.prototype = Object.create(SitePanel.prototype);
+	UpdatePasswordPanel.prototype.constructor = UpdatePasswordPanel;
 
 	function UpdatePasswordPanel() {
 		this.createRoot(null, "Password", "view change-password", revealPanelUp);
@@ -93,7 +94,8 @@ var UpdatePasswordPanel = (function () {
 })();
 
 var UpdateUsernamePanel = (function () {
-	UpdateUsernamePanel.prototype = new SitePanel();
+	UpdateUsernamePanel.prototype = Object.create(SitePanel.prototype);
+	UpdateUsernamePanel.prototype.constructor = UpdateUsernamePanel;
 
 	function UpdateUsernamePanel(user) {
 		this.createRoot(null, "Username", "view", revealPanelUp);

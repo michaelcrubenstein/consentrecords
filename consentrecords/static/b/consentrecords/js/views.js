@@ -2087,7 +2087,9 @@ var SearchView = (function () {
 
 /* A PanelSearchView is a SearchView that appears in an entire sitePanel. */
 var PanelSearchView = (function() {
-	PanelSearchView.prototype = new SearchView();
+	PanelSearchView.prototype = Object.create(SearchView.prototype);
+	PanelSearchView.prototype.constructor = PanelSearchView;
+
 	PanelSearchView.prototype.sitePanel = undefined
 	
 	function PanelSearchView(sitePanel, placeholder, chunkerType) {
@@ -2327,7 +2329,9 @@ function promiseCreateObjectFromCells(containerCell, objectData, cells)
 }
 
 var EditPanel = (function() {
-	EditPanel.prototype = new SitePanel();
+	EditPanel.prototype = Object.create(SitePanel.prototype);
+	EditPanel.prototype.constructor = EditPanel;
+
 	EditPanel.prototype.navContainer = null;
 	EditPanel.prototype.lastNewIDKey = 1;
 	
@@ -2788,7 +2792,8 @@ var EditPanel = (function() {
 })();
 
 var EditItemPanel = (function () {
-	EditItemPanel.prototype = new EditPanel();
+	EditItemPanel.prototype = Object.create(EditPanel.prototype);
+	EditItemPanel.prototype.constructor = EditItemPanel;
 
 	EditItemPanel.prototype._controller = null;
 	
@@ -2861,8 +2866,9 @@ var EditItemPanel = (function () {
 	Displays a panel for editing the specified object. 
  */
 var PickFromListPanel = (function () {
-	PickFromListPanel.prototype = new SitePanel();
-	
+	PickFromListPanel.prototype = Object.create(SitePanel.prototype);
+	PickFromListPanel.prototype.constructor = PickFromListPanel;
+
 	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
 	{
 		SitePanel.prototype.createRoot.call(this, datum, headerText, "list", revealPanelLeft);

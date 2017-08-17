@@ -679,7 +679,9 @@ cr.linkChanged = function(source, target)
 }
 	
 cr.IInstance = (function() {
-	IInstance.prototype = new cr.ModelObject();
+	IInstance.prototype = Object.create(cr.ModelObject.prototype);
+	IInstance.prototype.constructor = IInstance;
+	
 	IInstance.prototype._id = null;
 	IInstance.prototype._clientID = null;
 	IInstance.prototype._description = "";
@@ -1223,7 +1225,8 @@ cr.IInstance = (function() {
 	need to add fields or override updateData.
  */
 cr.TranslationInstance = (function() {
-	TranslationInstance.prototype = new cr.IInstance();
+	TranslationInstance.prototype = Object.create(cr.IInstance.prototype);
+	TranslationInstance.prototype.constructor = TranslationInstance;
 	
 	TranslationInstance.prototype._text = null;
 	TranslationInstance.prototype._language = null;
@@ -1362,7 +1365,9 @@ cr.TranslationInstance = (function() {
 })();
 
 cr.ServiceLinkInstance = (function() {
-	ServiceLinkInstance.prototype = new cr.IInstance();
+	ServiceLinkInstance.prototype = Object.create(cr.IInstance.prototype);
+	ServiceLinkInstance.prototype.constructor = ServiceLinkInstance;
+
 	ServiceLinkInstance.prototype._serviceID = null;
 	
 	ServiceLinkInstance.prototype.setDefaultValues = function()
@@ -1477,7 +1482,9 @@ cr.ServiceLinkInstance = (function() {
 })();
 	
 cr.OrderedServiceLinkInstance = (function() {
-	OrderedServiceLinkInstance.prototype = new cr.ServiceLinkInstance();
+	OrderedServiceLinkInstance.prototype = Object.create(cr.ServiceLinkInstance.prototype);
+	OrderedServiceLinkInstance.prototype.constructor = OrderedServiceLinkInstance;
+
 	OrderedServiceLinkInstance.prototype._position = null;
 	
 	OrderedServiceLinkInstance.prototype.setDefaultValues = function()
@@ -1577,7 +1584,9 @@ cr.OrderedServiceLinkInstance = (function() {
 })();
 
 cr.UserLinkInstance = (function() {
-	UserLinkInstance.prototype = new cr.IInstance();
+	UserLinkInstance.prototype = Object.create(cr.IInstance.prototype);
+	UserLinkInstance.prototype.constructor = UserLinkInstance;
+
 	UserLinkInstance.prototype._user = null;
 	
 	UserLinkInstance.prototype.setDefaultValues = function()
@@ -1691,7 +1700,9 @@ cr.UserLinkInstance = (function() {
 })();
 	
 cr.Grantable = (function() {
-	Grantable.prototype = new cr.IInstance();
+	Grantable.prototype = Object.create(cr.IInstance.prototype);
+	Grantable.prototype.constructor = Grantable;
+
 	Grantable.prototype._publicAccess = null;
 	Grantable.prototype._primaryAdministrator = null;
 	Grantable.prototype._userGrants = null;
@@ -1934,7 +1945,9 @@ cr.Grantable = (function() {
 })();
 
 cr.Grant = (function() {
-	Grant.prototype = new cr.IInstance();
+	Grant.prototype = Object.create(cr.IInstance.prototype);
+	Grant.prototype.constructor = Grant;
+
 	Grant.prototype._grantee = null;
 	Grant.prototype._privilege = null;
 	
@@ -2502,7 +2515,9 @@ cr.DateRangeInstance = (function() {
 })();
 
 cr.Address = (function() {
-	Address.prototype = new cr.IInstance();
+	Address.prototype = Object.create(cr.IInstance.prototype);
+	Address.prototype.constructor = Address;
+
 	Address.prototype._city = null;
 	Address.prototype._state = null;
 	Address.prototype._zipCode = null;
@@ -2714,7 +2729,9 @@ cr.Address = (function() {
 })();
 	
 cr.Comment = (function() {
-	Comment.prototype = new cr.IInstance();
+	Comment.prototype = Object.create(cr.IInstance.prototype);
+	Comment.prototype.constructor = Comment;
+
 	Comment.prototype._text = null;
 	Comment.prototype._question = null;
 	Comment.prototype._asker = null;
@@ -2893,7 +2910,9 @@ cr.Comment = (function() {
 })();
 	
 cr.CommentPrompt = (function() {
-	CommentPrompt.prototype = new cr.IInstance();
+	CommentPrompt.prototype = Object.create(cr.IInstance.prototype);
+	CommentPrompt.prototype.constructor = CommentPrompt;
+
 	CommentPrompt.prototype._translations = null;
 	
 	CommentPrompt.prototype.urlPath = function()
@@ -2997,7 +3016,8 @@ cr.CommentPrompt = (function() {
 })();
 	
 cr.CommentPromptText = (function() {
-	CommentPromptText.prototype = new cr.TranslationInstance();
+	CommentPromptText.prototype = Object.create(cr.TranslationInstance.prototype);
+	CommentPromptText.prototype.constructor = CommentPromptText;
 	
 	CommentPromptText.prototype.urlPath = function()
 	{
@@ -3014,8 +3034,9 @@ cr.CommentPromptText = (function() {
 })();
 	
 cr.DisqualifyingTag = (function() {
-	DisqualifyingTag.prototype = new cr.ServiceLinkInstance();
-	
+	DisqualifyingTag.prototype = Object.create(cr.ServiceLinkInstance.prototype);
+	DisqualifyingTag.prototype.constructor = DisqualifyingTag;
+
 	DisqualifyingTag.prototype.urlPath = function()
 	{
 		console.assert(this.id());
@@ -3031,7 +3052,9 @@ cr.DisqualifyingTag = (function() {
 })();
 	
 cr.Engagement = (function() {
-	Engagement.prototype = new cr.UserLinkInstance();
+	Engagement.prototype = Object.create(cr.UserLinkInstance.prototype);
+	Engagement.prototype.constructor = Engagement;
+
 	Engagement.prototype._user = null;
 	Engagement.prototype._start = null;
 	Engagement.prototype._end = null;
@@ -3164,7 +3187,9 @@ cr.Engagement = (function() {
 })();
 	
 cr.Enrollment = (function() {
-	Enrollment.prototype = new cr.UserLinkInstance();
+	Enrollment.prototype = Object.create(cr.UserLinkInstance.prototype);
+	Enrollment.prototype.constructor = Enrollment;
+
 	Enrollment.prototype._session = null;
 	
 	Enrollment.prototype.urlPath = function()
@@ -3207,7 +3232,9 @@ cr.Enrollment = (function() {
 })();
 	
 cr.Experience = (function() {
-	Experience.prototype = new cr.IInstance();
+	Experience.prototype = Object.create(cr.IInstance.prototype);
+	Experience.prototype.constructor = Experience;
+
 	Experience.prototype._path = null;
 	Experience.prototype._organization = null;
 	Experience.prototype._customOrganization = null;
@@ -3747,7 +3774,9 @@ cr.Experience = (function() {
 })();
 	
 cr.ExperienceCustomService = (function() {
-	ExperienceCustomService.prototype = new cr.IInstance();
+	ExperienceCustomService.prototype = Object.create(cr.IInstance.prototype);
+	ExperienceCustomService.prototype.constructor = ExperienceCustomService;
+
 	ExperienceCustomService.prototype._name = null;
 	ExperienceCustomService.prototype._position = null;
 	
@@ -3884,7 +3913,8 @@ cr.ExperienceCustomService = (function() {
 })();
 	
 cr.ExperienceService = (function() {
-	ExperienceService.prototype = new cr.OrderedServiceLinkInstance();
+	ExperienceService.prototype = Object.create(cr.OrderedServiceLinkInstance.prototype);
+	ExperienceService.prototype.constructor = ExperienceService;
 	
 	ExperienceService.prototype.urlPath = function()
 	{
@@ -3917,7 +3947,9 @@ cr.ExperienceService = (function() {
 })();
 	
 cr.ExperiencePrompt = (function() {
-	ExperiencePrompt.prototype = new cr.IInstance();
+	ExperiencePrompt.prototype = Object.create(cr.IInstance.prototype);
+	ExperiencePrompt.prototype.constructor = ExperiencePrompt;
+
     ExperiencePrompt.prototype._name = null;
     ExperiencePrompt.prototype._organization = null;
     ExperiencePrompt.prototype._site = null;
@@ -4252,7 +4284,8 @@ cr.ExperiencePrompt = (function() {
 })();
 	
 cr.ExperiencePromptService = (function() {
-	ExperiencePromptService.prototype = new cr.OrderedServiceLinkInstance();
+	ExperiencePromptService.prototype = Object.create(cr.OrderedServiceLinkInstance.prototype);
+	ExperiencePromptService.prototype.constructor = ExperiencePromptService;
 	
 	ExperiencePromptService.prototype.urlPath = function()
 	{
@@ -4269,7 +4302,8 @@ cr.ExperiencePromptService = (function() {
 })();
 	
 cr.ExperiencePromptText = (function() {
-	ExperiencePromptText.prototype = new cr.TranslationInstance();
+	ExperiencePromptText.prototype = Object.create(cr.TranslationInstance.prototype);
+	ExperiencePromptText.prototype.constructor = ExperiencePromptText;
 	
 	ExperiencePromptText.prototype.urlPath = function()
 	{
@@ -4286,7 +4320,9 @@ cr.ExperiencePromptText = (function() {
 })();
 	
 cr.Group = (function() {
-	Group.prototype = new cr.IInstance();
+	Group.prototype = Object.create(cr.IInstance.prototype);
+	Group.prototype.constructor = Group;
+
 	Group.prototype._names = null;
 	Group.prototype._members = null;
 	
@@ -4410,7 +4446,8 @@ cr.Group = (function() {
 })();
 	
 cr.GroupGrant = (function() {
-	GroupGrant.prototype = new cr.Grant();
+	GroupGrant.prototype = Object.create(cr.Grant.prototype);
+	GroupGrant.prototype.constructor = GroupGrant;
 	
 	GroupGrant.prototype.urlPath = function()
 	{
@@ -4432,7 +4469,8 @@ cr.GroupGrant = (function() {
 })();
 	
 cr.GroupName = (function() {
-	GroupName.prototype = new cr.TranslationInstance();
+	GroupName.prototype = Object.create(cr.TranslationInstance.prototype);
+	GroupName.prototype.constructor = GroupName;
 	
 	GroupName.prototype.urlPath = function()
 	{
@@ -4449,7 +4487,8 @@ cr.GroupName = (function() {
 })();
 	
 cr.GroupMember = (function() {
-	GroupMember.prototype = new cr.UserLinkInstance();
+	GroupMember.prototype = Object.create(cr.UserLinkInstance.prototype);
+	GroupMember.prototype.constructor = GroupMember;
 	
 	GroupMember.prototype.urlPath = function()
 	{
@@ -4466,7 +4505,9 @@ cr.GroupMember = (function() {
 })();
 	
 cr.Inquiry = (function() {
-	Inquiry.prototype = new cr.UserLinkInstance();
+	Inquiry.prototype = Object.create(cr.UserLinkInstance.prototype);
+	Inquiry.prototype.constructor = Inquiry;
+
 	Inquiry.prototype._session = null;
 	
 	Inquiry.prototype.urlPath = function()
@@ -4498,7 +4539,9 @@ cr.Inquiry = (function() {
 })();
 	
 cr.Notification = (function() {
-	Notification.prototype = new cr.IInstance();
+	Notification.prototype = Object.create(cr.IInstance.prototype);
+	Notification.prototype.constructor = Notification;
+
 	Notification.prototype._name = null;
 	Notification.prototype._isFresh = null;
 	Notification.prototype._arguments = null;
@@ -4621,7 +4664,8 @@ cr.Notification = (function() {
 })();
 	
 cr.NotificationArgument = (function() {
-	NotificationArgument.prototype = new cr.IInstance();
+	NotificationArgument.prototype = Object.create(cr.IInstance.prototype);
+	NotificationArgument.prototype.constructor = NotificationArgument;
 	
 	function NotificationArgument() {
 	    cr.IInstance.call(this);
@@ -4632,7 +4676,9 @@ cr.NotificationArgument = (function() {
 })();
 	
 cr.Offering = (function() {
-	Offering.prototype = new cr.IInstance();
+	Offering.prototype = Object.create(cr.IInstance.prototype);
+	Offering.prototype.constructor = Offering;
+
 	Offering.prototype._names = null;
     Offering.prototype._webSite = null;
     Offering.prototype._minimumAge = null;
@@ -5022,7 +5068,8 @@ cr.Offering = (function() {
 })();
 	
 cr.OfferingName = (function() {
-	OfferingName.prototype = new cr.TranslationInstance();
+	OfferingName.prototype = Object.create(cr.TranslationInstance.prototype);
+	OfferingName.prototype.constructor = OfferingName;
 	
 	OfferingName.prototype.urlPath = function()
 	{
@@ -5039,7 +5086,8 @@ cr.OfferingName = (function() {
 })();
 	
 cr.OfferingService = (function() {
-	OfferingService.prototype = new cr.OrderedServiceLinkInstance();
+	OfferingService.prototype = Object.create(cr.OrderedServiceLinkInstance.prototype);
+	OfferingService.prototype.constructor = OfferingService;
 	
 	OfferingService.prototype.urlPath = function()
 	{
@@ -5056,7 +5104,9 @@ cr.OfferingService = (function() {
 })();
 	
 cr.Organization = (function() {
-	Organization.prototype = new cr.Grantable();
+	Organization.prototype = Object.create(cr.Grantable.prototype);
+	Organization.prototype.constructor = Organization;
+
 	Organization.prototype._webSite = null;
 	Organization.prototype._inquiryAccessGroup = null;
 	Organization.prototype._names = null;
@@ -5312,7 +5362,8 @@ cr.Organization = (function() {
 })();
 	
 cr.OrganizationName = (function() {
-	OrganizationName.prototype = new cr.TranslationInstance();
+	OrganizationName.prototype = Object.create(cr.TranslationInstance.prototype);
+	OrganizationName.prototype.constructor = OrganizationName;
 	
 	OrganizationName.prototype.urlPath = function()
 	{
@@ -5329,7 +5380,9 @@ cr.OrganizationName = (function() {
 })();
 	
 cr.Path = (function() {
-	Path.prototype = new cr.Grantable();
+	Path.prototype = Object.create(cr.Grantable.prototype);
+	Path.prototype.constructor = Path;
+
 	Path.prototype._birthday = null;
 	Path.prototype._name = null;
 	Path.prototype._specialAccess = null;
@@ -5678,7 +5731,9 @@ cr.Path = (function() {
 })();
 	
 cr.Period = (function() {
-	Period.prototype = new cr.IInstance();
+	Period.prototype = Object.create(cr.IInstance.prototype);
+	Period.prototype.constructor = Period;
+
     Period.prototype._weekday = null;
     Period.prototype._startTime = null;
     Period.prototype._endTime = null;
@@ -5853,7 +5908,9 @@ cr.Period = (function() {
 })();
 	
 cr.Service = (function() {
-	Service.prototype = new cr.IInstance();
+	Service.prototype = Object.create(cr.IInstance.prototype);
+	Service.prototype.constructor = Service;
+
 	Service.prototype._stage = null;
 	Service.prototype._names = null;
 	Service.prototype._organizationLabels = null;
@@ -6218,7 +6275,8 @@ cr.Service.clearPromises = function()
 }
 
 cr.ServiceName = (function() {
-	ServiceName.prototype = new cr.TranslationInstance();
+	ServiceName.prototype = Object.create(cr.TranslationInstance.prototype);
+	ServiceName.prototype.constructor = ServiceName;
 	
 	ServiceName.prototype.urlPath = function()
 	{
@@ -6235,7 +6293,8 @@ cr.ServiceName = (function() {
 })();
 	
 cr.ServiceOrganizationLabel = (function() {
-	ServiceOrganizationLabel.prototype = new cr.TranslationInstance();
+	ServiceOrganizationLabel.prototype = Object.create(cr.TranslationInstance.prototype);
+	ServiceOrganizationLabel.prototype.constructor = ServiceOrganizationLabel;
 	
 	ServiceOrganizationLabel.prototype.urlPath = function()
 	{
@@ -6252,7 +6311,8 @@ cr.ServiceOrganizationLabel = (function() {
 })();
 	
 cr.ServiceSiteLabel = (function() {
-	ServiceSiteLabel.prototype = new cr.TranslationInstance();
+	ServiceSiteLabel.prototype = Object.create(cr.TranslationInstance.prototype);
+	ServiceSiteLabel.prototype.constructor = ServiceSiteLabel;
 	
 	ServiceSiteLabel.prototype.urlPath = function()
 	{
@@ -6269,7 +6329,8 @@ cr.ServiceSiteLabel = (function() {
 })();
 	
 cr.ServiceOfferingLabel = (function() {
-	ServiceOfferingLabel.prototype = new cr.TranslationInstance();
+	ServiceOfferingLabel.prototype = Object.create(cr.TranslationInstance.prototype);
+	ServiceOfferingLabel.prototype.constructor = ServiceOfferingLabel;
 	
 	ServiceOfferingLabel.prototype.urlPath = function()
 	{
@@ -6286,7 +6347,8 @@ cr.ServiceOfferingLabel = (function() {
 })();
 	
 cr.ServiceImplication = (function() {
-	ServiceImplication.prototype = new cr.ServiceLinkInstance();
+	ServiceImplication.prototype = Object.create(cr.ServiceLinkInstance.prototype);
+	ServiceImplication.prototype.constructor = ServiceImplication;
 	
 	ServiceImplication.prototype.urlPath = function()
 	{
@@ -6303,7 +6365,9 @@ cr.ServiceImplication = (function() {
 })();
 	
 cr.Session = (function() {
-	Session.prototype = new cr.IInstance();
+	Session.prototype = Object.create(cr.IInstance.prototype);
+	Session.prototype.constructor = Session;
+	
 	Session.prototype._names = null;
 	Session.prototype._registrationDeadline = null;
 	Session.prototype._start = null;
@@ -6798,8 +6862,9 @@ cr.Session = (function() {
 })();
 	
 cr.SessionName = (function() {
-	SessionName.prototype = new cr.TranslationInstance();
-	
+	SessionName.prototype = Object.create(cr.TranslationInstance.prototype);
+	SessionName.prototype.constructor = SessionName;
+
 	SessionName.prototype.urlPath = function()
 	{
 		console.assert(this.id());
@@ -6815,7 +6880,9 @@ cr.SessionName = (function() {
 })();
 	
 cr.Site = (function() {
-	Site.prototype = new cr.IInstance();
+	Site.prototype = Object.create(cr.IInstance.prototype);
+	Site.prototype.constructor = Site;
+
 	Site.prototype._webSite = null;
 	Site.prototype._names = null;
 	Site.prototype._offerings = null;
@@ -7070,8 +7137,9 @@ cr.Site = (function() {
 })();
 	
 cr.SiteName = (function() {
-	SiteName.prototype = new cr.TranslationInstance();
-	
+	SiteName.prototype = Object.create(cr.TranslationInstance.prototype);
+	SiteName.prototype.constructor = SiteName;
+
 	SiteName.prototype.urlPath = function()
 	{
 		console.assert(this.id());
@@ -7087,7 +7155,9 @@ cr.SiteName = (function() {
 })();
 	
 cr.Street = (function() {
-	Street.prototype = new cr.IInstance();
+	Street.prototype = Object.create(cr.IInstance.prototype);
+	Street.prototype.constructor = Street;
+
 	Street.prototype._position = null;
 	Street.prototype._text = null;
 	
@@ -7216,7 +7286,9 @@ cr.Street = (function() {
 })();
 
 cr.User = (function() {
-	User.prototype = new cr.Grantable();
+	User.prototype = Object.create(cr.Grantable.prototype);
+	User.prototype.constructor = User;
+
 	User.prototype._firstName = null;
 	User.prototype._lastName = null;
 	User.prototype._birthday = null;
@@ -7787,8 +7859,9 @@ cr.User = (function() {
 })();
 	
 cr.UserEmail = (function() {
-	UserEmail.prototype = new cr.IInstance();
-	
+	UserEmail.prototype = Object.create(cr.IInstance.prototype);
+	UserEmail.prototype.constructor = UserEmail;
+
 	UserEmail.prototype._text = null;
 	UserEmail.prototype._position = null;
 	
@@ -7897,8 +7970,9 @@ cr.UserEmail = (function() {
 })();
 	
 cr.UserGrant = (function() {
-	UserGrant.prototype = new cr.Grant();
-	
+	UserGrant.prototype = Object.create(cr.Grant.prototype);
+	UserGrant.prototype.constructor = UserGrant;
+
 	UserGrant.prototype.urlPath = function()
 	{
 		console.assert(this.id());
@@ -7919,7 +7993,9 @@ cr.UserGrant = (function() {
 })();
 	
 cr.UserUserGrantRequest = (function() {
-	UserUserGrantRequest.prototype = new cr.IInstance();
+	UserUserGrantRequest.prototype = Object.create(cr.IInstance.prototype);
+	UserUserGrantRequest.prototype.constructor = UserUserGrantRequest;
+
 	UserUserGrantRequest.prototype._user = null;	/* The container for this user grant request */
 	UserUserGrantRequest.prototype._grantee = null;
 	

@@ -1,6 +1,7 @@
 var WelcomePanel = (function () {
-	WelcomePanel.prototype = new SitePanel();
-	
+	WelcomePanel.prototype = Object.create(SitePanel.prototype);
+	WelcomePanel.prototype.constructor = WelcomePanel;
+
 	WelcomePanel.prototype.handleResize = function()
 	{
 		var ol = $(this.mainDiv.node()).children('ol');

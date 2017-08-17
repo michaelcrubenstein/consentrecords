@@ -982,8 +982,9 @@ var PathView = (function() {
 })();
 
 var PathLines = (function() {
-	PathLines.prototype = new PathView();
-		
+	PathLines.prototype = Object.create(PathView.prototype);
+	PathLines.prototype.constructor = PathLines;
+
 	PathLines.prototype.textLeftMargin = 10;
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
 	PathLines.prototype.pathBackground = "white";
@@ -1370,8 +1371,9 @@ var AlertButton = (function() {
 })();
 
 var SettingsButton = (function() {
-	SettingsButton.prototype = new AlertButton();
-	
+	SettingsButton.prototype = Object.create(AlertButton.prototype);
+	SettingsButton.prototype.constructor = SettingsButton;
+
 	SettingsButton.prototype.onClick = function()
 	{
 		if (prepareClick('click', "Settings"))
@@ -1421,8 +1423,9 @@ var SettingsButton = (function() {
 })();
 
 var NotificationsButton = (function() {
-	NotificationsButton.prototype = new AlertButton();
-	
+	NotificationsButton.prototype = Object.create(AlertButton.prototype);
+	NotificationsButton.prototype.constructor = NotificationsButton;
+
 	NotificationsButton.prototype.onClick = function()
 	{
 		if (prepareClick('click', "Notifications"))
@@ -1485,7 +1488,9 @@ var NotificationsButton = (function() {
 })();
 
 var PathlinesPanel = (function () {
-	PathlinesPanel.prototype = new SitePanel();
+	PathlinesPanel.prototype = Object.create(SitePanel.prototype);
+	PathlinesPanel.prototype.constructor = PathlinesPanel;
+
 	PathlinesPanel.prototype.user = null;
 	PathlinesPanel.prototype.pathtree = null;
 	PathlinesPanel.prototype.navContainer = null;
@@ -2144,7 +2149,9 @@ var ExperienceIdeaPanel = (function() {
 })();
 
 var OtherPathlines = (function() {
-	OtherPathlines.prototype = new PathLines();
+	OtherPathlines.prototype = Object.create(PathLines.prototype);
+	OtherPathlines.prototype.constructor = OtherPathlines;
+
 	OtherPathlines.prototype.detailAddToPathRect = null;
 	
 	OtherPathlines.prototype.canEditExperience = function(fd, i)
@@ -2179,7 +2186,9 @@ var OtherPathlines = (function() {
 })();
 
 var OtherPathPanel = (function () {
-	OtherPathPanel.prototype = new SitePanel();
+	OtherPathPanel.prototype = Object.create(SitePanel.prototype);
+	OtherPathPanel.prototype.constructor = OtherPathPanel;
+
 	OtherPathPanel.prototype.path = null;
 	OtherPathPanel.prototype.pathtree = null;
 	OtherPathPanel.prototype.navContainer = null;
