@@ -959,7 +959,7 @@ cr.IInstance = (function() {
 		$(this).trigger(addEventType, item);
 	}
 							
-	IInstance.prototype.updateList = function(items, data, newIDs, resultType, addEventType, deletedEventType)
+	IInstance.prototype.updateList = function(items, data, newIDs, addEventType)
 	{
 		var _this = this;
 		items = items.call(this);
@@ -1829,12 +1829,12 @@ cr.Grantable = (function() {
 		}
 		if ('user grants' in d)
 		{
-			if (this.updateList(this.userGrants, d['user grants'], newIDs, cr.UserGrant, "userGrantAdded.cr", "userGrantDeleted.cr"))
+			if (this.updateList(this.userGrants, d['user grants'], newIDs, 'userGrantAdded.cr'))
 				changed = true;
 		}
 		if ('group grants' in d)
 		{
-			if (this.updateList(this.groupGrants, d['group grants'], newIDs, cr.GroupGrant, "groupGrantAdded.cr", "groupGrantDeleted.cr"))
+			if (this.updateList(this.groupGrants, d['group grants'], newIDs, 'groupGrantAdded.cr'))
 				changed = true;
 		}
 		
@@ -2102,6 +2102,18 @@ cr.NamedInstance = (function() {
     		this.description('');
     }
     
+	NamedInstance.prototype.updateData = function(d, newIDs)
+	{
+		if ('names' in d)
+		{
+			this.updateList(this.names, d['names'], newIDs, 'nameAdded.cr');
+			this.calculateDescription();
+			return true;
+		}
+		else
+			return false;
+	}
+		
 	function NamedInstance() {};
 	return NamedInstance;
 })();
@@ -2666,7 +2678,7 @@ cr.Address = (function() {
 		}
 		if ('streets' in d)
 		{
-			this.updateList(this.streets, d['streets'], newIDs, cr.Street, "streetAdded.cr", "streetDeleted.cr");
+			this.updateList(this.streets, d['streets'], newIDs, 'streetAdded.cr');
 			changed = true;
 		}
 		
@@ -2951,7 +2963,7 @@ cr.CommentPrompt = (function() {
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if ('translations' in d)
 		{
-			this.updateList(this.translations, d['translations'], newIDs, cr.CommentPromptText, "translationAdded.cr", "translationDeleted.cr");
+			this.updateList(this.translations, d['translations'], newIDs, 'translationAdded.cr');
 			changed = true;
 			this.calculateDescription();
 		}
@@ -3537,17 +3549,17 @@ cr.Experience = (function() {
 			
 		if ('services' in d)
 		{
-			if (this.updateList(this.experienceServices, d['services'], newIDs, cr.ExperienceService, "experienceServiceAdded.cr", "experienceServiceDeleted.cr"))
+			if (this.updateList(this.experienceServices, d['services'], newIDs, 'experienceServiceAdded.cr'))
 				changed = true;
 		}
 		if ('custom services' in d)
 		{
-			if (this.updateList(this.customServices, d['custom services'], newIDs, cr.ExperienceCustomService, "customServiceAdded.cr", "customServiceDeleted.cr"))
+			if (this.updateList(this.customServices, d['custom services'], newIDs, 'customServiceAdded.cr'))
 				changed = true;
 		}
 		if ('comments' in d)
 		{
-			if (this.updateList(this.comments, d['comments'], newIDs, cr.Comment, "commentAdded.cr", "commentDeleted.cr"))
+			if (this.updateList(this.comments, d['comments'], newIDs, 'commentAdded.cr'))
 				changed = true;
 		}
 
@@ -4220,17 +4232,17 @@ cr.ExperiencePrompt = (function() {
 			
 		if ('translations' in d)
 		{
-			if (this.updateList(this.translations, d['translations'], newIDs, cr.ExperiencePromptText, "translationAdded.cr", "translationDeleted.cr"))
+			if (this.updateList(this.translations, d['translations'], newIDs, 'translationAdded.cr'))
 				changed = true;
 		}
 		if ('services' in d)
 		{
-			if (this.updateList(this.services, d['services'], newIDs, cr.ExperiencePromptService, "serviceAdded.cr", "serviceDeleted.cr"))
+			if (this.updateList(this.services, d['services'], newIDs, 'serviceAdded.cr'))
 				changed = true;
 		}
 		if ('disqualifyingTags' in d)
 		{
-			if (this.updateList(this.disqualifyingTags, d['disqualifying tags'], newIDs, cr.DisqualifyingTag, "disqualifyingTagAdded.cr", "disqualifyingTagDeleted.cr"))
+			if (this.updateList(this.disqualifyingTags, d['disqualifying tags'], newIDs, 'disqualifyingTagAdded.cr'))
 				changed = true;
 		}
 		
@@ -4380,20 +4392,15 @@ cr.Group = (function() {
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
-
-		if ('names' in d)
-		{
-			this.updateList(this.names, d['names'], newIDs, cr.GroupName, "nameAdded.cr", "nameDeleted.cr");
+		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
-			this.calculateDescription();
-		}
 		
 		if (changed)
 			this.triggerChanged();
 			
 		if ('members' in d)
 		{
-			if (this.updateList(this.members, d['members'], newIDs, cr.GroupMember, "memberAdded.cr", "memberDeleted.cr"))
+			if (this.updateList(this.members, d['members'], newIDs, 'memberAdded.cr'))
 				changed = true;
 		}
 		
@@ -4887,12 +4894,8 @@ cr.Offering = (function() {
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
-		if ('names' in d)
-		{
-			this.updateList(this.names, d['names'], newIDs, cr.OfferingName, "nameAdded.cr", "nameDeleted.cr");
+		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
-			this.calculateDescription();
-		}
 		
 		if ('web site' in d)
 		{
@@ -4925,12 +4928,12 @@ cr.Offering = (function() {
 			
 		if ('services' in d)
 		{
-			if (this.updateList(this.offeringServices, d['services'], newIDs, cr.OfferingService, "offeringServiceAdded.cr", "offeringServiceDeleted.cr"))
+			if (this.updateList(this.offeringServices, d['services'], newIDs, 'offeringServiceAdded.cr'))
 				changed = true;
 		}
 		if ('sessions' in d)
 		{
-			if (this.updateList(this.sessions, d['sessions'], newIDs, cr.Session, "sessionAdded.cr", "sessionDeleted.cr"))
+			if (this.updateList(this.sessions, d['sessions'], newIDs, 'sessionAdded.cr'))
 				changed = true;
 		}
 		
@@ -5247,24 +5250,20 @@ cr.Organization = (function() {
 			changed = true;
 		}
 		
-		if ('names' in d)
-		{
-			this.updateList(this.names, d['names'], newIDs, cr.OrganizationName, "nameAdded.cr", "nameDeleted.cr");
+		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
-			this.calculateDescription();
-		}
 
 		if (changed)
 			this.triggerChanged();
 			
 		if ('groups' in d)
 		{
-			if (this.updateList(this.groups, d['groups'], newIDs, cr.Group, "groupAdded.cr", "groupDeleted.cr"))
+			if (this.updateList(this.groups, d['groups'], newIDs, 'groupAdded.cr'))
 				changed = true;
 		}
 		if ('sites' in d)
 		{
-			if (this.updateList(this.sites, d['sites'], newIDs, cr.Site, "siteAdded.cr", "siteDeleted.cr"))
+			if (this.updateList(this.sites, d['sites'], newIDs, 'siteAdded.cr'))
 				changed = true;
 		}
 		if ('inquiry access group' in d)
@@ -5581,7 +5580,7 @@ cr.Path = (function() {
 		
 		if ('experiences' in d)
 		{
-			if (this.updateList(this.experiences, d['experiences'], newIDs, cr.Experience, "experienceAdded.cr", "experienceDeleted.cr"))
+			if (this.updateList(this.experiences, d['experiences'], newIDs, 'experienceAdded.cr'))
 				changed = true;
 		}
 		
@@ -6071,12 +6070,8 @@ cr.Service = (function() {
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 			
-		if ('names' in d)
-		{
-			this.updateList(this.names, d['names'], newIDs, cr.ServiceName, "nameAdded.cr", "nameDeleted.cr");
+		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
-			this.calculateDescription();
-		}
 
 		if ('stage' in d)
 		{
@@ -6089,17 +6084,17 @@ cr.Service = (function() {
 			
 		if ('organization labels' in d)
 		{
-			if (this.updateList(this.organizationLabels, d['organization labels'], newIDs, cr.OrganizationLabel, "organizationLabelAdded.cr", "organizationLabelDeleted.cr"))
+			if (this.updateList(this.organizationLabels, d['organization labels'], newIDs, 'organizationLabelAdded.cr'))
 				changed = true;
 		}
 		if ('site labels' in d)
 		{
-			if (this.updateList(this.siteLabels, d['site labels'], newIDs, cr.SiteLabel, "siteLabelAdded.cr", "siteLabelDeleted.cr"))
+			if (this.updateList(this.siteLabels, d['site labels'], newIDs, 'siteLabelAdded.cr'))
 				changed = true;
 		}
 		if ('offering labels' in d)
 		{
-			if (this.updateList(this.offeringLabels, d['offering labels'], newIDs, cr.OfferingLabel, "offeringLabelAdded.cr", "offeringLabelDeleted.cr"))
+			if (this.updateList(this.offeringLabels, d['offering labels'], newIDs, 'offeringLabelAdded.cr'))
 				changed = true;
 		}
 		
@@ -6735,12 +6730,9 @@ cr.Session = (function() {
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		
-		if ('names' in d)
-		{
-			this.updateList(this.names, d['names'], newIDs, cr.SessionName, "nameAdded.cr", "nameDeleted.cr");
+		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
-			this.calculateDescription();
-		}
+
 		if ('web site' in d)
 		{
 			this._webSite = d['web site'];
@@ -6758,25 +6750,25 @@ cr.Session = (function() {
 		}
 		if ('inquiries' in d)
 		{
-			if (this.updateList(this.inquiries, d['inquiries'], newIDs, cr.Inquiry, "inquiryAdded.cr", "inquiryDeleted.cr"))
+			if (this.updateList(this.inquiries, d['inquiries'], newIDs, 'inquiryAdded.cr'))
 				changed = true;
 		}
 		
 		if ('enrollments' in d)
 		{
-			if (this.updateList(this.enrollments, d['enrollments'], newIDs, cr.Enrollment, "enrollmentAdded.cr", "enrollmentDeleted.cr"))
+			if (this.updateList(this.enrollments, d['enrollments'], newIDs, 'enrollmentAdded.cr'))
 				changed = true;
 		}
 		
 		if ('engagements' in d)
 		{
-			if (this.updateList(this.engagements, d['engagements'], newIDs, cr.Engagement, "engagementAdded.cr", "engagementDeleted.cr"))
+			if (this.updateList(this.engagements, d['engagements'], newIDs, 'engagementAdded.cr'))
 				changed = true;
 		}
 		
 		if ('periods' in d)
 		{
-			if (this.updateList(this.periods, d['periods'], newIDs, cr.Period, "periodAdded.cr", "periodDeleted.cr"))
+			if (this.updateList(this.periods, d['periods'], newIDs, 'periodAdded.cr'))
 				changed = true;
 		}
 		
@@ -7001,12 +6993,8 @@ cr.Site = (function() {
 		var changed = false;
 
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
-		if ('names' in d)
-		{
-			this.updateList(this.names, d['names'], newIDs, cr.SiteName, "nameAdded.cr", "nameDeleted.cr");
+		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
-			this.calculateDescription();
-		}
 		
 		if ('web site' in d)
 		{
@@ -7024,7 +7012,7 @@ cr.Site = (function() {
 			
 		if ('offerings' in d)
 		{
-			if (this.updateList(this.offerings, d['offerings'], newIDs, cr.Offering, "offeringAdded.cr", "offeringDeleted.cr"))
+			if (this.updateList(this.offerings, d['offerings'], newIDs, 'offeringAdded.cr'))
 				changed = true;
 		}
 		
@@ -7402,13 +7390,13 @@ cr.User = (function() {
 			
 		if ('user grant requests' in d)
 		{
-			if (this.updateList(this.userGrantRequests, d['user grant requests'], newIDs, cr.UserGrantRequest, "userGrantRequestAdded.cr", "userGrantRequestDeleted.cr"))
+			if (this.updateList(this.userGrantRequests, d['user grant requests'], newIDs, 'userGrantRequestAdded.cr'))
 				changed = true;
 		}
 		
 		if ('notifications' in d)
 		{
-			if (this.updateList(this.notifications, d['notifications'], newIDs, cr.Notification, "notificationAdded.cr", "notificationDeleted.cr"))
+			if (this.updateList(this.notifications, d['notifications'], newIDs, 'notificationAdded.cr'))
 				changed = true;
 		}
 		
