@@ -1076,11 +1076,11 @@ cr.IInstance = (function() {
 			changes[key] = subChanges;
 	}
 	
-	IInstance.prototype.duplicateList = function(items, itemType, duplicateForEdit)
+	IInstance.prototype.duplicateList = function(items, duplicateForEdit)
 	{
 		return items.map(function(i)
 			{
-				target = new itemType();
+				target = new i.constructor();
 				i.duplicateData(target, duplicateForEdit);
 				return target;
 			});
@@ -2105,9 +2105,9 @@ cr.NamedInstance = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	NamedInstance.prototype.duplicateData = function(newInstance, nameType, duplicateForEdit)
+	NamedInstance.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		newInstance._names = this.duplicateList(this._names, nameType, duplicateForEdit);
+		newInstance._names = this.duplicateList(this._names, duplicateForEdit);
 		return this;
 	}
 	
@@ -2640,7 +2640,7 @@ cr.Address = (function() {
 		newInstance._city = this._city;
 		newInstance._state = this._state;
 		newInstance._zipCode = this._zipCode;
-		newInstance._streets = this.duplicateList(this._streets, cr.Street);
+		newInstance._streets = this.duplicateList(this._streets, duplicateForEdit);
 		return this;
 	}
 	
@@ -2968,7 +2968,7 @@ cr.CommentPrompt = (function() {
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
-		newInstance._translations = this.duplicateList(this._translations, cr.CommentPromptText);
+		newInstance._translations = this.duplicateList(this._translations, duplicateForEdit);
 		return this;
 	}
 	
@@ -3602,8 +3602,8 @@ cr.Experience = (function() {
 		newInstance._offering = this._offering;
 		newInstance._customOffering = this._customOffering;
 		newInstance._timeframe = this._timeframe;
-		newInstance._services = this.duplicateList(this._services, cr.ExperienceService);
-		newInstance._customServices = this.duplicateList(this._customServices, cr.ExperienceCustomService);
+		newInstance._services = this.duplicateList(this._services, duplicateForEdit);
+		newInstance._customServices = this.duplicateList(this._customServices, duplicateForEdit);
 		return this;
 	}
 	
@@ -4156,9 +4156,9 @@ cr.ExperiencePrompt = (function() {
 		newInstance._domainID = this._domainID;
 		newInstance._stage = this._stage;
 		newInstance._timeframe = this._timeframe;
-		newInstance._translations = this.duplicateList(this._translations, cr.ExperiencePromptText);
-		newInstance._services = this.duplicateList(this._services, cr.ExperiencePromptService);
-		newInstance._disqualifyingTags = this.duplicateList(this._disqualifyingTags, cr.DisqualifyingTag);
+		newInstance._translations = this.duplicateList(this._translations, duplicateForEdit);
+		newInstance._services = this.duplicateList(this._services, duplicateForEdit);
+		newInstance._disqualifyingTags = this.duplicateList(this._disqualifyingTags, duplicateForEdit);
 		return this;
 	}
 	
@@ -4361,8 +4361,8 @@ cr.Group = (function() {
 	Group.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		newInstance._names = this.duplicateList(this._names, cr.GroupName);
-		newInstance._members = this.duplicateList(this._members, cr.GroupMember);
+		newInstance._names = this.duplicateList(this._names, duplicateForEdit);
+		newInstance._members = this.duplicateList(this._members, duplicateForEdit);
 		
 		return this;
 	}
@@ -4866,14 +4866,14 @@ cr.Offering = (function() {
 	Offering.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OfferingName, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		newInstance._minimumAge = this._minimumAge;
 		newInstance._maximumAge = this._maximumAge;
 		newInstance._minimumGrade = this._minimumGrade;
 		newInstance._maximumGrade = this._maximumGrade;
-		newInstance._services = this.duplicateList(this._services, cr.OfferingService);
+		newInstance._services = this.duplicateList(this._services, duplicateForEdit);
 		return this;
 	}
 	
@@ -5181,7 +5181,7 @@ cr.Organization = (function() {
 	Organization.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.OrganizationName, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		newInstance._inquiryAccessGroup = this._inquiryAccessGroup;
@@ -6072,13 +6072,13 @@ cr.Service = (function() {
 	Service.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.ServiceName, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._stage = this._stage;
-		newInstance._organizationLabels = this.duplicateList(this._organizationLabels, cr.OrganizationLabel);
-		newInstance._siteLabels = this.duplicateList(this._siteLabels, cr.SiteLabel);
-		newInstance._offeringLabels = this.duplicateList(this._offeringLabels, cr.OfferingLabel);
-		newInstance._serviceImplications = this.duplicateList(this._serviceImplications, cr.ServiceImplication);
+		newInstance._organizationLabels = this.duplicateList(this._organizationLabels, duplicateForEdit);
+		newInstance._siteLabels = this.duplicateList(this._siteLabels, duplicateForEdit);
+		newInstance._offeringLabels = this.duplicateList(this._offeringLabels, duplicateForEdit);
+		newInstance._serviceImplications = this.duplicateList(this._serviceImplications, duplicateForEdit);
 		
 		return this;
 	}
@@ -6729,7 +6729,7 @@ cr.Session = (function() {
 	Session.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.SessionName, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		newInstance._registrationDeadline = this._registrationDeadline;
@@ -6992,7 +6992,7 @@ cr.Site = (function() {
 	Site.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, cr.SiteName, duplicateForEdit);
+		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		if (newInstance._address == null)
