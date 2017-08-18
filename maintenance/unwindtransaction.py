@@ -46,7 +46,7 @@ def printExperience(i):
 def printExperienceCustomService(i):
     print("%s\t%s\t%s" % \
         (i.id, 
-         i.position or nullString,
+         (i.position if (i.position != None) else nullString),
          i.name or nullString,
          ))
          
@@ -60,7 +60,7 @@ def printExperienceImplication(i):
 def printExperienceService(i):
     print("%s\t%s\t%s" % \
         (i.id, 
-         i.position or nullString,
+         (i.position if (i.position != None) else nullString),
          str(i.service) if i.service else nullString,
          ))
          
@@ -123,44 +123,10 @@ def printUserUserGrantRequest(i):
 def printInstance(i):
 	print(i.dataString)
          
-def revertExperience(h, i):
-    i.organization = h.organization
-    i.customOrganization = h.customOrganization
-    i.site = h.site
-    i.customSite = h.customSite
-    i.offering = h.offering
-    i.customOffering = h.customOffering
-    i.start = h.start
-    i.end = h.end
-    i.timeframe = h.timeframe
-    i.save()
-    i.checkImplications()
-
-def revertExperienceService(h, i):
-    i.position = h.position
-    i.service = h.service
-
-def revertExperienceCustomService(h, i):
-    i.position = h.position
-    i.name = h.name
-
-def revertInstance(h, i):
-	i.revert(h)
-	
-def revertGrant(h, i):
-    i.grantee = h.grantee
-    i.privilege = h.privilege
-    
-def revertUser(h, i):
-    i.revert(h)
-
-def revertUserUserGrantRequest(h, i):
-    i.grantee = h.grantee
-
-def revertChanged(changed, revertData):
+def revertChanged(changed):
     for i in changed.exclude(transaction=t):
         h = i.history.order_by('-transaction__creation_time')[0]
-        revertData(h, i)    
+        i.revert(h)
         i.lastTransaction = h.transaction
         h.delete()
         i.save()
@@ -281,51 +247,63 @@ if __name__ == "__main__":
         
         printTransaction(t)
         if '-yes' in sys.argv:
-            revertChanged(t.changedComments, revertInstance)
+            revertChanged(t.changedComments)
             revertDeleted(t.deletedComments)
                 
-            revertChanged(t.changedExperiences, revertExperience)
+            revertChanged(t.changedExperiences)
             deleted = list(t.deletedExperiences.all())
             revertDeleted(t.deletedExperiences)
             for i in deleted:
                 i.checkImplications()
                 
-            revertChanged(t.changedExperienceServices, revertExperienceService)
+            revertChanged(t.changedExperienceServices)
             deleted = list(t.deletedExperienceServices.all())
             revertDeleted(t.deletedExperienceServices)
             for i in deleted:
                 i.createImplications()
 
-            revertChanged(t.changedExperienceCustomServices, revertExperienceCustomService)
+            revertChanged(t.changedExperienceCustomServices)
             revertDeleted(t.deletedExperienceCustomServices)
 
-            revertChanged(t.changedNotifications, revertInstance)
+            revertChanged(t.changedNotifications)
             revertDeleted(t.deletedNotifications)
 
             revertDeleted(t.deletedNotificationArguments)
 
-            revertChanged(t.changedOrganizations, revertInstance)
+            revertChanged(t.changedOfferings)
+            revertDeleted(t.deletedOfferings)
+
+            revertChanged(t.changedOfferingNames)
+            revertDeleted(t.deletedOfferings)
+
+            revertChanged(t.changedOrganizations)
             revertDeleted(t.deletedOrganizations)
 
-            revertChanged(t.changedOrganizationNames, revertInstance)
+            revertChanged(t.changedOrganizationNames)
             revertDeleted(t.deletedOrganizationNames)
 
-            revertChanged(t.changedPaths, revertInstance)
+            revertChanged(t.changedPaths)
             revertDeleted(t.deletedPaths)
 
-            revertChanged(t.changedSites, revertInstance)
+            revertChanged(t.changedServices)
+            revertDeleted(t.deletedServices)
+
+            revertChanged(t.changedServiceNames)
+            revertDeleted(t.deletedServices)
+
+            revertChanged(t.changedSites)
             revertDeleted(t.deletedSites)
 
-            revertChanged(t.changedSiteNames, revertInstance)
+            revertChanged(t.changedSiteNames)
             revertDeleted(t.deletedSiteNames)
 
-            revertChanged(t.changedUsers, revertInstance)
+            revertChanged(t.changedUsers)
             revertDeleted(t.deletedUsers)
 
-            revertChanged(t.changedUserGrants, revertGrant)
+            revertChanged(t.changedUserGrants)
             revertDeleted(t.deletedUserGrants)
 
-            revertChanged(t.changedUserUserGrantRequests, revertUserUserGrantRequest)
+            revertChanged(t.changedUserUserGrantRequests)
             revertDeleted(t.deletedUserUserGrantRequests)
 
             n, d = t.delete()

@@ -756,6 +756,10 @@ class AccessInstance(IInstance):
                 
         return data
         
+    def revert(self, h):
+        self.grantee = h.grantee
+        self.privilege = h.privilege
+    
     @property    
     def privilegeSource(self):
         return self
