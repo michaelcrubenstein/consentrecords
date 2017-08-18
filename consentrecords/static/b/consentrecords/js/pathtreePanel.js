@@ -1769,12 +1769,10 @@ var ShareOptions = (function () {
 		var copyButton = div.append('button')
 			.text("Copy Path")
 			.classed("site-active-text copy", true)
-			.attr('data-clipboard-action', 'copy');
+			.attr('data-clipboard-text', 
+			      '{0}/for/{1}'.format(window.location.origin, user.emails()[0].text()));
 		
-		var clipboard = new Clipboard('button.copy', {
-			text: function(trigger) {
-				return '{0}/for/{1}'.format(window.location.origin, user.emails[0].text());
-			}});
+		var clipboard = new Clipboard(copyButton.node());
 			
 		clipboard.on('error', function(e) {
 			cr.asyncFail('Press Ctrl+C to copy');
