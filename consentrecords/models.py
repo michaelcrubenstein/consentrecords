@@ -538,8 +538,12 @@ class SecureRootInstance(RootInstance):
                 data['public access'] = self.publicAccess
             if self.primaryAdministrator:
                 data['primary administrator'] = self.primaryAdministrator.headData(context)
-            data['user grants'] = [i.getData([], context) for i in self.userGrants]
-            data['group grants'] = [i.getData([], context) for i in self.groupGrants]
+            if 'user grants' in fields:
+                data['user grants'] = [i.getData([], context) for i in \
+                                       UserGrant.order_by(self.userGrants, context)]
+            if 'group grants' in fields:
+                data['group grants'] = [i.getData([], context) for i in \
+                                        GroupGrant.order_by(self.groupGrants, context)]
 
         return data
     
