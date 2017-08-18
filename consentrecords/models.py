@@ -629,7 +629,7 @@ class SecureRootInstance(RootInstance):
 
     def fetchPrivilege(self, user):
         if not user:
-            return None
+            return self.publicAccess
         elif self.primaryAdministrator_id == user.id:
             return 'administer'
         else:
@@ -5348,7 +5348,7 @@ class Offering(ChildInstance, dbmodels.Model):
                     else:
                         data['site'] = self.parent.headData(context)
         else:
-            raise PermissionDenied('this offering can not be read')
+            raise PermissionDenied('this offering can not be read: %s' % self.description())
         return data
 
     def getSubClause(qs, user, accessType):
@@ -5868,16 +5868,16 @@ class Path(IInstance, dbmodels.Model):
     def anonymousFindFilter(prefix=''):
         inClause = (prefix + '__publicAccess__in') if prefix else 'publicAccess__in'
         userInClause = (prefix + '__parent__publicAccess__in') if prefix else 'parent__publicAccess__in'
-        return Q((inClause, ["find", "read"])|\
-                 (userInClause, ["find", "read"]))
+        return Q((inClause, ["find", "read"]))|\
+               Q((userInClause, ["find", "read"]))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
         inClause = (prefix + '__publicAccess') if prefix else 'publicAccess'
         userInClause = (prefix + '__parent__publicAccess') if prefix else 'parent__publicAccess'
-        return Q((inClause, "read")|\
-                 (userInClause, "read"))
+        return Q((inClause, "read"))|\
+               Q((userInClause, "read"))
     
     def privilegedQuerySet(qs, user, prefix, privileges):
         if prefix: prefix += '__'
