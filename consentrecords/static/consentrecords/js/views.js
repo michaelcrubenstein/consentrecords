@@ -2780,7 +2780,7 @@ var PickFromListPanel = (function () {
 	}
 
 	function PickFromListPanel() {
-		SitePanel.call(this);
+		crv.SitePanel.call(this);
 	}
 	
 	return PickFromListPanel;
