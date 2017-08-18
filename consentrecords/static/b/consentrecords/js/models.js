@@ -782,6 +782,7 @@ cr.IInstance = (function() {
     	p = this.readCheckPromise();
     	if (p) return p;
     	
+    	fields = fields !== undefined ? fields : [];
     	var _this = this;
     	/* Add 'this' to the fields to ensure that the directly stored data of this instance
     		is retrieved.
@@ -7387,6 +7388,9 @@ cr.User = (function() {
 		if (!this._birthday) this._birthday = source._birthday;
 		if (!this._systemAccess) this._systemAccess = source._systemAccess;
 		if (!this._emails) this._emails = source._emails;
+		if (!this._path) this._path = source._path;
+		if (!this._notifications) this._notifications = source._notifications;
+		if (!this._userGrantRequests) this._userGrantRequests = source._userGrantRequests;
 		return this;
 	}
 	
@@ -7667,7 +7671,6 @@ cr.User = (function() {
     User.prototype.getData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['path'];
-    	var _this = this;
     	return cr.IInstance.prototype.getData.call(this, fields);
     }
     
@@ -7769,107 +7772,6 @@ cr.User = (function() {
         return this._notificationsPromise;
     }
     
-	User.prototype.promiseDataLoaded = function(fields)
-	{
-		if (this.privilege() == cr.privileges.find)
-		{
-			var result = $.Deferred();
-			result.reject("You do not have permission to see information about {0}".format(this.description()));
-			return result.promise();
-		}
-		if (this._dataLoaded)
-		{
-			var result = $.Deferred();
-			result.resolve(this);
-			return result.promise();
-		}
-		else if (this.id())
-		{
-			var _this = this;
-			var jsonArray = {};
-			if (fields)
-				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
-			return $.getJSON(cr.urls.getData + this.urlPath() + "/", jsonArray)
-				.then(function(json)
-					{
-						var r2 = $.Deferred();
-						try {
-							/* If the data length is 0, then this item can not be read. */
-							if (json.data.length > 0)
-							{
-								_this.setData(json.data[0]);
-							}
-							else
-							{
-								_this.setDefaultValues();
-								_this.privilege(null);
-							}
-							
-							r2.resolve(_this);
-						}
-						catch (err)
-						{
-							r2.reject(err);
-						}
-						return r2;
-					},
-					cr.thenFail
-				 )
-				.then(function(instance)
-					{
-						if (!fields)
-							return;
-							
-						var subFields = fields.filter(function(s) { return s.indexOf("/") >= 0; });
-						if (subFields.length == 0)
-							return;
-						try
-						{
-							debugger;
-							// This code is used to get subField data. Is this necessary?
-// 							return $.when.apply(null, subFields.map(
-// 									function(s) {
-// 										var cellName = s.substring(0, s.indexOf("/"));
-// 										var fieldNames = s.substring(s.indexOf("/") + 1).split(",");
-// 										try
-// 										{
-// 											return cr.getCellValues(_this, cellName, fieldNames); 
-// 										}
-// 										catch(err)
-// 										{
-// 											var r3 = $.Deferred();
-// 											r3.reject(err);
-// 											return r3;
-// 										}
-// 									}))
-// 								.then(function()
-// 									{
-// 										var r3 = $.Deferred();
-// 										r3.resolve(cells);
-// 										return r3;
-// 									},
-// 									function(err)
-// 									{
-// 										var r3 = $.Deferred();
-// 										r3.reject(err);
-// 										return r3;
-// 									});
-						}
-						catch(err)
-						{
-							var r3 = $.Deferred();
-							r3.reject(err);
-							return r3;
-						}
-					}
-				);
-		}
-		else
-		{
-			this.setDefaultValues();
-		}
-	}
-	
 	function User() {
 	    cr.Grantable.call(this);
 	};
@@ -8160,17 +8062,16 @@ cr.UserUserGrantRequest = (function() {
 	
 cr.signedinUser = new cr.User();
 
-cr.createSignedinUser = function(id, description, fields)
+cr.createSignedinUser = function(id, fields)
 {
 	fields = fields !== undefined ? fields 
 								  : ['path', cr.fieldNames.systemAccess, 'user grant requests', 'notifications'];
 	crp.clear();
 	cr.Service.clearPromises();
-	cr.signedinUser.id(id)
-	               .description(description);
+	cr.signedinUser.id(id);
 	cr.signedinUser = crp.pushInstance(cr.signedinUser);
 	
-	return cr.signedinUser.promiseDataLoaded(fields)
+	return cr.signedinUser.promiseData(fields)
 		.then(function()
 			{
 				$(cr.signedinUser).trigger("signin.cr");

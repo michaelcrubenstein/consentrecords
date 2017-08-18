@@ -520,7 +520,7 @@ var SigninPanel = (function()
 										_this.submit()
 											.then(function(data)
 											{
-												cr.createSignedinUser(data.id, data.description)
+												cr.createSignedinUser(data.id)
 													.then(function()
 													{
 														_this.hideRight(unblockClick);
@@ -591,7 +591,7 @@ var SigninPanel = (function()
 							_this.submit()
 								.then(function(data)
 									{
-										cr.createSignedinUser(data.id, data.description)
+										cr.createSignedinUser(data.id)
 											.then(function()
 											{
 												_this.hideRight(unblockClick);

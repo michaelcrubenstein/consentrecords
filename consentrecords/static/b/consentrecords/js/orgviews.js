@@ -109,7 +109,6 @@ var SessionPanel = (function () {
 		this.namesSection.append('label')
 			.text(crv.buttonTexts.names);
 		this.appendTranslationEditor(this.namesSection, this.session, crv.buttonTexts.names, crv.buttonTexts.name, 
-									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr changed.cr", 
 									 this.session.names(),
 									 cr.SessionName);
 
@@ -1568,16 +1567,21 @@ var RootPanelSearchView = (function () {
 	RootPanelSearchView.prototype.onClickButton = function(d, i, button) {
 		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
 		{
-			try
-			{
-				showClickFeedback(button);
+			d.promiseData()
+				.then(function()
+					{
+						try
+						{
+							showClickFeedback(button);
 			
-				var controller = new (this.controllerType())(d);
-				controller.oldInstance(d);
-				var panel = new (this.childPanelType())(controller);
-				panel.showLeft().then(unblockClick);
-			}
-			catch (err) { cr.syncFail(err); }
+							var controller = new (this.controllerType())(d);
+							controller.oldInstance(d);
+							var panel = new (this.childPanelType())(controller);
+							panel.showLeft().then(unblockClick);
+						}
+						catch (err) { cr.syncFail(err); }
+					},
+					cr.syncFail);
 		}
 		d3.event.preventDefault();
 	}
@@ -1822,7 +1826,6 @@ var OrganizationPanel = (function () {
 	OrganizationPanel.prototype.panelTitle = "Organization";
 	OrganizationPanel.prototype.publicAccessLabel = "Public Access";
 	OrganizationPanel.prototype.primaryAdministratorLabel = "Primary Administrator";
-	OrganizationPanel.prototype.groupsLabel = "Groups";
 	OrganizationPanel.prototype.inquiryAccessGroupLabel = "Inquiry Access Group";
 	OrganizationPanel.prototype.readLabel = "Public";
 	OrganizationPanel.prototype.hiddenLabel = "Hidden";
@@ -1861,7 +1864,6 @@ var OrganizationPanel = (function () {
 		this.namesSection.append('label')
 			.text(this.namesLabel);
 		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
-									 "nameAdded.cr", "nameDeleted.cr", "addName.cr nameDeleted.cr changed.cr", 
 									 controller.newInstance().names(),
 									 cr.OrganizationName);
 
@@ -2383,7 +2385,6 @@ var SitePanel = (function () {
 		this.namesSection.append('label')
 			.text(this.namesLabel);
 		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
-									 'nameAdded.cr', 'nameDeleted.cr', 'addName.cr nameDeleted.cr changed.cr', 
 									 controller.newInstance().names(),
 									 cr.SiteName);
 
@@ -2484,6 +2485,99 @@ var SitesPanel = (function () {
 	
 	return SitesPanel;
 	
+})();
+
+var UserPanel = (function () {
+	UserPanel.prototype = Object.create(EditItemPanel.prototype);
+	UserPanel.prototype.constructor = UserPanel;
+
+	UserPanel.prototype.user = null;
+	UserPanel.prototype.publicAccessLabel = "Public Access";
+	UserPanel.prototype.primaryAdministratorLabel = "Primary Administrator";
+	UserPanel.prototype.readLabel = "Public";
+	UserPanel.prototype.hiddenLabel = "Hidden";
+	
+	UserPanel.prototype.publicAccessValue = function(enumValue)
+	{
+		if (enumValue == crv.buttonTexts.readPublicAccess)
+			return 'read';
+		else
+			return '';
+	}
+		
+    UserPanel.prototype.publicAccessDescription = function()
+    {
+    	if (this.controller().newInstance().publicAccess() == 'read')
+    		return crv.buttonTexts.readPublicAccess;
+    	else
+    		return crv.buttonTexts.noPublicAccess;
+    }
+    
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	UserPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		return false;
+	}
+	
+	function UserPanel(controller, onShow) {
+		var _this = this;
+		EditItemPanel.call(this, controller);
+
+		this.createRoot(crv.buttonTexts.user, onShow);
+
+		this.emailsSection = this.mainDiv.append('section')
+			.datum(controller.newInstance())
+			.classed('cell edit multiple', true);
+		this.emailsSection.append('label')
+			.text(crv.buttonTexts.emails);
+		this.appendOrderedTextEditor(this.emailsSection, controller.newInstance(), crv.buttonTexts.emails, crv.buttonTexts.email, 
+									 controller.newInstance().emails(),
+									 cr.UserEmail);
+
+		var publicAccessTextContainer = null;
+		
+		this.publicAccessSection = this.mainDiv.append('section')
+			.classed('cell edit unique first', true)
+			.datum(controller.newInstance())
+			.on('click', 
+				function(d) {
+					if (prepareClick('click', 'pick ' + crv.buttonTexts.publicAccess))
+					{
+						try
+						{
+							var panel = new PickPublicAccessPanel();
+							panel.createRoot(d, publicAccessTextContainer.text())
+								 .showLeft().then(unblockClick);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
+								{
+									d.publicAccess(_this.publicAccessValue(newDescription));
+									publicAccessTextContainer.text(newDescription);
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+	
+		this.publicAccessSection.append('label')
+			.text(crv.buttonTexts.publicAccess);
+			
+		var items = this.appendEnumerationEditor(this.publicAccessSection, this.publicAccessDescription());
+			
+		publicAccessTextContainer = items.selectAll('div.description-text');
+	
+		crf.appendRightChevrons(items);	
+		
+		this.primaryAdministratorEditor = new EnumerationSectionEditor(
+			this, controller.newInstance(), controller.newInstance().primaryAdministrator, this.primaryAdministratorLabel,
+			PickPrimaryAdministratorPanel
+			);
+	}
+	
+	return UserPanel;
 })();
 
 var UserSearchView = (function () {

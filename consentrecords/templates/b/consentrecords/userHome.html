@@ -697,7 +697,7 @@
 			{% endif %}
 
 			{% if userID %}
-			cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+			cr.createSignedinUser("{{userID}}")
 				.fail(cr.asyncFail);
 			{% endif %}
 		

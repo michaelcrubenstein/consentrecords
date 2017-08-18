@@ -716,3 +716,19 @@ var SiteController = (function() {
 	return SiteController;
 })();
 
+var UserController = (function() {
+	UserController.prototype = Object.create(RootController.prototype);
+	UserController.prototype.constructor = UserController;
+	
+	UserController.prototype.addingMessage = "Adding User...";
+	UserController.prototype.savingMessage = "Saving User...";
+	UserController.prototype.groupKey = 'users';
+	
+	function UserController(source, duplicateForEdit)
+	{
+		RootController.call(this, source || cr.User, duplicateForEdit);
+	}
+	
+	return UserController;
+})();
+

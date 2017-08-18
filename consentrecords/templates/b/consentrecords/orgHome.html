@@ -222,7 +222,7 @@
 
 		/* The global object used to identify the current user. */
 		{% if userID %}
-		cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+		cr.createSignedinUser("{{userID}}")
 			.fail(cr.asyncFail);
 		{% endif %}
 		
