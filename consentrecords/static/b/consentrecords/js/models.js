@@ -2087,6 +2087,10 @@ cr.Grant = (function() {
 	
 	Grant.prototype.updateData = function(d, newIDs)
 	{
+		/* Since this object has no sub items, just return if we are being added. */
+		if ('add' in d)
+			return false;
+			
 		var changed = false;
 		if ('grantee' in d) {
 			var granteeData = d['grantee'];
