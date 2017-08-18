@@ -90,21 +90,19 @@ var CompareFlag = (function() {
 		
 		if (e)
 			top = this.ageCalculator.getYears(e);
-		else if (s)
-			top = "Now";
-		else if (t  == "Previous")
-			top = "Done";
-		else if (t == "Current")
-			top = "Now";
-		else
+		else if (t == "Goal")
 			top = "Goal";
+		else if (s || t == "Current")
+			top = this.ageCalculator.getYears(new Date().toISOString().substr(0, 10));
+		else
+			top = "Done";
 			
 		if (s)
 			bottom = this.ageCalculator.getYears(s);
 		else if (t == "Previous")
 			bottom = "Done";
 		else if (t == "Current")
-			bottom = "Now";
+			bottom = this.ageCalculator.getYears(new Date().toISOString().substr(0, 10));
 		else
 			bottom = "Goal";
 		
