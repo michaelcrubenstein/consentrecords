@@ -29,11 +29,10 @@ urlpatterns = [
 
     url(r'^b/', include('b.urls')),
     
-    url(r'^$', views.home, name='home'),
-    url(r'^org/$', views.orgHome, name='orgHome'),
+    url(r'^$', views.home),
+    url(r'^org/$', views.orgHome),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^find/', views.find),
-    url(r'^list', views.showInstances, name='list'),
     url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
     url(r'^add/([A-Fa-f0-9]{32})/', views.addExperience),
     url(r'^add/', views.addToPathway),
@@ -45,6 +44,12 @@ urlpatterns = [
     url(r'^signup/([^/@]+@[^/@]+\.[^/@]+)/', views.signup),
     url(r'^signup/', views.signup),
     url(r'^experience/([^/]+)/', views.showExperience),
+
+    url(r'^organizations/', views.showRootItems),
+    url(r'^services/', views.showRootItems),
+    url(r'^users/', views.showRootItems),
+    url(r'^commentprompts/', views.showRootItems),
+    url(r'^experienceprompts/', views.showRootItems),
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),

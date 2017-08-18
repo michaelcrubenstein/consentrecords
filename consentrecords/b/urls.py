@@ -23,7 +23,6 @@ urlpatterns = [
     url(r'^org/$', views.orgHome),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^find/', views.find),
-    url(r'^list', views.showInstances),
     url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
     url(r'^add/([A-Fa-f0-9]{32})/', views.addExperience),
     url(r'^add/', views.addToPathway),

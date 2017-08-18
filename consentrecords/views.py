@@ -63,7 +63,7 @@ def home(request):
     }
     
     if request.user.is_authenticated:
-        languageCode = request.GET.get('languageCode', 'en')
+        languageCode = request.GET.get('language', 'en')
         context = Context(languageCode, request.user)
         user = context.user
         if not user:
@@ -165,33 +165,21 @@ def find(request):
     return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
-def showInstances(request):
-    logPage(request, 'pathAdvisor/list')
+def showRootItems(request):
     
     try:
-        # The type of the root object.
-        rootType = request.GET.get('type', None)
-        root = rootType and terms[rootType];
-        path=request.GET.get('path', "_term")
-        header=request.GET.get('header', "List")
-            
-        template = loader.get_template(templateDirectory + 'configuration.html')
+        url = request.path_info.split('/')[-2] + '.html'
+        logPage(request, 'pathAdvisor/' + request.path_info)
+        template = loader.get_template(templateDirectory + url)
     
         argList = {
             'user': request.user,
             'jsversion': settings.JS_VERSION,
-            'canShowObjects': request.user.is_staff,
-            'canAddObject': request.user.is_staff,
-            'path': urllib.parse.unquote_plus(path),
-            'header': header,
             'cdn_url': settings.CDN_URL,
             }
-        if root:
-            argList["rootID"] = root.id.hex
-            argList["singularName"] = root._description
         
         if request.user.is_authenticated:
-            user = Instance.getUserInstance(request.user)
+            user = Context('en', request.user).user
             if not user:
                 return HttpResponse("user is not set up: %s" % request.user.get_full_name())
             argList['userID'] = user.id.hex
@@ -243,8 +231,10 @@ def showExperience(request, id):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex

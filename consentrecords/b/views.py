@@ -100,8 +100,10 @@ def orgHome(request):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -146,42 +148,6 @@ def find(request):
         args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent.description(languageCode=language)
 
     return HttpResponse(template.render(args))
-
-@ensure_csrf_cookie
-def showInstances(request):
-    logPage(request, 'pathAdvisor/list')
-    
-    try:
-        # The type of the root object.
-        rootType = request.GET.get('type', "_term")
-        root = rootType and terms[rootType];
-        path=request.GET.get('path', "_term")
-        header=request.GET.get('header', "List")
-            
-        template = loader.get_template(templateDirectory + 'configuration.html')
-    
-        argList = {
-            'user': request.user,
-            'jsversion': settings.JS_VERSION,
-            'canShowObjects': request.user.is_staff,
-            'canAddObject': request.user.is_staff,
-            'path': urllib.parse.unquote_plus(path),
-            'header': header,
-            'cdn_url': settings.CDN_URL,
-            }
-        if root:
-            argList["rootID"] = root.id.hex
-            argList["singularName"] = root._description
-        
-        if request.user.is_authenticated:
-            user = Instance.getUserInstance(request.user)
-            if not user:
-                return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-            argList['userID'] = user.id.hex
-        
-        return HttpResponse(template.render(argList))
-    except Exception as e:
-        return HttpResponse(str(e))
 
 @ensure_csrf_cookie
 def showRootItems(request):
@@ -316,8 +282,8 @@ def ignore(request, email):
         'cdn_url': settings.CDN_URL,
     }
     
-    languageCode = request.GET.get('language', 'en')
-    context = Context(languageCode, request.user)
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
     
     if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
@@ -365,7 +331,7 @@ def userSettings(request):
 
 @ensure_csrf_cookie
 def signup(request, email=None):
-    LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
+    LogRecord.emit(request.user, 'pathAdvisor/signup', email)
     
     template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
@@ -390,70 +356,73 @@ def acceptFollower(request, userPath=None):
         raise Http404("acceptFollower only responds to POST methods")
     
     try:    
-        language = None
-        followerID = request.POST["follower"]
-        privilegeID = request.POST["privilege"]
-        
-        if terms.isUUID(followerID):
-            followerPath = '#%s' % followerID
-        else:
-            followerPath = followerID
+        followerPath = request.POST["follower"]
+        privilege = request.POST["privilege"]
         
         if not request.user.is_authenticated:
             return HttpResponseBadRequest(reason="user is not authenticated")
             
-        userInfo = UserInfo(request.user)
+        language = request.POST.get('language', 'en')
+        context = Context(language, request.user)
+        
         if userPath:
-            users = pathparser.getQuerySet(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
-            if len(users):
-                user = users[0]
-                if user.typeID != terms.user:
+            qs, tokens, qsType, accessType = \
+                    RootInstance.parse(cssparser.tokenizeHTML(userPath), context.user)
+            if qs.exists():
+                user = qs[0]
+                if qsType != User:
                     return HttpResponseBadRequest(reason="item to accept follower is not a user: %s" % userPath)
             else:
                 return HttpResponseBadRequest(reason="user is not recognized: %s" % userPath)
         else:
-            user = Instance.getUserInstance(request.user)
+            user = context.user
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo)
-        if len(objs) > 0:
-            follower = objs[0]
-            if follower.typeID == terms.user:
-                followerField = terms.user
+        if not context.canAdminister(user):
+            return PermissionDenied("you do not have permission to accept this user")
+        
+        qs, tokens, qsType, accessType = \
+                    RootInstance.parse(cssparser.tokenizeHTML(followerPath), context.user)    
+        if qs.exists():
+            grantee = qs[0]
+            if qsType == User:
+                grants = user.userGrants
             else:
-                followerField = terms.group
-            ars = user.value_set.filter(field=terms.accessRecord,
-                                  deleteTransaction__isnull=True) \
-                          .filter(referenceValue__value__field=followerField,
-                                  referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__referenceValue_id=follower.id)
+                grants = user.groupGrants
+            ars = grants.filter(deleteTransaction__isnull=True,
+                                grantee_id=user.id)
             if ars.exists():
                 return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
             else:
                 with transaction.atomic():
-                    transactionState = TransactionState(request.user)
-                    nameLists = NameList()
-                    try:
-                        ar = user.value_set.filter(field=terms.accessRecord,
-                                                   deleteTransaction__isnull=True) \
-                                     .get(referenceValue__value__field=terms.privilege,
-                                          referenceValue__value__deleteTransaction__isnull=True,
-                                          referenceValue__value__referenceValue_id=privilegeID).referenceValue
-                        newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
-                    except Value.DoesNotExist:
-                        ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
-                            {TermNames.privilege: [{'instanceID': privilegeID}],
-                             followerField.getDescription(): [{'instanceID': follower.id.hex}]}, nameLists, userInfo, transactionState)
+                    if qsType == User:
+                        grantClass = UserGrant
+                    else:
+                        grantClass = GroupGrant
+                    newValue = grantClass.objects.create(transaction=context.transaction,
+                        lastTransaction=context.transaction,
+                        parent=grantTarget, privilege=privilege, grantee=grantee)
     
                     # Remove any corresponding access requests.
-                    vs = user.value_set.filter(field=terms.accessRequest,
-                                           deleteTransaction__isnull=True,
-                                           referenceValue_id=follower.id)
+                    vs = user.userGrantRequests.filter(deleteTransaction__isnull=True,
+                                           grantee_id=grantee.id)
                     for v in vs:
-                        v.deepDelete(transactionState)
+                        v.markDeleted(context)
                 
-                    data = newValue.getReferenceData(userInfo, language)
+                    if qsType == User:
+                        n = Notification.objects.create(transaction=context.transaction,
+                            lastTransaction=context.transaction,
+                            parent=grantee,
+                            name='crn.FollowerAccept',
+                            isFresh='yes')
+                        na=NotificationArgument.objects.create(transaction=context.transaction,
+                            lastTransaction=context.transaction,
+                            parent=n,
+                            position=0,
+                            argument=user.id.hex)
+
+                    data = newValue.getData([], context)
                     results = {'object': data} 
         else:
             raise RuntimeError('the user or group is unrecognized')
