@@ -69,7 +69,7 @@ var Signup = (function () {
 					function(data)
 					{
 						cr.signedinUser.setData(data);
-						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
+						$("panel.sign-in").hide("slide", {direction: "right"}, 0);
 						_thisSignup.hideDown(
 							function()
 							{
