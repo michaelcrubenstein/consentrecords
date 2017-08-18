@@ -1194,6 +1194,21 @@ cr.IInstance = (function() {
 				cr.thenFail);
 	}
 	
+    IInstance.prototype.getData = function(fields)
+    {
+    	var _this = this;
+    	return cr.getData(
+        	{
+        		path: this.urlPath(),
+        		fields: fields,
+        		resultType: this.constructor
+        	})
+        	.then(function()
+        	{
+        		return _this;
+        	});
+    }
+    
 	IInstance.prototype.deleteData = function()
 	{
 		var _this = this;
@@ -3155,12 +3170,7 @@ cr.Engagement = (function() {
     Engagement.prototype.getData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['user'];
-    	return cr.getData(
-        	{
-        		path: this.urlPath(),
-        		fields: fields,
-        		resultType: cr.Engagement
-        	});
+    	return cr.IInstance.prototype.getData.call(this, fields);
     }
     
 	Engagement.prototype.setDefaultValues = function()
@@ -3247,11 +3257,7 @@ cr.Enrollment = (function() {
     Enrollment.prototype.getData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['user'];
-        	{
-        		path: this.urlPath(),
-        		fields: fields,
-        		resultType: cr.Enrollment
-        	});
+    	return cr.IInstance.prototype.getData.call(this, fields);
     }
     
 	function Enrollment() {
@@ -4821,12 +4827,7 @@ cr.Offering = (function() {
     Offering.prototype.getData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['names', 'services'];
-    	return cr.getData(
-        	{
-        		path: this.urlPath(),
-        		fields: fields,
-        		resultType: cr.Offering
-        	});
+    	return cr.IInstance.prototype.getData.call(this, fields);
     }
     
 	Offering.prototype.setData = function(d)
@@ -5368,12 +5369,7 @@ cr.Organization = (function() {
     {
     	fields = fields !== undefined ? fields : ['sites', 'groups'];
     	var _this = this;
-    	return cr.getData(
-        	{
-        		path: this.urlPath(),
-        		fields: fields,
-        		resultType: cr.Organization
-        	})
+    	return cr.IInstance.prototype.getData.call(this, fields)
         	.then(function()
         	{
         		_this.sites().forEach(function(site)
@@ -6872,16 +6868,7 @@ cr.Session = (function() {
     	fields = fields !== undefined ? fields : ['periods'];
     	/* Do not get the inquiries, enrollments or engagements, as these may number in the thousands. */
     	var _this = this;
-    	return cr.getData(
-        	{
-        		path: this.urlPath(),
-        		fields: fields,
-        		resultType: cr.Session
-        	})
-        	.then(function()
-        	{
-        		return _this;
-        	});
+    	return cr.IInstance.prototype.getData.call(this, fields);
     }
     
 	function Session() {
@@ -7115,12 +7102,7 @@ cr.Site = (function() {
     {
     	fields = fields !== undefined ? fields : ['address'];
     	var _this = this;
-    	return cr.getData(
-        	{
-        		path: this.urlPath(),
-        		fields: fields,
-        		resultType: cr.Site
-        	})
+    	return cr.IInstance.prototype.getData.call(this, fields)
         	.then(function()
         	{
         		_this.address()._fieldsLoaded = ['this'];
@@ -7682,6 +7664,13 @@ cr.User = (function() {
 		}
 	}
 	
+    User.prototype.getData = function(fields)
+    {
+    	fields = fields !== undefined ? fields : ['path'];
+    	var _this = this;
+    	return cr.IInstance.prototype.getData.call(this, fields);
+    }
+    
     User.prototype.promisePath = function()
     {
     	p = this.readCheckPromise();
