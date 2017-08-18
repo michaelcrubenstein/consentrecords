@@ -5377,10 +5377,13 @@ cr.Organization = (function() {
     	return cr.IInstance.prototype.getData.call(this, fields)
         	.then(function()
         	{
-        		_this.sites().forEach(function(site)
-        			{
-        				site.organization(_this);
-        			});
+        		if (_this.sites())
+        		{
+					_this.sites().forEach(function(site)
+						{
+							site.organization(_this);
+						});
+        		}
         		return _this;
         	});
     }

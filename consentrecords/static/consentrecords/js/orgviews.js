@@ -1565,6 +1565,7 @@ var RootPanelSearchView = (function () {
 	
 	/* Overrides SearchView.prototype.onClickButton */
 	RootPanelSearchView.prototype.onClickButton = function(d, i, button) {
+		var _this = this;
 		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
 		{
 			d.promiseData()
@@ -1574,9 +1575,9 @@ var RootPanelSearchView = (function () {
 						{
 							showClickFeedback(button);
 			
-							var controller = new (this.controllerType())(d);
+							var controller = new (_this.controllerType())(d);
 							controller.oldInstance(d);
-							var panel = new (this.childPanelType())(controller);
+							var panel = new (_this.childPanelType())(controller);
 							panel.showLeft().then(unblockClick);
 						}
 						catch (err) { cr.syncFail(err); }
