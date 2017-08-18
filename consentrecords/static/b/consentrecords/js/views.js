@@ -2380,7 +2380,7 @@ var EditPanel = (function() {
 		}
 	}
 	
-	EditPanel.prototype.appendItemControls = function(items, data, appendInputControls)
+	EditPanel.prototype.appendItemControls = function(itemsDiv, items, data, appendInputControls)
 	{
 		crf.appendDeleteControls(items);
 		appendInputControls(items);
@@ -2485,7 +2485,7 @@ var EditPanel = (function() {
 		itemsDiv.classed('deletable-items', true);
 		var items = appendItems(itemsDiv, data);
 		
-		this.appendItemControls(items, data, appendInputControls);
+		this.appendItemControls(itemsDiv, items, data, appendInputControls);
 
 		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
 	}
@@ -2512,7 +2512,7 @@ var EditPanel = (function() {
 		itemsDiv.classed('deletable-items', true);
 		var items = appendItems(itemsDiv, data);
 		
-		this.appendItemControls(items, data, deleteEventType, appendInputControls);
+		this.appendItemControls(itemsDiv, items, data, deleteEventType, appendInputControls);
 
 		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
 	}
