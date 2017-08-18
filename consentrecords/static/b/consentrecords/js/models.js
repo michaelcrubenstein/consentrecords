@@ -688,7 +688,7 @@ cr.IInstance = (function() {
 	IInstance.prototype._privilege = null;
 	IInstance.prototype._parentID = null;
 	IInstance.prototype._parent = null;
-	IInstance.prototype._dataLoaded = false;
+	IInstance.prototype._fieldsLoaded = [];
 	
 	IInstance.prototype.id = function(newID)
 	{
@@ -781,24 +781,56 @@ cr.IInstance = (function() {
     {
     	p = this.readCheckPromise();
     	if (p) return p;
+    	
+    	var _this = this;
+    	/* Add 'this' to the fields to ensure that the directly stored data of this instance
+    		is retrieved.
+    	 */
+    	fields.push('this');
+    	fields = fields.filter(function(f)
+    	{
+    		return !(f in _this._fieldsLoaded);
+    	});
 
-        if (this._dataPromise)
-        	return this._dataPromise;
-        else if (this._dataLoaded)
+        if (fields.length == 0)	/* Everything is already loaded. */
         {
-        	result = $.Deferred();
-        	result.resolve(this);
-        	return result;
+        	if (this._dataPromise)
+        		return this._dataPromise;
+			else
+			{
+				var result = $.Deferred();
+				result.resolve(this);
+				return result;
+			}
         }
-        
-        var _this = this;	
-        this._dataPromise = this.getData(fields)
-        	.then(function()
-        		{
-        			_this._dataLoaded = true;
-        			return _this;
-        		});
-        return this._dataPromise;
+        else
+        {
+			var _this = this;
+		
+			var f = function()
+			{
+				_this._fieldsLoaded = _this._fieldsLoaded.concat(fields);
+		
+				/* Remove 'this' from the fields when getting data, since it has no meaning on the service. */
+				_this._dataPromise = _this.getData(fields.filter(function(f) { return f != 'this'; }))
+					.then(function()
+						{
+							_this._dataPromise = null;
+							return _this;
+						},
+						function(err)
+						{
+							_this._dataPromise = null;
+							_this._fieldsLoaded.filter(function(f) { return !(f in fields); });
+							return err;
+						});
+				return _this._dataPromise;
+			}
+			if (this._dataPromise)
+				return this._dataPromise.then(f);
+			else
+				return f();
+		}
     }
     
 	IInstance.prototype.setChildren = function(d, key, childType, children)
@@ -3215,7 +3247,6 @@ cr.Enrollment = (function() {
     Enrollment.prototype.getData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['user'];
-    	return cr.getData(
         	{
         		path: this.urlPath(),
         		fields: fields,
@@ -7092,7 +7123,7 @@ cr.Site = (function() {
         	})
         	.then(function()
         	{
-        		_this.address()._dataLoaded = true;
+        		_this.address()._fieldsLoaded = ['this'];
         		return _this;
         	});
     }
