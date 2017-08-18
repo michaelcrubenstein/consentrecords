@@ -61,8 +61,9 @@ var AgeCalculator = (function() {
 })();
 
 var CompareFlag = (function() {
-	CompareFlag.prototype = new FlagController();
-	
+	CompareFlag.prototype = Object.create(FlagController.prototype);
+	CompareFlag.prototype.constructor = CompareFlag;
+
 	CompareFlag.prototype.getEndAge = function()
 	{
 		endDate = new Date(this.getEndDate());
@@ -82,27 +83,27 @@ var CompareFlag = (function() {
 	
 	CompareFlag.prototype.getYearArray = function()
 	{
-		var e = this.experience.getDatum("End");
-		var s = this.experience.getDatum("Start");
-		var t = this.experience.getValue("Timeframe");
+		var e = this.experience.end();
+		var s = this.experience.start();
+		var t = this.experience.timeframe && this.experience.timeframe();
 		var top, bottom;
 		
 		if (e)
 			top = this.ageCalculator.getYears(e);
 		else if (s)
 			top = "Now";
-		else if (t && t.getDescription() == "Previous")
+		else if (t  == "Previous")
 			top = "Done";
-		else if (t && t.getDescription() == "Current")
+		else if (t == "Current")
 			top = "Now";
 		else
 			top = "Goal";
 			
 		if (s)
 			bottom = this.ageCalculator.getYears(s);
-		else if (t && t.getDescription() == "Previous")
+		else if (t == "Previous")
 			bottom = "Done";
-		else if (t && t.getDescription() == "Current")
+		else if (t == "Current")
 			bottom = "Now";
 		else
 			bottom = "Goal";
@@ -113,9 +114,9 @@ var CompareFlag = (function() {
 	/* Return true if the experience in this flag is on the specified path. */
 	CompareFlag.prototype.isOnPath = function(path)
 	{
-		return (this.experience.getTypeName() == "Experience") ?
-			   (this.experience.getValue(cr.fieldNames.user).getInstanceID() == path.getValue(cr.fieldNames.user).getInstanceID()) :
-			   (this.experience.cell.parent == path);
+		return (this.experience instanceof cr.Engagement) ?
+			   (this.experience.user().id() == path.user().id()) :
+			   (this.experience.path() == path);
 	}
 	
 	function CompareFlag(experience, ageCalculator)
@@ -129,8 +130,9 @@ var CompareFlag = (function() {
 })();
 
 var ComparePath = (function() {
-	ComparePath.prototype = new PathView();
-	
+	ComparePath.prototype = Object.create(PathView.prototype);
+	ComparePath.prototype.constructor = ComparePath;
+
 	ComparePath.prototype.youName = "You";
 	
 	ComparePath.prototype.poleSpacing = 4;
@@ -165,16 +167,6 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.columnData = [{labelY: PathGuides.labelYs[0], color: "#666"}, 
 										{labelY: PathGuides.labelYs[0], color: "#666"}];
-
-	ComparePath.prototype.handleValueDeleted = function(experience)
-	{
-		var index = this.allExperiences.indexOf(experience);
-		var _this = this;
-		if (index >= 0)
-			this.allExperiences.splice(index, 1);
-		this.clearLayout();
-		this.checkLayout();
-	};
 
 	ComparePath.prototype.getColumn = function(fd)
 	{
@@ -307,9 +299,9 @@ var ComparePath = (function() {
 		
 		function getCompareFlag(experience)
 			{
-				var isLeft = (experience.getTypeName() == "Experience") ?
-							 (experience.getValue(cr.fieldNames.user).getInstanceID() == _this.leftPath.getValue(cr.fieldNames.user).getInstanceID()) :
-							 (experience.cell.parent == _this.leftPath);
+				var isLeft = (experience instanceof cr.Engagement) ?
+							 (experience.user().id() == _this.leftPath.user().id()) :
+							 (experience.path() == _this.leftPath);
 				if (isLeft)
 					return new CompareFlag(experience, _this.leftAgeCalculator);
 				else
@@ -368,8 +360,8 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
 	{
-		return (cr.signedinUser && path == cr.signedinUser.subInstance("Path") && this.youName) ||
-			getPathDescription(path) ||
+		return (cr.signedinUser && path == cr.signedinUser.path() && this.youName) ||
+			path.caption() ||
 			ageCalculator.toString();
 	}
 	
@@ -391,8 +383,8 @@ var ComparePath = (function() {
 		var _this = this;
 		var firstTime = true;
 		
-		this.leftAgeCalculator = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
-		this.rightAgeCalculator = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
+		this.leftAgeCalculator = new AgeCalculator(this.leftPath.birthday());
+		this.rightAgeCalculator = new AgeCalculator(this.rightPath.birthday());
 		
 		this.columnData[0].name = this.getPathDescription(this.leftPath, this.leftAgeCalculator);
 		this.columnData[1].name = this.getPathDescription(this.rightPath, this.rightAgeCalculator);
@@ -424,30 +416,17 @@ var ComparePath = (function() {
 			.attr('y2', 500)
 			.attr('stroke', function(d) { return d.color; });
 	
-		var leftCell = this.leftPath.getCell("More Experience");
-		var rightCell = this.rightPath.getCell("More Experience");
 		var addedFunction = function(eventObject, newData)
 			{
 				_this.addMoreExperience(newData);
 			}
-		setupOnViewEventHandler(leftCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
-		setupOnViewEventHandler(rightCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
-			
-		var experiences = leftCell.data;
+		setupOnViewEventHandler(this.leftPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
+		setupOnViewEventHandler(this.rightPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
 		
-		this.allExperiences = this.allExperiences.concat(experiences);
-		
-		this.allExperiences = this.allExperiences.concat(rightCell.data);
-		$(rightCell.data).each(function()
-			{
-				this.calculateDescription();
-			});
-			
-		/* Ensure that all of the offerings have their associated cells. */
-		this.allExperiences.forEach(function(experience)
-			{
-				checkOfferingCells(experience);
-			});
+		this.allExperiences = this.leftPath.engagements().splice()
+			.concat(this.rightPath.engagements())
+			.concat(this.leftPath.experiences())
+			.concat(this.rightPath.experiences())
 			
 		var resizeFunction = function()
 		{
@@ -468,7 +447,7 @@ var ComparePath = (function() {
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
-				return d.getTypeName() === "More Experience";
+				return d instanceof cr.Experience;
 			})
 			.forEach(function(d)
 			{
@@ -518,9 +497,9 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
 	{
-		if (leftPath.getPrivilege() === cr.privileges.find)
+		if (leftPath.privilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(leftPath.getDescription());
-		if (rightPath.getPrivilege() === cr.privileges.find)
+		if (rightPath.privilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(rightPath.getDescription());
 		if (this.leftPath)
 			throw "paths have already been set for this pathtree";
@@ -586,22 +565,7 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var p1 = crp.promise({path: this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)', 
-				   fields: ["parents"]});
-		var p2 = crp.promise({path: this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
-						'::reference(Session)::reference(Sessions)::reference(Offering)'});
-		var p3 = crp.promise({path: this.rightPath.getInstanceID() + '/More Experience/Offering'});
-		$.when(p1, p2, p3)
-		.then(function(experiences, r2, r3)
-			{
-				_this.allExperiences = experiences.slice();
-				$(experiences).each(function()
-				{
-					this.setDescription(this.getValue("Offering").getDescription());
-				});
-				
-				return _this.rightPath.promiseCellsFromCache(["More Experience", "parents"]);
-			})
+		this.rightPath.promiseExperiences()
 		.then(successFunction2, cr.asyncFail);
 	}
 	
@@ -615,7 +579,9 @@ var ComparePath = (function() {
 })();
 
 var ComparePathsPanel = (function () {
-	ComparePathsPanel.prototype = new SitePanel();
+	ComparePathsPanel.prototype = Object.create(crv.SitePanel.prototype);
+	ComparePathsPanel.prototype.constructor = ComparePathsPanel;
+
 	ComparePathsPanel.prototype.leftUser = null;
 	ComparePathsPanel.prototype.rightUser = null;
 	ComparePathsPanel.prototype.pathtree = null;
@@ -653,8 +619,8 @@ var ComparePathsPanel = (function () {
 			throw "pathtree already assigned to pathtree panel";
 			
 		this.pathtree = new ComparePath(this, panel2Div.node());
-		this.pathtree.setUser(this.leftUser.subInstance("Path"),
-							  this.rightUser.subInstance("Path"));
+		this.pathtree.setUser(this.leftUser.path(),
+							  this.rightUser.path());
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{

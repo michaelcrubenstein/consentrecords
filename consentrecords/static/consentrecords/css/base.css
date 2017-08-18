@@ -283,9 +283,6 @@ button:hover {
 	background: #f8f8f8;
 	opacity: 1.0;
 }
-.cell.btn {
-	padding: 0px 0px;		/* To override btn style. */
-}
 ol.cell-items {
 	margin: 0;				/* To override bootstrap ol style */
 	font-size: 15px;
@@ -317,6 +314,21 @@ section.cell {
 	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
 	padding-right: 0px;
 }
+
+/* Display a label in a cell. Note that the label may or may not be contained in the
+	top level of the cell. For example, see newExperiencePanel.css tag cells.
+ */
+.cell label {
+    color: #222;
+	font-size: 13px;
+	font-weight: normal; 
+	
+	/* The following margin and padding allow for overlines. */
+	margin: 0;
+	padding: 6px 0px;
+	margin-left: 12px;
+}
+
 .cell-border-below {
 	margin-left: 12px;
 	border-bottom: 1px solid #eee;
@@ -329,27 +341,22 @@ section.cell {
 .cell.unique {
 	background: white;
 	display: flex;
-	align-items: baseline;
+	align-items: center;	/* Items should be aligned to the center because the label font is different from the data font. */
+	-webkit-align-items: center;
 }
 
-.cell.unique.edit {
+.cell.unique>label {
+	line-height: 1.5em;	/* The same as .cell.unique>ol */
+}
+
+.cell.unique.edit:last-of-type {
 	border-bottom: 1px solid #eee;
 }
-.cell.unique.edit>label {
-	line-height: 1.5em;	/* The same as .cell.unique.view>label and .cell.unique>ol */
+*.overlined {
+	border-top: 1px solid #eee;
 }
 
-.cell label {
-    color: #222;
-	font-size: 13px;
-	font-weight: normal; 
-	
-	/* The following margin and padding allow for overlines. */
-	margin: 0;
-	padding: 6px 0px;
-	margin-left: 12px;
-}
-.cell.unique>label.overlined-items {
+.cell.unique>label.overlined {
     padding-top: 9px;	/* Extra padding on the top is needed for overlined items. */
 }
 
@@ -358,10 +365,9 @@ section.cell {
 	text-align: left;
 }
 
-.string-value-view {
-	position: relative;
-	overflow: hidden;
-	width: auto;
+.text-fill {
+	overflow-x: hidden;
+	text-overflow: ellipsis;
 }
 .cell.unique.view>* {
 	border-bottom: 1px solid #eee;
@@ -372,7 +378,6 @@ section.cell {
 	margin-right: auto;
 	padding-left: 0px;
 	padding-bottom: 7px;	/* An extra pixel so that borders line up properly. */
-	line-height: 1.5em; 
 	vertical-align: middle;
 }
 .cell.unique>ol {
@@ -415,7 +420,12 @@ panel.list .description-text {
 	text-align: left;
 }
 .site-chevron-right {
+	height: 14px;
 	color: #777;
+	padding-left: 12px;
+	padding-right: 12px;
+	align-self: center;
+	-webkit-align-self: center;
 }
 .site-chevron-right+.description-text {
 	margin-right: 18px;
@@ -424,6 +434,8 @@ panel.list .description-text {
 	width: 80px;
 	margin-right: 12px;
 	outline: none;
+	align-self: center;
+	-webkit-align-self: center;
 }
 li > .row-button {
 	text-align: left;
@@ -441,21 +453,25 @@ li>span.glyphicon:first-child {
 li>span.glyphicon.glyphicon-ok:first-child {
 	padding-left: 12px;
 	padding-right: 12px;
+	align-self: center;
+	-webkit-align-self: center;
 }
 
 .cell.unique>ol {
 	flex-grow: 100;
 }
 
-/* If there is a label for a unique string item, right-align the input. */
-.cell.unique.edit.string label+ol input {
+/* If there is a label for a unique input item, right-align the input. */
+.cell.unique.edit>label+ol input {
 	text-align: right;
 }
+
 .cell.edit input[type=text],
 .cell.edit input[type=number],
 .cell.edit input[type=month],
 .cell.edit input[type=email],
 .cell.edit input[type=url],
+.cell.edit input[type=time],
 .cell.edit input[type=date] {
 	-webkit-appearance:none;
 	-moz-appearance:none;
@@ -468,6 +484,7 @@ li>span.glyphicon.glyphicon-ok:first-child {
 .cell.edit input[type=month]:focus,
 .cell.edit input[type=email]:focus,
 .cell.edit input[type=url]:focus,
+.cell.edit input[type=time]:focus,
 .cell.edit input[type=date]:focus {
 	outline: none;
 }
@@ -504,15 +521,20 @@ li>span.glyphicon.glyphicon-ok:first-child {
 	float: right;
 }
 div.add-value {
-	border-top: 1px solid #eee;
-	border-bottom: 1px solid #eee;
-}
-div.add-value>button {
 	overflow: hidden;
 	display: block;
 	width: 100%;
-	padding: 6px 12px;
+	padding-left: 12px;
+	border-bottom: 1px solid #eee;
 	text-align: left;
+	align-items: center;
+	-webkit-align-items: center;
+	background-color: white;
+}
+
+div.add-value>div {
+	padding-top: 6px;
+	padding-bottom: 6px;
 }
 
 .searchbar {
@@ -546,7 +568,8 @@ div.add-value>button {
 }
 
 .info-button-container {
-	padding-bottom: 5px;	/* So that the bottom border will line up properly. */
+	align-self: center;
+	-webkit-align-self: center;
 }
 
 .info-button {
@@ -592,8 +615,6 @@ div.add-value>button {
 ol.cell-items>li {
 	display: flex;
 	position: relative;	/* Relative position is needed to set the left edge of the item. */
-	align-items: baseline;
-	-webkit-align-items: baseline;
 	font-size: 15px;
 	min-height: 30px;
 	cursor: pointer;
@@ -656,26 +677,6 @@ ol.deletable-items>li>button:last-child:focus {
 	outline: none;
 }
 
-/** styles for the right chevron of the notification. */
-ol.cell-items>li>img {
-	position: relative;
-	top: 12px;
-	color: #777;
-	padding-left: 12px;
-	padding-right: 12px;
-	padding-bottom: 10px;
-	height: 24px;
-}
-
-.right-vertical-chevron {	/* A hack to get the chevrons in the correct vertical alignment in 
-								conjunction with right-fixed-width-div. */
-	line-height: 1.3em;
-	vertical-align: middle;
-/* 
-	margin-top: 3px;
-	margin-bottom: 3px;
- */
-}
 ol, ul {
 	list-style-type: none;
 	-webkit-padding-start: 0px;
@@ -767,6 +768,13 @@ div.not-sure-button>div {
 	margin-left: auto;
 	margin-right: auto;
 	padding-bottom: 4px;
+}
+
+section.cell.documentation {
+	padding: .5em 1em;
+	font-size: 0.8em;
+	color: #666;
+	background-color: transparent;
 }
 
 select::-ms-expand {

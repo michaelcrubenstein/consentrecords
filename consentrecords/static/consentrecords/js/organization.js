@@ -4,38 +4,33 @@
 	Utility routines for managing organizations and their contents
  */
  
-cr.organizationStrings = 
-	{
-		someone: "Someone"
-	};
-
 /* Append the specified address to the specified div, which is a d3.js object */
 function appendAddress(address)
 {
 	var div = d3.select(this);
-	if (address && address.getInstanceID())
+	if (address && address.id())
 	{
-		address.promiseCellsFromCache()
+		address.promiseData()
 			.then(function()
 			{
-				var streetCell = address.getCell("Street");
-				var city = address.getDatum("City");
-				var stateCell = address.getCell("State");
-				var zip = address.getDatum("Zip Code");
-				if (streetCell)
-					$(streetCell.data).each(function() {
-						if (this.text && this.text.length > 0)
+				var streets = address.streets();
+				var city = address.city();
+				var state = address.state();
+				var zip = address.zipCode();
+				if (streets)
+					$(streets).each(function() {
+						if (this.text() && this.text().length > 0)
 						{
 							div.append('div')
 								.classed("address-line", true)
-								.text(this.text);
+								.text(this.text());
 						}
 					});
 				line = "";
 				if (city && city.length)
 					line += city;
-				if (stateCell && stateCell.data.length)
-					line += ", " + stateCell.data[0].getDescription();
+				if (state)
+					line += ", " + state;
 				if (zip && zip.length)
 					line += "  " + zip;
 				if (line.trim())
@@ -46,109 +41,46 @@ function appendAddress(address)
 	}
 }
 
-/* Return a new date that will be a UTC date that represents the same date
-	as now in the currrent time zone. For example, 10:00 p.m. in Boston on Oct. 21, 2016 should
-	be a UTC date of Oct. 21, 2016 even though that time is actually a UTC Date of Oct. 22, 2016.
- */ 
-function getUTCTodayDate()
-{
-	var startMinDate = new Date();
-	return new Date(Date.UTC(startMinDate.getFullYear(), startMinDate.getMonth(), startMinDate.getDate(), 0, 0, 0));
-}
-
 function getMonthString(date)
 {
 	var s = (date.getUTCMonth() + 1).toString();
 	return (s.length == 1) ? "0" + s : s;
 }
 
-function getStartDate(d)
-{
-	return d.getDatum("Start");
-}
-
-function getEndDate(d) {
-	return d.getDatum("End") || 
-		   (d.getDatum("Start") ? new Date().toISOString().substr(0, 10) : undefined);
-}	
-
-/* Given an ISO Date string, return a locale date string */
-function getLocaleDateString(s)
-{
-	if (s.length == 7)
-		return Date.CultureInfo.monthNames[parseInt(s.substr(5)) - 1] + " " + s.substr(0, 4);
-	else if (s.length == 10)
-	{
-		var a = new Date(s);
-		
-		/* Offset is set to set the time to 1:00 a.m. in the local time zone. Since creating
-			a new date sets the time to midnight UTC, we need to set it an hour later in case 
-			daylight saving's time is in effect. To account for different time zones, we 
-			add an hour if the offset is positive, or subtract an hour if the offset is negative.
-		 */
-		var offset = (a.getTimezoneOffset()) * 60 * 1000;
-		
-		if (offset >= 0)
-			offset += 60 * 60 * 1000;
-		else
-			offset -= 60 * 60 * 1000;
-			
-		a.setTime(a.getTime() + offset);
-		return a.toLocaleDateString();
-	}
-	else
-		return s;
-}
-
-function getDateRange(d)
-{
-	var startDate = getStartDate(d);
-	startDate = startDate ? getLocaleDateString(startDate) : "";
-		
-	var endDate = d.getDatum("End");
-	endDate = endDate ? getLocaleDateString(endDate) : "";
-		
-	var connector;
-	if (startDate || endDate)
-		return "{0} - {1}".format(startDate, endDate);
-	else
-		return "";
-}
-
 function appendSessionDescriptions(buttons)
 {
-	buttons.append('div')
-		.text(function(d) { 
-			return d.getValue("Offering").getDescription();
-		});
-
-	var rightText = buttons.append('span').classed("centered-right-2", true);
-
-	var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+	var leftText = buttons.append('div').classed("growable", true);
 	
-	leftText.append('div').classed("sub-text", true)
-		.text(function(d) {
-			return d.getDescription();
+	leftText.append('div')
+		.text(function(d) { 
+			return d.offering().description();
 		});
-	leftText.append('div').classed("sub-text", true)
-		.text(getDateRange);
-	leftText.append('div').classed("sub-text", true)
+
+	leftText.append('div').classed("sub-text description-text", true)
 		.text(function(d) {
-			var registrationDeadline = d.getDatum("Registration Deadline");
+			return d.description();
+		});
+	leftText.append('div').classed("sub-text description-text", true)
+		.text(function(d) {
+			return d.dateRange();
+		});
+	leftText.append('div').classed("sub-text description-text", true)
+		.text(function(d) {
+			var registrationDeadline = d.registrationDeadline();
 			if (registrationDeadline)
 				return "register by " + registrationDeadline;
 			else
 				return "";
 		});
 
-	leftText.append('div').classed("sub-text sub-paragraph", true)
+	leftText.append('div').classed("sub-text sub-paragraph description-text", true)
 		.text(function(d) {
-			return d.getValue("Organization").getDescription();
+			return d.organization().description();
 		});
-	leftText.append('div').classed("sub-text", true)
+	leftText.append('div').classed("sub-text description-text", true)
 		.text(function(d) {
-			if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
-				return d.getValue("Site").getDescription();
+			if (d.site().description() != d.organization().description())
+				return d.site().description();
 			else
 				return null;
 		});
@@ -157,8 +89,8 @@ function appendSessionDescriptions(buttons)
 
 function getUserName(user)
 {
-	var firstName = user.getDatum(cr.fieldNames.firstName);
-	var lastName = user.getDatum(cr.fieldNames.lastName);
+	var firstName = user.firstName();
+	var lastName = user.lastName();
 	if (firstName)
 	{
 		if (lastName)
@@ -171,34 +103,11 @@ function getUserName(user)
 }
 
 /**
- * Returns a string that describes the user associated with the specified path.
- * The string may be either the name of the user associated with the path (if defined
- * and accessible), the screen name associated with the path, the email address
- * associated with the user associated with the path (if defined and accessible) or
- * "Someone" (or some translation thereof)
- */
-function getPathDescription(path)
-{
-	if (path instanceof cr.Value)
-		path = path.instance();
-		
-	return (path.parent() && getUserName(path.parent())) ||
-			path.getDescription() ||
-		   (path.parent() && path.parent().getDescription()) ||
-		    cr.organizationStrings.someone;
-}
-
-function getUserDescription(user)
-{
-	return getUserName(user) || user.getDescription();
-}
-				
-/**
  *	Displays a panel containing the experiences within the specified path.
  */				
 function showPath(path)
 {
-	return path.promiseCells(["More Experience", "parents", cr.fieldNames.user])
+	return path.promiseExperiences()
 			   .then(function()
 				{
 					var panel = new OtherPathPanel(path, true);
@@ -217,11 +126,11 @@ function showPath(path)
  */				
 function showUser(user)
 {
-	user.promiseCells([])
+	user.promisePath()
 	 .then(function()
 		{
 			var panel = new PathlinesPanel(user, true);
-			panel.pathtree.setUser(user.getValue("Path"), true);
+			panel.pathtree.setUser(user.path(), true);
 			panel.showLeft().then(unblockClick);
 		},
 		cr.syncFail);
@@ -262,18 +171,21 @@ function drawInfoButtons(infoButtons)
  */
 }
 
-function appendInfoButtons(items)
+function appendInfoButtons(items, dataF)
 {
 	/* infoButtons need to be wrapped inside of a div so that the other
 		div can contain a separate border if needed. 
 	 */
-	var outerDiv = items.append('div')
+	dataF = (dataF !== undefined) ? dataF : function(d) { return d; };
+	var outerDiv = items
+		.append('div')
 		.classed('info-button-container', true);
 	var infoButtons =  outerDiv
 		.append('div')
 		.classed('info-button', true)
-		.on('click', function(user) {
-			if (prepareClick('click', 'show info: ' + user.getDescription()))
+		.on('click', function(userContainer) {
+			var user = dataF(userContainer);
+			if (prepareClick('click', 'show info: ' + user.description()))
 			{
 				try
 				{
@@ -307,155 +219,17 @@ function appendStringItem(obj, label, text, addBorder)
 
 	var items = appendItems(itemsDiv, [text]);
 	items.append("div")
-		.classed("string-value-view growable unselectable", true)
+		.classed("text-fill growable unselectable", true)
 		.text(function(d) { return d; });
-}
-
-function getOfferingAgeRange(offering)
-{
-	var min = offering.getDatum("Minimum Age");
-	var max = offering.getDatum("Maximum Age");
-	if (min)
-	{
-		if (max)
-		{
-			if (min == max)
-				return min;
-			else
-				return min + " - " + max;
-		}
-		else
-			return min + " or older";
-	}
-	else if (max)
-	{
-		return "up to " + max;
-	}
-	else
-		return "";
-}
-
-function getOfferingGradeRange(offering)
-{
-	var min = offering.getDatum("Minimum Grade");
-	var max = offering.getDatum("Maximum Grade");
-	if (min)
-	{
-		if (max)
-		{
-			if (min == max)
-				return min;
-			else
-				return min + " - " + max;
-		}
-		else
-			return min + " or beyond";
-	}
-	else if (max)
-	{
-		return "up to " + max;
-	}
-	else
-		return "";
-}
-
-function showAgeRange(offering, successFunction)
-{
-	return offering.promiseCellsFromCache()
-		.then(function()
-			{
-				successFunction(getOfferingAgeRange(offering));
-			});
-}
-
-function showGradeRange(offering, successFunction)
-{
-	return offering.promiseCellsFromCache()
-		.then(function()
-			{
-				successFunction(getOfferingGradeRange(offering));
-			});
-}
-
-function showWebSite(offering, successFunction)
-{
-	return offering.promiseCellsFromCache()
-		.then(function()
-			{
-				var newText = offering.getDatum("Web Site");
-				successFunction(newText);
-			});
-}
-
-function getPickedOrCreatedValue(i, pickedName, createdName)
-{
-	var v = i.getValue(pickedName);
-	if (v && v.getInstanceID())
-		return v.getDescription();
-	else {
-		v = i.getValue(createdName);
-		if (v)
-			return v.text;
-		else
-			return undefined;
-	}
 }
 
 function checkOfferingCells(experience)
 {
-	offering = experience.getValue("Offering");
-	if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
-	{
-		var storedI = crp.getInstance(offering.getInstanceID());
-		if (storedI && storedI.getCells())
-		{
-			offering.importCells(storedI.getCells());
-			r = $.Deferred();
-			r.resolve();
-			return r;
-		}
-		else
-		{
-			return offering.promiseCells();
-		}
-	}
-	else
-	{
-		r = $.Deferred();
-		r.resolve();
-		return r;
-	}
-}
-
-function getTagList(experience)
-{
-	var names = [];
-	
-	var offering = experience.getValue("Offering");
-	if (offering && offering.getInstanceID())
-	{
-		if (!offering.areCellsLoaded())
-			throw new Error("Runtime error: offering data is not loaded");
-			
-		names = offering.getCell("Service").data
-			.filter(function(v) { return !v.isEmpty(); })
-			.map(function(v) { return v.getDescription(); });
-	}
-	
-	var serviceCell = experience.getCell("Service");
-	var userServiceCell = experience.getCell("User Entered Service");
-
-	if (serviceCell)
-		names = names.concat(serviceCell.data
-			.filter(function(v) { return !v.isEmpty(); })
-			.map(function(v) { return v.getDescription(); }));
-	
-	if (userServiceCell)
-		names = names.concat(userServiceCell.data
-			.filter(function(v) { return !v.isEmpty(); })
-			.map(function(v) { return v.getDescription(); }));
-	
-	return names.join(", ");
+	offering = experience.offering();
+	console.assert(!offering || !offering.id() || offering.offeringServices());
+	r = $.Deferred();
+	r.resolve();
+	return r;
 }
 
 function getNamedInstance(data, name)

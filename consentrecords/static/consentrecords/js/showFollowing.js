@@ -1,7 +1,9 @@
 /* RequestFollowPanel is used to specify the email address of a user the currently logged-in
 	user wants to follow. */
 var RequestFollowPanel = (function() {
-	RequestFollowPanel.prototype = new SitePanel();
+	RequestFollowPanel.prototype = Object.create(crv.SitePanel.prototype);
+	RequestFollowPanel.prototype.constructor = RequestFollowPanel;
+
 	RequestFollowPanel.prototype.followingPanel = null;
 	RequestFollowPanel.prototype.title = "Ask to Follow";
 	RequestFollowPanel.prototype.emailDocumentation = 
@@ -33,11 +35,11 @@ var RequestFollowPanel = (function() {
 					var done = function()
 					{
 						_this.followingPanel.showPendingObjects([
-							{text: email, getDescription: function() { return email; }}]);
+							{text: email, description: function() { return email; }}]);
 						_this.followingPanel._pendingSection.selectAll('li').sort(
 							function(a, b)
 							{
-								return a.getDescription().localeCompare(b.getDescription());
+								return a.description().localeCompare(b.description());
 							}
 						);
 						_this.followingPanel._noPendingResultsDiv.style('display', 'none');
@@ -61,7 +63,7 @@ var RequestFollowPanel = (function() {
 						}
 						else
 						{
-							cr.requestAccess(user, 'user[email="{0}"]'.format(email), done, syncFailFunction);
+							cr.requestAccess(user, 'user[email>text="{0}"]'.format(email), done, syncFailFunction);
 						}
 					}
 					catch(err)
@@ -102,7 +104,9 @@ var RequestFollowPanel = (function() {
 /* FollowingPanel is used to identify and manage the users that the currently logged-in
 	user is following. */
 var FollowingPanel = (function() {
-	FollowingPanel.prototype = new SitePanel();
+	FollowingPanel.prototype = Object.create(crv.SitePanel.prototype);
+	FollowingPanel.prototype.constructor = FollowingPanel;
+
 	FollowingPanel.prototype.user = null;
 	FollowingPanel.prototype._pendingSection = null;
 	FollowingPanel.prototype._noPendingResultsDiv = null;
@@ -123,19 +127,19 @@ var FollowingPanel = (function() {
 				if (prepareClick('click', 'delete access request'))
 				{
 					var path;
-					if (d.getInstanceID)
-						path = d.getInstanceID()
+					if (d.id)
+						path = 'user/' + d.id()
 					else
-						path = 'user[email={0}]'.format(d.getDescription())
-					path += '/{0}/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
-					cr.getData({path: path})
-						.then(function(values)
+						path = 'user[email>text={0}]'.format(d.description())
+					path += '/user grant request[grantee={0}]'.format(_this.user.id());
+					cr.getData({path: path, fields: ['parents'], resultType: cr.UserUserGrantRequest})
+						.then(function(grantRequests)
 							{
-								if (values.length > 0)
+								if (grantRequests.length > 0)
 								{
-									values[0].deleteValue()
+									grantRequests[0].deleteData()
 										.then(
-										function(v)
+										function()
 										{
 											removeItem(_thisItem,
 												function()
@@ -188,9 +192,9 @@ var FollowingPanel = (function() {
 		items.append('button')
 			.classed("compare-button", true)
 			.on("click", function(user) {
-				if (prepareClick('click', 'compare to: ' + user.getDescription()))
+				if (prepareClick('click', 'compare to: ' + user.description()))
 				{
-					user.promiseCells([])
+					user.promisePath()
 						.then(function()
 						{
 							try
@@ -306,8 +310,9 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._pendingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getPendingRequestsDone(foundObjects, startVal); });
-		this._pendingChunker.path = 'user["access request"={0}]'.format(this.user.getInstanceID());
+		this._pendingChunker.path = 'user[user grant request>grantee={0}]'.format(this.user.id());
 		this._pendingChunker.fields = ["none"];
+		this._pendingChunker.resultType = cr.User;
 		
 		this.appendActionButton("Ask To Follow", function()
 			{
@@ -334,8 +339,9 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._followingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
-		this._followingChunker.path = '{0}::reference("access record")[privilege=(read,write,administer)]::reference(user)'.format(this.user.getInstanceID());
+		this._followingChunker.path = 'user[user grant>grantee={0}]'.format(this.user.id());
 		this._followingChunker.fields = ["none"];
+		this._followingChunker.resultType = cr.User;
 		
 		$(this.node()).one("revealing.cr", function()
 			{

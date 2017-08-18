@@ -3,6 +3,7 @@
 var GetDataChunker = (function() {
 	GetDataChunker.prototype.path = null;
 	GetDataChunker.prototype.fields = [];
+	GetDataChunker.prototype.resultType = null;
 	GetDataChunker.prototype._increment = 20;
 	GetDataChunker.prototype._containerNode = null;
 	GetDataChunker.prototype._loadingMessage = null;
@@ -19,20 +20,23 @@ var GetDataChunker = (function() {
 		this._curSearchID = 0;
 	}
 	
+	GetDataChunker.prototype._scrollingNode = function()
+	{
+		if ($(this._containerNode).css('overflow-y') == 'scroll')
+			return $(this._containerNode);
+		else
+			return $(this._containerNode).scrollParent();
+	}
+	
 	GetDataChunker.prototype._clearScrollCheck = function()
 	{
 		if (this._check != null)
 		{
-			var scrollingNode;
-			if ($(this._containerNode).css('overflow-y') == 'scroll')
-				scrollingNode = $(this._containerNode);
-			else
-				scrollingNode = $(this._containerNode).scrollParent();
-			scrollingNode.off("scroll", this._check);
-			scrollingNode.off("resize.cr", this._check);
+			this._scrollingNode().off("scroll resize.cr", this._check);
 			this._check = null;
 		}
 		this.invalidatePendingData();
+		this._start = 0;
 	}
 	
 	GetDataChunker.prototype.clearLoadingMessage = function()
@@ -45,7 +49,17 @@ var GetDataChunker = (function() {
 			this._isSpinning = false;
 		}
 		this._clearScrollCheck();
-		this._start = 0;
+	}
+	
+	GetDataChunker.prototype.increment = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._increment;
+		else
+		{
+			this._increment = newValue;
+			return this;
+		}
 	}
 	
 	GetDataChunker.prototype._restart = function(instances, startVal)
@@ -53,7 +67,7 @@ var GetDataChunker = (function() {
 		if (!this._loadingMessage)
 			throw "loadingMessage is not set up";
 			
-		if (instances.length < this._increment)
+		if (instances.length < this.increment())
 		{
 			this.clearLoadingMessage();
 			if (this._onDoneSearch)
@@ -61,7 +75,7 @@ var GetDataChunker = (function() {
 		}
 		else
 		{
-			this._start += this._increment;
+			this._start += this.increment();
 			if (!this.isOverflowingY(this._loadingMessage.node()))
 				this._continue(startVal);
 			else
@@ -83,11 +97,6 @@ var GetDataChunker = (function() {
 		}
 	}
 	
-	GetDataChunker.prototype._dataGetter = function()
-	{
-		return cr.getData;
-	}
-	
 	GetDataChunker.prototype._continue = function(startVal)
 	{
 		var _this = this;
@@ -100,9 +109,10 @@ var GetDataChunker = (function() {
 		var curSearchCount = this._searchCount;
 		this._curSearchID = this._searchCount;
 
-		this._dataGetter()({path: this.path, 
+		cr.getData({path: this.path, 
+		            resultType: this.resultType,
 					start: this._start,
-					end: this._start + this._increment,
+					end: this._start + this.increment(),
 					fields: this.fields})
 			.then(function(instances) 
 						{ 
@@ -124,24 +134,18 @@ var GetDataChunker = (function() {
 		var _this = this;
 		
 		this._clearScrollCheck();
-		this._start = 0;
 
 		this._check = function(eventObject)
 		{
 			_this._onScroll(eventObject.data);
 		}
 		
-		var scrollingNode;
-		if ($(this._containerNode).css('overflow-y') == 'scroll')
-			scrollingNode = $(this._containerNode);
-		else
-			scrollingNode = $(this._containerNode).scrollParent();
-		
+		var scrollingNode = this._scrollingNode();
 		if (scrollingNode.length == 0)
 			throw new Error("scrollParent not specified; containerNode is not displayed");
 			
-		scrollingNode.scroll(startVal, this._check);
-		scrollingNode.on("resize.cr", this._check);
+		scrollingNode.scroll(startVal, this._check)
+					 .on("resize.cr", this._check);
 	}
 	
 	/* checkStart is called to start up a new search that is going to append its results
@@ -215,9 +219,15 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype.hasShortResults = function()
 	{
-		return this.buttons().size() < this._increment &&
+		return this.buttons().size() < this.increment() &&
 			   this._curSearchID == 0 &&
 			   !this._isSpinning;
+	}
+	
+	/* Called when one of the items that had been found is deleted. */
+	GetDataChunker.prototype.onItemDeleted = function()
+	{
+		this._start -= 1;
 	}
 	
 	GetDataChunker.prototype.hasButtons = function()

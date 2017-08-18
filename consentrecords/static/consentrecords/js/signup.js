@@ -1,5 +1,7 @@
 var Signup = (function () {
-	Signup.prototype = new SitePanel();
+	Signup.prototype = Object.create(crv.SitePanel.prototype);
+	Signup.prototype.constructor = Signup;
+
 	Signup.prototype.dots = null;
 
 	Signup.prototype.checkUnusedEmail = function(email, successFunction, failFunction) {
@@ -58,28 +60,22 @@ var Signup = (function () {
 			{
 				var birthDay = _thisSignup.getBirthday();
 				var birthMonth = birthDay.substr(0, 7);
-				var initialData = {"Birthday": [{text: birthDay}],
-				                   "Path": 
-				                   		[{cells: {"Birthday": [{text: birthMonth}] }}
-				                   		]};
-				initialData[cr.fieldNames.publicAccess] = [{path: "term[name=privilege]>enumerator[name=find]"}];
+				var initialData = {'birthday': birthDay,
+				                   'path':{'birthday': birthMonth}
+				                  };
+				initialData[cr.fieldNames.publicAccess] = 'find';
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
 					initialData, 
 					function(data)
 					{
-						cr.signedinUser.updateFromChangeData(data);
-						cr.signedinUser.promiseCells([cr.fieldNames.systemAccess])
-							.then(function()
+						cr.signedinUser.setData(data);
+						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
+						_thisSignup.hideDown(
+							function()
 							{
-								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								_thisSignup.hideDown(
-									function()
-									{
-										$(cr.signedinUser).trigger("signin.cr");
-										unblockClick();
-									});
-							},
-						cr.syncFail);
+								$(cr.signedinUser).trigger("signin.cr");
+								unblockClick();
+							});
 					},
 					cr.syncFail)
 				
@@ -406,94 +402,6 @@ var Signup = (function () {
 			this.onReveal = null;
 		}
 	
-		function setupPanel4(signup)
-		{
-			var p = d3.select(this);
-			
-			p.append('h1').classed('', true)
-				.text('Sharing');
-			
-			p.append('p')
-				.text('Do you want your profile to be visible to others?');
-			
-			var t = p.append('table').classed('option', true);	
-			var row = t.append('tr');
-			var cell = row.append('td');
-			cell.append('input')
-				.attr('type', 'radio')
-				.attr('name', 'publicAccess')
-				.property('value', 'none')
-				.on('change', function()
-					{
-						var _this = this;
-						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
-					});
-			cell.append('span').text('Hidden');
-			row.append('td').append('p').text('No one will be able to locate or identify you.');
-
-			row = t.append('tr');
-			cell = row.append('td');
-			var findInput = cell.append('input')
-				.attr('type', 'radio')
-				.attr('checked', 1)
-				.attr('name', 'publicAccess')
-				.property('value', cr.privileges.find)
-				.on('change', function()
-					{
-						var _this = this;
-						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
-					});
-			cell.append('span').text('By Request');
-			row.append('td').append('p').text('Others can request access to your profile if they know your email address.');
-
-			row = t.append('tr');
-			cell = row.append('td');
-			var readInput = cell.append('input')
-				.attr('type', 'radio')
-				.attr('name', 'publicAccess')
-				.property('value', cr.privileges.read)
-				.on('change', function()
-					{
-						var _this = this;
-						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
-					});
-			cell.append('span').text('Public');
-			row.append('td').append('p').text('Others can look at your profile (except for information you hide from view).');
-
-			signup.getPublicAccess = function()
-			{
-				var s = t.selectAll('input[name=publicAccess]:checked').property('value');
-				if (s === 'none')
-					return null;
-				else
-					return s;
-			}
-			
-			this.onCheckFowardEnabled = function()
-			{
-				return false;	/* Block moving forward until the following script completes. */
-			}
-			
-			crp.promise({path: 'term[name=privilege]'})
-				.done(function(newInstances)
-					{
-						var enumeratorCell = newInstances[0].getCell('enumerator');
-						for (var i = 0; i < enumeratorCell.data.length; ++i)
-						{
-							var d = enumeratorCell.data[i];
-							if (d.getDescription() === cr.privileges.read)
-								readInput.property('value', d.getInstanceID());
-							else if (d.getDescription() === cr.privileges.find)
-								findInput.property('value', d.getInstanceID());
-						}
-						p.node().onCheckForwardEnabled = undefined;
-						signup.dots.checkForwardEnabled();
-					})
-				.fail(cr.asyncFail);
-			
-			this.onReveal = null;
-		}
-	
 		this.dots.nthPanel(0).onReveal = setupPanel2;
 		this.dots.nthPanel(1).onReveal = setupPanel3;
 		this.dots.nthPanel(2).onReveal = setupPanel0;
@@ -509,8 +417,9 @@ var Signup = (function () {
 
 var SigninPanel = (function()
 {
-	SigninPanel.prototype = new SitePanel();
-	
+	SigninPanel.prototype = Object.create(crv.SitePanel.prototype);
+	SigninPanel.prototype.constructor = SigninPanel;
+
 	SigninPanel.prototype.canSubmit = function() {
 	return $(this.passwordInput).val() !== "" &&
 		$(this.emailInput).val() !== "";
@@ -529,16 +438,16 @@ var SigninPanel = (function()
 		}
 	},
 
-	SigninPanel.prototype.submit = function(successFunction, failFunction) {
+	SigninPanel.prototype.submit = function() {
 		if (!this.canSubmit())
 			return;
 		
 		bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 		
 		var _this = this;
-		$.post(cr.urls.submitSignin, { username : $(this.emailInput).val(),
+		return $.post(cr.urls.submitSignin, { username : $(this.emailInput).val(),
 									  password : $(this.passwordInput).val() })
-			.done(function(json)
+			.then(function(json)
 				{
 					if ($(_this.rememberMeCheckbox).prop("checked"))
 						$.cookie("email", $(_this.emailInput).val(), { expires : 10 });
@@ -549,13 +458,11 @@ var SigninPanel = (function()
 					$(_this.passwordInput).val("")
 				
 					$.cookie("authenticator", "email", { path: "/"});
-					if (successFunction)
-						successFunction(json.user);
-				})
-			.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				});
+					var r2 = $.Deferred();
+					r2.resolve(json.user);
+					return r2;
+				},
+				cr.thenFail);
 	}
 
 	SigninPanel.prototype.initializeFocus = function()
@@ -594,24 +501,6 @@ var SigninPanel = (function()
 				.on('input', function() { _this.checkenabled(); })
 				.node();
 		
-		var signInSuccess = function(data)
-		{
-			crp.clear();
-			cr.signedinUser.updateFromChangeData(data);
-			cr.signedinUser.promiseCells([cr.fieldNames.systemAccess])
-				.then(function()
-					{
-						_this.hideRight(function()
-							{
-								crp.pushInstance(cr.signedinUser);
-								$(cr.signedinUser).trigger("signin.cr");
-								unblockClick();
-							});
-					
-					},
-					cr.syncFail);
-		}
-		
 		this.passwordInput = form.append('input')
 				.attr('type', 'password')
 				.attr('maxlength', '254')
@@ -626,7 +515,19 @@ var SigninPanel = (function()
 							{
 								try
 								{
-									_this.submit(signInSuccess, cr.syncFail);
+									if (_this.canSubmit())
+									{
+										_this.submit()
+											.then(function(data)
+											{
+												cr.createSignedinUser(data.id)
+													.then(function()
+													{
+														_this.hideRight(unblockClick);
+													},
+													cr.syncFail);
+											}, cr.syncFail);
+									}
 								}
 								catch(err)
 								{
@@ -653,7 +554,7 @@ var SigninPanel = (function()
 			
 		buttonContainer.append('span')
 			.classed('signin-cancel-button site-trio-clipped site-active-text', true)
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'hide panel button'))
@@ -687,7 +588,16 @@ var SigninPanel = (function()
 					{
 						try
 						{
-							_this.submit(signInSuccess, cr.syncFail);
+							_this.submit()
+								.then(function(data)
+									{
+										cr.createSignedinUser(data.id)
+											.then(function()
+											{
+												_this.hideRight(unblockClick);
+											},
+											cr.syncFail)
+									});
 						}
 						catch(err)
 						{
@@ -771,7 +681,9 @@ var SigninPanel = (function()
 
 var ForgotPasswordPanel = (function()
 {
-	ForgotPasswordPanel.prototype = new SitePanel();
+	ForgotPasswordPanel.prototype = Object.create(crv.SitePanel.prototype);
+	ForgotPasswordPanel.prototype.constructor = ForgotPasswordPanel;
+
 	ForgotPasswordPanel.prototype.submitButton = null;
 	ForgotPasswordPanel.prototype.emailGroup = null;
 	ForgotPasswordPanel.prototype.emailInput = null;
@@ -859,7 +771,7 @@ var ForgotPasswordPanel = (function()
 			
 		buttonContainer.append('span')
 			.classed('done-button site-trio-clipped site-active-text', true)
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'hide panel button'))

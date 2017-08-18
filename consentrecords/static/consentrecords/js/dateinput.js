@@ -621,8 +621,6 @@ var DateWheel = (function () {
 			
 			this.oldMonth = parseInt(newValue.substring(5, 7));
 			this._setSelectedIndex(this.monthNode, this.oldMonth - 1);
-			this._onMonthChanged();
-			$(this).trigger('change');
 			
 			if (newValue.length > 8)
 			{
@@ -634,6 +632,8 @@ var DateWheel = (function () {
 				this.oldDay = undefined;
 				this._setSelectedIndex(this.dayNode, 0);
 			}
+			this._onMonthChanged();
+			$(this).trigger('change');
 			
 			return this;
 		}

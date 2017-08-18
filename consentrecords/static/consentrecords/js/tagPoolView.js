@@ -1,18 +1,18 @@
-var Service = (function() {
-	Service.prototype.service = null;
+var ServiceFlagController = (function() {
+	ServiceFlagController.prototype.service = null;
 	
-	Service.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
-	Service.prototype.flagLineOneDY = '1.4em';
-	Service.prototype.flagHeightEM = 2.333;
-	Service.prototype.emToPX = 11;
+	ServiceFlagController.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
+	ServiceFlagController.prototype.flagLineOneDY = '1.4em';
+	ServiceFlagController.prototype.flagHeightEM = 2.333;
+	ServiceFlagController.prototype.emToPX = 11;
 	
-	Service.prototype._getStage = function()
+	ServiceFlagController.prototype._getStage = function()
 	{
 		var service = this.service;
-		return service && service.getInstanceID() && crp.getInstance(service.getInstanceID()).getValue("Stage")
+		return service && service.id() && crp.getInstance(service.id()).stage()
 	}
 
-	Service.prototype.stageColumns = {
+	ServiceFlagController.prototype.stageColumns = {
 		Housing: 0,
 		Studying: 1,
 		Certificate: 1,
@@ -29,13 +29,12 @@ var Service = (function() {
 		Wellness: 6,
 	};
 	
-	Service.prototype.getStageDescription = function(stage)
+	ServiceFlagController.prototype.getStageDescription = function(stage)
 	{
-		var stageDescription = stage && stage.getDescription();
-		return stageDescription in this.stageColumns && stageDescription;
+		return stage in this.stageColumns && stage;
 	}
 	
-	Service.prototype.getColumn = function()
+	ServiceFlagController.prototype.getColumn = function()
 	{
 		var stage = this._getStage();
 		var stageDescription = this.getStageDescription(stage);
@@ -43,18 +42,18 @@ var Service = (function() {
 			return this.stageColumns[stageDescription];
 		var _this = this;
 			
-		if (this.service && this.service.getInstanceID())
+		if (this.service && this.service.id())
 		{
-			var services = crp.getInstance(this.service.getInstanceID()).getCell("Service");
+			var services = crp.getInstance(this.service.id()).serviceImplications();
 			/* services may be null if the service has been deleted */
-			var s = services && services.data.find(function(s)
+			var s = services && services.find(function(s)
 				{
-					var stage =  s.getInstanceID() && crp.getInstance(s.getInstanceID()).getValue("Stage");
+					var stage =  s.service() && s.service().stage();
 					return _this.getStageDescription(stage);
 				});
 			if (s)
 				return this.stageColumns[
-					this.getStageDescription(crp.getInstance(s.getInstanceID()).getValue("Stage"))
+					this.getStageDescription(s.service().stage())
 				];
 		}
 
@@ -62,69 +61,60 @@ var Service = (function() {
 		return 7;
 	}
 	
-	Service.prototype.getColor = function()
+	ServiceFlagController.prototype.getColor = function()
 	{
 		var column = this.getColumn();
 		return PathGuides.data[column].color;
 	}
 	
-	Service.prototype.fontColor = function()
+	ServiceFlagController.prototype.fontColor = function()
 	{
 		var column = this.getColumn();
 		return PathGuides.data[column].fontColor;
 	}
 	
-	Service.prototype.flagColor = function()
+	ServiceFlagController.prototype.flagColor = function()
 	{
 		var column = this.getColumn();
 		return PathGuides.data[column].flagColor;
 	}
 	
-	Service.prototype.poleColor = function()
+	ServiceFlagController.prototype.poleColor = function()
 	{
 		var column = this.getColumn();
 		return PathGuides.data[column].poleColor;
 	}
 	
-	Service.prototype.getDescription = function()
+	ServiceFlagController.prototype.description = function()
 	{
-		return this.service.getDescription();
+		return this.service.description();
 	}
 	
 	/* Returns True if the service contains the specified text. */
-	Service.prototype.contains = function(s, prefix)
+	ServiceFlagController.prototype.descriptionContains = function(s, prefix)
 	{
-		if (this.service)
-		{
-			var re = new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
-			if (re.test(this.service.getDescription()))
-				return true;
-			
-			var cell = this.service.getCell("Service");
-			return cell.data.find(function(d) { return d.getDescription().toLocaleUpperCase() == s; });	
-		}
-		return false;
+		return this.service && this.service.descriptionContains(s, prefix);
 	}
 	
-	Service.prototype.colorElement = function(r)
+	ServiceFlagController.prototype.colorElement = function(r)
 	{
 		var colorText = this.getColor();
 		r.setAttribute("fill", colorText);
 		r.setAttribute("stroke", colorText);
 	}
 	
-	Service.prototype.setFlagText = function(node)
+	ServiceFlagController.prototype.setFlagText = function(node)
 	{
 		var g = d3.select(node);
 		g.selectAll('text>tspan:nth-child(1)')
-			.text(this.getDescription())
+			.text(this.description())
 	}
 
-	function Service(dataObject) {
+	function ServiceFlagController(dataObject) {
 		this.service = dataObject;
 	}
 	
-	return Service;
+	return ServiceFlagController;
 })();
 
 var TagPoolView = (function () {
@@ -252,10 +242,10 @@ var TagPoolView = (function () {
 		{
 			this.flags().each(function(fs)
 				{
-					if (!fs.contains(filterText.toLocaleUpperCase(), prefix) &&
+					if (!fs.descriptionContains(filterText.toLocaleUpperCase(), prefix) &&
 						!inputRegExps.reduce(function(a, b)
 							{
-								return a && b.test(fs.getDescription());
+								return a && b.test(fs.description());
 							}, true))
 						fs.visible = false;
 				});
@@ -278,7 +268,9 @@ var TagPoolView = (function () {
 			.attr('x2', 1.5)
 			.each(function(d)
 				{
-					d.colorElement(this);
+					var colorText = d.getColor();
+					this.setAttribute("fill", colorText);
+					this.setAttribute("stroke", colorText);
 				});
 		g.append('rect').classed('opaque', true)
 			.attr('x', 3);
@@ -286,27 +278,33 @@ var TagPoolView = (function () {
 			.attr('x', 3)
 			.each(function(d)
 				{
-					d.colorElement(this);
+					var colorText = d.getColor();
+					this.setAttribute("fill", colorText);
+					this.setAttribute("stroke", colorText);
 				});
 		var text = g.append('text').classed('flag-label', true)
-			.attr('x', Service.prototype.textDetailLeftMargin);
+			.attr('x', ServiceFlagController.prototype.textDetailLeftMargin);
 		text.append('tspan')
 			.attr('dy', '1.1em')
 			.attr('fill', function(d) {
 				return d.fontColor();
 			});
 		
-		g.each(function(d) { d.setFlagText(this); });
+		g.each(function(d) {
+			var g = d3.select(this);
+			g.selectAll('text>tspan:nth-child(1)')
+			 .text(d.description())
+		});
 
 		g.selectAll('rect')
-			.attr('height', "{0}em".format(Service.prototype.flagHeightEM))
+			.attr('height', "{0}em".format(TagPoolView.prototype.flagHeightEM))
 			.attr('width', function(fd)
 				{
 					return $(this.parentNode).children('text')[0].getBBox().width + 5;
 				});	
 		
 		g.selectAll('line.flag-pole')
-			.attr('y2', function(fd) { return "{0}em".format(fd.flagHeightEM); });
+			.attr('y2', function(fd) { return "{0}em".format(TagPoolView.prototype.flagHeightEM); });
 
 	}
 	
@@ -334,9 +332,9 @@ var TagPoolView = (function () {
 		var data = this.flags().data();
 		var sd = data.find(function(sd) {
 				var d = sd.service;
-				return d.getCell && d.getCell(cr.fieldNames.name).data.find(
-					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
-					(d.getDescription && d.getDescription().toLocaleLowerCase() === compareText);
+				return d.names().find(
+					function(d) { return d.description().toLocaleLowerCase() === compareText;}) ||
+					(d.description && d.description().toLocaleLowerCase() === compareText);
 			});
 		return sd && sd.service;
 	}

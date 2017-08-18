@@ -1,6 +1,7 @@
 var WelcomeOrganizationPanel = (function () {
-	WelcomeOrganizationPanel.prototype = new SitePanel();
-	
+	WelcomeOrganizationPanel.prototype = Object.create(crv.SitePanel.prototype);
+	WelcomeOrganizationPanel.prototype.constructor = WelcomeOrganizationPanel;
+
 	WelcomeOrganizationPanel.prototype.handleResize = function()
 	{
 	}
