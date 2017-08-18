@@ -699,6 +699,10 @@ class TranslationInstance(ChildInstance):
         self.text = h.text 
         self.languageCode = h.languageCode 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -839,6 +843,10 @@ class ServiceLinkInstance(ChildInstance):
     def revert(self, h):
         self.service = h.service 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, self.service or '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -872,6 +880,10 @@ class OrderedServiceLinkInstance(ServiceLinkInstance):
         self.position = h.position 
         self.service = h.service 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.position, self.service or '-')
+           
     def order_by(queryset, context):
         return queryset.order_by('position')
                 
@@ -3746,6 +3758,10 @@ class CommentPromptTextHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class DisqualifyingTag(ServiceLinkInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdDisqualifyingTags')
@@ -3786,6 +3802,10 @@ class DisqualifyingTagHistory(dbmodels.Model):
 
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTagHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, self.service or '-')
+           
 class Engagement(ChildInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdEngagements')
@@ -4492,9 +4512,14 @@ class ExperienceServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceServiceHistories')
     instance = historyInstanceField(ExperienceService)
+    
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.position, self.service or '-')
+           
 class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdExperiencePrompts')
@@ -4741,6 +4766,10 @@ class ExperiencePromptServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServiceHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.position, self.service or '-')
+           
 class ExperiencePromptText(TranslationInstance, PublicInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdExperiencePromptTexts')
@@ -4775,6 +4804,10 @@ class ExperiencePromptTextHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class Group(ChildInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdGroups')
@@ -4893,6 +4926,10 @@ class GroupNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class GroupMember(ChildInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdGroupMembers')
@@ -5432,6 +5469,14 @@ class Offering(ChildInstance, dbmodels.Model):
         self.minimumGrade = h.minimumGrade 
         self.maximumGrade = h.maximumGrade 
            
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s\t%s\t%s\t%s" % (self.id, self.webSite or '-', 
+            self.minimumAge or '-', 
+            self.maximumAge or '-', 
+            self.minimumGrade or '-', 
+            self.maximumGrade or '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -5475,6 +5520,14 @@ class OfferingHistory(dbmodels.Model):
     minimumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     maximumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s\t%s\t%s\t%s" % (self.id, self.webSite or '-', 
+            self.minimumAge or '-', 
+            self.maximumAge or '-', 
+            self.minimumGrade or '-', 
+            self.maximumGrade or '-')
+           
 class OfferingName(TranslationInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdOfferingNames')
@@ -5518,6 +5571,10 @@ class OfferingNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdOfferingServices')
@@ -5568,9 +5625,14 @@ class OfferingServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringServiceHistories')
     instance = historyInstanceField(OfferingService)
+    
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.position, self.service or '-')
+           
 class Organization(SecureRootInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdOrganizations')
@@ -5787,6 +5849,10 @@ class OrganizationNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class Path(IInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdPaths')
@@ -6350,6 +6416,10 @@ class ServiceNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class ServiceOrganizationLabel(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceOrganizationLabels')
@@ -6384,6 +6454,10 @@ class ServiceOrganizationLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class ServiceSiteLabel(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceSiteLabels')
@@ -6418,6 +6492,10 @@ class ServiceSiteLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class ServiceOfferingLabel(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceOfferingLabels')
@@ -6452,6 +6530,10 @@ class ServiceOfferingLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceImplications')
@@ -6520,6 +6602,10 @@ class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
     def revert(self, h):
         self.impliedService = h.impliedService 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, self.impliedService or '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6542,6 +6628,10 @@ class ServiceImplicationHistory(dbmodels.Model):
 
     impliedService = dbmodels.ForeignKey('consentrecords.Service', related_name='impliedServiceHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, self.impliedService or '-')
+           
 class Session(ChildInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdSessions')
@@ -6810,6 +6900,10 @@ class SessionNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class Site(ChildInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdSites')
@@ -6921,7 +7015,7 @@ class Site(ChildInstance, dbmodels.Model):
     
     @property    
     def dataString(self):
-        return "%s\t%s" % (self.id, self.webSite)
+        return "%s\t%s" % (self.id, self.webSite or '-')
            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -6948,7 +7042,7 @@ class SiteHistory(dbmodels.Model):
 
     @property    
     def dataString(self):
-        return "%s\t%s" % (self.id, self.webSite)
+        return "%s\t%s" % (self.id, self.webSite or '-')
            
 class SiteName(TranslationInstance, dbmodels.Model):
     id = idField()
@@ -6993,6 +7087,10 @@ class SiteNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+           
 class Street(ChildInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdStreets')
@@ -7420,6 +7518,10 @@ class UserEmail(ChildInstance, dbmodels.Model):
         self.position = h.position 
         self.text = h.text 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.position, self.text or '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -7442,6 +7544,10 @@ class UserEmailHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     position = dbmodels.IntegerField(editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.position, self.text or '-')
+           
 ### A Multiple Picked Value
 class UserUserGrantRequest(AccessInstance, dbmodels.Model):
     id = idField()

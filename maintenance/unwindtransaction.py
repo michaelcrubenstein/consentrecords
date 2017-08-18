@@ -90,13 +90,6 @@ def printPath(i):
          i.canAnswerExperience or nullString,
         ))
 
-def printTranslation(i):
-    print("%s\t%s\t%s" % \
-        (i.id, 
-         i.text or nullString,
-         i.languageCode or nullString,
-         ))
-         
 def printUser(i):
     print("%s\t%s\t%s\t%s" % 
         (i.id, i.firstName or nullString, i.lastName or nullString, i.birthday or nullString,
@@ -193,6 +186,24 @@ def printTransaction(t):
                t.createdNotifications, t.changedNotifications, 
                t.deletedNotifications, t.notificationHistories)
 
+    printTable("\tweb site\tminimum age\tmaximum age\tminimum grade\tmaximum grade",
+               "Offerings", "Offering",
+               printInstance,
+               t.createdOfferings, t.changedOfferings, 
+               t.deletedOfferings, t.offeringHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Offering Names", "Offering Name",
+               printInstance,
+               t.createdOfferingNames, t.changedOfferingNames, 
+               t.deletedOfferingNames, t.offeringNameHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Offering Names", "Offering Name",
+               printInstance,
+               t.createdOfferingNames, t.changedOfferingNames, 
+               t.deletedOfferingNames, t.offeringNameHistories)
+
     printTable("\tweb site\tinquiry access group\tpublic access\tprimary administrator",
                "Organizations", "Organization",
                printOrganization,
@@ -201,7 +212,7 @@ def printTransaction(t):
 
     printTable("\ttext\tlanguageCode",
                "Organization Names", "Organization Name",
-               printTranslation,
+               printInstance,
                t.createdOrganizationNames, t.changedOrganizationNames, 
                t.deletedOrganizationNames, t.organizationNameHistories)
 
@@ -219,7 +230,7 @@ def printTransaction(t):
 
     printTable("\ttext\tlanguageCode",
                "Site Names", "Site Name",
-               printTranslation,
+               printInstance,
                t.createdSiteNames, t.changedSiteNames, 
                t.deletedSiteNames, t.siteNameHistories)
 
@@ -228,6 +239,12 @@ def printTransaction(t):
                printUser,
                t.createdUsers, t.changedUsers, 
                t.deletedUsers, t.userHistories)
+
+    printTable("\tposition\ttext",
+               "User Emails", "User Email",
+               printInstance,
+               t.createdUserEmails, t.changedUserEmails, 
+               t.deletedUserEmails, t.userEmailHistories)
 
     printTable("\tuser\tgrantee\tprivilege",
                "User Grants", "User Grant",
@@ -299,6 +316,9 @@ if __name__ == "__main__":
 
             revertChanged(t.changedUsers)
             revertDeleted(t.deletedUsers)
+
+            revertChanged(t.changedUserEmails)
+            revertDeleted(t.deletedUserEmails)
 
             revertChanged(t.changedUserGrants)
             revertDeleted(t.deletedUserGrants)
