@@ -1207,8 +1207,14 @@ cr.IInstance = (function() {
         		fields: fields,
         		resultType: this.constructor
         	})
-        	.then(function()
+        	.then(function(items)
         	{
+        		if (items.length == 0)
+        		{
+        			r2 = $.Deferred();
+        			r2.reject(new Error("this no longer exists"));
+        			return r2;
+        		}
         		return _this;
         	});
     }
