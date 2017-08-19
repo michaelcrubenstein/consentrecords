@@ -2421,9 +2421,10 @@ var EditPanel = (function() {
 						data.push(newValue);
 						newValue.parent(container);
 					
-						var item = sectionObj.selectAll('ol').append('li')
+						var itemsDiv = sectionObj.selectAll('ol');
+						var item = itemsDiv.append('li')
 							.datum(newValue);
-						_this.appendMultipleItemControls(item, appendInputControls);
+						_this.appendItemControls(itemsDiv, item, data, appendInputControls);
 						itemsDiv.style('display', null);
 						unblockClick();
 					}
