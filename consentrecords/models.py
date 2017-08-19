@@ -7209,13 +7209,17 @@ class User(SecureRootInstance, dbmodels.Model):
     @property
     def path(self):
         return self.paths.filter(deleteTransaction__isnull=True)[0]
+        
+    @property
+    def currentEmailsQuerySet(self):
+        return self.emails.filter(deleteTransaction__isnull=True).order_by('position')
     
     def __init__(self, *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
         self._authUser = None
 
     def description(self, language=None):
-        qs = self.emails.order_by('position')
+        qs = self.currentEmailsQuerySet
         if len(qs):
             return qs[0].text
         else:
@@ -7290,7 +7294,7 @@ class User(SecureRootInstance, dbmodels.Model):
     @property
     def authUser(self):
         if not self._authUser:
-            emails = self.emails.filter(deleteTransaction__isnull=True).order_by('position')
+            emails = self.currentEmailsQuerySet
             if not emails.count():
                 return AnonymousUser()
             qs = AuthUser.objects.filter(email=emails[0].text)
