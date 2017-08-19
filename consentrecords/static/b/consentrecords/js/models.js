@@ -606,9 +606,7 @@ cr.updateUsername = function(newUsername, password)
 										password: password})
 		        .then(function(json)
 				{
-					var v = cr.signedinUser.getValue(cr.fieldNames.email);
-					v.updateFromChangeData({text: newUsername});
-					v.triggerDataChanged();
+					cr.signedinUser.emails()[0].updateData({text: newUsername}, {});
 				},
 				cr.thenFail);
 	}
@@ -7410,8 +7408,8 @@ cr.User = (function() {
 		if (!this._lastName) this._lastName = source._lastName;
 		if (!this._birthday) this._birthday = source._birthday;
 		if (!this._systemAccess) this._systemAccess = source._systemAccess;
-		if (!this._emails) this._emails = source._emails;
 		if (!this._path) this._path = source._path;
+		if (!this._emails) this._emails = source._emails;
 		if (!this._notifications) this._notifications = source._notifications;
 		if (!this._userGrantRequests) this._userGrantRequests = source._userGrantRequests;
 		return this;
@@ -7507,6 +7505,13 @@ cr.User = (function() {
 		}
 		
 		return changed;
+	}
+	
+	User.prototype.triggerChanged = function()
+	{
+		this.description(this.emails().length > 0 ? this.emails()[0].text() : "Unknown User");
+		
+		cr.IInstance.prototype.triggerChanged.call(this);
 	}
 	
 	User.prototype.firstName = function(newValue)
@@ -7634,8 +7639,8 @@ cr.User = (function() {
 		{
 			this._path = new cr.Path();
 			this._path.setData(newData);
-			this._path.parent(this);
-			this._path.user(this);
+			this._path.parent(this)
+					  .user(this);
 			this._path = crp.pushInstance(this._path);
 			return this;
 		}
@@ -7647,10 +7652,12 @@ cr.User = (function() {
 			return this._emails;
 		else
 		{
+			var _this = this;
 			this._emails = newData.map(function(d)
 				{
 					var i = new cr.UserEmail();
 					i.setData(d);
+					i.parent(_this);
 					return i;
 				});
 			return this;
@@ -7663,10 +7670,12 @@ cr.User = (function() {
 			return this._notifications;
 		else
 		{
+			var _this = this;
 			this._notifications = newData.map(function(d)
 				{
 					var i = new cr.Notification();
 					i.setData(d);
+					i.parent(_this);
 					return i;
 				});
 			return this;
@@ -7683,7 +7692,8 @@ cr.User = (function() {
 			this._userGrantRequests = newData.map(function(d)
 				{
 					var i = new cr.UserUserGrantRequest();
-					i.user(_this)
+					i.parent(_this)
+					 .user(_this)
 					 .setData(d);
 					return i;
 				});
@@ -7872,6 +7882,15 @@ cr.UserEmail = (function() {
 			this.triggerChanged();
 			
 		return changed;
+	}
+	
+	UserEmail.prototype.triggerChanged = function()
+	{
+		this.description(this.text());
+		
+		cr.IInstance.prototype.triggerChanged.call(this);
+
+		this.parent().triggerChanged();
 	}
 	
 	function UserEmail() {

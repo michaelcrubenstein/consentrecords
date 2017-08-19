@@ -793,7 +793,7 @@ class api:
                         RootInstance.parseUpdateData(d, ExperiencePrompt, context, newIDs)
                     results = {'new IDs': newIDs}
                 else:
-                	raise ValueError('root object changes are unrecognized: %s' % str(changes))
+                    raise ValueError('root object changes are unrecognized: %s' % str(changes))
             
             return JsonResponse(results)
         
@@ -956,12 +956,10 @@ def updateUsername(request):
     try:
         with transaction.atomic():
             results = userviews.updateUsernameResults(request)
-            userInstance = Instance.getUserInstance(request.user)
-            transactionState = TransactionState(request.user)
-            v = userInstance.getSubValue(terms.email)
-            v.updateValue({"text": request.user.email}, UserInfo(request.user), transactionState)
-            nameLists = NameList()
-            userInstance.cacheDescription(nameLists);
+            languageCode = request.POST.get('languageCode', 'en')
+            context = Context(languageCode, request.user)
+            emails = context.user.currentEmailsQuerySet
+            emails[0].update({'text': request.user.email}, context, {})
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
