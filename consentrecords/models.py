@@ -7350,7 +7350,12 @@ class User(SecureRootInstance, dbmodels.Model):
                                  publicAccess=_orNone(data, 'public access'),
                                  primaryAdministrator=primaryAdministrator,
                                 )
-        newItem.save()
+        
+        # If there was no administrator associated with this user, then set the
+        # primaryAdministrator to the user itself.                        
+        if not primaryAdministrator:
+            newItem.primaryAdministrator = newItem
+            newItem.save()
         
         newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
         newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
