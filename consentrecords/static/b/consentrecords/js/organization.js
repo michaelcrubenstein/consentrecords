@@ -126,7 +126,7 @@ function showPath(path)
  */				
 function showUser(user)
 {
-	user.promisePath()
+	user.promiseData(['path'])
 	 .then(function()
 		{
 			var panel = new PathlinesPanel(user, true);

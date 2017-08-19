@@ -7327,7 +7327,6 @@ cr.User = (function() {
 	User.prototype._notifications = null;
 	User.prototype._notificationsPromise = null;
 	User.prototype._path = null;
-	User.prototype._pathPromise = null;
 	User.prototype._userGrantRequests = null;
 	User.prototype._userGrantRequestsPromise = null;
 	
@@ -7348,7 +7347,6 @@ cr.User = (function() {
 		this._notifications = null;
 		this._notificationsPromise = null;
 		this._path = null;
-		this._pathPromise = null;
 		this._userGrantRequests = null;
 		this._userGrantRequestPromise = null;
 	}
@@ -7392,7 +7390,6 @@ cr.User = (function() {
 			
 		/* Clear all of the promises. */
 		this._notificationsPromise = null;
-		this._pathPromise = null;
 		this._userGrantRequestPromise = null;
 	}
 	
@@ -7688,38 +7685,6 @@ cr.User = (function() {
     {
     	fields = fields !== undefined ? fields : ['path'];
     	return cr.IInstance.prototype.getData.call(this, fields);
-    }
-    
-    User.prototype.promisePath = function()
-    {
-    	p = this.readCheckPromise();
-    	if (p) return p;
-
-        if (this._pathPromise)
-        	return this._pathPromise;
-        else if (this._path)
-        {
-        	result = $.Deferred();
-        	result.resolve(this._path);
-        	return result;
-        }
-        
-        var _this = this;	
-        this._pathPromise = cr.getData(
-        	{
-        		path: 'user/{0}/path'.format(this.id()),
-        		fields: [],
-        		resultType: cr.Path
-        	})
-        	.then(function(paths)
-        		{
-        			_this._path = paths[0];
-        			_this._path.user(_this);
-        			result = $.Deferred();
-        			result.resolve(paths[0]);
-        			return result;
-        		});
-        return this._pathPromise;
     }
     
     User.prototype.promiseUserGrantRequests = function()
