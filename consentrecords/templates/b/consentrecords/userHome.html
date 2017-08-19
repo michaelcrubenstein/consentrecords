@@ -698,20 +698,19 @@
 
 			{% if userID %}
 			cr.createSignedinUser("{{userID}}")
-				.fail(cr.asyncFail);
-			{% endif %}
-		
-			/* Initialize all of the objects that are dependent on whether or not the user is
-				signed in.
-			 */
-			
-			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
-			if (cr.signedinUser.id())
-			{
+				.fail(function(err)
+					{
+						cr.signedinUser.clear();
+						firstPanel = new WelcomePanel();
+						firstPanel.showNow();
+						cr.asyncFail(err);
+					});
+					
 				cr.signedinUser.one("signin.cr", null, function(eventObject)
 					{
 						try
 						{
+							console.assert(cr.signedinUser.path());
 							firstPanel = new PathlinesPanel(cr.signedinUser, false);
 							firstPanel.setupSearchPanel();
 							firstPanel.showNow();
@@ -730,21 +729,25 @@
 							cr.asyncFail(err);
 						}
 					});
-			}
-			else if (!needsSignin)
+			{% endif %}
+			
+			/* Initialize all of the objects that are dependent on whether or not the user is
+				signed in.
+			 */
+			if (!cr.signedinUser.id())
 			{
-				if (handleState)
+				if (needsSignin)
+				{
+					firstPanel = null;
+					checkSignin(handleState);
+				}
+				else if (handleState)
 					handleState();
 				else
 				{
 					firstPanel = new WelcomePanel();
 					firstPanel.showNow();
 				}
-			}
-			else
-			{
-				firstPanel = null;
-				checkSignin(handleState);
 			}
 		});
 		
