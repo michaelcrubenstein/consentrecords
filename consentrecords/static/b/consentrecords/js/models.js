@@ -1155,6 +1155,7 @@ cr.IInstance = (function() {
 		this._description = null;
 		this._parentID = null;
 		this._privilege = null;
+		this._fieldsLoaded = [];
 		return this;
 	}
 
