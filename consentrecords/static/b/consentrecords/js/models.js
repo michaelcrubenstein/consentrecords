@@ -274,15 +274,25 @@ cr.postError = function(jqXHR, textStatus, errorThrown)
 			return jqXHR.statusText;
 	};
 
+/* Failure of a post event. */
 cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
 	{
 		failFunction(new Error(cr.postError(jqXHR, textStatus, errorThrown)));
 	};
 
+/* Failure of an ajax event that throws an error. */
 cr.thenFail = function(jqXHR, textStatus, errorThrown)
 	{
 		var r2 = $.Deferred();
 		r2.reject(new Error(cr.postError(jqXHR, textStatus, errorThrown)));
+		return r2;
+	};
+
+/*	Chain the failure event to be handled subsequently. */
+cr.chainFail = function(err)
+	{
+		var r2 = $.Deferred();
+		r2.reject(err);
 		return r2;
 	};
 	

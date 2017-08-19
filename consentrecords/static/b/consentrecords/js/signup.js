@@ -21,22 +21,21 @@ var Signup = (function () {
 			});
 	}
 			
-	Signup.prototype.submit = function(username, password, initialData, successFunction, failFunction)
+	Signup.prototype.submit = function(username, password, initialData)
 	{
 		bootstrap_alert.show($('.alert-container'), "Signing up...\n(this may take a minute)", "alert-info");
 
-		$.post(cr.urls.submitNewUser, 
+		return $.post(cr.urls.submitNewUser, 
 			{ username: username,
 				password: password,
 				properties: JSON.stringify(initialData)
 			})
-		  .done(function(json, textStatus, jqXHR)
+		  .then(function(json, textStatus, jqXHR)
 			{
-				successFunction(json.user);
-			})
-		  .fail(function(jqXHR, textStatus, errorThrown) {
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-		  });
+				var r2 = $.Deferred();
+				r2.resolve(json.user);
+				return r2;
+			}, cr.thenFail);
 	}
 
 	function Signup(initialData)
@@ -65,20 +64,18 @@ var Signup = (function () {
 				                  };
 				initialData[cr.fieldNames.publicAccess] = 'find';
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
-					initialData, 
-					function(data)
-					{
-						cr.signedinUser.setData(data);
-						$("panel.sign-in").hide("slide", {direction: "right"}, 0);
-						_thisSignup.hideDown(
-							function()
-							{
-								$(cr.signedinUser).trigger("signin.cr");
-								unblockClick();
-							});
-					},
-					cr.syncFail)
-				
+					initialData)
+					.then(function(data)
+						{
+							return cr.createSignedinUser(data.id);
+						}, 
+						cr.chainFail)
+					.then(function(user)
+						{
+							$("panel.sign-in").hide("slide", {direction: "right"}, 0);
+							_thisSignup.hideDown(unblockClick);
+						},
+						cr.syncFail);				
 			});
 		this.dots.appendBackButton(navContainer, function() {
 			_thisSignup.hideDown(unblockClick);
@@ -597,7 +594,8 @@ var SigninPanel = (function()
 												_this.hideRight(unblockClick);
 											},
 											cr.syncFail)
-									});
+									},
+									cr.syncFail);
 						}
 						catch(err)
 						{
