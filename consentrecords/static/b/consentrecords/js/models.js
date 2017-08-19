@@ -823,7 +823,9 @@ cr.IInstance = (function() {
 						{
 							_this._dataPromise = null;
 							_this._fieldsLoaded.filter(function(f) { return !(f in fields); });
-							return err;
+							var r2 = $.Deferred();
+							r2.reject(err);
+							return r2;
 						});
 				return _this._dataPromise;
 			}
