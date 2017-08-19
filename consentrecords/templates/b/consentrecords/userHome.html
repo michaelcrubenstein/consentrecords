@@ -704,10 +704,6 @@
 			/* Initialize all of the objects that are dependent on whether or not the user is
 				signed in.
 			 */
-			if (!cr.signedinUser.id())
-			{
-				$(cr.signedinUser).trigger("signout.cr");
-			}
 			
 			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
 			if (cr.signedinUser.id())
@@ -784,7 +780,6 @@
 				.then(function()
 					{
 						cr.signedinUser.clear();
-						$(cr.signedinUser).trigger("signout.cr");
 						var sitePanels = $("panel.site-panel");
 						var panel = new WelcomePanel();
 						panel.showNow();
