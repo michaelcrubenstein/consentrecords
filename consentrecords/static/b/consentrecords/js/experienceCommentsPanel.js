@@ -624,7 +624,7 @@ var ExperienceCommentsPanel = (function() {
 			function (eventObject, changeTarget)
 			{
 				if (changeTarget instanceof cr.Experience)
-					changeTarget.promiseComments()
+					changeTarget.promiseData(['comments'])
 						.then(function()
 							{
 								onCommentsChecked(changeTarget);
@@ -696,7 +696,7 @@ var ExperienceCommentsPanel = (function() {
 			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
 				comments are loaded. This won't happen if the comments are already loaded.
 			 */
-			this.promise = fd.experience.promiseComments()
+			this.promise = fd.experience.promiseData(['comments'])
 				.then(function(comments)
 					{
 						var r = $.Deferred();

@@ -4083,7 +4083,7 @@ class Experience(ChildInstance, dbmodels.Model):
     def select_related(querySet, fields=[]):
         csqs = ExperienceCustomService.objects.filter(deleteTransaction__isnull=True).order_by('position')
         sqs = ExperienceService.objects.filter(deleteTransaction__isnull=True).order_by('position')
-        return Experience.select_head_related(querySet).select_related('organization')\
+        qs = Experience.select_head_related(querySet).select_related('organization')\
                        .select_related('site')\
                        .prefetch_related(Prefetch('customServices', 
                            queryset= (ExperienceCustomService.select_related(csqs)
@@ -4095,6 +4095,12 @@ class Experience(ChildInstance, dbmodels.Model):
                                if 'services' in fields else \
                                ExperienceCustomService.select_head_related(sqs)),
                            to_attr='currentServices'))
+        if 'comments' in fields:
+            qs = qs.prefetch_related(Prefetch('comments',
+                Comment.select_related(Comment.objects.filter(deleteTransaction__isnull=True)).order_by('transaction__creation_time'),
+                                              to_attr='currentComments'))
+        return qs
+            
     
     def getData(self, fields, context):
         data = self.headData(context)
@@ -4134,6 +4140,9 @@ class Experience(ChildInstance, dbmodels.Model):
                 data['start'] = self.start
             if self.end:
                 data['end'] = self.end
+                
+            if 'comments' in fields:
+                data['comments'] = [i.getData([], context) for i in self.currentComments];
             if self.timeframe:
                 data['timeframe'] = self.timeframe
         return data
@@ -4558,7 +4567,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
         return querySet
         
     def select_related(querySet, fields=[]):
-    	# Disqualifying tags cannot be sorted without a context. 
+        # Disqualifying tags cannot be sorted without a context. 
         return ExperiencePrompt.select_head_related(querySet)\
                     .select_related('organization')\
                     .select_related('site')\

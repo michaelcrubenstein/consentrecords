@@ -3327,7 +3327,6 @@ cr.Experience = (function() {
 	Experience.prototype._services = null;
 	Experience.prototype._customServices = null;
 	Experience.prototype._comments = null;
-	Experience.prototype._commentsPromise = null;
 	
 	Experience.prototype.urlPath = function()
 	{
@@ -3712,37 +3711,6 @@ cr.Experience = (function() {
 		}
 	}
 	
-    Experience.prototype.promiseComments = function()
-    {
-    	p = this.readCheckPromise();
-    	if (p) return p;
-
-        if (this._commentsPromise)
-        	return this._commentsPromise;
-        else if (this._comments)
-        {
-        	result = $.Deferred();
-        	result.resolve(this._comments);
-        	return result;
-        }
-        
-        var _this = this;	
-        this._commentsPromise = cr.getData(
-        	{
-        		path: 'experience/{0}/comment'.format(this.id()),
-        		fields: [],
-        		resultType: cr.Comment
-        	})
-        	.then(function(comments)
-        		{
-        			_this._comments = comments;
-        			result = $.Deferred();
-        			result.resolve(comments);
-        			return result;
-        		});
-        return this._commentsPromise;
-    }
-    
 	Experience.prototype.pickedOrCreatedText = function(picked, created)
 	{
 		if (picked && picked.id())
