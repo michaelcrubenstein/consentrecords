@@ -822,8 +822,9 @@ cr.IInstance = (function() {
 		
 				/* Remove 'this' from the fields when getting data, since it has no meaning on the service. */
 				_this._dataPromise = _this.getData(fields.filter(function(f) { return f != 'this'; }))
-					.then(function()
+					.then(function(item)
 						{
+							console.assert(item == _this);
 							_this._dataPromise = null;
 							return _this;
 						},
@@ -1395,6 +1396,11 @@ cr.TranslationInstance = (function() {
 		return this;
 	}
 	
+	TranslationInstance.prototype.calculateDescription = function()
+	{
+		this._description = this._text;
+	}
+	
 	/** Called after the contents of the TranslationInstance have been updated on the server. */
 	TranslationInstance.prototype.updateData = function(d, newIDs)
 	{
@@ -1404,7 +1410,7 @@ cr.TranslationInstance = (function() {
 		if ('text' in d)
 		{
 			this._text = d['text'];
-			this._description = this._text;
+			this.calculateDescription();
 			changed = true;
 		}
 		if ('languageCode' in d)
@@ -1521,6 +1527,11 @@ cr.ServiceLinkInstance = (function() {
 			initialData.service = this.service().urlPath();
 	}
 	
+	ServiceLinkInstance.prototype.calculateDescription = function()
+	{
+		this._description = this.service() ? this.service().description() : "";
+	}
+	
 	/** Called after the contents of the ServiceLinkInstance have been updated on the server. */
 	ServiceLinkInstance.prototype.updateData = function(d, newIDs, canTrigger)
 	{
@@ -1550,7 +1561,7 @@ cr.ServiceLinkInstance = (function() {
 				this._serviceID = serviceID;
 				changed = true;
 			}
-			this._description = this.service() ? this.service().description() : "";
+			this.calculateDescription();
 		}
 		
 		if (changed && canTrigger)
@@ -1741,6 +1752,11 @@ cr.UserLinkInstance = (function() {
 			
 		return changes;
 	}
+	
+	UserLinkInstance.prototype.calculateDescription = function()
+	{
+		this.description(this._user ? this._user.description() : "");
+	}
 		
 	UserLinkInstance.prototype.updateData = function(d, newIDs, canTrigger)
 	{
@@ -1768,7 +1784,7 @@ cr.UserLinkInstance = (function() {
 				this._user = newUser;
 				changed = true;
 			}
-			this._description = this._user ? this._user.description() : "";
+			this.calculateDescription();
 		}
 		
 		if (changed && canTrigger)
@@ -2122,6 +2138,11 @@ cr.Grant = (function() {
 		return this;
 	}
 	
+	Grant.prototype.calculateDescription = function()
+	{
+		this._description = this._grantee ? this._grantee.description() : "";
+	}
+	
 	Grant.prototype.updateData = function(d, newIDs)
 	{
 		/* Since this object has no sub items, just return if we are being added. */
@@ -2150,7 +2171,7 @@ cr.Grant = (function() {
 				this._grantee = newGrantee;
 				changed = true;
 			}
-			this._description = this._grantee ? this._grantee.description() : "";
+			this.calculateDescription();
 		}
 		
 		if ('privilege' in d)
@@ -2940,6 +2961,11 @@ cr.Comment = (function() {
 		return changes;
 	}
 	
+	Comment.prototype.calculateDescription = function()
+	{
+		this._description = this._text;
+	}
+	
 	Comment.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -2956,7 +2982,7 @@ cr.Comment = (function() {
 			if (this._text != d['text'])
 			{
 				this._text = d['text'];
-				this._description = this._text;
+				this.calculateDescription();
 				changed = true;
 			}
 		}
@@ -3558,22 +3584,26 @@ cr.Experience = (function() {
 		this._customSite = 'custom site' in d ? d['custom site'] : "";
 		this._customOffering = 'custom offering' in d ? d['custom offering'] : "";
 		this._timeframe = 'timeframe' in d ? d['timeframe'] : "";
+		var _this = this;
 		if ('services' in d)
 			this._services = d['services'].map(function(d) {
 								var i = new cr.ExperienceService();
 								i.setData(d);
+								i.parentID(_this.id());
 								return i;
 							});
 		if ('custom services' in d)
 			this._customServices = d['custom services'].map(function(d) {
 								var i = new cr.ExperienceCustomService();
 								i.setData(d);
+								i.parentID(_this.id());
 								return i;
 							});
 		if ('comments' in d)
 			this._comments = d['comments'].map(function(d) {
 								var i = new cr.Comment();
 								i.setData(d);
+								i.parentID(_this.id());
 								return i;
 							});
     }
@@ -3926,6 +3956,11 @@ cr.ExperienceCustomService = (function() {
 		return changes;
 	}
 		
+	ExperienceCustomService.prototype.calculateDescription = function()
+	{
+		this.description(this._name);
+	}
+		
 	ExperienceCustomService.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -3933,7 +3968,7 @@ cr.ExperienceCustomService = (function() {
 		if ('name' in d)
 		{
 			this._name = d['name'];
-			this._description = this._name;
+			this.calculateDescription();
 			changed = true;
 		}
 		if ('position' in d)
@@ -4267,6 +4302,11 @@ cr.ExperiencePrompt = (function() {
 				   .pullNewElements(this.disqualifyingTags(), source.disqualifyingTags());
 	}
 	
+	ExperiencePrompt.prototype.calculateDescription = function()
+	{
+		this.description(this._name);
+	}
+	
 	/** Called after the contents of the ExperiencePrompt have been updated on the server. */
 	ExperiencePrompt.prototype.updateData = function(d, newIDs)
 	{
@@ -4276,7 +4316,7 @@ cr.ExperiencePrompt = (function() {
 		if ('name' in d)
 		{
 			this._name = d.name;
-			this._description = this._name;
+			this.calculateDescription();
 			changed = true;
 		}
 		
@@ -4685,6 +4725,11 @@ cr.Notification = (function() {
 		user = this.parent();
 		cr.removeElement(user.notifications(), this);
 		$(user).trigger("notificationDeleted.cr", this);
+	}
+	
+	Notification.prototype.calculateDescription = function()
+	{
+		this.description(this.name());
 	}
 	
 	/** Called after the contents of the Notification have been updated on the server. */
@@ -5645,6 +5690,11 @@ cr.Path = (function() {
 		return changes;
 	}
 	
+	Path.prototype.calculateDescription = function()
+	{
+		this.description(this._name);
+	}
+	
 	/** Called after the contents of the Path have been updated on the server. */
 	Path.prototype.updateData = function(d, newIDs)
 	{
@@ -5656,7 +5706,7 @@ cr.Path = (function() {
 		if ('screen name' in d)
 		{
 			this._name = d['screen name'];
-			this.description(this._name);
+			this.calculateDescription();
 			changed = true;
 		}
 		if ('special access' in d)
@@ -5912,6 +5962,16 @@ cr.Period = (function() {
 		return changes;
 	}
 	
+	Period.prototype.calculateDescription = function()
+	{
+		this.description("{0}: {1}-{2}".format(
+					this.weekdayDescription(),
+					this._startTime,
+					this._endTime
+				));
+
+	}
+	
 	/** Called after the contents of the Period have been updated on the server. */
 	Period.prototype.updateData = function(d, newIDs)
 	{
@@ -5936,11 +5996,7 @@ cr.Period = (function() {
 		}
 		if (changed)
 		{
-			this.description("{0}: {1}-{2}".format(
-					this.weekdayDescription(),
-					this._startTime,
-					this._endTime
-				));
+			this.calculateDescription();
 			this.triggerChanged();
 		}
 		
@@ -7293,6 +7349,11 @@ cr.Street = (function() {
 			
 		return changes;
 	}
+	
+	Street.prototype.calculateDescription = function()
+	{
+		this._description = this._text;
+	}
 		
 	/** Called after the contents of the Street have been updated on the server. */
 	Street.prototype.updateData = function(d, newIDs)
@@ -7308,8 +7369,8 @@ cr.Street = (function() {
 		if ('text' in d)
 		{
 			this._text = d['text'];
+			this.calculateDescription();
 			changed = true;
-			this._description = this._text;
 		}
 		
 		if (changed)
@@ -7461,6 +7522,11 @@ cr.User = (function() {
 		return changes;
 	}
 	
+	User.prototype.calculateDescription = function()
+	{
+		this.description(this.emails().length > 0 ? this.emails()[0].text() : "Unknown User");
+	}
+	
 	User.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -7512,8 +7578,7 @@ cr.User = (function() {
 	
 	User.prototype.triggerChanged = function()
 	{
-		this.description(this.emails().length > 0 ? this.emails()[0].text() : "Unknown User");
-		
+		this.calculateDescription();		
 		cr.IInstance.prototype.triggerChanged.call(this);
 	}
 	
@@ -7864,6 +7929,11 @@ cr.UserEmail = (function() {
 		return changes;
 	}
 		
+	UserEmail.prototype.calculateDescription = function()
+	{
+		this._description = this._text;
+	}
+		
 	UserEmail.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -7877,8 +7947,8 @@ cr.UserEmail = (function() {
 		if ('text' in d)
 		{
 			this._text = d['text'];
+			this.calculateDescription();
 			changed = true;
-			this._description = this._text;
 		}
 		
 		if (changed)
@@ -8023,6 +8093,11 @@ cr.UserUserGrantRequest = (function() {
 			
 		return changes;
 	}
+	
+	UserUserGrantRequest.prototype.calculateDescription = function()
+	{
+		this._description = this._grantee ? this._grantee.description() : "";
+	}
 		
 	UserUserGrantRequest.prototype.updateData = function(d, newIDs)
 	{
@@ -8048,7 +8123,7 @@ cr.UserUserGrantRequest = (function() {
 				this._grantee = newGrantee;
 				changed = true;
 			}
-			this._description = this._grantee ? this._grantee.description() : "";
+			this.calculateDescription();
 		}
 		
 		if (changed)
