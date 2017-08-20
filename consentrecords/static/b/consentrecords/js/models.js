@@ -1007,10 +1007,14 @@ cr.IInstance = (function() {
 	
 	IInstance.prototype.childAdded = function(item, d, newIDs, addEventType)
 	{
-		item.id(newIDs[d['add']])
-			.clientID(null)
-			.parent(this);
-		item = crp.pushInstance(item);
+		item.parent(this);
+		
+		if (this.id())
+		{
+			item.id(newIDs[d['add']])
+				.clientID(null);
+			item = crp.pushInstance(item);
+		}
 		
 		/* Call updateData so that sub-items also get their IDs */
 		item.updateData(d, newIDs);
@@ -1033,7 +1037,7 @@ cr.IInstance = (function() {
 							});
 						if (item)
 						{
-							$(item).trigger("deleted.cr", item);
+							item.triggerDeleted();
 						}
 					}
 					else if ('add' in d)
@@ -1230,22 +1234,38 @@ cr.IInstance = (function() {
 	IInstance.prototype.deleteData = function()
 	{
 		var _this = this;
-		return $.ajax({
-				url: cr.urls.getData + this.urlPath() + "/",
-				type: 'DELETE',
-				data: {'languageCode': 'en'},
-			})
-			.then(function()
-				{
-					$(_this).trigger("deleted.cr", _this);
-					return _this;
-				},
-				cr.thenFail);
+		
+		if (this.id())
+		{
+			return $.ajax({
+					url: cr.urls.getData + this.urlPath() + "/",
+					type: 'DELETE',
+					data: {'languageCode': 'en'},
+				})
+				.then(function()
+					{
+						_this.triggerDeleted();
+						return _this;
+					},
+					cr.thenFail);
+		}
+		else
+		{
+			this.triggerDeleted();
+			var r = $.Deferred();
+			r.resolve(this);
+			return r;
+		}
 	};
 	
 	IInstance.prototype.triggerChanged = function()
 	{
 		$(this).trigger('changed.cr', this);
+	}
+	
+	IInstance.prototype.triggerDeleted = function()
+	{
+		$(this).trigger('deleted.cr', this);
 	}
 	
 	function IInstance() {
@@ -3666,8 +3686,10 @@ cr.Experience = (function() {
 		return this;
 	}
 	
-	Experience.prototype.deleted = function()
+	Experience.prototype.triggerDeleted = function()
 	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		
 		cr.removeElement(this.parent().experiences(), this);
 		$(this.parent()).trigger("experienceDeleted.cr", this);
 	}
@@ -3888,8 +3910,10 @@ cr.ExperienceCustomService = (function() {
 		return this;
     }
         
-	ExperienceCustomService.prototype.deleted = function()
+	ExperienceCustomService.prototype.triggerDeleted = function()
 	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		
 		var experience = this.parent();
 		cr.removeElement(experience.customServices(), this);
 		$(experience).trigger("customServiceDeleted.cr", this);
@@ -3990,8 +4014,10 @@ cr.ExperienceService = (function() {
 		$(this.parent()).trigger('changed.cr');
 	}
 	
-	ExperienceService.prototype.deleted = function()
+	ExperienceService.prototype.triggerDeleted = function()
 	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		
 		var experience = this.parent();
 		cr.removeElement(experience.experienceServices(), this);
 		$(experience).trigger('experienceServiceDeleted.cr', this);
@@ -4684,8 +4710,10 @@ cr.Notification = (function() {
 		return this;
 	}
 	
-	Notification.prototype.deleted = function()
+	Notification.prototype.triggerDeleted = function()
 	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		
 		user = this.parent();
 		cr.removeElement(user.notifications(), this);
 		$(user).trigger("notificationDeleted.cr", this);
@@ -7135,6 +7163,13 @@ cr.Site = (function() {
         	});
     }
     
+	Site.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().sites(), this);
+		$(this.parent()).trigger("siteDeleted.cr", this);
+	}
+	
     Site.prototype.promiseOfferings = function()
     {
     	p = this.readCheckPromise();
@@ -8054,8 +8089,10 @@ cr.UserUserGrantRequest = (function() {
 		return changed;
 	}
 
-	UserUserGrantRequest.prototype.deleted = function()
+	UserUserGrantRequest.prototype.triggerDeleted = function()
 	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		
 		/* Delete from the container first, so that other objects know the container may be empty. */
 		var user = this.user();
 		cr.removeElement(user.userGrantRequests(), this);

@@ -77,7 +77,7 @@ var SharingPanel = (function() {
 								{
 									/* Since this item was deleted as part of adding access,  
 										process it's deletion. */
-									$(d).trigger("deleted.cr", d);
+									d.triggerDeleted();
 									unblockClick();
 								}, 
 								cr.syncFail);

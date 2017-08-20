@@ -187,7 +187,16 @@ var ChildController = (function() {
 		console.assert(this.groupKey !== undefined);
 		var changes = {};
 		changes[this.groupKey] = [initialData];
-		return this.parent().update(changes, false);
+		if (this.parent().id())
+		{
+			return this.parent().update(changes, false);
+		}
+		else
+		{
+			r2 = $.Deferred();
+			r2.resolve(changes, {});
+			return r2;
+		}
 	}
 	
 	ChildController.prototype.postAddDone = function(changes, newIDs)
@@ -199,6 +208,9 @@ var ChildController = (function() {
 
 	function ChildController(parent, source, duplicateForEdit)
 	{
+		/* Ensure that addEventType is defined. */
+		console.assert(this.addEventType);
+		
 		this.parent(parent);
 		Controller.call(this, source, duplicateForEdit);
 	}

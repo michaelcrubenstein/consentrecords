@@ -348,6 +348,10 @@ var ChildSearchView = (function () {
 	
 	ChildSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
+		/* If parent hasn't been saved, then all items are visible. */
+		if (!this.parent.id())
+			return true;
+			
 		if (compareText.length === 0)
 			return true;
 			
@@ -441,9 +445,17 @@ var ChildrenPanel = (function () {
 		this.navContainer.appendTitle(header);
 
 		this.searchView = new (this.searchViewType)(this, this.parent);
-		$(this.node()).one('revealing.cr', function() { 
-				_this.searchView.search(""); 
-				_this.searchView.inputBox.focus();
+		$(this.node()).one('revealing.cr', function() {
+				if (_this.parent.id())
+				{
+					_this.searchView.search(""); 
+					_this.searchView.inputBox.focus();
+				}
+				else 
+				{
+					_this.searchView.inputBox.setAttribute('disabled', true);
+					_this.searchView.showObjects(_this.savedItems());
+				}
 			});
 	}
 	
@@ -452,10 +464,17 @@ var ChildrenPanel = (function () {
 		var _this = this;
 		var controller = new (this.searchView.controllerType())(this.parent);
 		var panel = new (this.searchView.childPanelType())(controller, revealPanelUp);
-		setupOnViewEventHandler(this.parent, this.addedEvent, panel.node(), function(eventObject)
+		setupOnViewEventHandler(this.parent, controller.addEventType, panel.node(), function(eventObject, newInstance)
 			{
-				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+				if (_this.parent.id())
+					_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+				else
+				{
+					_this.searchView.showObjects([newInstance]);
+					_this.savedItems().push(newInstance);
+				}
 			}); 
+		
 		panel.showUp().then(unblockClick);
 	}
 
@@ -532,8 +551,13 @@ var InquiriesPanel = (function () {
 	InquiriesPanel.prototype = Object.create(SessionChildrenPanel.prototype);
 	InquiriesPanel.prototype.constructor = InquiriesPanel;
 
-	InquiriesPanel.prototype.panelTitle = "Inquiries";
 	InquiriesPanel.prototype.addPanelTitle = "Add Inquiry";
+	InquiriesPanel.prototype.searchViewType = InquirySearchView;
+	
+	InquiriesPanel.prototype.savedItems = function()
+	{
+		return this.parent.inquiries();
+	}
 	
 	InquiriesPanel.prototype.showAddPanel = function()
 	{
@@ -545,18 +569,10 @@ var InquiriesPanel = (function () {
 			}); 
 		panel.showLeft().then(unblockClick);
 	}
-
+	
 	function InquiriesPanel(parent, onShow) {
 		SessionChildrenPanel.call(this, parent, onShow);
-		var _this = this;
-
-		this.createRoot(parent, this.panelTitle, 'list', onShow);
-
-		this.searchView = new InquirySearchView(this, parent);
-		$(this.node()).one('revealing.cr', function() { 
-				_this.searchView.search(""); 
-				_this.searchView.inputBox.focus();
-			});
+		this.createRoot(parent, crv.buttonTexts.inquiries, 'list', onShow);
 	}
 	
 	return InquiriesPanel;
@@ -594,9 +610,14 @@ var EnrollmentsPanel = (function () {
 	EnrollmentsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
 	EnrollmentsPanel.prototype.constructor = EnrollmentsPanel;
 
-	EnrollmentsPanel.prototype.panelTitle = "Enrollments";
 	EnrollmentsPanel.prototype.addPanelTitle = "Add Enrollment";
-
+	EnrollmentsPanel.prototype.searchViewType = EnrollmentSearchView;
+	
+	EnrollmentsPanel.prototype.savedItems = function()
+	{
+		return this.parent.enrollments();
+	}
+	
 	EnrollmentsPanel.prototype.showAddPanel = function()
 	{
 		var _this = this;
@@ -607,18 +628,10 @@ var EnrollmentsPanel = (function () {
 			}); 
 		panel.showLeft().then(unblockClick);
 	}
-
+	
 	function EnrollmentsPanel(parent, onShow) {
 		SessionChildrenPanel.call(this, parent, onShow);
-		var _this = this;
-
-		this.createRoot(parent, this.panelTitle, 'list', onShow);
-
-		this.searchView = new EnrollmentSearchView(this, parent);
-		$(this.node()).one('revealing.cr', function() { 
-				_this.searchView.search(""); 
-				_this.searchView.inputBox.focus();
-			});
+		this.createRoot(parent, crv.buttonTexts.enrollments, 'list', onShow);
 	}
 	
 	return EnrollmentsPanel;
@@ -656,32 +669,17 @@ var EngagementsPanel = (function () {
 	EngagementsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
 	EngagementsPanel.prototype.constructor = EngagementsPanel;
 
-	EngagementsPanel.prototype.panelTitle = "Engagements";
-	EngagementsPanel.prototype.addedEvent = 'engagementAdded.cr';
-
-	EngagementsPanel.prototype.showAddPanel = function()
+	EnrollmentsPanel.prototype.addPanelTitle = "Add Engagement";
+	EnrollmentsPanel.prototype.searchViewType = EngagementSearchView;
+	
+	EnrollmentsPanel.prototype.savedItems = function()
 	{
-		var _this = this;
-		var child = new (this.searchView.resultType())();
-		var panel = new (this.searchView.childPanelType())(this.parent, child, revealPanelUp);
-		setupOnViewEventHandler(this.parent, this.addedEvent, panel.node(), function(eventObject)
-			{
-				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
-			}); 
-		panel.showUp().then(unblockClick);
+		return this.parent.engagements();
 	}
-
+	
 	function EngagementsPanel(parent, onShow) {
 		SessionChildrenPanel.call(this, parent, onShow);
-		var _this = this;
-
-		this.createRoot(parent, this.panelTitle, "list", onShow);
-
-		this.searchView = new EngagementSearchView(this, parent);
-		$(this.node()).one("revealing.cr", function() { 
-				_this.searchView.search(""); 
-				_this.searchView.inputBox.focus();
-			});
+		this.createRoot(parent, crv.buttonTexts.engagements, 'list', onShow);
 	}
 	
 	return EngagementsPanel;
@@ -734,30 +732,18 @@ var PeriodsPanel = (function () {
 	PeriodsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
 	PeriodsPanel.prototype.constructor = PeriodsPanel;
 
-	PeriodsPanel.prototype.panelTitle = "Periods";
-
-	PeriodsPanel.prototype.showAddPanel = function()
+	EnrollmentsPanel.prototype.addPanelTitle = "Add Period";
+	EnrollmentsPanel.prototype.searchViewType = PeriodSearchView;
+	
+	EnrollmentsPanel.prototype.savedItems = function()
 	{
-		var period = new cr.Period();
-		var panel = new PeriodPanel(this.parent, period, revealPanelUp);
-		panel.showLeft().then(unblockClick);
+		return this.parent.periods();
 	}
+	
 
 	function PeriodsPanel(parent, onShow) {
 		SessionChildrenPanel.call(this, parent, onShow);
-		var _this = this;
-
-		this.createRoot(parent, this.panelTitle, "list", onShow);
-
-		this.searchView = new PeriodSearchView(this, parent);
-		$(this.node()).one("revealing.cr", function() { 
-				_this.searchView.search(""); 
-				_this.searchView.inputBox.focus();
-			});
-		setupOnViewEventHandler(this.parent, 'periodAdded.cr', this.node(), function(eventObject)
-			{
-				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
-			}); 
+		this.createRoot(parent, crv.buttonTexts.periods, "list", onShow);
 	}
 	
 	return PeriodsPanel;
@@ -1757,13 +1743,15 @@ var GroupsPanel = (function () {
 	GroupsPanel.prototype.constructor = GroupsPanel;
 
 	GroupsPanel.prototype.addPanelTitle = "Add Group";
-	GroupsPanel.prototype.addedEvent = 'groupAdded.cr';
 	GroupsPanel.prototype.searchViewType = GroupChildSearchView;
+	
+	GroupsPanel.prototype.savedItems = function()
+	{
+		return this.parent.groups();
+	}
 	
 	function GroupsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		var _this = this;
-
 		this.createRoot(parent, crv.buttonTexts.groups, 'list', onShow);
 	}
 	
@@ -1805,13 +1793,15 @@ var OfferingsPanel = (function () {
 	OfferingsPanel.prototype.constructor = OfferingsPanel;
 
 	OfferingsPanel.prototype.addPanelTitle = "Add Offering";
-	OfferingsPanel.prototype.addedEvent = 'offeringAdded.cr';
 	OfferingsPanel.prototype.searchViewType = OfferingChildSearchView;
+	
+	OfferingsPanel.prototype.savedItems = function()
+	{
+		return this.parent.offerings();
+	}
 	
 	function OfferingsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		var _this = this;
-
 		this.createRoot(parent, crv.buttonTexts.offerings, 'list', onShow);
 	}
 	
@@ -2253,7 +2243,6 @@ var OrganizationsPanel = (function () {
 	OrganizationsPanel.prototype.panelTitle = "Organizations";
 	OrganizationsPanel.prototype.addPanelTitle = "Add Organization";
 	OrganizationsPanel.prototype.searchViewType = OrganizationSearchView;
-	OrganizationsPanel.prototype.addEventType = 'organizationAdded.cr';
 	
 	function OrganizationsPanel(onShow)
 	{
@@ -2300,7 +2289,6 @@ var ServicesPanel = (function () {
 	ServicesPanel.prototype.panelTitle = "Services";
 	ServicesPanel.prototype.addPanelTitle = "Add Service";
 	ServicesPanel.prototype.searchViewType = ServiceSearchView;
-	ServicesPanel.prototype.addEventType = 'serviceAdded.cr';
 	
 	function ServicesPanel(onShow)
 	{
@@ -2474,13 +2462,15 @@ var SitesPanel = (function () {
 	SitesPanel.prototype.constructor = SitesPanel;
 
 	SitesPanel.prototype.addPanelTitle = "Add Site";
-	SitesPanel.prototype.addedEvent = 'siteAdded.cr';
 	SitesPanel.prototype.searchViewType = SiteChildSearchView;
+	
+	SitesPanel.prototype.savedItems = function()
+	{
+		return this.parent.sites();
+	}
 	
 	function SitesPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		var _this = this;
-
 		this.createRoot(parent, crv.buttonTexts.sites, 'list', onShow);
 	}
 	
@@ -2618,7 +2608,6 @@ var UsersPanel = (function () {
 	UsersPanel.prototype.panelTitle = "Users";
 	UsersPanel.prototype.addPanelTitle = "Add User";
 	UsersPanel.prototype.searchViewType = UserSearchView;
-	UsersPanel.prototype.addEventType = 'userAdded.cr';
 	
 	function UsersPanel(onShow)
 	{
@@ -2666,7 +2655,6 @@ var CommentPromptsPanel = (function () {
 	CommentPromptsPanel.prototype.panelTitle = "Comment Prompts";
 	CommentPromptsPanel.prototype.addPanelTitle = "Add Comment Prompt";
 	CommentPromptsPanel.prototype.searchViewType = CommentPromptSearchView;
-	CommentPromptsPanel.prototype.addEventType = 'commentPromptAdded.cr';
 	
 	function CommentPromptsPanel(onShow)
 	{
@@ -2714,7 +2702,6 @@ var ExperiencePromptsPanel = (function () {
 	ExperiencePromptsPanel.prototype.panelTitle = "Experience Prompts";
 	ExperiencePromptsPanel.prototype.addPanelTitle = "Add Experience Prompt";
 	ExperiencePromptsPanel.prototype.searchViewType = ExperiencePromptSearchView;
-	ExperiencePromptsPanel.prototype.addEventType = 'experiencePromptAdded.cr';
 	
 	function ExperiencePromptsPanel(onShow)
 	{
