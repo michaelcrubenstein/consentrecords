@@ -999,6 +999,7 @@ cr.IInstance = (function() {
 		newElements.forEach(function(i)
 			{
 				if (i.clientID() && 
+					!i.isEmpty() &&
 					!oldElements.find(function(e) { return e.clientID() == i.clientID(); }))
 				{
 					oldElements.push(i);
@@ -1108,6 +1109,11 @@ cr.IInstance = (function() {
 		}
 	}
 	
+	IInstance.prototype.isEmpty = function()
+	{
+		return false;
+	}
+	
 	IInstance.prototype.appendUpdateList = function(oldItems, newItems, changes, key)
 	{
 		var subChanges = [];
@@ -1118,12 +1124,12 @@ cr.IInstance = (function() {
 			var f = d.id() ? 
 				function(e)
 				{
-					return e.id() == d.id();
+					return e.id() == d.id() && !e.isEmpty();
 				}
 				:
 				function(e)
 				{
-					return e.clientID() == d.clientID();
+					return e.clientID() == d.clientID() && !e.isEmpty();
 				};
 			var item = newItems.find(f);
 			
@@ -1138,27 +1144,30 @@ cr.IInstance = (function() {
 		var j = 0;
 		newItems.forEach(function(d)
 			{
-				if (j < remainingItems.length)
+				if (!d.isEmpty())
 				{
-					var oldItem = remainingItems[j];
-					var changes = oldItem.getUpdateData(d);
-					if (Object.keys(changes).length > 0)
+					if (j < remainingItems.length)
 					{
-						if (oldItem.id())
-							changes.id = oldItem.id();
-						else
-							changes.clientID = oldItem.clientID();
+						var oldItem = remainingItems[j];
+						var changes = oldItem.getUpdateData(d);
+						if (Object.keys(changes).length > 0)
+						{
+							if (oldItem.id())
+								changes.id = oldItem.id();
+							else
+								changes.clientID = oldItem.clientID();
+							subChanges.push(changes);
+						}
+						++j;
+					}
+					else
+					{
+						if (!d.clientID())
+							d.clientID(uuid.v4());
+						var changes = {add: d.clientID()};
+						d.appendData(changes);
 						subChanges.push(changes);
 					}
-					++j;
-				}
-				else
-				{
-					if (!d.clientID())
-						d.clientID(uuid.v4());
-					var changes = {add: d.clientID()};
-					d.appendData(changes);
-					subChanges.push(changes);
 				}
 			});
 		if (subChanges.length > 0)
@@ -1422,6 +1431,11 @@ cr.TranslationInstance = (function() {
 		return changes;
 	}
 	
+	TranslationInstance.prototype.isEmpty = function()
+	{
+		return !this.text();
+	}
+	
 	TranslationInstance.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -1570,6 +1584,11 @@ cr.ServiceLinkInstance = (function() {
 		return changes;
 	}
 		
+	ServiceLinkInstance.prototype.isEmpty = function()
+	{
+		return this.service() != null;
+	}
+	
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
@@ -1800,6 +1819,11 @@ cr.UserLinkInstance = (function() {
 		return changes;
 	}
 	
+	UserLinkInstance.prototype.isEmpty = function()
+	{
+		return this._user != null;
+	}
+	
 	UserLinkInstance.prototype.calculateDescription = function()
 	{
 		this.description(this._user ? this._user.description() : "");
@@ -1813,7 +1837,7 @@ cr.UserLinkInstance = (function() {
 		if ('user' in d) {
 			var userData = d['user'];
 			var userID;
-			if (typeof(userData) == "string")
+			if (typeof(userData) == 'string')
 			{
 				if (/^user\/[A-Za-z0-9]{32}$/.test(userData))
 					userID = userData.substring("user/".length);
@@ -2173,6 +2197,11 @@ cr.Grant = (function() {
 			changes['privilege'] = revision.privilege();
 				
 		return changes;
+	}
+	
+	Grant.prototype.isEmpty = function()
+	{
+		return this._grantee != null;
 	}
 	
 	Grant.prototype.mergeData = function(source)
@@ -7386,6 +7415,11 @@ cr.Street = (function() {
 		return changes;
 	}
 	
+	Street.prototype.isEmpty = function()
+	{
+		return !this.text();
+	}
+	
 	Street.prototype.triggerDeleted = function()
 	{
 		cr.IInstance.prototype.triggerDeleted.call(this);
@@ -7977,6 +8011,11 @@ cr.UserEmail = (function() {
 		return changes;
 	}
 		
+	UserEmail.prototype.isEmpty = function()
+	{
+		return !this.text();
+	}
+	
 	UserEmail.prototype.triggerDeleted = function()
 	{
 		cr.IInstance.prototype.triggerDeleted.call(this);
