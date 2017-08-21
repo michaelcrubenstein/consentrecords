@@ -2382,6 +2382,8 @@ var EditPanel = (function() {
 	
 	EditPanel.prototype.appendItemControls = function(itemsDiv, items, data, appendInputControls)
 	{
+		var _this = this;
+		
 		crf.appendDeleteControls(items);
 		appendInputControls(items);
 		crf.appendConfirmDeleteControls(items, function(d)
@@ -2426,6 +2428,10 @@ var EditPanel = (function() {
 							.datum(newValue);
 						_this.appendItemControls(itemsDiv, item, data, appendInputControls);
 						itemsDiv.style('display', null);
+						var input = item.selectAll('input');
+						if (input.node())
+							input.node().focus();
+							
 						unblockClick();
 					}
 					catch(err)
@@ -2495,6 +2501,7 @@ var EditPanel = (function() {
 	{
 		var _this = this;
 		section.classed("string translation", true);
+		
 		var itemsDiv = crf.appendItemList(section);
 	
 		function appendInputControls(items)
