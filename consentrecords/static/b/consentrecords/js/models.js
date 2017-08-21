@@ -890,6 +890,7 @@ cr.IInstance = (function() {
 		if (duplicateForEdit)
 		{
 			newInstance._id = this._id;
+			newInstance._clientID = this._clientID;	/* In case this instance hasn't yet been saved. */
 			newInstance._privilege = this._privilege;
 			newInstance._parentID = this._parentID;
 		}
@@ -997,7 +998,8 @@ cr.IInstance = (function() {
 		var _this = this;
 		newElements.forEach(function(i)
 			{
-				if (i.clientID())
+				if (i.clientID() && 
+					!oldElements.find(function(e) { return e.clientID() == i.clientID(); }))
 				{
 					oldElements.push(i);
 					i.parent(_this);
@@ -1015,10 +1017,11 @@ cr.IInstance = (function() {
 			item.id(newIDs[d['add']])
 				.clientID(null);
 			item = crp.pushInstance(item);
+			
+			/* Call updateData so that sub-items also get their IDs */
+			item.updateData(d, newIDs);
 		}
 		
-		/* Call updateData so that sub-items also get their IDs */
-		item.updateData(d, newIDs);
 		$(this).trigger(addEventType, item);
 	}
 							
@@ -1035,6 +1038,17 @@ cr.IInstance = (function() {
 						var item = items.find(function(i)
 							{
 								return i.id() == d['delete'];
+							});
+						if (item)
+						{
+							item.triggerDeleted();
+						}
+					}
+					else if ('deleteClient' in d)
+					{
+						var item = items.find(function(i)
+							{
+								return i.clientID() == d['deleteClient'];
 							});
 						if (item)
 						{
@@ -1087,15 +1101,25 @@ cr.IInstance = (function() {
 		var remainingItems = [];
 		oldItems.forEach(function(d)
 		{
-			var item = newItems.find(function(e)
+			console.assert(d.id() || d.clientID());
+			var f = d.id() ? 
+				function(e)
 				{
 					return e.id() == d.id();
-				});
+				}
+				:
+				function(e)
+				{
+					return e.clientID() == d.clientID();
+				};
+			var item = newItems.find(f);
 			
 			if (item)
 				remainingItems.push(d);
-			else
+			else if (d.id())
 				subChanges.push({'delete': d.id()});
+			else
+				subChanges.push({'deleteClient': d.clientID()});	/* Items that were added, not saved and then deleted. */
 		});
 		
 		var j = 0;
@@ -1114,7 +1138,8 @@ cr.IInstance = (function() {
 				}
 				else
 				{
-					d.clientID(uuid.v4());
+					if (!d.clientID())
+						d.clientID(uuid.v4());
 					var changes = {add: d.clientID()};
 					d.appendData(changes);
 					subChanges.push(changes);
