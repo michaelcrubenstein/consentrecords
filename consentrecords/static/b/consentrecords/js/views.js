@@ -2520,7 +2520,7 @@ var EditPanel = (function() {
 		itemsDiv.classed('deletable-items', true);
 		var items = appendItems(itemsDiv, data);
 		
-		this.appendItemControls(itemsDiv, items, data, deleteEventType, appendInputControls);
+		this.appendItemControls(itemsDiv, items, data, appendInputControls);
 
 		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
 	}
