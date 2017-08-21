@@ -2854,7 +2854,7 @@ cr.Address = (function() {
 		
 		if (changed)
 		{
-			this._description = this.calculateDescription();
+			this.calculateDescription();
 			this.triggerChanged();
 		}
 			
@@ -2990,6 +2990,13 @@ cr.Comment = (function() {
 			changes.asker = revision.asker() && revision.asker().urlPath();
 		
 		return changes;
+	}
+	
+	Comment.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().comments(), this);
+		$(this.parent()).trigger("commentDeleted.cr", this);
 	}
 	
 	Comment.prototype.calculateDescription = function()
@@ -3749,7 +3756,6 @@ cr.Experience = (function() {
 	Experience.prototype.triggerDeleted = function()
 	{
 		cr.IInstance.prototype.triggerDeleted.call(this);
-		
 		cr.removeElement(this.parent().experiences(), this);
 		$(this.parent()).trigger("experienceDeleted.cr", this);
 	}
