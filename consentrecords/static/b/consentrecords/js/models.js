@@ -7940,6 +7940,13 @@ cr.UserEmail = (function() {
 		return changes;
 	}
 		
+	UserEmail.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().emails(), this);
+		$(this.parent()).trigger("emailDeleted.cr", this);
+	}
+	
 	UserEmail.prototype.calculateDescription = function()
 	{
 		this._description = this._text;
