@@ -251,8 +251,8 @@ if __name__ == "__main__":
         
         printTransaction(t)
         if '-yes' in sys.argv:
-            revertChanged(t.changedAddresss)
-            revertDeleted(t.deletedAddresss)
+            revertChanged(t.changedAddresses)
+            revertDeleted(t.deletedAddresses)
                 
             revertChanged(t.changedComments)
             revertDeleted(t.deletedComments)
@@ -296,7 +296,6 @@ if __name__ == "__main__":
             for i in deleted:
                 i.createImplications()
 
-            revertChanged(t.changedGroups)
             revertDeleted(t.deletedGroups)
 
             revertChanged(t.changedGroupGrants)
