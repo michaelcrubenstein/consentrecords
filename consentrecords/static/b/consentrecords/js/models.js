@@ -2872,11 +2872,17 @@ cr.Address = (function() {
 		
 		if (changed)
 		{
-			this.calculateDescription();
 			this.triggerChanged();
 		}
 			
 		return changed;
+	}
+	
+	Address.prototype.triggerChanged = function()
+	{
+		this.calculateDescription();
+		cr.IInstance.prototype.triggerChanged.call(this);
+		this.parent().triggerChanged();
 	}
 	
 	function Address(parent) {
@@ -4011,7 +4017,6 @@ cr.ExperienceCustomService = (function() {
 		if ('name' in d)
 		{
 			this._name = d['name'];
-			this.calculateDescription();
 			changed = true;
 		}
 		if ('position' in d)
@@ -4028,9 +4033,9 @@ cr.ExperienceCustomService = (function() {
 	
 	ExperienceCustomService.prototype.triggerChanged = function()
 	{
+		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
-
-		$(this.parent()).trigger('changed.cr');
+		this.parent().triggerChanged();
 	}
 	
 	function ExperienceCustomService() {
@@ -4053,11 +4058,9 @@ cr.ExperienceService = (function() {
 	
 	ExperienceService.prototype.triggerChanged = function()
 	{
-		this.description(this.service().description());
-		
+		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
-
-		$(this.parent()).trigger('changed.cr');
+		this.parent().triggerChanged();
 	}
 	
 	ExperienceService.prototype.triggerDeleted = function()
@@ -8011,10 +8014,8 @@ cr.UserEmail = (function() {
 	
 	UserEmail.prototype.triggerChanged = function()
 	{
-		this.description(this.text());
-		
+		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
-
 		this.parent().triggerChanged();
 	}
 	
