@@ -768,6 +768,19 @@ class AccessInstance(IInstance):
         self.grantee = h.grantee
         self.privilege = h.privilege
     
+    @property
+    def dataString(self):
+        if User.objects.filter(pk=i.grantor_id).exists():
+            grantor = User.objects.get(pk=i.grantor_id)
+        elif Organization.objects.filter(pk=i.grantor_id).exists():
+            grantor = Organization.objects.get(pk=i.grantor_id)
+        else:
+            grantor = i.grantor_id
+        return "%s\t%s\t%s\t%s" % \
+              (
+                i.id, str(grantor), str(i.grantee), i.privilege or '-'
+              )
+     
     @property    
     def privilegeSource(self):
         return self
@@ -3280,6 +3293,19 @@ class UserGrantHistory(dbmodels.Model):
     grantee = dbmodels.ForeignKey('consentrecords.User', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property
+    def dataString(self):
+        if User.objects.filter(pk=i.grantor_id).exists():
+            grantor = User.objects.get(pk=i.grantor_id)
+        elif Organization.objects.filter(pk=i.grantor_id).exists():
+            grantor = Organization.objects.get(pk=i.grantor_id)
+        else:
+            grantor = i.grantor_id
+        return"%s\t%s\t%s\t%s" % \
+              (
+                i.id, str(grantor), str(i.grantee), i.privilege or '-'
+              )
+         
 ### A Multiple Picked Value
 class GroupGrant(AccessInstance, dbmodels.Model):
     id = idField()
@@ -3354,7 +3380,20 @@ class GroupGrantHistory(dbmodels.Model):
 
     grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
-
+    
+    @property
+    def dataString(self):
+        if User.objects.filter(pk=i.grantor_id).exists():
+            grantor = User.objects.get(pk=i.grantor_id)
+        elif Organization.objects.filter(pk=i.grantor_id).exists():
+            grantor = Organization.objects.get(pk=i.grantor_id)
+        else:
+            grantor = i.grantor_id
+        return"%s\t%s\t%s\t%s" % \
+              (
+                i.id, str(grantor), str(i.grantee), i.privilege or '-'
+              )
+         
 class Address(ChildInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdAddresses')
@@ -3461,6 +3500,11 @@ class Address(ChildInstance, dbmodels.Model):
         self.city = h.city 
         self.state = h.state 
         self.zipCode = h.zipCode 
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s" % \
+            (self.id, self.city or '-', self.state or '-', self.zipCode or '-')
            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -3494,6 +3538,11 @@ class AddressHistory(dbmodels.Model):
     state = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     zipCode = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s" % \
+            (self.id, self.city or '-', self.state or '-', self.zipCode or '-')
+           
 class Comment(ChildInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdComments')
@@ -3629,6 +3678,14 @@ class Comment(ChildInstance, dbmodels.Model):
         self.text = h.text 
         self.question = h.question 
         self.asker = h.asker 
+    
+    def dataString(self):
+        return "%s\t%s\n\t%s\n\t%s" % \
+            (self.id, 
+             self.text or '-',
+             str(self.asker) if i.asker else '-',
+             self.question or '-',
+             )
            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -3660,6 +3717,14 @@ class CommentHistory(dbmodels.Model):
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedCommentHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
+    def dataString(self):
+        return "%s\t%s\n\t%s\n\t%s" % \
+            (self.id, 
+             self.text or '-',
+             str(self.asker) if i.asker else '-',
+             self.question or '-',
+             )
+           
 class CommentPrompt(RootInstance, PublicInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdCommentPrompts')
@@ -3712,7 +3777,11 @@ class CommentPrompt(RootInstance, PublicInstance, dbmodels.Model):
         newItem.createChildren(data, 'translations', context, CommentPromptText, newIDs)
         
         return newItem                          
-        
+    
+    @property
+    def dataString(self):
+        return self.id
+            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -3724,6 +3793,10 @@ class CommentPromptHistory(dbmodels.Model):
     transaction = createTransactionField('commentPromptHistories')
     instance = historyInstanceField(CommentPrompt)
     
+    @property
+    def dataString(self):
+        return self.id
+            
 class CommentPromptText(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdCommentPromptTexts')
@@ -3904,6 +3977,14 @@ class Engagement(ChildInstance, dbmodels.Model):
         self.user = h.user 
         self.start = h.start 
         self.end = h.end 
+           
+    def dataString(self):
+        return "%s\t%s\n\t%s\n\t%s" % \
+            (self.id, 
+             str(self.user) if self.user else '-',
+             self.start,
+             self.end,
+             )
            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -6818,6 +6899,12 @@ class Session(ChildInstance, dbmodels.Model):
         self.start = h.start 
         self.end = h.end 
         self.canRegister = h.canRegister 
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s\t%s" %\
+            (self.id, self.registrationDeadline or '-',
+             self.start or '-', self.end or '-', self.canRegister or '-')
            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -6866,6 +6953,12 @@ class SessionHistory(dbmodels.Model):
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     canRegister = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s\t%s" %\
+            (self.id, self.registrationDeadline or '-',
+             self.start or '-', self.end or '-', self.canRegister or '-')
+           
 class SessionName(TranslationInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdSessionNames')
@@ -7168,7 +7261,11 @@ class Street(ChildInstance, dbmodels.Model):
     def revert(self, h):
         self.position = h.position 
         self.text = h.text 
-
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.position, self.text or '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -7189,6 +7286,10 @@ class StreetHistory(dbmodels.Model):
     position = dbmodels.IntegerField(editable=False)
     text = dbmodels.CharField(max_length=255, null=True, editable=False)
 
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, self.position, self.text or '-')
+           
 class User(SecureRootInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdUsers')
@@ -7401,7 +7502,13 @@ class User(SecureRootInstance, dbmodels.Model):
         self.birthday = h.birthday
         self.publicAccess = h.publicAccess
         self.primaryAdministrator = h.primaryAdministrator
-            
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s" % \
+            (i.id, i.firstName or '-', i.lastName or '-', i.birthday or '-',
+            )
+    
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -7616,6 +7723,13 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
     def revert(self, h):
         self.grantee = h.grantee 
 
+    @property
+    def dataString(self):
+        return"%s\t%s\t%s" % \
+          (
+            i.id, str(i.parent), str(i.grantee)
+          )
+         
     def update(self, changes, context, newIDs={}):
         if not context.canAdminister(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -7638,6 +7752,13 @@ class UserUserGrantRequestHistory(dbmodels.Model):
 
     grantee = dbmodels.ForeignKey(User, related_name='userUserGrantRequestHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
+    @property
+    def dataString(self):
+        return"%s\t%s\t%s" % \
+          (
+            i.id, str(i.parent), str(i.grantee)
+          )
+         
 class Context:
     def __init__(self, languageCode, user, propertyList=None, hostURL=None):
         self.languageCode = languageCode

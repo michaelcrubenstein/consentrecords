@@ -12,14 +12,6 @@ from consentrecords.models import *
 
 nullString = "-"
 
-def printAddress(i):
-    print("%s\t%s\t%s\t%s" % \
-        (i.id, 
-         i.city or nullString,
-         i.state or nullString,
-         i.zipCode or nullString,
-         ))
-         
 def printComment(i):
     print("%s\t%s\n\t%s\n\t%s" % \
         (i.id, 
@@ -90,29 +82,6 @@ def printPath(i):
          i.canAnswerExperience or nullString,
         ))
 
-def printUser(i):
-    print("%s\t%s\t%s\t%s" % 
-        (i.id, i.firstName or nullString, i.lastName or nullString, i.birthday or nullString,
-        ))
-        
-def printUserGrant(i):
-    if User.objects.filter(pk=i.grantor_id).exists():
-        grantor = User.objects.get(pk=i.grantor_id)
-    elif Organization.objects.filter(pk=i.grantor_id).exists():
-        grantor = Organization.objects.get(pk=i.grantor_id)
-    else:
-        grantor = i.grantor_id
-    print("%s\t%s\t%s\t%s" %
-          (
-            i.id, str(grantor), str(i.grantee), i.privilege or nullString
-          ))
-         
-def printUserUserGrantRequest(i):
-    print("%s\t%s\t%s" %
-          (
-            i.id, str(i.parent), str(i.grantee)
-          ))
-          
 def printInstance(i):
 	print(i.dataString)
          
@@ -152,13 +121,13 @@ def printTransaction(t):
     
     printTable("\tcity\tstate\tzip code",
                "Addresses", "Address",
-               printAddress,
+               printInstance,
                t.createdAddresses, t.changedAddresses, 
                t.deletedAddresses, t.addressHistories)
 
     printTable("\ttext/asker/comments",
                "Comments", "Comment",
-               printComment,
+               printInstance,
                t.createdComments, t.changedComments, 
                t.deletedComments, t.commentHistories)
 
@@ -222,6 +191,18 @@ def printTransaction(t):
                t.createdPaths, t.changedPaths, 
                t.deletedPaths, t.pathHistories)
 
+    printTable("\tregistration deadline\tstart\tend\tcan register",
+               "Sessions", "Session",
+               printInstance,
+               t.createdSessions, t.changedSessions, 
+               t.deletedSessions, t.sessionHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Session Names", "Session Name",
+               printInstance,
+               t.createdSessionNames, t.changedSessionNames, 
+               t.deletedSessionNames, t.sessionNameHistories)
+
     printTable("\tweb site",
                "Sites", "Site",
                printInstance,
@@ -234,9 +215,15 @@ def printTransaction(t):
                t.createdSiteNames, t.changedSiteNames, 
                t.deletedSiteNames, t.siteNameHistories)
 
+    printTable("\tposition\ttext",
+               "Streets", "Street",
+               printInstance,
+               t.createdStreets, t.changedStreets, 
+               t.deletedStreets, t.streetHistories)
+
     printTable("\tfirst name\tlast name\tbirthday",
                "Users", "User",
-               printUser,
+               printInstance,
                t.createdUsers, t.changedUsers, 
                t.deletedUsers, t.userHistories)
 
@@ -248,13 +235,13 @@ def printTransaction(t):
 
     printTable("\tuser\tgrantee\tprivilege",
                "User Grants", "User Grant",
-               printUserGrant,
+               printInstance,
                t.createdUserGrants, t.changedUserGrants, 
                t.deletedUserGrants, t.userGrantHistories)
 
     printTable("\tgrantor\tgrantee",
                "User User Grant Requests", "User User Grant Request",
-               printUserUserGrantRequest,
+               printInstance,
                t.createdUserUserGrantRequests, t.changedUserUserGrantRequests, 
                t.deletedUserUserGrantRequests, t.userUserGrantRequestHistories)
 
@@ -264,8 +251,26 @@ if __name__ == "__main__":
         
         printTransaction(t)
         if '-yes' in sys.argv:
+            revertChanged(t.changedAddresss)
+            revertDeleted(t.deletedAddresss)
+                
             revertChanged(t.changedComments)
             revertDeleted(t.deletedComments)
+                
+            revertChanged(t.changedCommentPrompts)
+            revertDeleted(t.deletedCommentPrompts)
+                
+            revertChanged(t.changedCommentPromptTexts)
+            revertDeleted(t.deletedCommentPromptTexts)
+                
+            revertChanged(t.changedDisqualifyingTags)
+            revertDeleted(t.deletedDisqualifyingTags)
+                
+            revertChanged(t.changedEngagements)
+            revertDeleted(t.deletedEngagements)
+                
+            revertChanged(t.changedEnrollments)
+            revertDeleted(t.deletedEnrollments)
                 
             revertChanged(t.changedExperiences)
             deleted = list(t.deletedExperiences.all())
@@ -273,14 +278,38 @@ if __name__ == "__main__":
             for i in deleted:
                 i.checkImplications()
                 
+            revertChanged(t.changedExperienceCustomServices)
+            revertDeleted(t.deletedExperienceCustomServices)
+
+            revertChanged(t.changedExperiencePrompts)
+            revertDeleted(t.deletedExperiencePrompts)
+                
+            revertChanged(t.changedExperiencePromptServices)
+            revertDeleted(t.deletedExperiencePromptServices)
+                
+            revertChanged(t.changedExperiencePromptTexts)
+            revertDeleted(t.deletedExperiencePromptTexts)
+                
             revertChanged(t.changedExperienceServices)
             deleted = list(t.deletedExperienceServices.all())
             revertDeleted(t.deletedExperienceServices)
             for i in deleted:
                 i.createImplications()
 
-            revertChanged(t.changedExperienceCustomServices)
-            revertDeleted(t.deletedExperienceCustomServices)
+            revertChanged(t.changedGroups)
+            revertDeleted(t.deletedGroups)
+
+            revertChanged(t.changedGroupGrants)
+            revertDeleted(t.deletedGroupGrants)
+
+            revertChanged(t.changedGroupMembers)
+            revertDeleted(t.deletedGroupMembers)
+
+            revertChanged(t.changedGroupNames)
+            revertDeleted(t.deletedGroupNames)
+
+            revertChanged(t.changedInquiries)
+            revertDeleted(t.deletedInquiries)
 
             revertChanged(t.changedNotifications)
             revertDeleted(t.deletedNotifications)
@@ -291,7 +320,10 @@ if __name__ == "__main__":
             revertDeleted(t.deletedOfferings)
 
             revertChanged(t.changedOfferingNames)
-            revertDeleted(t.deletedOfferings)
+            revertDeleted(t.deletedOfferingNames)
+
+            revertChanged(t.changedOfferingServices)
+            revertDeleted(t.deletedOfferingServices)
 
             revertChanged(t.changedOrganizations)
             revertDeleted(t.deletedOrganizations)
@@ -302,17 +334,41 @@ if __name__ == "__main__":
             revertChanged(t.changedPaths)
             revertDeleted(t.deletedPaths)
 
+            revertChanged(t.changedPeriods)
+            revertDeleted(t.deletedPeriods)
+
             revertChanged(t.changedServices)
             revertDeleted(t.deletedServices)
 
+            revertChanged(t.changedServiceImplications)
+            revertDeleted(t.deletedServiceImplications)
+
             revertChanged(t.changedServiceNames)
-            revertDeleted(t.deletedServices)
+            revertDeleted(t.deletedServiceNames)
+
+            revertChanged(t.changedServiceOfferingLabels)
+            revertDeleted(t.deletedServiceOfferingLabels)
+
+            revertChanged(t.changedServiceOrganizationLabels)
+            revertDeleted(t.deletedServiceOrganizationLabels)
+
+            revertChanged(t.changedServiceSiteLabels)
+            revertDeleted(t.deletedServiceSiteLabels)
+
+            revertChanged(t.changedSessions)
+            revertDeleted(t.deletedSessions)
+
+            revertChanged(t.changedSessionNames)
+            revertDeleted(t.deletedSessionNames)
 
             revertChanged(t.changedSites)
             revertDeleted(t.deletedSites)
 
             revertChanged(t.changedSiteNames)
             revertDeleted(t.deletedSiteNames)
+
+            revertChanged(t.changedStreets)
+            revertDeleted(t.deletedStreets)
 
             revertChanged(t.changedUsers)
             revertDeleted(t.deletedUsers)
