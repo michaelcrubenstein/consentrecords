@@ -57,9 +57,18 @@ var Controller = (function() {
 				return r2;
 			}
 							
-			bootstrap_alert.show($('.alert-container'), this.savingMessage, "alert-info");
-			
-			return this.oldInstance().update(updateData, false)
+			var r;
+			if (this.oldInstance().id())
+			{
+				bootstrap_alert.show($('.alert-container'), this.savingMessage, "alert-info");
+				r = this.oldInstance().update(updateData, false);
+			}
+			else
+			{
+				r = $.Deferred();
+				r.resolve(updateData, {});
+			}
+			return r
 				.then(function(changes, newIDs)
 					{
 						var r2 = $.Deferred();
