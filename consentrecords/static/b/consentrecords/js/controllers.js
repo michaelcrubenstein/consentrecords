@@ -227,6 +227,23 @@ var ChildController = (function() {
 	return ChildController;
 })();
 
+var AddressController = (function() {
+	AddressController.prototype = Object.create(ChildController.prototype);
+	AddressController.prototype.constructor = AddressController;
+	
+	AddressController.prototype.addingMessage = "Adding Address...";
+	AddressController.prototype.savingMessage = "Saving Address...";
+	AddressController.prototype.groupKey = 'address';
+	AddressController.prototype.addEventType = 'addressAdded.cr';
+
+	function AddressController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Address, duplicateForEdit);
+	}
+	
+	return AddressController;
+})();
+
 var ExperienceController = (function() {
 	ExperienceController.prototype = Object.create(ChildController.prototype);
 	ExperienceController.prototype.constructor = ExperienceController;

@@ -2735,10 +2735,12 @@ cr.Address = (function() {
 		this._city = 'city' in d ? d['city'] : "";
 		this._state = 'state' in d ? d['state'] : "";
 		this._zipCode = 'zipCode' in d ? d['zipCode'] : "";
+		var _this = this;
 		if ('streets' in d)
 			this._streets = d['streets'].map(function(d) {
 								var i = new cr.Street();
 								i.setData(d);
+								i.parent(_this);
 								return i;
 							});
     }
@@ -2861,8 +2863,9 @@ cr.Address = (function() {
 		return changed;
 	}
 	
-	function Address() {
+	function Address(parent) {
 	    cr.IInstance.call(this);
+	    this.parent(parent);
 	};
 	
 	return Address;
@@ -7060,7 +7063,7 @@ cr.Site = (function() {
 		this._webSite = 'web site' in d ? d['web site'] : "";
 		if ('address' in d)
 		{
-			this._address = new cr.Address();
+			this._address = new cr.Address(this);
 			this._address.setData(d['address']);
 		}
 		if ('offerings' in d)
@@ -7084,7 +7087,9 @@ cr.Site = (function() {
 		if (source._address)
 		{
 			if (!this._address)
-				this._address = new cr.Address();
+			{
+				this._address = new cr.Address(this);
+			}
 			this._address.mergeData(source._address);
 		}
 		if (!this._offerings && source._offerings)
@@ -7100,7 +7105,7 @@ cr.Site = (function() {
 		cr.IInstance.prototype.setDefaultValues.call(this);
 		this._webSite = "";
 		this._names = [];
-		this._address = new cr.Address();
+		this._address = new cr.Address(this);
 		this._address.setDefaultValues();
 		this._offerings = [];
 	}
@@ -7199,18 +7204,19 @@ cr.Site = (function() {
 		return changed;
 	}
 	
-    Site.prototype.getData = function(fields)
-    {
+	Site.prototype.promiseData = function(fields)
+	{
     	fields = fields !== undefined ? fields : ['address'];
     	var _this = this;
-    	return cr.IInstance.prototype.getData.call(this, fields)
+    	return cr.IInstance.prototype.promiseData.call(this, fields)
         	.then(function()
         	{
-        		_this.address()._fieldsLoaded = ['this'];
+        		if (_this.address()._fieldsLoaded.indexOf('this') < 0)
+        			_this.address()._fieldsLoaded.push('this');
         		return _this;
         	});
-    }
-    
+	}
+	
 	Site.prototype.triggerDeleted = function()
 	{
 		cr.IInstance.prototype.triggerDeleted.call(this);
@@ -7361,6 +7367,14 @@ cr.Street = (function() {
 		return changes;
 	}
 	
+	Street.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().streets(), this);
+		this.parent().calculateDescription();
+		$(this.parent()).trigger("streetDeleted.cr", this);
+	}
+	
 	Street.prototype.calculateDescription = function()
 	{
 		this._description = this._text;
@@ -7444,6 +7458,7 @@ cr.User = (function() {
 		this._emails = [];
 		this._notifications = [];
 		this._path = new cr.Path();
+		this._path.parent(this);
 		this._userGrantRequests = [];
 	}
 	
@@ -7503,7 +7518,10 @@ cr.User = (function() {
 		newInstance._systemAccess = this._systemAccess;
 		
 		if (newInstance._path == null)
+		{
 			newInstance._path = new cr.Path();
+			newInstance._path.parent(this);
+		}
 		this._path.duplicateData(newInstance._path, duplicateForEdit);
 		
 		return this;

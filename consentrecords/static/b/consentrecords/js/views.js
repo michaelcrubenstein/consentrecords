@@ -156,6 +156,7 @@ var crv = {
 		add: "Add",
 		address: "Address",
 		cancel: "Cancel",
+		city: "City",
 		done: "Done",
 		edit: "Edit",
 		emails: "Emails",
@@ -173,11 +174,15 @@ var crv = {
 		publicAccess: "Public Access",
 		readPublicAccess: "Public",
 		settings: "Settings",
-		sites: "Site",
+		site: "Site",
 		sites: "Sites",
+		state: "State",
+		street: "Street",
+		streets: "Streets",
 		user: "User",
 		users: "Users",
 		webSite: "Web Site",
+		zipCode: "Zip Code",
 	},
 
 	appendLoadingMessage: function(node)
@@ -2200,6 +2205,27 @@ var EditPanel = (function() {
 		return this;
 	}
 	
+	/** Adds a section that contains a unique text block. 
+		instanceProperty is a function that can get or set its value.
+	 */
+	EditPanel.prototype.appendTextSection = function(instance, instanceProperty, labelText, inputType)
+	{
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit unique', true)
+			.on('focusout', function(d)
+				{
+					instanceProperty.call(instance, d3.select(this).select('input').property('value'));
+				});
+		section.append('label')
+			.text(labelText);
+		this.appendTextEditor(section, 
+							  labelText,
+							  instanceProperty.call(instance),
+							  inputType);
+		return section;	 
+	}
+	
 	EditPanel.prototype.appendTextEditor = function(section, placeholder, value, inputType)
 	{
 		var itemsDiv = crf.appendItemList(section);
@@ -2525,6 +2551,43 @@ var EditPanel = (function() {
 		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
 	}
 	
+	/** Appends an enumeration that is associated with a picker panel for picking new values. */
+	EditPanel.prototype.appendEnumerationPickerSection = function(instance, instanceProperty, labelText, pickPanelType)
+	{
+		var section = this.mainDiv.append('section')
+			.classed('cell edit unique', true)
+			.datum(instance)
+			.on('click', 
+				function(d) {
+					if (prepareClick('click', 'pick ' + labelText))
+					{
+						try
+						{
+							var panel = new pickPanelType();
+							var textContainer = d3.select(this).selectAll('div.description-text');
+							panel.createRoot(d, textContainer.text())
+								 .showLeft().then(unblockClick);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
+								{
+									textContainer.text(newDescription);
+									instanceProperty.call(instance, newDescription);
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+	
+		section.append('label')
+			.text(labelText);
+		var items = this.appendEnumerationEditor(section, instanceProperty.call(instance));
+		crf.appendRightChevrons(items);	
+		return section;
+	}
+	
 	EditPanel.prototype.appendEnumerationEditor = function(section, newValue)
 	{
 		var itemsDiv = crf.appendItemList(section);
@@ -2724,6 +2787,17 @@ var EditItemPanel = (function () {
 var PickFromListPanel = (function () {
 	PickFromListPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PickFromListPanel.prototype.constructor = PickFromListPanel;
+	PickFromListPanel.prototype.oldDescription = null;
+	
+	PickFromListPanel.prototype.isInitialValue = function(d)
+	{
+		return this.datumDescription(d) === this.oldDescription;
+	}
+
+	PickFromListPanel.prototype.pickedValue = function(d)
+	{
+		return this.datumDescription(d);
+	}
 
 	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
 	{
@@ -2758,23 +2832,24 @@ var PickFromListPanel = (function () {
 		items.append("div")
 			.classed("description-text growable unselectable", true)
 			.text(function(d) { return _this.datumDescription(d); });
-				
+		
+		this.oldDescription = oldDescription;		
 		items.filter(function(d, i)
 			{
-				return _this.datumDescription(d) === oldDescription;
+				return _this.isInitialValue(d);
 			})
 			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
 				
 		items.on('click', function(d, i)
 				{
-					if (_this.datumDescription(d) === oldDescription)
+					if (_this.isInitialValue(d))
 						return;
 					
 					if (prepareClick('click', _this.datumDescription(d)))
 					{
 						try
 						{
-							$(_this.node()).trigger('itemPicked.cr', _this.datumDescription(d));
+							$(_this.node()).trigger('itemPicked.cr', _this.pickedValue(d));
 							_this.hideRight(unblockClick);
 						}
 						catch(err)
