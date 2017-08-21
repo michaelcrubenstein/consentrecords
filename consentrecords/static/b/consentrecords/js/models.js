@@ -1480,6 +1480,25 @@ cr.TranslationInstance = (function() {
 
 })();
 
+/* A mix-in for items that have positions */
+cr.OrderedInstance = (function() {
+	OrderedInstance.prototype.position = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._position;
+		else
+		{
+		    if (newValue !== this._position)
+		    {
+				this._position = newValue;
+			}
+			return this;
+		}
+	}
+	function OrderedInstance() {};
+	return OrderedInstance;
+})();
+	
 cr.ServiceLinkInstance = (function() {
 	ServiceLinkInstance.prototype = Object.create(cr.IInstance.prototype);
 	ServiceLinkInstance.prototype.constructor = ServiceLinkInstance;
@@ -1604,6 +1623,7 @@ cr.ServiceLinkInstance = (function() {
 	
 cr.OrderedServiceLinkInstance = (function() {
 	OrderedServiceLinkInstance.prototype = Object.create(cr.ServiceLinkInstance.prototype);
+	Object.assign(OrderedServiceLinkInstance.prototype, cr.OrderedInstance.prototype);
 	OrderedServiceLinkInstance.prototype.constructor = OrderedServiceLinkInstance;
 
 	OrderedServiceLinkInstance.prototype._position = null;
@@ -1612,20 +1632,6 @@ cr.OrderedServiceLinkInstance = (function() {
 	{
 		ServiceLinkInstance.prototype.setDefaultValues.call(this);
 		this._position = null;
-	}
-	
-	OrderedServiceLinkInstance.prototype.position = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._position;
-		else
-		{
-		    if (newValue != this._position)
-		    {
-				this._position = newValue;
-			}
-			return this;
-		}
 	}
 	
 	/** Sets the data for this OrderedServiceLinkInstance based on a dictionary of data that
@@ -3879,6 +3885,7 @@ cr.Experience = (function() {
 	
 cr.ExperienceCustomService = (function() {
 	ExperienceCustomService.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(ExperienceCustomService.prototype, cr.OrderedInstance.prototype);
 	ExperienceCustomService.prototype.constructor = ExperienceCustomService;
 
 	ExperienceCustomService.prototype._name = null;
@@ -3888,20 +3895,6 @@ cr.ExperienceCustomService = (function() {
 	{
 		console.assert(this.id());
 		return 'experience custom service/{0}'.format(this.id());
-	}
-	
-	ExperienceCustomService.prototype.position = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._position;
-		else
-		{
-		    if (newValue != this._position)
-		    {
-				this._position = newValue;
-			}
-			return this;
-		}
 	}
 	
 	ExperienceCustomService.prototype.name = function(newValue)
@@ -7278,6 +7271,7 @@ cr.SiteName = (function() {
 	
 cr.Street = (function() {
 	Street.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(Street.prototype, cr.OrderedInstance.prototype);
 	Street.prototype.constructor = Street;
 
 	Street.prototype._position = null;
@@ -7289,27 +7283,13 @@ cr.Street = (function() {
 		return 'street/{0}'.format(this.id());
 	}
 	
-	Street.prototype.position = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._position;
-		else
-		{
-		    if (newValue != this._position)
-		    {
-				this._position = newValue;
-			}
-			return this;
-		}
-	}
-	
 	Street.prototype.text = function(newValue)
 	{
 		if (newValue === undefined)
 			return this._text;
 		else
 		{
-		    if (newValue != this._text)
+		    if (newValue !== this._text)
 		    {
 				this._text = newValue;
 			}
