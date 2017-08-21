@@ -5084,7 +5084,7 @@ cr.Offering = (function() {
 			changes['maximum grade'] = revision.maximumGrade();
 		
 		this.appendUpdateList(this.names(), revision.names(), changes, 'names');		
-		this.appendUpdateList(this.services(), revision.services(), changes, 'services');		
+		this.appendUpdateList(this.offeringServices(), revision.offeringServices(), changes, 'services');		
 					
 		return changes;
 	}

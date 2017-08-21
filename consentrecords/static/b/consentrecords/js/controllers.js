@@ -691,6 +691,23 @@ var ExperienceController = (function() {
 	return ExperienceController;
 })();
 
+var OfferingController = (function() {
+	OfferingController.prototype = Object.create(ChildController.prototype);
+	OfferingController.prototype.constructor = OfferingController;
+	
+	OfferingController.prototype.addingMessage = "Adding Offering...";
+	OfferingController.prototype.savingMessage = "Saving Offering...";
+	OfferingController.prototype.groupKey = 'offerings';
+	OfferingController.prototype.addEventType = 'offeringAdded.cr';
+
+	function OfferingController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Offering, duplicateForEdit);
+	}
+	
+	return OfferingController;
+})();
+
 var OrganizationController = (function() {
 	OrganizationController.prototype = Object.create(RootController.prototype);
 	OrganizationController.prototype.constructor = OrganizationController;
@@ -735,6 +752,23 @@ var OrganizationController = (function() {
 	}
 	
 	return OrganizationController;
+})();
+
+var SessionController = (function() {
+	SessionController.prototype = Object.create(ChildController.prototype);
+	SessionController.prototype.constructor = SessionController;
+	
+	SessionController.prototype.addingMessage = "Adding Session...";
+	SessionController.prototype.savingMessage = "Saving Session...";
+	SessionController.prototype.groupKey = 'sessions';
+	SessionController.prototype.addEventType = 'sessionAdded.cr';
+
+	function SessionController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Session, duplicateForEdit);
+	}
+	
+	return SessionController;
 })();
 
 var SiteController = (function() {
