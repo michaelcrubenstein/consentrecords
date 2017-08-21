@@ -1070,7 +1070,7 @@ cr.IInstance = (function() {
 							$(_this).trigger(addEventType, d);
 						}
 					}
-					else
+					else if ('id' in d)
 					{
 						var item = items.find(function(i)
 							{
@@ -1081,6 +1081,19 @@ cr.IInstance = (function() {
 							item.updateData(d, newIDs);
 						}
 					}
+					else if ('clientID' in d)
+					{
+						var item = items.find(function(i)
+							{
+								return i.clientID() == d['clientID'];
+							});
+						if (item)
+						{
+							item.updateData(d, newIDs);
+						}
+					}
+					else
+						console.assert(false);
 				});
 		}
 		else
@@ -1131,7 +1144,10 @@ cr.IInstance = (function() {
 					var changes = oldItem.getUpdateData(d);
 					if (Object.keys(changes).length > 0)
 					{
-						changes.id = oldItem.id();
+						if (oldItem.id())
+							changes.id = oldItem.id();
+						else
+							changes.clientID = oldItem.clientID();
 						subChanges.push(changes);
 					}
 					++j;
