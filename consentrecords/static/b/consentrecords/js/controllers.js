@@ -681,6 +681,43 @@ var ExperienceController = (function() {
 			return "";
 	}
 	
+	/** Returns True if this controller has a service that overrides the importance of
+		the first service directly associated with this controller's new instance.
+	 */
+	ExperienceController.prototype.hasPrimaryService = function()
+	{
+		return this.offering() &&
+			   this.offering().offeringServices().length > 0;
+	}
+	
+	ExperienceController.prototype.primaryServices = function()
+	{
+		var offering = this.offering();
+		if (offering && offering.id())
+		{
+			return offering.offeringServices()
+				.filter(function(v) { return !v.isEmpty(); })
+				.map(function(s) { return s.service(); });
+		}
+		else
+			return [];
+	}
+	
+	ExperienceController.prototype.serviceLinks = function()
+	{
+		return this.experienceServices();
+	}
+	
+	ExperienceController.prototype.serviceLinkType = function()
+	{
+		return cr.ExperienceService;
+	}
+	
+	ExperienceController.prototype.customServiceType = function()
+	{
+		return cr.ExperienceCustomService;
+	}
+	
 	function ExperienceController(path, source, duplicateForEdit)
 	{
 		console.assert(path instanceof cr.Path);
