@@ -1298,9 +1298,11 @@ cr.IInstance = (function() {
 		}
 	};
 	
-	IInstance.prototype.triggerChanged = function()
+	IInstance.prototype.triggerChanged = function(target)
 	{
-		$(this).trigger('changed.cr', this);
+		target = target !== undefined ? target : this;
+		
+		$(this).trigger('changed.cr', target);
 	}
 	
 	IInstance.prototype.triggerDeleted = function()
@@ -2896,11 +2898,13 @@ cr.Address = (function() {
 		return changed;
 	}
 	
-	Address.prototype.triggerChanged = function()
+	Address.prototype.triggerChanged = function(target)
 	{
+		target = target !== undefined ? target : this;
+		
 		this.calculateDescription();
-		cr.IInstance.prototype.triggerChanged.call(this);
-		this.parent().triggerChanged();
+		cr.IInstance.prototype.triggerChanged.call(this, target);
+		this.parent().triggerChanged(target);
 	}
 	
 	function Address(parent) {
@@ -4053,7 +4057,7 @@ cr.ExperienceCustomService = (function() {
 	{
 		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
-		this.parent().triggerChanged();
+		this.parent().triggerChanged(this);
 	}
 	
 	function ExperienceCustomService() {
@@ -4078,7 +4082,7 @@ cr.ExperienceService = (function() {
 	{
 		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
-		this.parent().triggerChanged();
+		this.parent().triggerChanged(this);
 	}
 	
 	ExperienceService.prototype.triggerDeleted = function()
@@ -7647,10 +7651,12 @@ cr.User = (function() {
 		return changed;
 	}
 	
-	User.prototype.triggerChanged = function()
+	User.prototype.triggerChanged = function(target)
 	{
+		target = target !== undefined ? target : this;
+
 		this.calculateDescription();		
-		cr.IInstance.prototype.triggerChanged.call(this);
+		cr.IInstance.prototype.triggerChanged.call(this, target);
 	}
 	
 	User.prototype.firstName = function(newValue)
@@ -8044,7 +8050,7 @@ cr.UserEmail = (function() {
 	{
 		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
-		this.parent().triggerChanged();
+		this.parent().triggerChanged(this);
 	}
 	
 	function UserEmail() {
