@@ -615,22 +615,6 @@ var ExperienceCommentsPanel = (function() {
 					_this.loadComments([newData]);
 				});
 		
-		function onCommentsChecked(experience)
-		{
-			_this.loadComments(experience.comments());
-		}
-		
-		setupOnViewEventHandler(fd.experience, 'changed.cr', commentsDiv.node(), 
-			function (eventObject, changeTarget)
-			{
-				if (changeTarget instanceof cr.Experience)
-					changeTarget.promiseData(['comments'])
-						.then(function()
-							{
-								onCommentsChecked(changeTarget);
-							}, cr.asyncFail)
-			});
-		
 		if (fd.experience.canWrite())
 		{
 			var newCommentDiv = panel2Div.append('section')
@@ -694,7 +678,8 @@ var ExperienceCommentsPanel = (function() {
 		if (fd.experience.id())
 		{
 			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
-				comments are loaded. This won't happen if the comments are already loaded.
+				comments are loaded. The panel's css won't be set up if the comments are 
+				already loaded.
 			 */
 			this.promise = fd.experience.promiseData(['comments'])
 				.then(function(comments)
@@ -702,7 +687,7 @@ var ExperienceCommentsPanel = (function() {
 						var r = $.Deferred();
 						setTimeout(function()
 							{
-								onCommentsChecked(fd.experience);
+								_this.loadComments(fd.experience.comments());
 								r.resolve();
 							});
 						return r;
