@@ -946,17 +946,6 @@ cr.IInstance = (function() {
 		return [cr.privileges.write, cr.privileges.administer].indexOf(this.privilege()) >= 0;
 	}
 	
-	/* isEmpty is used to identify temporary instances that are created to fill
-		the UI but don't yet have any data. This need may be obsolete.
-	 */
-	IInstance.prototype.isEmpty = function()
-	{
-		if (this.id())
-		    return false;
-		
-		return false;
-	}
-	
 	IInstance.prototype.appendUpdateReferenceCommand = function(newValue, f, key, initialData, sourceObjects)
 	{
 		var onChange = {target: this, update: function() { f(newValue); }};
@@ -1586,7 +1575,7 @@ cr.ServiceLinkInstance = (function() {
 		
 	ServiceLinkInstance.prototype.isEmpty = function()
 	{
-		return this.service() != null;
+		return this.service() == null;
 	}
 	
 	/* Copies all of the data associated with this instance prior to making changes.
@@ -1821,7 +1810,7 @@ cr.UserLinkInstance = (function() {
 	
 	UserLinkInstance.prototype.isEmpty = function()
 	{
-		return this._user != null;
+		return this._user == null;
 	}
 	
 	UserLinkInstance.prototype.calculateDescription = function()
@@ -2201,7 +2190,7 @@ cr.Grant = (function() {
 	
 	Grant.prototype.isEmpty = function()
 	{
-		return this._grantee != null;
+		return this._grantee == null;
 	}
 	
 	Grant.prototype.mergeData = function(source)
