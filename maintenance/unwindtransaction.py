@@ -167,12 +167,6 @@ def printTransaction(t):
                t.createdOfferingNames, t.changedOfferingNames, 
                t.deletedOfferingNames, t.offeringNameHistories)
 
-    printTable("\ttext\tlanguageCode",
-               "Offering Names", "Offering Name",
-               printInstance,
-               t.createdOfferingNames, t.changedOfferingNames, 
-               t.deletedOfferingNames, t.offeringNameHistories)
-
     printTable("\tweb site\tinquiry access group\tpublic access\tprimary administrator",
                "Organizations", "Organization",
                printOrganization,
