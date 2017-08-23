@@ -1505,6 +1505,24 @@ cr.TranslationInstance = (function() {
 
 })();
 
+cr.Name = (function() {
+	Name.prototype = Object.create(cr.TranslationInstance.prototype);
+	Name.prototype.constructor = Name;
+	
+	Name.prototype.triggerChanged = function()
+	{
+		this.calculateDescription();
+		cr.IInstance.prototype.triggerChanged.call(this);
+		this.parent().triggerChanged(this);
+	}
+	
+	function Name() {
+	    cr.TranslationInstance.call(this);
+	};
+	
+	return Name;
+})();
+
 /* A mix-in for items that have positions */
 cr.OrderedInstance = (function() {
 	OrderedInstance.prototype.position = function(newValue)
@@ -3220,7 +3238,7 @@ cr.CommentPrompt = (function() {
 })();
 	
 cr.CommentPromptText = (function() {
-	CommentPromptText.prototype = Object.create(cr.TranslationInstance.prototype);
+	CommentPromptText.prototype = Object.create(cr.Name.prototype);
 	CommentPromptText.prototype.constructor = CommentPromptText;
 	
 	CommentPromptText.prototype.urlPath = function()
@@ -3230,7 +3248,7 @@ cr.CommentPromptText = (function() {
 	}
 	
 	function CommentPromptText() {
-	    cr.TranslationInstance.call(this);
+	    cr.Name.call(this);
 	};
 	
 	return CommentPromptText;
@@ -4634,7 +4652,7 @@ cr.GroupGrant = (function() {
 })();
 	
 cr.GroupName = (function() {
-	GroupName.prototype = Object.create(cr.TranslationInstance.prototype);
+	GroupName.prototype = Object.create(cr.Name.prototype);
 	GroupName.prototype.constructor = GroupName;
 	
 	GroupName.prototype.urlPath = function()
@@ -4644,7 +4662,7 @@ cr.GroupName = (function() {
 	}
 	
 	function GroupName() {
-	    cr.TranslationInstance.call(this);
+	    cr.Name.call(this);
 	};
 	
 	return GroupName;
@@ -5235,7 +5253,7 @@ cr.Offering = (function() {
 })();
 	
 cr.OfferingName = (function() {
-	OfferingName.prototype = Object.create(cr.TranslationInstance.prototype);
+	OfferingName.prototype = Object.create(cr.Name.prototype);
 	OfferingName.prototype.constructor = OfferingName;
 	
 	OfferingName.prototype.urlPath = function()
@@ -5245,7 +5263,7 @@ cr.OfferingName = (function() {
 	}
 	
 	function OfferingName() {
-	    cr.TranslationInstance.call(this);
+	    cr.Name.call(this);
 	};
 	
 	return OfferingName;
@@ -5527,7 +5545,7 @@ cr.Organization = (function() {
 })();
 	
 cr.OrganizationName = (function() {
-	OrganizationName.prototype = Object.create(cr.TranslationInstance.prototype);
+	OrganizationName.prototype = Object.create(cr.Name.prototype);
 	OrganizationName.prototype.constructor = OrganizationName;
 	
 	OrganizationName.prototype.urlPath = function()
@@ -5537,7 +5555,7 @@ cr.OrganizationName = (function() {
 	}
 	
 	function OrganizationName() {
-	    cr.TranslationInstance.call(this);
+	    cr.Name.call(this);
 	};
 	
 	return OrganizationName;
@@ -6451,7 +6469,7 @@ cr.Service.clearPromises = function()
 }
 
 cr.ServiceName = (function() {
-	ServiceName.prototype = Object.create(cr.TranslationInstance.prototype);
+	ServiceName.prototype = Object.create(cr.Name.prototype);
 	ServiceName.prototype.constructor = ServiceName;
 	
 	ServiceName.prototype.urlPath = function()
@@ -6461,7 +6479,7 @@ cr.ServiceName = (function() {
 	}
 	
 	function ServiceName() {
-	    cr.TranslationInstance.call(this);
+	    cr.Name.call(this);
 	};
 	
 	return ServiceName;
@@ -7309,7 +7327,7 @@ cr.Site = (function() {
 })();
 	
 cr.SiteName = (function() {
-	SiteName.prototype = Object.create(cr.TranslationInstance.prototype);
+	SiteName.prototype = Object.create(cr.Name.prototype);
 	SiteName.prototype.constructor = SiteName;
 
 	SiteName.prototype.urlPath = function()
@@ -7319,7 +7337,7 @@ cr.SiteName = (function() {
 	}
 	
 	function SiteName() {
-	    cr.TranslationInstance.call(this);
+	    cr.Name.call(this);
 	};
 	
 	return SiteName;
