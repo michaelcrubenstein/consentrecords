@@ -1963,6 +1963,7 @@ var OfferingPanel = (function () {
 
 		/* The tags section. */
 		this.tagPoolSection = new TagPoolSection(this, controller);
+		this.tagPoolSection.section.classed('first', true);
 
 		var tagsFocused = function(eventObject, inputNode)
 			{
