@@ -1,5 +1,9 @@
 /* tagPoolView.css */
 
+section.tags {
+	background-color: white;
+}
+
 section.tags div.tag-help {
 	margin: 6px 12px;
 	cursor: default;

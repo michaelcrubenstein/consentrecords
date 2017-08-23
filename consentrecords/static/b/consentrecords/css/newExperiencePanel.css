@@ -41,10 +41,6 @@
 		border-bottom-width: 1px;
 	}
 	
-	panel.new-experience-panel section {
-		background-color: white;
-	}
-	
 	panel.new-experience-panel section.tags.offering {
 		margin-top: 12px;
 	}
@@ -68,6 +64,10 @@
 		font-size: 11px;
 		font-weight: 600;
 		height: 25px;
+	}
+	
+	section.cell.picker {
+		background-color: white;
 	}
 	
 	panel.new-experience-panel section.cell.picker input {
