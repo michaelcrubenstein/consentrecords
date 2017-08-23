@@ -801,7 +801,8 @@ cr.IInstance = (function() {
     		return !(f in _this._fieldsLoaded);
     	});
 
-        if (fields.length == 0)	/* Everything is already loaded. */
+        if (!this.id() ||		/* This item was never saved. */
+        	fields.length == 0)	/* Everything is already loaded. */
         {
         	if (this._dataPromise)
         		return this._dataPromise;
@@ -1007,10 +1008,13 @@ cr.IInstance = (function() {
 			item.id(newIDs[d['add']])
 				.clientID(null);
 			item = crp.pushInstance(item);
-			
-			/* Call updateData so that sub-items also get their IDs */
-			item.updateData(d, newIDs);
 		}
+		
+		/* Call updateData so that sub-items also get their IDs.
+			updateData also is responsible for ensuring descriptions are calculated
+			and change triggers are sent.
+		 */
+		item.updateData(d, newIDs);
 		
 		$(this).trigger(addEventType, item);
 	}
