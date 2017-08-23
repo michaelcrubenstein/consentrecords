@@ -45,34 +45,6 @@
 		background-color: white;
 	}
 	
-	panel.new-experience-panel section.tags div.tag-help {
-		margin: 6px 12px;
-		cursor: default;
-		user-select: none;
-		-webkit-user-select: none;
-		-moz-user-select: none;
-		-ms-user-select: none;
-		-o-user-select: none;
-		font-size: 0.8em;
-		color: #666;
-	}
-	
-	panel.new-experience-panel section.tags.custom>div:last-of-type {
-		display: flex;
-		flex-direction: column;
-	}
-	
-	panel.new-experience-panel section.tags>div:last-of-type>div.pool-container {
-		margin-top: 0px;
-		flex-grow: 1;
-	}
-	
-	panel.new-experience-panel section.tags > div:first-of-type {
-		display: flex;
-		width: 100%;
-		padding-top: 6px;
-	}
-	
 	panel.new-experience-panel section.tags.offering {
 		margin-top: 12px;
 	}
@@ -96,76 +68,6 @@
 		font-size: 11px;
 		font-weight: 600;
 		height: 25px;
-	}
-	
-	panel.new-experience-panel section.tags label {
-		padding-bottom: 0px;
-	}
-	
-	panel.new-experience-panel section.tags > div:first-of-type span.tags-container {
-		margin-left: 12px;
-		display: inline-block;
-		margin-bottom: 6px;
-		flex-grow: 1;
-	}
-	
-	panel.new-experience-panel section.tags input.tag {
-		display: inline-block;
-		background-color: white;
-		color: #222;
-		border-style: solid;
-		border-width: 0px;
-		border-left: solid 3px;
-		border-color: transparent;
-		outline: none;
-		padding-left: 1.5px;
-		padding-right: 3.5px;
-		margin-right: 15px;
-		margin-bottom: 6px;
-		font-size: 11px;
-		font-weight: 600;
-		height: 25px;
-		border-radius: 0px;
-		appearance: none;
-		-webkit-appearance: none;
-		-moz-appearance: none;
-	}
-	
-	panel.new-experience-panel section.tags input.tag:focus {
-		display: inline-block;
-		background-color: white;
-		color: #222;
-		border-style: solid;
-		border-width: 1px;
-		border-color: #ddd;
-		outline: none;
-		padding-left: 3px;
-	}
-	
-	panel.new-experience-panel section.tags input.tag::-moz-selection,
-	panel.new-experience-panel section.tags input.tag::selection
-	{
-	  color: white; background: #2C55CC;
-	}
-
-	panel.new-experience-panel section.tags span.textWidth {
-		display: inline-block;
-		border-style: solid;
-		border-width: 0px;
-		border-left: solid 3px;
-		font-size: 11px;
-		font-weight: 600;
-		padding-left: 3px;
-		padding-right: 1.5px;
-	}
-	
-	panel.new-experience-panel section.tags button {
-		font-size: 11px;
-		font-weight: 600;
-		padding-left: 3px;
-		padding-right: 1.5px;
-		height: 25px;			/* Matches input-tag */
-		margin-bottom: 6px;		/* Matches input-tag */
 	}
 	
 	panel.new-experience-panel section.cell.picker input {
@@ -297,10 +199,6 @@
 		cursor: pointer;
 	}
 	
-	panel.new-experience-tags section p {
-		margin: 10px;
-	}
-
     .dots ~ panel {
     	height: calc(100% - 50px);
     	width: 100%;
@@ -314,54 +212,6 @@
 		margin: 10px;
 	}
 	
-	panel.experience nav
-	{
-		border-bottom-color: #f8f8f8;
-	}
-	
-	panel.experience header
-	{
-		padding-left: 12px;
-		padding-right: 12px;
-		padding-bottom: 5px;
-		border-bottom: 1px solid #eee;
-		background-color: #F8F8F8;
-	}
-	
-	panel.experience .title>.title
-	{
-		display: inline-block;
-		padding: .2em;
-		color: #333;
-		text-align: left;
-		font-size: 15px;
-		font-weight: 500;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		cursor: pointer;
-	}
-	
-	panel.experience li .organization>div {
-		display: block;
-		margin-left: 0px;
-		color: #444;
-		font-size: smaller;
-		cursor: pointer;
-	}
-
-	panel.experience header .tags {
-		font-size: smaller;
-		color: #666;
-		overflow-x: hidden;
-		text-overflow: ellipsis;
-		max-width: 100%;
-		cursor: pointer;
-	}
-	
-	panel.experience span.tag {
-		margin-right: 1em;
-	}
-
 	panel.confirm {
 		position: absolute;
 		bottom: 0;

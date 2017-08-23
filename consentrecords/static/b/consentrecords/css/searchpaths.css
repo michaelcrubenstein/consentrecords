@@ -86,12 +86,6 @@ text.icon-label {
 	cursor: default;
 }
 
-svg.flags {
-	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
-	font-size: 11px;
-	width: 100%;
-}
-
 svg.travel.flags {
 	position: absolute;
 }
@@ -99,13 +93,6 @@ svg.travel.flags {
 rect.hole {
 	opacity: 1.0;
 	fill: #666;
-}
-
-div.pool-container {
-	width: calc(100% - 20px);
-	margin: 10px;
-	overflow-y: scroll;
-	-webkit-overflow-scrolling: touch;
 }
 
 panel.search-paths div.query-container {
