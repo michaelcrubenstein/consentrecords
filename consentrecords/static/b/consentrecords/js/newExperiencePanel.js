@@ -925,7 +925,7 @@ var OfferingSearchView = (function() {
 
 		if (this.experienceController.siteName())
 		{
-			if (this.experienceController.site)
+			if (this.experienceController.site())
 			{
 				if (!val)
 				{
@@ -1039,7 +1039,7 @@ var OfferingSearchView = (function() {
 
 		if (this.experienceController.siteName())
 		{
-			if (this.experienceController.site)
+			if (this.experienceController.site())
 			{
 				if (this.typeName === "Offering")
 					return cr.Offering;
@@ -1111,7 +1111,7 @@ var OfferingSearchView = (function() {
 		/* For each state, set up typeName, and the list of typeNames. */
 		if (this.experienceController.siteName())
 		{
-			if (this.experienceController.site)
+			if (this.experienceController.site())
 			{
 				this.typeNames = ["Offering"];
 			}
