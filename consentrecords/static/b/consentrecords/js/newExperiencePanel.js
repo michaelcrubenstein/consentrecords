@@ -1232,106 +1232,6 @@ var OfferingSearchView = (function() {
 	return OfferingSearchView;
 })();
 
-var VerticalReveal = (function() {
-	VerticalReveal.prototype.node = null;
-
-	VerticalReveal.prototype.isVisible = function()
-	{
-		return this._isVisible;
-	}
-	
-	VerticalReveal.prototype.show = function(args, duration, step, done)
-	{
-		var jNode = $(this.node);
-
-		if (!args)
-			args = {};
-		if (args.newHeight === undefined)
-			args.newHeight = 'auto';
-		if (args.children === undefined)
-			args.children = jNode.children();
-
-		args.children.css('display', '');
-		this._isVisible = true;
-		var oldHeight = jNode.height();
-		jNode.height(args.newHeight);
-		if (args.before)
-			args.before();
-			
-		if (!duration)
-		{
-			if (step) step();
-			if (done) done();
-			jNode.css('padding-top', "0px")
-				 .css('padding-bottom', "0px");
-		}
-		else if (args.newHeight == 'auto')
-		{
-			/* This hack smells bad, but it seems to work. The problem occurs in that the code
-				below doesn't do the right thing if this item has padding on the bottom. (and maybe the top,
-				but I didn't test that. */
-			var outerHeight = jNode.outerHeight(false);
-			jNode.height(oldHeight);
-			jNode.animate({height: outerHeight, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
-			
-		}
-		else
-		{
-			var height = jNode.height();
-			jNode.height(oldHeight);
-			jNode.animate({height: height, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
-		}
-	}
-	
-	VerticalReveal.prototype.hide = function(args)
-	{
-		var duration = (args && args.duration) ? args.duration : 0;
-		var step = (args && args.step) ? args.step : null;
-		var done = (args && args.done) ? args.done : null;
-		var before = (args && args.before) ? args.before : null;
-		
-		var jNode = $(this.node);
-
-		var oldHeight = jNode.height();
-		var oldPaddingTop = jNode.css('padding-top');
-		var oldPaddingBottom = jNode.css('padding-bottom');
-		jNode.css('padding-top', '0px')
-			 .css('padding-bottom', '0px')
-			 .height(0);
-		if (before)
-			before();
-			
-		if (!duration)
-		{
-			if (step) step();
-			if (done) done();
-			jNode.children().css('display', 'none');
-			this._isVisible = false;
-		}
-		else
-		{
-			var _this = this;
-			jNode.css('padding-top', oldPaddingTop)
-				 .css('padding-bottom', oldPaddingBottom)
-				 .height(oldHeight)
-				 .animate({height: '0px', 'padding-top': '0px', 'padding-bottom': '0px'}, {duration: duration, easing: 'swing', step: step, done: 
-				function() {
-					jNode.children().css('display', 'none');
-					_this._isVisible = false;
-					if (done) done();
-				}});
-		}
-	}
-			
-	function VerticalReveal(node)
-	{
-		this.node = node;
-		this._isVisible = true;
-	}
-	
-	return VerticalReveal;
-})();
-
 /* This is the entry panel for the workflow. The experience contains no data on entry. 
 	This panel can specify a search domain or, with typing, pick a service, offering, organization or site.
 	One can also specify a custom service or a custom organization. */
@@ -1723,16 +1623,6 @@ var NewExperiencePanel = (function () {
 		this.calculateHeight();
 	}
 	
-	NewExperiencePanel.prototype.getTagConstrainText = function()
-	{
-		var tagsContainer = this.mainDiv.select('.tags-container');
-		var inputs = tagsContainer.selectAll('input:focus');
-		if (inputs.size() > 0)
-			return inputs.node().value.trim();
-		else
-			return "";
-	}
-	
 	NewExperiencePanel.prototype.checkOrganizationInput = function()
 	{
 		var newText = this.organizationSearchView.inputText();
@@ -2082,8 +1972,6 @@ var NewExperiencePanel = (function () {
 		var label;
 		var searchContainer;
 		
-		section = panel2Div.append('section');
-		
 		/* The tags section. */
 		this.tagPoolSection = new TagPoolSection(this, experienceController);
 		
@@ -2112,6 +2000,28 @@ var NewExperiencePanel = (function () {
 				{
 					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
 				});
+				
+		this.tagPoolSection.fillTags()
+			.then(function()
+				{
+					var tagPoolSection = _this.tagPoolSection;
+					
+					/* Have to hide after appending the flags or the metrics aren't calculated. */
+					tagPoolSection.searchView.reveal.hide();
+
+					if (experienceController.serviceLinks().length == 0)
+					{
+						var tagsContainer = tagPoolSection.section.select('.tags-container');
+						var tagInput = tagPoolSection.appendTag(tagsContainer, null);
+						tagInput.node().focus();
+					}
+					else
+					{
+						var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
+						tagInput.node().focus();
+					}
+				},
+				cr.asyncFail);
 
 		/* Code starting for the date range. */
 		var birthday = experienceController.parent().birthday() ||

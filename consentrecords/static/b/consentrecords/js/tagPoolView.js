@@ -117,6 +117,107 @@ var ServiceFlagController = (function() {
 	return ServiceFlagController;
 })();
 
+var VerticalReveal = (function() {
+	VerticalReveal.prototype.node = null;
+	VerticalReveal.prototype._isVisible = true;
+
+	VerticalReveal.prototype.isVisible = function()
+	{
+		return this._isVisible;
+	}
+	
+	VerticalReveal.prototype.show = function(args, duration, step, done)
+	{
+		var jNode = $(this.node);
+
+		if (!args)
+			args = {};
+		if (args.newHeight === undefined)
+			args.newHeight = 'auto';
+		if (args.children === undefined)
+			args.children = jNode.children();
+
+		args.children.css('display', '');
+		this._isVisible = true;
+		var oldHeight = jNode.height();
+		jNode.height(args.newHeight);
+		if (args.before)
+			args.before();
+			
+		if (!duration)
+		{
+			if (step) step();
+			if (done) done();
+			jNode.css('padding-top', "0px")
+				 .css('padding-bottom', "0px");
+		}
+		else if (args.newHeight == 'auto')
+		{
+			/* This hack smells bad, but it seems to work. The problem occurs in that the code
+				below doesn't do the right thing if this item has padding on the bottom. (and maybe the top,
+				but I didn't test that. */
+			var outerHeight = jNode.outerHeight(false);
+			jNode.height(oldHeight);
+			jNode.animate({height: outerHeight, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
+			
+		}
+		else
+		{
+			var height = jNode.height();
+			jNode.height(oldHeight);
+			jNode.animate({height: height, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
+		}
+	}
+	
+	VerticalReveal.prototype.hide = function(args)
+	{
+		var duration = (args && args.duration) ? args.duration : 0;
+		var step = (args && args.step) ? args.step : null;
+		var done = (args && args.done) ? args.done : null;
+		var before = (args && args.before) ? args.before : null;
+		
+		var jNode = $(this.node);
+
+		var oldHeight = jNode.height();
+		var oldPaddingTop = jNode.css('padding-top');
+		var oldPaddingBottom = jNode.css('padding-bottom');
+		jNode.css('padding-top', '0px')
+			 .css('padding-bottom', '0px')
+			 .height(0);
+		if (before)
+			before();
+			
+		if (!duration)
+		{
+			if (step) step();
+			if (done) done();
+			jNode.children().css('display', 'none');
+			this._isVisible = false;
+		}
+		else
+		{
+			var _this = this;
+			jNode.css('padding-top', oldPaddingTop)
+				 .css('padding-bottom', oldPaddingBottom)
+				 .height(oldHeight)
+				 .animate({height: '0px', 'padding-top': '0px', 'padding-bottom': '0px'}, {duration: duration, easing: 'swing', step: step, done: 
+				function() {
+					jNode.children().css('display', 'none');
+					_this._isVisible = false;
+					if (done) done();
+				}});
+		}
+	}
+			
+	function VerticalReveal(node)
+	{
+		this.node = node;
+		this._isVisible = true;
+	}
+	
+	return VerticalReveal;
+})();
+
 var TagPoolView = (function () {
 	TagPoolView.prototype.container = null;
 	TagPoolView.prototype.div = null;
@@ -423,8 +524,7 @@ var TagSearchView = (function() {
 		if (this.focusNode.value)
 			TagPoolView.prototype.setFlagVisibles.call(this);
 		else if (this.focusNode != this.firstTagInputNode() ||
-				 (this.controller.offering() &&
-			 	  this.controller.offering().offeringServices().length > 0))
+				 this.controller.hasPrimaryService())
 		{
 			this.flags().each(function(fs)
 				{
@@ -585,10 +685,10 @@ var TagSearchView = (function() {
 				if (d3Focus && d3Focus.datum())
 				{
 					var oldService = d3Focus.datum();
-					if (oldService instanceof cr.ServiceLinkInstance)
+					if (oldService instanceof this.controller.serviceLinkType())
 					{
-						/* Replace the old experienceService with a new one. */
-						if (this.controller.experienceServices().indexOf(oldService) >= 0)
+						/* Replace the old service link with a new one. */
+						if (this.controller.serviceLinks().indexOf(oldService) >= 0)
 						{
 							oldService.service(d.service)
 							     .description(d.service.description())
@@ -599,7 +699,8 @@ var TagSearchView = (function() {
 							oldService = this.controller.addService(d.service);
 						}
 					}
-					else if (oldService instanceof cr.ExperienceCustomService)
+					else if (this.controller.customServiceType() &&
+							 oldService instanceof this.controller.customServiceType())
 					{
 						this.controller.removeCustomService(oldService);
 						oldService = this.controller.addService(d.service);
@@ -686,6 +787,8 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.setTagColor = function(node)
 	{
+		console.assert(node.tagName == 'INPUT');
+		
 		if (node == document.activeElement)
 		{
 			d3.select(node)
@@ -703,10 +806,8 @@ var TagPoolSection = (function () {
 			{
 				if (d instanceof cr.Service)
 					service = d;
-				else if (d instanceof cr.ServiceLinkInstance)
+				else if (d instanceof this.controller.serviceLinkType())
 					service = d.service();
-				else
-					console.assert(false);
 			}
 			
 			if (service)
@@ -718,7 +819,7 @@ var TagPoolSection = (function () {
 					.style('border-color', pathGuide.poleColor)
 					.style('color', pathGuide.fontColor);
 			}
-			else if (d)
+			else if (d && node.value)
 			{
 				pathGuide = PathGuides.data[PathGuides.data.length - 1];
 		
@@ -764,13 +865,18 @@ var TagPoolSection = (function () {
 						/* Remove a standard service */
 						_this.controller.removeService(d);
 					}
-					else if (d instanceof _this.controller.customServiceType())
+					else if (_this.controller.customServiceType() &&
+							 d instanceof _this.controller.customServiceType())
 					{
 						/* Remove a custom service */
 						_this.controller.removeCustomService(d);
 					}
 					else if (d)
-						throw new Error("Invalid object to remove");
+					{
+						// This may be the datum associated with the container.
+						// In this case, do nothing.
+						;
+					}
 					$(this).remove();
 				}
 				else if (d instanceof _this.controller.serviceLinkType())
@@ -794,7 +900,8 @@ var TagPoolSection = (function () {
 					else
 						{	/* No change */ }
 				}
-				else if (d instanceof _this.controller.customServiceType())
+				else if (_this.controller.customServiceType() &&
+						 d instanceof _this.controller.customServiceType())
 				{
 					if (!newService)
 					{
@@ -871,7 +978,7 @@ var TagPoolSection = (function () {
 				try
 				{
 					_this.searchView.focusNode = this;
-					$(_this).trigger('tagsFocused.cr');
+					$(_this).trigger('tagsFocused.cr', this);
 				}
 				catch (err)
 				{
@@ -881,7 +988,7 @@ var TagPoolSection = (function () {
 			.on('focusout', function()
 			{
 				_this.setTagInputWidth(this);
-				$(_this).trigger('tagsChanged.cr');
+				$(_this).trigger('tagsChanged.cr', this);
 				if (!_this.inMouseDown)
 				{
 					_this.checkTagInput();
@@ -931,44 +1038,47 @@ var TagPoolSection = (function () {
 		var tags = [];
 		var _this = this;
 		
-		container = this.section.select('.tags-container');
+		var container = this.section.select('.tags-container');
 		var tagDivs = container.selectAll('input.tag');
 		tags = tags.concat(this.controller.serviceLinks()
 			.filter(function(s) 
 			{
-				sDescription = s.description();
+				var sDescription = s.description();
 				return !offeringTags.find(function(d)
 					{
 						return d.description() === sDescription;
 					})
 			}));
-		tags = tags.concat(this.controller.customServices()
-			.filter(function(s) 
-			{
-				sDescription = s.description();
-				return !offeringTags.find(function(d)
-					{
-						return d.description() === sDescription;
-					}) &&
-					!tags.find(function(d) 
-					{ 
-						return d.description() === sDescription; 
-					})
-			}));
+			
+		if (this.controller.customServiceType())
+		{
+			tags = tags.concat(this.controller.customServices()
+				.filter(function(s) 
+				{
+					var sDescription = s.description();
+					return !offeringTags.find(function(d)
+						{
+							return d.description() === sDescription;
+						}) &&
+						!tags.find(function(d) 
+						{ 
+							return d.description() === sDescription; 
+						})
+				}));
+		}
 		
 		tagDivs.filter(function(d) { return d == null || tags.indexOf(d) < 0; } ).remove();
 		
 		var ds = tagDivs.data();
 		for (var i = 0; i < tags.length; ++i)
 		{
-			var input;
 			if (ds.indexOf(tags[i]) < 0)
 			{
-				input = this.appendTag(container, tags[i]);
+				this.appendTag(container, tags[i]);
 			}
 			else
 			{
-				input = tagDivs.filter(function(d) { return d == tags[i]; });
+				var input = tagDivs.filter(function(d) { return d == tags[i]; });
 				input.node().value = tags[i].description();
 				this.setTagInputWidth(input.node());
 			}
@@ -1064,44 +1174,10 @@ var TagPoolSection = (function () {
 			return false;
 	}
 	
-	function TagPoolSection(panel, controller)
+	TagPoolSection.prototype.fillTags = function()
 	{
-		this.controller = controller;
-		
-		this.section = panel.mainDiv.append('section')
-			.classed('cell tags custom', true);
-		var tagsTopContainer = this.section.append('div');
-		label = tagsTopContainer.append('label')
-			.text('Tags:');
-		
-		var tagsContainer = tagsTopContainer.append('span')
-			.classed('tags-container', true);
-			
-		tagsContainer.append('button')
-			.classed('site-active-text', true)
-			.text('Add Tag')
-			.on('click', function()
-				{
-					$(this).stop()
-						.animate({opacity: 0}, {duration: 200})
-						.promise()
-						.then(function()
-							{ 
-								_this.checkTagInput(null);
-								var tagInput = _this.appendTag(tagsContainer, null);
-								tagInput.node().focus();
-							});
-				});
-		
-		searchContainer = this.section.append('div');
-		
-		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
-		this.tagHelp.text(this.firstTagHelp);
-			
-		this.searchView = new TagSearchView(searchContainer, this, controller);
-
 		var _this = this;
-		cr.Service.servicesPromise()
+		return cr.Service.servicesPromise()
 			.then(function(services)
 				{
 					_this.allServices = services;
@@ -1125,22 +1201,48 @@ var TagPoolSection = (function () {
 								else
 									d3.event.preventDefault();
 							});
-					
-					/* Have to hide after appending the flags or the metrics aren't calculated. */
-					_this.searchView.reveal.hide();
-
-					if (_this.controller.serviceLinks().length == 0)
-					{
-						var tagInput = _this.appendTag(tagsContainer, null);
-						tagInput.node().focus();
-					}
-					else
-					{
-						var tagInput = _this.section.select('.tags-container>input.tag');
-						tagInput.node().focus();
-					}
 				},
-				cr.syncFail);
+				cr.chainFail);
+	}
+	
+	function TagPoolSection(panel, controller)
+	{
+		this.controller = controller;
+		
+		this.section = panel.mainDiv.append('section')
+			.classed('cell tags custom', true);
+		var tagsTopContainer = this.section.append('div');
+		label = tagsTopContainer.append('label')
+			.text('Tags:');
+		
+		var tagsContainer = tagsTopContainer.append('span')
+			.classed('tags-container', true);
+			
+		var _this = this;
+		tagsContainer.append('button')
+			.classed('site-active-text', true)
+			.text('Add Tag')
+			.on('click', function()
+				{
+					var _thisButton = this;
+					$(this).stop()
+						.animate({opacity: 0}, {duration: 200})
+						.promise()
+						.then(function()
+							{
+								$(_thisButton).css('display', 'none');
+								_this.checkTagInput(null);
+								var tagInput = _this.appendTag(tagsContainer, null);
+								tagInput.node().focus();
+							});
+				});
+		
+		searchContainer = this.section.append('div');
+		
+		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
+		this.tagHelp.text(this.firstTagHelp);
+			
+		this.searchView = new TagSearchView(searchContainer, this, controller);
 	}
 	
 	return TagPoolSection;
