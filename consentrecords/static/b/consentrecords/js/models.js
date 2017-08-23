@@ -3395,6 +3395,13 @@ cr.Engagement = (function() {
 		return changed;
 	}
 
+	Engagement.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().engagements(), this);
+		$(this.parent()).trigger("engagementDeleted.cr", this);
+	}
+	
 	function Engagement() {
 	    cr.UserLinkInstance.call(this);
 	};
@@ -3435,6 +3442,13 @@ cr.Enrollment = (function() {
     	return cr.IInstance.prototype.getData.call(this, fields);
     }
     
+	Enrollment.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().enrollments(), this);
+		$(this.parent()).trigger("enrollmentDeleted.cr", this);
+	}
+	
 	function Enrollment() {
 	    cr.UserLinkInstance.call(this);
 	};
@@ -4620,6 +4634,13 @@ cr.Group = (function() {
 		return changed;
 	}
 	
+	Group.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().groups(), this);
+		$(this.parent()).trigger("groupDeleted.cr", this);
+	}
+	
 	function Group() {
 	    cr.IInstance.call(this);
 	};
@@ -4673,6 +4694,13 @@ cr.GroupMember = (function() {
 	GroupMember.prototype = Object.create(cr.UserLinkInstance.prototype);
 	GroupMember.prototype.constructor = GroupMember;
 	
+	GroupMember.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().members(), this);
+		$(this.parent()).trigger("memberDeleted.cr", this);
+	}
+	
 	GroupMember.prototype.urlPath = function()
 	{
 		console.assert(this.id());
@@ -4711,6 +4739,13 @@ cr.Inquiry = (function() {
 			}
 			return this;
 		}
+	}
+	
+	Inquiry.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().inquiries(), this);
+		$(this.parent()).trigger("inquiryDeleted.cr", this);
 	}
 	
 	function Inquiry() {
@@ -5213,6 +5248,13 @@ cr.Offering = (function() {
 			return "";
 	}
 
+	Offering.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().offerings(), this);
+		$(this.parent()).trigger("offeringDeleted.cr", this);
+	}
+	
     Offering.prototype.promiseSessions = function()
     {
     	p = this.readCheckPromise();
@@ -6091,6 +6133,13 @@ cr.Period = (function() {
 		}
 		
 		return changed;
+	}
+	
+	Period.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().periods(), this);
+		$(this.parent()).trigger("periodDeleted.cr", this);
 	}
 	
 	function Period() {
