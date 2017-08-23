@@ -2500,7 +2500,7 @@ var EditItemPanel = (function () {
 	EditItemPanel.prototype.createRoot = function(header, onShow)
 	{
 		var _this = this;
-		EditPanel.prototype.createRoot.call(this, this._controller.newInstance(), header, onShow);
+		EditPanel.prototype.createRoot.call(this, null, header, onShow);
 
 		this.navContainer.appendLeftButton()
 			.on("click", function()

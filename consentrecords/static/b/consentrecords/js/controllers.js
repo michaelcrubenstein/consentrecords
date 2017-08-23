@@ -737,6 +737,58 @@ var OfferingController = (function() {
 	OfferingController.prototype.groupKey = 'offerings';
 	OfferingController.prototype.addEventType = 'offeringAdded.cr';
 
+	/* Args can either be a cr.Service or a string. */
+	OfferingController.prototype.addService = function(args)
+	{
+		if (args instanceof cr.Service)
+		{
+			var i = new (this.serviceLinkType())();
+			i.description(args.description())
+			 .parent(this.newInstance())
+			 .service(args)
+			 .position(this.serviceLinks().length
+			           ? this.serviceLinks()[this.serviceLinks().length - 1].position() + 1
+			           : 0);
+			this.serviceLinks().push(i);
+			return i;
+		}
+		else
+			throw new Error("Invalid arguments to addService");
+	}
+	
+	OfferingController.prototype.removeService = function(service)
+	{
+		cr.removeElement(this.newInstance().offeringServices(), service);
+	}
+	
+	/** Returns True if this controller has a service that overrides the importance of
+		the first service directly associated with this controller's new instance.
+	 */
+	OfferingController.prototype.hasPrimaryService = function()
+	{
+		return false;
+	}
+	
+	OfferingController.prototype.primaryServices = function()
+	{
+		return [];
+	}
+	
+	OfferingController.prototype.serviceLinks = function()
+	{
+		return this.newInstance().offeringServices();
+	}
+	
+	OfferingController.prototype.serviceLinkType = function()
+	{
+		return cr.OfferingService;
+	}
+	
+	OfferingController.prototype.customServiceType = function()
+	{
+		return null;
+	}
+	
 	function OfferingController(parent, source, duplicateForEdit)
 	{
 		ChildController.call(this, parent, source || cr.Offering, duplicateForEdit);

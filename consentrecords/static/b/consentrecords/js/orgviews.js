@@ -1918,7 +1918,19 @@ var OfferingPanel = (function () {
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	OfferingPanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
-			return false;
+		return false;
+	}
+	
+	OfferingPanel.prototype.onFocusInTagInput = function(inputNode)
+	{
+		var _this = this;
+		d3.select(inputNode)
+			.style('background-color', null)
+			.style('border-color', null)
+			.style('color', null);
+			
+		this.tagPoolSection.checkTagInput(inputNode);
+		this.tagPoolSection.revealSearchView(inputNode, false);
 	}
 	
 	function OfferingPanel(controller, onShow) {
@@ -1949,6 +1961,40 @@ var OfferingPanel = (function () {
 				 
 		this.appendChildrenPanelButton(crv.buttonTexts.sessions, SessionsPanel);
 
+		/* The tags section. */
+		this.tagPoolSection = new TagPoolSection(this, controller);
+
+		var tagsFocused = function(eventObject, inputNode)
+			{
+				try
+				{
+					_this.onFocusInTagInput(inputNode);
+				}
+				catch (err)
+				{
+					cr.asyncFail(err);
+				}
+			}
+		$(this.tagPoolSection).on('tagsFocused.cr', this.node(), tagsFocused);
+		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
+			function(eventObject)
+				{
+					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
+				});
+				
+
+		this.tagPoolSection.fillTags()
+			.then(function()
+				{
+					var tagPoolSection = _this.tagPoolSection;
+					
+					/* Have to hide after appending the flags or the metrics aren't calculated. */
+					tagPoolSection.searchView.reveal.hide();
+
+					_this.tagPoolSection.checkTagInput(null);
+				},
+				cr.asyncFail)
+		
 		/* Add a delete button. */
 		this.appendDeleteButton();
 	}

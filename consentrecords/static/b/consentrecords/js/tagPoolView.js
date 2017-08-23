@@ -707,7 +707,9 @@ var TagSearchView = (function() {
 					}
 					else
 					{
-						console.assert(false);
+						// This can occur if the datum is null, in which case it
+						// May be the datum of the parent.
+						oldService = this.controller.addService(d.service);
 					}
 					this.focusNode.value = d.description();
 				}
@@ -858,7 +860,8 @@ var TagPoolSection = (function () {
 					
 				var newText = this.value.trim();
 				var newService = newText && _this.searchView.hasNamedService(newText.toLocaleLowerCase());
-				if (!newText)
+				if (!newText ||
+					(!newService && !_this.controller.customServiceType()))
 				{
 					if (d instanceof _this.controller.serviceLinkType())
 					{
@@ -991,15 +994,13 @@ var TagPoolSection = (function () {
 				$(_this).trigger('tagsChanged.cr', this);
 				if (!_this.inMouseDown)
 				{
-					_this.checkTagInput();
-					_this.showAddTagButton();
+					_this.hideReveal();
 				}
 			})
 			.keypress(function(e) {
 				if (e.which == 13)
 				{
-					_this.checkTagInput();
-					_this.showAddTagButton();
+					_this.hideReveal();
 					e.preventDefault();
 				}
 			})
@@ -1243,6 +1244,11 @@ var TagPoolSection = (function () {
 		this.tagHelp.text(this.firstTagHelp);
 			
 		this.searchView = new TagSearchView(searchContainer, this, controller);
+
+		$(panel.node()).one("revealing.cr", function()
+			{
+				_this.showTags();
+			});
 	}
 	
 	return TagPoolSection;

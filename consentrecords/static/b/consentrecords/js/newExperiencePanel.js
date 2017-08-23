@@ -1559,8 +1559,6 @@ var NewExperiencePanel = (function () {
 		{
 			parent.css('display', 'none');
 		}
-			
-		return this.tagPoolSection.showTags();
 	}
 	
 	NewExperiencePanel.prototype._serviceLabel = function(service, namesFunction)
