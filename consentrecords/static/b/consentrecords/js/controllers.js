@@ -89,7 +89,8 @@ var Controller = (function() {
 		else
 		{
 			/* Test case: add an experience to a path. */
-			bootstrap_alert.show($('.alert-container'), this.addingMessage, "alert-info");
+			if (this.parent().id())
+				bootstrap_alert.show($('.alert-container'), this.addingMessage, "alert-info");
 
 			var initialData = {'add': uuid.v4()};
 
