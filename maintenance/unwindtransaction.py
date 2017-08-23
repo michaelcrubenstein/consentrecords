@@ -49,13 +49,6 @@ def printExperienceImplication(i):
          str(i.service) if i.service else nullString,
          ))
          
-def printExperienceService(i):
-    print("%s\t%s\t%s" % \
-        (i.id, 
-         (i.position if (i.position != None) else nullString),
-         str(i.service) if i.service else nullString,
-         ))
-         
 def printNotification(i):
     print("%s\t%s\t%s\t%s" % \
         (i.id, 
@@ -131,6 +124,12 @@ def printTransaction(t):
                t.createdComments, t.changedComments, 
                t.deletedComments, t.commentHistories)
 
+    printTable("\tservice",
+               "Disqualifying Tags", "Disqualifying Tag",
+               printInstance,
+               t.createdExperiencePromptServices, t.changedExperiencePromptServices, 
+               t.deletedExperiencePromptServices, t.experiencePromptServiceHistories)
+
     printTable("\torganization\tcustom organization\tsite\tcustom site\toffering\tcustom offering\tstart\tend\ttimeframe",
                "Experiences", "Experience",
                printExperience,
@@ -145,9 +144,15 @@ def printTransaction(t):
 
     printTable("\tposition\tservice",
                "Experience Services", "Experience Service",
-               printExperienceService,
+               printInstance,
                t.createdExperienceServices, t.changedExperienceServices, 
                t.deletedExperienceServices, t.experienceServiceHistories)
+
+    printTable("\tposition\tservice",
+               "Experience Prompt Services", "Experience Prompt Service",
+               printInstance,
+               t.createdExperiencePromptServices, t.changedExperiencePromptServices, 
+               t.deletedExperiencePromptServices, t.experiencePromptServiceHistories)
 
     printTable("\tuser\tname\tis fresh",
                "Notifications", "Notification",
@@ -166,6 +171,12 @@ def printTransaction(t):
                printInstance,
                t.createdOfferingNames, t.changedOfferingNames, 
                t.deletedOfferingNames, t.offeringNameHistories)
+
+    printTable("\tposition\tservice",
+               "Offering Service", "Offering Service",
+               printInstance,
+               t.createdOfferingServices, t.changedOfferingServices, 
+               t.deletedOfferingServices, t.offeringServiceHistories)
 
     printTable("\tweb site\tinquiry access group\tpublic access\tprimary administrator",
                "Organizations", "Organization",
