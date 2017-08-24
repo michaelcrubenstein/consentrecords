@@ -5463,16 +5463,11 @@ class Offering(ChildInstance, dbmodels.Model):
             if self.maximumGrade:
                 data['maximum grade'] = self.maximumGrade
         
-            if 'services' in fields:
-                data['services'] = [i.getData([], context) for i in self.currentServices]
-            else:
-                data['services'] = [i.headData(context) for i in self.currentServices]
+            data['services'] = [i.getData([], context) for i in self.currentServices]
             
             if 'sessions' in fields:
                 data['sessions'] = [i.getData([], context) for i in self.currentSessions]
-            else:
-                data['sessions'] = [i.headData(context) for i in self.currentSessions]
-            data['sessions'].sort(key=lambda i: i['description'])
+                data['sessions'].sort(key=lambda i: i['description'])
             
             if 'parents' in fields:
                 if context.canRead(self.parent):
