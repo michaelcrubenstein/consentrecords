@@ -479,29 +479,6 @@ function editUniqueString(sectionObj, container, placeholder, value, inputType)
 		.property("value", value);
 }
 
-function editUniqueDateStampDayOptional(sectionObj, placeholder, value, inputType)
-{
-	var itemsDiv = crf.appendItemList(sectionObj);
-	
-	var items = itemsDiv.append('li');
-	items.each(function(d)
-	{
-		var input = new DateInput(this);
-		d3.select(this).selectAll('.date-row')
-			.classed('growable', true);
-			
-		if (value && value.length > 0)
-			input.value(value);
-	});
-}
-
-function getUniqueDateStampDayOptionalValue(sectionObj)
-{
-	var dateRow = sectionObj.selectAll('.date-row');
-	var input = dateRow.node().dateInput;
-	return input.value();
-}
-
 /* Produces a function which adds new value view to a container view
 	when the new data is added.
  */
@@ -2142,22 +2119,6 @@ var EditPanel = (function() {
 			hideWheel: hideWheel,
 			showWheel: showWheel,
 		};
-	}
-	
-	EditPanel.prototype.appendDateStampDayOptionalEditor = function(section, placeholder, value, inputType)
-	{
-		var itemsDiv = crf.appendItemList(section);
-	
-		var items = itemsDiv.append('li');
-		items.each(function(d)
-		{
-			var input = new DateInput(this);
-			d3.select(this).selectAll('.date-row')
-				.classed('growable', true);
-			
-			if (value)
-				input.value(value);
-		});
 	}
 	
 	EditPanel.prototype.onConfirmDelete = function(data, d, deleteControl)
