@@ -1515,6 +1515,13 @@ cr.Name = (function() {
 		this.parent().triggerChanged(this);
 	}
 	
+	Name.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().names(), this);
+		this.parent().triggerChanged(this);
+	}
+	
 	function Name() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -5185,6 +5192,13 @@ cr.Offering = (function() {
 		return changed;
 	}
 	
+	Offering.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().offerings(), this);
+		$(this.parent()).trigger("offeringDeleted.cr", this);
+	}
+	
 	Offering.prototype.ageRange = function()
 	{
 		var min = this.minimumAge();
@@ -5233,13 +5247,6 @@ cr.Offering = (function() {
 			return "";
 	}
 
-	Offering.prototype.triggerDeleted = function()
-	{
-		cr.IInstance.prototype.triggerDeleted.call(this);
-		cr.removeElement(this.parent().offerings(), this);
-		$(this.parent()).trigger("offeringDeleted.cr", this);
-	}
-	
     Offering.prototype.promiseSessions = function()
     {
     	p = this.readCheckPromise();
@@ -6110,6 +6117,7 @@ cr.Period = (function() {
 			this._endTime = d['end time'];
 			changed = true;
 		}
+		
 		if (changed)
 			this.triggerChanged();
 		
@@ -7068,6 +7076,13 @@ cr.Session = (function() {
     	return cr.IInstance.prototype.getData.call(this, fields);
     }
     
+	Session.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().sessions(), this);
+		$(this.parent()).trigger("sessionDeleted.cr", this);
+	}
+	
 	function Session() {
 	    cr.IInstance.call(this);
 	};
