@@ -22,7 +22,19 @@
     <!-- Custom styles for this template -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showFollowing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showSharing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/signup.css" %}?v={{jsversion}}" rel="stylesheet">
+    
+    <link href="{% static "custom_user/css/formsimple.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
+
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -63,12 +75,29 @@
 	<script src="{% static "b/consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/showFollowing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/showSharing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/signup.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/settings.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 	
+		staticPath = '{% static "b/" %}';
+		jsVersionPathSuffix = '?v={{jsversion}}';
 		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
 		leftChevronPath = '{% static "b/consentrecords/png/ios7-arrow-back-512px.svg" %}'
+		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
+		notificationsImagePath = '{% static "b/consentrecords/png/notifications.png" %}' + jsVersionPathSuffix;
+		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
+		myPathwayImagePath = '{% static "b/consentrecords/png/mypathway.svg" %}' + jsVersionPathSuffix;
+		compareImagePath = '{% static "b/consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
+		inquiryImagePath = '{% static "b/consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
 		
 		/* For show methods, the obj is the DOM object that contains the item being shown.
 							 the d object contains the field information.

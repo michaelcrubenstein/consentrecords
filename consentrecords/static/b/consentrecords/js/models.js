@@ -798,7 +798,7 @@ cr.IInstance = (function() {
     	fields.push('this');
     	fields = fields.filter(function(f)
     	{
-    		return _this._fieldsLoaded.indexOf('this') < 0;
+    		return _this._fieldsLoaded.indexOf(f) < 0;
     	});
 
         if (!this.id() ||		/* This item was never saved. */

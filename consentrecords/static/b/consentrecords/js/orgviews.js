@@ -475,6 +475,7 @@ var InquirySearchView = (function () {
 	InquirySearchView.prototype = Object.create(SessionChildSearchView.prototype);
 	InquirySearchView.prototype.constructor = InquirySearchView;
 
+	InquirySearchView.prototype.textPath = 'name>text';
 	InquirySearchView.prototype.pathType = 'inquiry';
 	
 	InquirySearchView.prototype.resultType = function()

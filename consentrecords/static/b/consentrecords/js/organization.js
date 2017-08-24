@@ -129,9 +129,16 @@ function showUser(user)
 	user.promiseData(['path'])
 	 .then(function()
 		{
-			var panel = new PathlinesPanel(user, true);
-			panel.pathtree.setUser(user.path(), true);
-			panel.showLeft().then(unblockClick);
+			try
+			{
+				var panel = new PathlinesPanel(user, true);
+				panel.pathtree.setUser(user.path(), true);
+				panel.showLeft().then(unblockClick);
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
 		},
 		cr.syncFail);
 }

@@ -277,23 +277,25 @@ var ExperienceCommentsPanel = (function() {
 		var _this = this;
 		var changes = [];
 
-		cr.signedinUser.notifications().forEach(function(n)
-			{
-				if (n.name() == "crn.ExperienceCommentRequested")
+		if (cr.signedinUser.notifications())
+		{
+			cr.signedinUser.notifications().forEach(function(n)
 				{
-					var args = n.args();
-					if (args.length >= 3 && 
-						args[1].id() == _this.fd.experience.id())
+					if (n.name() == "crn.ExperienceCommentRequested")
 					{
-						var comment = crp.getInstance(args[2].id());
-						if (comment && comment.text())
+						var args = n.args();
+						if (args.length >= 3 && 
+							args[1].id() == _this.fd.experience.id())
 						{
-							changes.push({'delete': n.id()});
+							var comment = crp.getInstance(args[2].id());
+							if (comment && comment.text())
+							{
+								changes.push({'delete': n.id()});
+							}
 						}
 					}
-				}
-			});
-			
+				});
+		}	
 		if (changes.length > 0)
 		{
 			return cr.signedinUser.update({'notifications': changes});
