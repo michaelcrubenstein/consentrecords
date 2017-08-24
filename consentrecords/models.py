@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.db import models as dbmodels
-from django.db.models import F, Q, Prefetch
+from django.db.models import F, Q, Prefetch, Case, When, Min
 from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
@@ -654,6 +654,16 @@ class ChildInstance(IInstance):
     @property    
     def privilegeSource(self):
         return self.parent.privilegeSource
+
+class NamedInstance():
+    def order_by(queryset, context):
+        w1=When(names__languageCode=context.languageCode, names__deleteTransaction__isnull=True, then='names__text')
+        if context.languageCode=='en':
+            return queryset.annotate(ordering=Min(Case(w1))).order_by('ordering')
+        else:
+            w2=When(names__languageCode='en', names__deleteTransaction__isnull=True, then='names__text')
+            return queryset.annotate(ordering=Min(Case(w1))).annotate(orderingen=Min(Case(w2)))\
+                .order_by(Case(When(ordering__isnull=False, then='ordering'), default='orderingen'))
         
 ### An Instance that is a name and a language code
 class TranslationInstance(ChildInstance):
@@ -5488,9 +5498,7 @@ class Offering(ChildInstance, dbmodels.Model):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
 
     def order_by(queryset, context):
-        return queryset.filter(Q(names__deleteTransaction__isnull=True)& 
-                               (Q(names__languageCode=context.languageCode)|(Q(names__languageCode='en')&~Q(names__parent__names__languageCode=context.languageCode))))\
-                       .order_by('names__text')
+        return NamedInstance.order_by(queryset, context)
     
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
