@@ -380,248 +380,42 @@ var AddressPanel = (function () {
 	return AddressPanel;
 })();
 
-var SessionPanel = (function () {
-	SessionPanel.prototype = Object.create(EditPanel.prototype);
-	SessionPanel.prototype.constructor = SessionPanel;
-
-	SessionPanel.prototype.session = null;
-	SessionPanel.prototype.panelTitle = "Session";
-	SessionPanel.prototype.datePlaceholder = "(None)";
-	SessionPanel.prototype.registrationDeadlineLabel = "Registration Deadline";
-	SessionPanel.prototype.startLabel = "Start";
-	SessionPanel.prototype.endLabel = "End";
-	SessionPanel.prototype.canRegisterLabel = "Can Register";
-	SessionPanel.prototype.inquiriesLabel = "Inquiries";
-	SessionPanel.prototype.enrollmentsLabel = "Enrollments";
-	SessionPanel.prototype.engagementsLabel = "Engagements";
-	SessionPanel.prototype.periodsLabel = "Periods";
-	SessionPanel.prototype.yesLabel = "Yes";
-	SessionPanel.prototype.noLabel = "No";
-
-    SessionPanel.prototype.promiseUpdateChanges = function()
-    {
-		var changes = {};
-		var getCanRegisterValue = function(enumValue)
-		{
-			if (enumValue == SessionPanel.prototype.yesLabel)
-				return cr.booleans.yes;
-			else if (enumValue == SessionPanel.prototype.noLabel)
-				return cr.booleans.no;
-			else
-				return "";
-		}
-		
-		this.appendDateChanges(this.registrationDeadlineEditor, this.session.registrationDeadline(), 
-								changes, 'registration deadline')
-			.appendDateChanges(this.startEditor, this.session.start(),
-							   changes, 'start')
-			.appendDateChanges(this.endEditor, this.session.end(),
-							   changes, 'end')
-			.appendEnumerationChanges(this.canRegisterSection, getCanRegisterValue, 
-									  this.session.canRegister(),
-							   		  changes, 'can register')
-			.appendTranslationChanges(this.namesSection, this.session.names, changes, 'names');
-		return this.session.update(changes);
-    }
-    
-    SessionPanel.prototype.canRegisterDescription = function()
-    {
-    	if (this.session.canRegister() == "yes")
-    		return this.yesLabel;
-    	else
-    		return this.noLabel;
-    }
-    
-	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
-	SessionPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+var CanRegisterChoices = (function () {
+	
+	function CanRegisterChoices()
 	{
-		if (newReveal != this.registrationDeadlineEditor.wheelReveal &&
-			this.registrationDeadlineEditor.wheelReveal.isVisible())
-		{
-			this.registrationDeadlineEditor.hideWheel(done);
-			return true;
-		}
-		else if (newReveal != this.startEditor.wheelReveal &&
-			this.startEditor.wheelReveal.isVisible())
-		{
-			this.startEditor.hideWheel(done);
-			return true;
-		}
-		else if (newReveal != this.endEditor.wheelReveal &&
-			this.endEditor.wheelReveal.isVisible())
-		{
-			this.endEditor.hideWheel(done);
-			return true;
-		}
-		else
-			return false;
 	}
 	
-	function SessionPanel(session, onShow) {
-		var _this = this;
-		this.session = session;
-
-		this.createRoot(session, this.panelTitle, "edit", onShow);
-
-		var doneButton = this.navContainer.appendRightButton();
-			
-		this.navContainer.appendTitle(this.panelTitle);
-		
-		doneButton.on("click", function()
-			{
-				if (prepareClick('click', _this.panelTitle + ' done'))
-				{
-					showClickFeedback(this);
-		
-					try
-					{
-						/* Build up an update for initialData. */
-						_this.promiseUpdateChanges()
-							.then(function() { _this.hide(); },
-								  cr.syncFail)
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-		.append("span").text(crv.buttonTexts.done);
-		
-		this.namesSection = this.mainDiv.append('section')
-			.datum(this.session)
-			.classed('cell edit multiple', true);
-		this.namesSection.append('label')
-			.text(crv.buttonTexts.names);
-		this.appendTranslationEditor(this.namesSection, this.session, crv.buttonTexts.names, crv.buttonTexts.name, 
-									 this.session.names(),
-									 cr.SessionName);
-
-		this.registrationDeadlineSection = this.mainDiv.append('section')
-			.datum(this.session)
-			.classed('cell edit unique first', true);
-		this.registrationDeadlineSection.append('label')
-			.text(this.registrationDeadlineLabel);
-		this.registrationDeadlineEditor = this.appendDateEditor(this.registrationDeadlineSection, 
-							  this.datePlaceholder,
-							  this.session.registrationDeadline());
-				 
-		this.startSection = this.mainDiv.append('section')
-			.datum(this.session)
-			.classed('cell edit unique', true);
-		this.startSection.append('label')
-			.classed('overlined', true)
-			.text(this.startLabel);
-		this.startEditor = this.appendDateEditor(this.startSection,
-												 this.datePlaceholder,
-												 this.session.start());
-				 
-		this.endSection = this.mainDiv.append('section')
-			.datum(this.session)
-			.classed('cell edit unique', true);
-		this.endSection.append('label')
-			.classed('overlined', true)
-			.text(this.endLabel);
-		this.endEditor = this.appendDateEditor(this.endSection,
-												 this.datePlaceholder,
-												 this.session.end());
-		
-		this.canRegisterSection = this.appendEnumerationPickerSection(this.session, this.canRegisterDescription, this.canRegisterLabel, PickCanRegisterPanel)
-		this.canRegisterSection.classed('first', true);		 
-
-		var childrenButton;
-		childrenButton = this.appendActionButton(this.inquiriesLabel, function() {
-				if (prepareClick('click', 'Inquiries'))
-				{
-					showClickFeedback(this);
-					try
-					{
-						var panel = new InquiriesPanel(session, revealPanelLeft);
-						panel.showLeft().then(unblockClick);
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-			.classed('first', true);
-		childrenButton.selectAll('li>div').classed('description-text', true);
-		crf.appendRightChevrons(childrenButton.selectAll('li'));	
-
-		childrenButton = this.appendActionButton(this.enrollmentsLabel, function() {
-				if (prepareClick('click', 'Enrollments'))
-				{
-					showClickFeedback(this);
-					try
-					{
-						var panel = new EnrollmentsPanel(session, revealPanelLeft);
-						panel.showLeft().then(unblockClick);
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-			.classed('first', true);
-		childrenButton.selectAll('li>div').classed('description-text', true);
-		crf.appendRightChevrons(childrenButton.selectAll('li'));	
-
-		childrenButton = this.appendActionButton(this.engagementsLabel, function() {
-				if (prepareClick('click', 'Engagements'))
-				{
-					showClickFeedback(this);
-					try
-					{
-						var panel = new EngagementsPanel(session, revealPanelLeft);
-						panel.showLeft().then(unblockClick);
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-			.classed('first', true);
-		childrenButton.selectAll('li>div').classed('description-text', true);
-		crf.appendRightChevrons(childrenButton.selectAll('li'));	
-
-		childrenButton = this.appendActionButton(this.periodsLabel, function() {
-				if (prepareClick('click', 'Periods'))
-				{
-					showClickFeedback(this);
-					try
-					{
-						var panel = new PeriodsPanel(session, revealPanelLeft);
-						panel.showLeft().then(unblockClick);
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-			.classed('first', true);
-		childrenButton.selectAll('li>div').classed('description-text', true);
-		crf.appendRightChevrons(childrenButton.selectAll('li'));	
-	}
-	
-	return SessionPanel;
+	return CanRegisterChoices;
 })();
 
 var PickCanRegisterPanel = (function () {
 	PickCanRegisterPanel.prototype = Object.create(PickFromListPanel.prototype);
 	PickCanRegisterPanel.prototype.constructor = PickCanRegisterPanel;
 
-	PickCanRegisterPanel.prototype.title = SessionPanel.prototype.canRegisterLabel;
-	
+	PickCanRegisterPanel.prototype.title = crv.buttonTexts.canRegister;
 	
 	PickCanRegisterPanel.prototype.data = function()
 	{
-		return [{value: 'yes', description: SessionPanel.prototype.yesLabel},
-				{value: 'no', description: SessionPanel.prototype.noLabel}
+		return [{code: '', name: crv.buttonTexts.nonePlaceholder},
+				{code: 'yes', name: crv.buttonTexts.yes},
+				{code: 'no', name: crv.buttonTexts.no},
 			   ];
 	}
 	
 	PickCanRegisterPanel.prototype.isInitialValue = function(d)
 	{
-		return d.value === this.initialValue;
+		return d.code === this.initialValue;
 	}
 
 	PickCanRegisterPanel.prototype.pickedValue = function(d)
 	{
-		return d.value;
+		return d.code;
 	}
 
 	PickCanRegisterPanel.prototype.datumDescription = function(d)
 	{
-		return d.description;
+		return d.name;
 	}
 	
 	PickCanRegisterPanel.prototype.createRoot = function(user, initialValue)
@@ -634,6 +428,15 @@ var PickCanRegisterPanel = (function () {
 		PickFromListPanel.call(this);
 	}
 	
+	PickCanRegisterPanel.getDescription = function(storedValue)
+	{
+		var d = PickCanRegisterPanel.prototype.data.call(null).find(function(d)
+			{
+				return d.code == storedValue;
+			})
+		return d && d.name;
+	}
+
 	return PickCanRegisterPanel;
 })();
 
@@ -1912,7 +1715,6 @@ var OfferingPanel = (function () {
 	OfferingPanel.prototype = Object.create(ChildPanel.prototype);
 	OfferingPanel.prototype.constructor = OfferingPanel;
 
-	OfferingPanel.prototype.panelTitle = "Offering";
 	OfferingPanel.prototype.deleteLabel = "Delete Offering";
 
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
@@ -2058,7 +1860,6 @@ var OrganizationPanel = (function () {
 	OrganizationPanel.prototype.constructor = OrganizationPanel;
 
 	OrganizationPanel.prototype.organization = null;
-	OrganizationPanel.prototype.panelTitle = "Organization";
 	OrganizationPanel.prototype.publicAccessLabel = "Public Access";
 	OrganizationPanel.prototype.primaryAdministratorLabel = "Primary Administrator";
 	OrganizationPanel.prototype.inquiryAccessGroupLabel = "Inquiry Access Group";
@@ -2473,13 +2274,12 @@ var OrganizationsPanel = (function () {
 	OrganizationsPanel.prototype = Object.create(RootItemsPanel.prototype);
 	OrganizationsPanel.prototype.constructor = OrganizationsPanel;
 
-	OrganizationsPanel.prototype.panelTitle = "Organizations";
 	OrganizationsPanel.prototype.addPanelTitle = "Add Organization";
 	OrganizationsPanel.prototype.searchViewType = OrganizationSearchView;
 	
 	function OrganizationsPanel(onShow)
 	{
-		RootItemsPanel.call(this, this.panelTitle, onShow);
+		RootItemsPanel.call(this, crv.buttonTexts.organizations, onShow);
 	}
 	
 	return OrganizationsPanel;
@@ -2530,6 +2330,78 @@ var ServicesPanel = (function () {
 	
 	return ServicesPanel;
 	
+})();
+
+var SessionPanel = (function () {
+	SessionPanel.prototype = Object.create(ChildPanel.prototype);
+	SessionPanel.prototype.constructor = SessionPanel;
+
+	SessionPanel.prototype.deleteLabel = "Delete Session";
+
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	SessionPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		if (newReveal != this.registrationDeadlineEditor.wheelReveal &&
+			this.registrationDeadlineEditor.wheelReveal.isVisible())
+		{
+			this.registrationDeadlineEditor.hideWheel(done);
+			return true;
+		}
+		else if (newReveal != this.startEditor.wheelReveal &&
+			this.startEditor.wheelReveal.isVisible())
+		{
+			this.startEditor.hideWheel(done);
+			return true;
+		}
+		else if (newReveal != this.endEditor.wheelReveal &&
+			this.endEditor.wheelReveal.isVisible())
+		{
+			this.endEditor.hideWheel(done);
+			return true;
+		}
+		else
+			return false;
+	}
+	
+	function SessionPanel(controller, onShow) {
+		ChildPanel.call(this, controller);
+		
+		var _this = this;
+
+		this.createRoot(crv.buttonTexts.session, onShow);
+		
+		/* Fill in the controls for editing */
+		this.namesSection = this.mainDiv.append('section')
+			.datum(controller.newInstance())
+			.classed('cell edit multiple', true);
+		this.namesSection.append('label')
+			.text(this.namesLabel);
+		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
+									 controller.newInstance().names(),
+									 cr.SessionName);
+									 
+		this.registrationDeadlineSection = this.appendDateSection(controller.newInstance(), controller.newInstance().registrationDeadline, crv.buttonTexts.registrationDeadline);
+		this.registrationDeadlineEditor = this.registrationDeadlineSection.editor;
+		this.registrationDeadlineSection.classed('first', true);
+		
+		this.startSection = this.appendDateSection(controller.newInstance(), controller.newInstance().start, crv.buttonTexts.start);
+		this.startEditor = this.startSection.editor;
+		this.endSection = this.appendDateSection(controller.newInstance(), controller.newInstance().end, crv.buttonTexts.end);
+		this.endEditor = this.endSection.editor;
+
+		this.canRegisterSection = this.appendEnumerationPickerSection(controller.newInstance(), controller.newInstance().canRegister, crv.buttonTexts.canRegister, PickCanRegisterPanel)
+		this.canRegisterSection.classed('first', true);
+				 
+		this.appendChildrenPanelButton(crv.buttonTexts.inquiries, InquiriesPanel);
+		this.appendChildrenPanelButton(crv.buttonTexts.enrollments, EnrollmentsPanel);
+		this.appendChildrenPanelButton(crv.buttonTexts.engagements, EngagementsPanel);
+		this.appendChildrenPanelButton(crv.buttonTexts.periods, PeriodsPanel);
+		
+		/* Add a delete button. */
+		this.appendDeleteButton();
+	}
+	
+	return SessionPanel;
 })();
 
 var SessionChildSearchView = (function () {

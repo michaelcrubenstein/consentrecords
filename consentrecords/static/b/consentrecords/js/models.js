@@ -7007,6 +7007,8 @@ cr.Session = (function() {
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
+    Session.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
+
 	Session.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;

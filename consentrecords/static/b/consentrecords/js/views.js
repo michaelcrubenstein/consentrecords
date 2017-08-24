@@ -156,27 +156,41 @@ var crv = {
 		add: "Add",
 		address: "Address",
 		cancel: "Cancel",
+		canRegister: "Can Register",
 		city: "City",
 		done: "Done",
 		edit: "Edit",
 		emails: "Emails",
 		email: "Email",
+		end: "End",
+		enrollment: "Enrollment",
+		enrollments: "Enrollments",
+		engagement: "Engagement",
+		engagements: "Engagements",
+		group: "Group",
 		groups: "Groups",
+		inquiry: "Inquiry",
+		inquiries: "Inquiries",
 		maximumAge: "Maximum Age",
 		maximumGrade: "Maximum Grade",
 		minimumAge: "Minimum Age",
 		minimumGrade: "Minimum Grade",
 		names: "Names",
 		name: "Name",
+		no: "No",
+		nonePlaceholder: "(None)",
 		noPublicAccess: "Hidden",
 		nullString: "(None)",
 		offering: "Offering", 
 		offerings: "Offerings", 
 		organization: "Organization",
 		organizations: "Organizations",
+		period: "Period",
+		periods: "Periods",
 		primaryAdministrator: "Primary Administrator",
 		publicAccess: "Public Access",
 		readPublicAccess: "Public",
+		registrationDeadline: "Registration Deadline",
 		service: "Service",
 		services: "Services",
 		session: "Session",
@@ -184,12 +198,14 @@ var crv = {
 		settings: "Settings",
 		site: "Site",
 		sites: "Sites",
+		start: "Start",
 		state: "State",
 		street: "Street",
 		streets: "Streets",
 		user: "User",
 		users: "Users",
 		webSite: "Web Site",
+		yes: "Yes",
 		zipCode: "Zip Code",
 	},
 
@@ -2003,6 +2019,33 @@ var EditPanel = (function() {
 		return inputs;
 	}
 	
+	EditPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText)
+	{
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit unique', true);
+		section.append('label')
+			.classed('overlined', true)
+			.text(labelText);
+		section.editor = this.appendDateEditor(section,
+												 crv.buttonTexts.nonePlaceholder,
+												 instanceProperty.call(instance));
+		
+		var handler = function(eventObject)
+		{
+			var dateWheelValue = this.value() != '' ? this.value() : null;
+			instanceProperty.call(instance, dateWheelValue);
+		}
+		$(section.editor.dateWheel).on('change', null, handler);
+		$(section.node()).on("clearTriggers.cr remove", section.editor.dateWheel, function()
+			{
+				$(section.editor.dateWheel).off('change', handler);
+			});
+
+		return section;
+		
+	}
+	
 	EditPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)
 	{
 		/* If minDate is not defined, set it to January 1, 50 years ago. */
@@ -2017,7 +2060,7 @@ var EditPanel = (function() {
 		if (maxDate === undefined)
 		{
 			maxDate = new Date();
-			maxDate.setUTCFullYear(minDate.getUTCFullYear() + 50);
+			maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 50);
 			maxDate.setMonth(11);
 			maxDate.setDate(31);
 		}
@@ -2292,13 +2335,16 @@ var EditPanel = (function() {
 						{
 							var panel = new pickPanelType();
 							var textContainer = d3.select(this).selectAll('div.description-text');
-							panel.createRoot(d, textContainer.text())
+							panel.createRoot(d, instanceProperty.call(instance))
 								 .showLeft().then(unblockClick);
 						
-							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newValue)
 								{
-									textContainer.text(newDescription);
-									instanceProperty.call(instance, newDescription);
+									if ('getDescription' in pickPanelType)
+										textContainer.text(pickPanelType.getDescription(newValue));
+									else
+										textContainer.text(newValue);
+									instanceProperty.call(instance, newValue);
 								});
 						}
 						catch(err)
@@ -2310,7 +2356,12 @@ var EditPanel = (function() {
 	
 		section.append('label')
 			.text(labelText);
-		var items = this.appendEnumerationEditor(section, instanceProperty.call(instance));
+			
+		var initialDescription = instanceProperty.call(instance);
+		if ('getDescription' in pickPanelType)
+			initialDescription = pickPanelType.getDescription(initialDescription);
+		var items = this.appendEnumerationEditor(section, initialDescription);
+		
 		crf.appendRightChevrons(items);	
 		return section;
 	}
