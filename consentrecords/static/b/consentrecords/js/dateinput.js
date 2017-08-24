@@ -186,11 +186,11 @@ var DateWheel = (function () {
     
     DateWheel.prototype.checkMinDate = function(minDate, maxDate)
     {
+    	maxDate = maxDate !== undefined ? maxDate : getUTCTodayDate();
+    	
 		this.minDate = minDate;
 		this.maxDate = maxDate;
 		
-    	maxDate = maxDate !== undefined ? maxDate : getUTCTodayDate();
-    	
 		var maxYear = (maxDate).getUTCFullYear();
 		var minYear = minDate ? minDate.getUTCFullYear() : maxYear - 100;
 
@@ -365,12 +365,9 @@ var DateWheel = (function () {
     
 	function DateWheel(container, showDate, minDate, maxDate)
 	{
-    	if (!container)
-    		throw ("container is not specified");
-    	if (!showDate)
-    		throw ("showDate is not specified");
-    	if (typeof(showDate) != "function")
-    		throw ("showDate is not a function");
+		console.assert(container);
+		console.assert(showDate);
+		console.assert(typeof(showDate) == "function");
     		
     	maxDate = maxDate !== undefined ? maxDate : getUTCTodayDate();
     		
@@ -458,12 +455,19 @@ var DateWheel = (function () {
 			.append('li')
 			.text(function(d) { return d; });
 			
-		this.checkMinDate(minDate, maxDate);
+		/* Set the default date to a reasonable value. */
+		var currentDate = getUTCTodayDate();
+		if (currentDate > maxDate)
+			currentDate = maxDate;
+		else if (currentDate < minDate)
+			currentDate = minDate;
 		
 		/* Initialize oldYear, oldMonth and oldDay to reasonable values */
-		_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
-		_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
-		_this.oldDay = _this._getSelectedIndex(_this.dayNode);
+		this.oldYear = currentDate.getUTCFullYear();
+		this.oldMonth = currentDate.getUTCMonth() + 1;
+		this.oldDay = currentDate.getUTCDate();
+		
+		this.checkMinDate(minDate, maxDate);
 	}
 	
 	return DateWheel;
