@@ -36,9 +36,6 @@
     <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <style>
-    	.consent-record {
-    		margin-top: 3px;
-    	}
     	.consent-form-title {
     	}
     	.consent-record-accept-button {
@@ -367,43 +364,6 @@
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 			return cr.submitSignout();
-		}
-		
-		function cells_get_cell_by_name(cells, name)
-		{
-			for (var i = 0; i < cells.length; ++i)
-			{
-				var cell = cells[i];
-				if (cell.field.name == name)
-					return cell;
-			}
-			return undefined;
-		}
-		
-		function compareSessions(a, b)
-		{
-			var aDate = a.start();
-			var bDate = b.start();
-			if (aDate)
-			{
-				if (bDate)
-				{
-					result = aDate.localeCompare(bDate);
-					if (result == 0)
-						return a.description().localeCompare(b.description());
-					else
-						return result;
-				}
-				else
-					return -1;
-			}
-			else
-			{
-				if (bDate)
-					return 1;
-				else
-					return a.description().localeCompare(b.description());
-			}
 		}
 		
 		function hide_organizations()

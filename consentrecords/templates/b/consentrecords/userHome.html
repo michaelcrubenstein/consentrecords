@@ -40,13 +40,6 @@
     <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <style>
-    	.consent-record {
-    		margin-top: 3px;
-    	}
-    	.consent-form-title {
-    	}
-    	.consent-record-accept-button {
-    	}
     	.button-section {
     		float: bottom;
     	}
@@ -796,39 +789,6 @@
 					});
 		}
 		
-		function show_consent_records(containerDiv) {
-			var successFunction = function(newInstances)
-			{
-				var divs = d3.select(containerDiv).selectAll('section')
-					.data(newInstances)
-					.enter()
-					.append('section').classed("consent-record cell", true);
-				
-				divs.append('div').classed("consent-record-accept-button right-label right-fixed-width-div right-label site-active-text", true)
-					.text("I Accept");
-				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
-					.text(function(d) { 
-						return d.getCells()[0].data[0].getDescription();
-					});
-			}
-			
-			var path = cr.signedinUser.id() + '>"Consent Record"';
-			cr.getData({path: path, 
-						fields: ["parents"]})
-				.then(successFunction, cr.asyncFail);
-		}
-		
-		function cells_get_cell_by_name(cells, name)
-		{
-			for (var i = 0; i < cells.length; ++i)
-			{
-				var cell = cells[i];
-				if (cell.field.name == name)
-					return cell;
-			}
-			return undefined;
-		}
-		
 		function setMetaProperties(session, targetHRef)
 		{
 			var headDiv = d3.select("head");
@@ -876,79 +836,6 @@
 				d3.event.preventDefault();
 			});
 			{% endif %}
-		}
-		
-		function compareSessions(a, b)
-		{
-			var aDate = a.getDatum("Start");
-			var bDate = b.getDatum("Start");
-			if (aDate)
-			{
-				if (bDate)
-				{
-					result = aDate.localeCompare(bDate);
-					if (result == 0)
-						return a.getDescription().localeCompare(b.getDescription());
-					else
-						return result;
-				}
-				else
-					return -1;
-			}
-			else
-			{
-				if (bDate)
-					return 1;
-				else
-					return a.getDescription().localeCompare(b.getDescription());
-			}
-		}
-		
-		function show_plans(user, container) {
-			var successFunction = function(sessions)
-			{
-				var containerPanel = d3.select(container);
-				containerPanel.selectAll('section').remove();
-				containerPanel.selectAll('p').remove();
-				
-				if (sessions.length > 0)
-				{
-					$(sessions).each(function() { this.calculateDescription(); });
-					sessions.sort(compareSessions);
-				
-					var section = containerPanel.append("section")
-						.classed("cell", true);
-					var divs = section.selectAll("li")
-						.data(sessions)
-						.enter()
-						.append("li").classed("consent-record", true);	// So that each button appears on its own row.
-	
-					divs.on("click", function(session)
-						{
-							if (prepareClick('click', 'session ' + session.description()))
-							{
-								showClickFeedback(this);
-
-								var sitePanel = showSessionDetails(user, session, null, $(container).parents("panel")[0]);
-			
-								sitePanel.showLeft().then(unblockClick);
-							}
-						});
-	
-					appendSessionDescriptions(divs);
-				}
-				else
-				{
-					containerPanel.append("p")
-						.append("p")
-						.text('Sorry, there are no experiences for which you are enrolled.');
-				}
-			}
-			
-			var path = "user/" + cr.signedinUser.id()+"/enrollment/session";
-			cr.getData({path: path, 
-						fields: ["parents"]})
-				.then(successFunction, cr.asyncFail);
 		}
 		
 		function validateEmail(email) 
