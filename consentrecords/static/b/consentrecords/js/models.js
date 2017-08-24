@@ -7092,7 +7092,7 @@ cr.Session = (function() {
 })();
 	
 cr.SessionName = (function() {
-	SessionName.prototype = Object.create(cr.TranslationInstance.prototype);
+	SessionName.prototype = Object.create(cr.Name.prototype);
 	SessionName.prototype.constructor = SessionName;
 
 	SessionName.prototype.urlPath = function()
@@ -7102,7 +7102,7 @@ cr.SessionName = (function() {
 	}
 	
 	function SessionName() {
-	    cr.TranslationInstance.call(this);
+	    cr.Name.call(this);
 	};
 	
 	return SessionName;
