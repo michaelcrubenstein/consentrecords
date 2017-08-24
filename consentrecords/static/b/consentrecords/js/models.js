@@ -1421,7 +1421,7 @@ cr.TranslationInstance = (function() {
 		if (cr.stringChanged(this.text(), revision.text()))
 			changes.text = revision.text();
 		if (cr.stringChanged(this.language(), revision.language()))
-			changes['language code'] = revision.language();
+			changes['languageCode'] = revision.language();
 		
 		return changes;
 	}
