@@ -1306,6 +1306,7 @@ cr.IInstance = (function() {
 	{
 		target = target !== undefined ? target : this;
 		
+		this.calculateDescription();
 		$(this).trigger('changed.cr', target);
 	}
 	
@@ -1460,7 +1461,6 @@ cr.TranslationInstance = (function() {
 		if ('text' in d)
 		{
 			this._text = d['text'];
-			this.calculateDescription();
 			changed = true;
 		}
 		if ('languageCode' in d)
@@ -1511,7 +1511,6 @@ cr.Name = (function() {
 	
 	Name.prototype.triggerChanged = function()
 	{
-		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
 		this.parent().triggerChanged(this);
 	}
@@ -1653,7 +1652,6 @@ cr.ServiceLinkInstance = (function() {
 				this._serviceID = serviceID;
 				changed = true;
 			}
-			this.calculateDescription();
 		}
 		
 		if (changed && canTrigger)
@@ -1868,7 +1866,6 @@ cr.UserLinkInstance = (function() {
 				this._user = newUser;
 				changed = true;
 			}
-			this.calculateDescription();
 		}
 		
 		if (changed && canTrigger)
@@ -2260,7 +2257,6 @@ cr.Grant = (function() {
 				this._grantee = newGrantee;
 				changed = true;
 			}
-			this.calculateDescription();
 		}
 		
 		if ('privilege' in d)
@@ -2332,7 +2328,6 @@ cr.NamedInstance = (function() {
 		if ('names' in d)
 		{
 			this.updateList(this.names, d['names'], newIDs, 'nameAdded.cr');
-			this.calculateDescription();
 			return true;
 		}
 		else
@@ -2924,7 +2919,6 @@ cr.Address = (function() {
 	{
 		target = target !== undefined ? target : this;
 		
-		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this, target);
 		this.parent().triggerChanged(target);
 	}
@@ -3089,7 +3083,6 @@ cr.Comment = (function() {
 			if (this._text != d['text'])
 			{
 				this._text = d['text'];
-				this.calculateDescription();
 				changed = true;
 			}
 		}
@@ -3220,7 +3213,6 @@ cr.CommentPrompt = (function() {
 		{
 			this.updateList(this.translations, d['translations'], newIDs, 'translationAdded.cr');
 			changed = true;
-			this.calculateDescription();
 		}
 		
 		if (changed)
@@ -3759,7 +3751,6 @@ cr.Experience = (function() {
 	Experience.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
-		var changedDescription = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 		if (cr.OrganizationLinkInstance.prototype.updateData.call(this, d, newIDs))
@@ -3767,7 +3758,7 @@ cr.Experience = (function() {
 		if (cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		if (cr.OfferingLinkInstance.prototype.updateData.call(this, d, newIDs))
-			changedDescription = true;
+			changed = true;
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		if ('custom organization' in d)
@@ -3783,7 +3774,7 @@ cr.Experience = (function() {
 		if ('custom offering' in d)
 		{
 			this._customOffering = d['custom offering'];
-			changedDescription = true;
+			changed = true;
 		}
 		if ('timeframe' in d)
 		{
@@ -3791,10 +3782,7 @@ cr.Experience = (function() {
 			changed = true;
 		}
 		
-		if (changedDescription)
-			this.calculateDescription();
-		
-		if (changed || changedDescription)
+		if (changed)
 			this.triggerChanged();
 			
 		if ('services' in d)
@@ -4091,7 +4079,6 @@ cr.ExperienceCustomService = (function() {
 	
 	ExperienceCustomService.prototype.triggerChanged = function()
 	{
-		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
 		this.parent().triggerChanged(this);
 	}
@@ -4116,7 +4103,6 @@ cr.ExperienceService = (function() {
 	
 	ExperienceService.prototype.triggerChanged = function()
 	{
-		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
 		this.parent().triggerChanged(this);
 	}
@@ -4420,7 +4406,6 @@ cr.ExperiencePrompt = (function() {
 		if ('name' in d)
 		{
 			this._name = d.name;
-			this.calculateDescription();
 			changed = true;
 		}
 		
@@ -5838,7 +5823,6 @@ cr.Path = (function() {
 		if ('screen name' in d)
 		{
 			this._name = d['screen name'];
-			this.calculateDescription();
 			changed = true;
 		}
 		if ('special access' in d)
@@ -5853,7 +5837,7 @@ cr.Path = (function() {
 		}
 
 		if (changed)
-			$(this).trigger("changed.cr", this);
+			this.triggerChanged();
 		
 		if ('experiences' in d)
 		{
@@ -6127,10 +6111,7 @@ cr.Period = (function() {
 			changed = true;
 		}
 		if (changed)
-		{
-			this.calculateDescription();
 			this.triggerChanged();
-		}
 		
 		return changed;
 	}
@@ -7488,7 +7469,7 @@ cr.Street = (function() {
 	{
 		cr.IInstance.prototype.triggerDeleted.call(this);
 		cr.removeElement(this.parent().streets(), this);
-		this.parent().calculateDescription();
+		this.parent().triggerChanged();
 		$(this.parent()).trigger("streetDeleted.cr", this);
 	}
 	
@@ -7511,7 +7492,6 @@ cr.Street = (function() {
 		if ('text' in d)
 		{
 			this._text = d['text'];
-			this.calculateDescription();
 			changed = true;
 		}
 		
@@ -7720,14 +7700,6 @@ cr.User = (function() {
 		}
 		
 		return changed;
-	}
-	
-	User.prototype.triggerChanged = function(target)
-	{
-		target = target !== undefined ? target : this;
-
-		this.calculateDescription();		
-		cr.IInstance.prototype.triggerChanged.call(this, target);
 	}
 	
 	User.prototype.firstName = function(newValue)
@@ -8107,7 +8079,6 @@ cr.UserEmail = (function() {
 		if ('text' in d)
 		{
 			this._text = d['text'];
-			this.calculateDescription();
 			changed = true;
 		}
 		
@@ -8119,7 +8090,6 @@ cr.UserEmail = (function() {
 	
 	UserEmail.prototype.triggerChanged = function()
 	{
-		this.calculateDescription();
 		cr.IInstance.prototype.triggerChanged.call(this);
 		this.parent().triggerChanged(this);
 	}
@@ -8281,7 +8251,6 @@ cr.UserUserGrantRequest = (function() {
 				this._grantee = newGrantee;
 				changed = true;
 			}
-			this.calculateDescription();
 		}
 		
 		if (changed)
