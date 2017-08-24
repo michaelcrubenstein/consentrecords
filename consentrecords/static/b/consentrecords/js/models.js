@@ -6926,7 +6926,6 @@ cr.Session = (function() {
 		cr.DateRangeInstance.prototype.mergeData.call(this, source);
 		if (!this._names && source._names)
 			this._names = source._names;
-		if (!this._webSite) this._webSite = source._webSite;
 		if (!this._registrationDeadline) this._registrationDeadline = source._registrationDeadline;
 		if (!this._canRegister) this._canRegister = source._canRegister;
 		if (!this._inquiries && source._inquiries)
@@ -6945,7 +6944,6 @@ cr.Session = (function() {
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
 		cr.DateRangeInstance.prototype.setDefaultValues.call(this);
-		this._webSite = "";
 		this._registrationDeadline = "";
 		this._canRegister = 'no';
 		this._names = [];
@@ -6963,7 +6961,6 @@ cr.Session = (function() {
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
-		newInstance._webSite = this._webSite;
 		newInstance._registrationDeadline = this._registrationDeadline;
 		newInstance._canRegister = this._canRegister;
 		return this;
@@ -6973,8 +6970,6 @@ cr.Session = (function() {
 	{
     	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
 		
-		if (this.webSite())
-			initialData['web site'] = this.webSite();
 		if (this.registrationDeadline())
 			initialData['registration deadline'] = this.registrationDeadline();
 		if (this.canRegister())
@@ -6994,8 +6989,8 @@ cr.Session = (function() {
 	{
 		changes = changes !== undefined ? changes : {};
 		
-		if (cr.stringChanged(this.webSite(), revision.webSite()))
-			changes['web site'] = revision.webSite();
+		cr.DateRangeInstance.prototype.getUpdateData.call(this, revision, changes);
+
 		if (cr.stringChanged(this.registrationDeadline(), revision.registrationDeadline()))
 			changes['registration deadline'] = revision.registrationDeadline();
 		if (cr.stringChanged(this.canRegister(), revision.canRegister()))
@@ -7023,11 +7018,6 @@ cr.Session = (function() {
 		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 
-		if ('web site' in d)
-		{
-			this._webSite = d['web site'];
-			changed = true;
-		}
 		if ('registration deadline' in d)
 		{
 			this._registrationDeadline = d['registration deadline'];
