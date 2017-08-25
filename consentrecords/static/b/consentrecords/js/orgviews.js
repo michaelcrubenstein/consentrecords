@@ -1790,11 +1790,6 @@ var OfferingPanel = (function () {
 		this.tagPoolSection.fillTags()
 			.then(function()
 				{
-					var tagPoolSection = _this.tagPoolSection;
-					
-					/* Have to hide after appending the flags or the metrics aren't calculated. */
-					tagPoolSection.searchView.reveal.hide();
-
 					_this.tagPoolSection.checkTagInput(null);
 				},
 				cr.asyncFail)

@@ -2004,9 +2004,6 @@ var NewExperiencePanel = (function () {
 				{
 					var tagPoolSection = _this.tagPoolSection;
 					
-					/* Have to hide after appending the flags or the metrics aren't calculated. */
-					tagPoolSection.searchView.reveal.hide();
-
 					if (experienceController.serviceLinks().length == 0)
 					{
 						var tagsContainer = tagPoolSection.section.select('.tags-container');

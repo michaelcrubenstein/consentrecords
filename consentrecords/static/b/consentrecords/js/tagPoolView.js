@@ -942,6 +942,8 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.appendTag = function(container, instance)
 	{
+		var _this = this;
+		
 		var input = container.insert('input', 'button')
 			.datum(instance)
 			.classed('tag', true)
@@ -953,6 +955,7 @@ var TagPoolSection = (function () {
 			.on('mousedown', function(e)
 			{
 				startFocus = (this != document.activeElement);
+				_this.inMouseDown = true;
 			})
 			.on('click', function(e)
 			{
@@ -1191,10 +1194,6 @@ var TagPoolSection = (function () {
 								 */
 								_this.inMouseDown = true;
 							})
-						.on('mouseup', function()
-							{
-								_this.inMouseDown = false;
-							})
 						.on('click', function(s)
 							{
 								if (s.visible === undefined || s.visible)
@@ -1202,6 +1201,10 @@ var TagPoolSection = (function () {
 								else
 									d3.event.preventDefault();
 							});
+							
+					/* Have to hide after appending the flags or the metrics aren't calculated. */
+					_this.searchView.reveal.hide();
+					_this.showTags();
 				},
 				cr.chainFail);
 	}
@@ -1223,6 +1226,10 @@ var TagPoolSection = (function () {
 		tagsContainer.append('button')
 			.classed('site-active-text', true)
 			.text('Add Tag')
+			.on('mousedown', function()
+				{
+					_this.inMouseDown = true;
+				})
 			.on('click', function()
 				{
 					var _thisButton = this;
@@ -1244,10 +1251,24 @@ var TagPoolSection = (function () {
 		this.tagHelp.text(this.firstTagHelp);
 			
 		this.searchView = new TagSearchView(searchContainer, this, controller);
-
-		$(panel.node()).one("revealing.cr", function()
+		
+		var wasMouseDown = false;
+		$(this.section.node()).mouseup(function()
 			{
-				_this.showTags();
+				_this.inMouseDown = false;
+			})
+			.mouseleave(function()
+			{
+				wasMouseDown = _this.inMouseDown;
+				_this.inMouseDown = false;
+			})
+			.mouseenter(function()
+			{
+				_this.inMouseDown = wasMouseDown;
+				wasMouseDown = false;
+			})
+			.mousedown(function() {
+				wasMouseDown = false;
 			});
 	}
 	
