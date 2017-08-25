@@ -380,15 +380,6 @@ var AddressPanel = (function () {
 	return AddressPanel;
 })();
 
-var CanRegisterChoices = (function () {
-	
-	function CanRegisterChoices()
-	{
-	}
-	
-	return CanRegisterChoices;
-})();
-
 var PickCanRegisterPanel = (function () {
 	PickCanRegisterPanel.prototype = Object.create(PickFromListPanel.prototype);
 	PickCanRegisterPanel.prototype.constructor = PickCanRegisterPanel;
@@ -622,10 +613,10 @@ var EngagementsPanel = (function () {
 	EngagementsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
 	EngagementsPanel.prototype.constructor = EngagementsPanel;
 
-	EnrollmentsPanel.prototype.addPanelTitle = "Add Engagement";
-	EnrollmentsPanel.prototype.searchViewType = EngagementSearchView;
+	EngagementsPanel.prototype.addPanelTitle = "Add Engagement";
+	EngagementsPanel.prototype.searchViewType = EngagementSearchView;
 	
-	EnrollmentsPanel.prototype.savedItems = function()
+	EngagementsPanel.prototype.savedItems = function()
 	{
 		return this.parent.engagements();
 	}
@@ -793,62 +784,18 @@ var PeriodsPanel = (function () {
 })();
 
 var EngagementPanel = (function () {
-	EngagementPanel.prototype = Object.create(EditPanel.prototype);
+	EngagementPanel.prototype = Object.create(ChildPanel.prototype);
 	EngagementPanel.prototype.constructor = EngagementPanel;
 
-	EngagementPanel.prototype.session = null;
-	EngagementPanel.prototype.engagement = null;
-	EngagementPanel.prototype.panelTitle = "Participation";
-	EngagementPanel.prototype.userLabel = "Participant";
-	EngagementPanel.prototype.startLabel = "Start";
-	EngagementPanel.prototype.endLabel = "End";
-	EngagementPanel.prototype.deleteLabel = "Delete Participant";
-	EngagementPanel.prototype.startPlaceholder = "Not Sure";
-	EngagementPanel.prototype.endPlaceholder = "Not Sure or Current";
+	EngagementPanel.prototype.deleteLabel = "Delete Engagement";
 
-    EngagementPanel.prototype.promiseUpdateChanges = function()
-    {
-		var changes = {};
-		
-		var newUser = this.userSection.datum();
-		if (!newUser || !(newUser instanceof cr.User))
-		{
-			r2 = $.Deferred();
-			r2.reject("Please specify a user.");
-			return r2;
-		}
-		if (!this.engagement.user() || 
-			this.engagement.user().id() != newUser.id())
-		{
-			changes['user'] = newUser.urlPath();
-		}
-		
-		this.appendDateChanges(this.startEditor, this.engagement.start(),
-							   changes, 'start')
-			.appendDateChanges(this.endEditor, this.engagement.end(),
-							   changes, 'end');
-		if (this.engagement.id())
-		{
-			return this.engagement.update(changes);
-		}
-		else
-		{
-			if (Object.keys(changes).length == 0)
-			{
-				r2 = $.Deferred();
-				r2.resolve();
-				return r2;
-			}
-			else
-			{
-				changes['add'] = 1;
-				changes['user'] = newUser.urlPath();
-				var sessionChanges = {'engagements': [changes]};
-				return this.session.update(sessionChanges);
-			}
-		}
-    }
-    
+	EngagementPanel.prototype.promiseUpdateChanges = function()
+	{
+		if (this.controller().newInstance().user() == null)
+			throw new Error("The user of an engagement is required.");
+		ChildPanel.prototype.promiseUpdateChanges.call(this);
+	}
+
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	EngagementPanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
@@ -868,39 +815,16 @@ var EngagementPanel = (function () {
 			return false;
 	}
 	
-	function EngagementPanel(parent, engagement, onShow) {
+	function EngagementPanel(controller, onShow) {
+		ChildPanel.call(this, controller);
+		
 		var _this = this;
-		this.session = parent;
-		this.engagement = engagement;
 
-		this.createRoot(parent, this.panelTitle, "edit", onShow);
+		this.createRoot(crv.buttonTexts.engagement, onShow);
 		
-		this.appendBackButton();
-
-		var doneButton = this.navContainer.appendRightButton();
-			
-		this.navContainer.appendTitle(this.panelTitle);
-		
-		doneButton.on("click", function()
-			{
-				if (prepareClick('click', _this.panelTitle + ' done'))
-				{
-					showClickFeedback(this);
-		
-					try
-					{
-						/* Build up an update for initialData. */
-						_this.promiseUpdateChanges()
-							.then(function() { _this.hide(); },
-								  cr.syncFail)
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-		.append("span").text(crv.buttonTexts.done);
-		
+		/* Fill in the controls for editing */
 		this.userSection = this.mainDiv.append('section')
-			.datum(this.engagement.user())
+			.datum(controller.newInstance())
 			.classed('cell edit unique first', true)
 			.on('click', 
 				function(cell) {
@@ -908,12 +832,12 @@ var EngagementPanel = (function () {
 					{
 						try
 						{
-							var panel = new PickEngagementUserPanel(_this.session, engagement, "Pick User");
+							var panel = new PickEngagementUserPanel(controller.newInstance().parent(), controller.newInstance(), "Pick User");
 							panel.showLeft().then(unblockClick);
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newUser)
 								{
-									_this.userSection.datum(newUser);
+									controller.newInstance().user(newUser);
 									_this.userSection.selectAll('li>div').text(newUser.description());
 								});
 						}
@@ -925,57 +849,21 @@ var EngagementPanel = (function () {
 			});
 
 		this.userSection.append('label')
-			.text(this.userLabel);
-		var user = this.engagement.user();
+			.text(crv.buttonTexts.user);
+		var user = controller.newInstance().user();
 		var items = this.appendEnumerationEditor(this.userSection, 
-			user ? this.engagement.user().description() : "(None)");
+			user ? controller.newInstance().user().description() : "(None)");
 		this.userSection.datum(user);
 		crf.appendRightChevrons(items);	
 				 
-		this.startSection = this.mainDiv.append('section')
-			.datum(this.session)
-			.classed('cell edit unique', true);
-		this.startSection.append('label')
-			.classed('overlined', true)
-			.text(this.startLabel);
-		this.startEditor = this.appendDateEditor(this.startSection,
-												 this.startPlaceholder,
-												 this.engagement.start());
 				 
-		this.endSection = this.mainDiv.append('section')
-			.datum(this.session)
-			.classed('cell edit unique', true);
-		this.endSection.append('label')
-			.classed('overlined', true)
-			.text(this.endLabel);
-		this.endEditor = this.appendDateEditor(this.endSection,
-												 this.endPlaceholder,
-												 this.engagement.end());
-		
-		if (this.engagement.id())	
-		{	 
-			childrenButton = this.appendActionButton(this.deleteLabel, function() {
-				if (prepareClick('click', this.deleteLabel))
-				{
-					showClickFeedback(this);
-					try
-					{
-						new ConfirmDeleteAlert(_this.node(), _this.deleteLabel, 
-							function() { 
-								_this.engagement.deleteData()
-									.then(function() { _this.hide() },
-										  cr.syncFail);
-							}, 
-							unblockClick);
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-			.classed('first', true);
-			childrenButton.selectAll('li>div')
-				.classed('site-active-text', false)
-				.classed('text-danger', true);
-		}
+		this.startSection = this.appendDateSection(controller.newInstance(), controller.newInstance().start, crv.buttonTexts.start);
+		this.startEditor = this.startSection.editor;
+		this.endSection = this.appendDateSection(controller.newInstance(), controller.newInstance().end, crv.buttonTexts.end);
+		this.endEditor = this.endSection.editor;
+
+		/* Add a delete button. */
+		this.appendDeleteButton();
 	}
 	
 	return EngagementPanel;
@@ -1288,15 +1176,6 @@ var PickEngagementUserPanel = (function()
 	}
 	
 	return PickEngagementUserPanel;
-})();
-
-	
-	function PickWeekdayPanel(oldDescription) {
-		PickFromListPanel.call(this);
-		this.createRoot(oldDescription);
-	}
-	
-	return PickWeekdayPanel;
 })();
 
 var RootPanelSearchView = (function () {
@@ -2207,7 +2086,7 @@ var SessionPanel = (function () {
 	SessionPanel.prototype.constructor = SessionPanel;
 
 	SessionPanel.prototype.deleteLabel = "Delete Session";
-
+	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	SessionPanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{

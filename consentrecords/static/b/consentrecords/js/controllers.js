@@ -245,6 +245,23 @@ var AddressController = (function() {
 	return AddressController;
 })();
 
+var EngagementController = (function() {
+	EngagementController.prototype = Object.create(ChildController.prototype);
+	EngagementController.prototype.constructor = EngagementController;
+	
+	EngagementController.prototype.addingMessage = "Adding Engagement...";
+	EngagementController.prototype.savingMessage = "Saving Engagement...";
+	EngagementController.prototype.groupKey = 'engagements';
+	EngagementController.prototype.addEventType = 'engagementAdded.cr';
+
+	function EngagementController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Engagement, duplicateForEdit);
+	}
+	
+	return EngagementController;
+})();
+
 var ExperienceController = (function() {
 	ExperienceController.prototype = Object.create(ChildController.prototype);
 	ExperienceController.prototype.constructor = ExperienceController;
