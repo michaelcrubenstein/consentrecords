@@ -178,14 +178,15 @@ function drawInfoButtons(infoButtons)
  */
 }
 
-function appendInfoButtons(items, dataF)
+function appendInfoButtons(items, dataF, appendF)
 {
 	/* infoButtons need to be wrapped inside of a div so that the other
 		div can contain a separate border if needed. 
 	 */
 	dataF = (dataF !== undefined) ? dataF : function(d) { return d; };
-	var outerDiv = items
-		.append('div')
+	appendF = (appendF !== undefined) ? appendF : function(items) { return items.append('div'); };
+	
+	var outerDiv = appendF(items)
 		.classed('info-button-container', true);
 	var infoButtons =  outerDiv
 		.append('div')

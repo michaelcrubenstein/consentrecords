@@ -457,6 +457,28 @@ var InquirySearchView = (function () {
 		return InquiryPanel;
 	}
 	
+	InquirySearchView.prototype.onClickButton = function(inquiry, i, button) {
+		if (prepareClick('click', 'inquiry: ' + inquiry.description()))
+		{
+			try
+			{
+				showClickFeedback(button);
+				showUser(inquiry.user());
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+		d3.event.preventDefault();
+	}
+	InquirySearchView.prototype.fillItems = function(items)
+	{
+		ChildSearchView.prototype.fillItems.call(this, items);
+		appendInfoButtons(items, function(d)
+			{
+				return d.user();
+			}, 
+			function(items) { return items.insert('div', 'button:last-of-type'); });
+	}
+	
 	function InquirySearchView(sitePanel, session) {
 		ChildSearchView.call(this, sitePanel, session);
 	}

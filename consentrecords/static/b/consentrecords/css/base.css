@@ -570,10 +570,10 @@ div.add-value>div {
 .info-button-container {
 	align-self: center;
 	-webkit-align-self: center;
+	margin-right: 12px;
 }
 
 .info-button {
-	margin-right: 12px;
 	background: transparent;
 	cursor: pointer;
 	border-color: #2C55CC;
