@@ -158,9 +158,11 @@ var ChildSearchView = (function () {
 			.classed('deletable-items', true);
 	}
 	
-	function ChildSearchView(sitePanel, parent) {
+	function ChildSearchView(sitePanel, parent, placeholder) {
+		placeholder = placeholder !== undefined ? placeholder : crv.buttonTexts.search;
+		
 		this.parent = parent;
-		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+		PanelSearchView.call(this, sitePanel, placeholder, GetDataChunker);
 	}
 	
 	return ChildSearchView;
@@ -210,13 +212,15 @@ var ChildrenPanel = (function () {
 		$(this.node()).one('revealing.cr', function() {
 				if (_this.parent.id())
 				{
-					_this.searchView.search(""); 
-					_this.searchView.inputBox.focus();
+					_this.searchView.search("");
+					if (_this.searchView.inputBox) 
+						_this.searchView.inputBox.focus();
 				}
 				else 
 				{
-					_this.searchView.inputBox.setAttribute('disabled', true);
 					_this.searchView.showObjects(_this.savedItems());
+					if (_this.searchView.inputBox) 
+						_this.searchView.inputBox.setAttribute('disabled', true);
 				}
 			});
 	}
@@ -431,42 +435,11 @@ var PickCanRegisterPanel = (function () {
 	return PickCanRegisterPanel;
 })();
 
-var SessionChildSearchView = (function () {
-	SessionChildSearchView.prototype = Object.create(ChildSearchView.prototype);
-	SessionChildSearchView.prototype.constructor = SessionChildSearchView;
-
-	SessionChildSearchView.prototype.textPath = 'user>email>text';
-	SessionChildSearchView.prototype.session = null;
-	
-	function SessionChildSearchView(sitePanel, session) {
-		this.session = session;
-		ChildSearchView.call(this, sitePanel, session);
-	}
-	
-	return SessionChildSearchView;
-})();
-
-var SessionChildrenPanel = (function () {
-	SessionChildrenPanel.prototype = Object.create(ChildrenPanel.prototype);
-	SessionChildrenPanel.prototype.constructor = SessionChildrenPanel;
-
-	SessionChildrenPanel.prototype.session = null;
-	
-	function SessionChildrenPanel(parent, onShow)
-	{
-		ChildrenPanel.call(this, parent, onShow);
-		this.session = parent;
-	}
-	
-	return SessionChildrenPanel;
-	
-})();
-
 var InquirySearchView = (function () {
-	InquirySearchView.prototype = Object.create(SessionChildSearchView.prototype);
+	InquirySearchView.prototype = Object.create(ChildSearchView.prototype);
 	InquirySearchView.prototype.constructor = InquirySearchView;
 
-	InquirySearchView.prototype.textPath = 'name>text';
+	InquirySearchView.prototype.textPath = 'user>email>text';
 	InquirySearchView.prototype.pathType = 'inquiry';
 	
 	InquirySearchView.prototype.resultType = function()
@@ -485,14 +458,14 @@ var InquirySearchView = (function () {
 	}
 	
 	function InquirySearchView(sitePanel, session) {
-		SessionChildSearchView.call(this, sitePanel, session);
+		ChildSearchView.call(this, sitePanel, session);
 	}
 	
 	return InquirySearchView;
 })();
 
 var InquiriesPanel = (function () {
-	InquiriesPanel.prototype = Object.create(SessionChildrenPanel.prototype);
+	InquiriesPanel.prototype = Object.create(ChildrenPanel.prototype);
 	InquiriesPanel.prototype.constructor = InquiriesPanel;
 
 	InquiriesPanel.prototype.addPanelTitle = "Add Inquiry";
@@ -515,7 +488,7 @@ var InquiriesPanel = (function () {
 	}
 	
 	function InquiriesPanel(parent, onShow) {
-		SessionChildrenPanel.call(this, parent, onShow);
+		ChildrenPanel.call(this, parent, onShow);
 		this.createRoot(parent, crv.buttonTexts.inquiries, 'list', onShow);
 	}
 	
@@ -523,9 +496,10 @@ var InquiriesPanel = (function () {
 })();
 
 var EnrollmentSearchView = (function () {
-	EnrollmentSearchView.prototype = Object.create(SessionChildSearchView.prototype);
+	EnrollmentSearchView.prototype = Object.create(ChildSearchView.prototype);
 	EnrollmentSearchView.prototype.constructor = EnrollmentSearchView;
 
+	EnrollmentSearchView.prototype.textPath = 'user>email>text';
 	EnrollmentSearchView.prototype.pathType = 'enrollment';
 	
 	EnrollmentSearchView.prototype.resultType = function()
@@ -544,14 +518,14 @@ var EnrollmentSearchView = (function () {
 	}
 	
 	function EnrollmentSearchView(sitePanel, parent) {
-		SessionChildSearchView.call(this, sitePanel, parent);
+		ChildSearchView.call(this, sitePanel, parent);
 	}
 	
 	return EnrollmentSearchView;
 })();
 
 var EnrollmentsPanel = (function () {
-	EnrollmentsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
+	EnrollmentsPanel.prototype = Object.create(ChildrenPanel.prototype);
 	EnrollmentsPanel.prototype.constructor = EnrollmentsPanel;
 
 	EnrollmentsPanel.prototype.addPanelTitle = "Add Enrollment";
@@ -574,7 +548,7 @@ var EnrollmentsPanel = (function () {
 	}
 	
 	function EnrollmentsPanel(parent, onShow) {
-		SessionChildrenPanel.call(this, parent, onShow);
+		ChildrenPanel.call(this, parent, onShow);
 		this.createRoot(parent, crv.buttonTexts.enrollments, 'list', onShow);
 	}
 	
@@ -582,9 +556,10 @@ var EnrollmentsPanel = (function () {
 })();
 
 var EngagementSearchView = (function () {
-	EngagementSearchView.prototype = Object.create(SessionChildSearchView.prototype);
+	EngagementSearchView.prototype = Object.create(ChildSearchView.prototype);
 	EngagementSearchView.prototype.constructor = EngagementSearchView;
 
+	EngagementSearchView.prototype.textPath = 'user>email>text';
 	EngagementSearchView.prototype.pathType = 'engagement';
 	
 	EngagementSearchView.prototype.resultType = function()
@@ -603,14 +578,14 @@ var EngagementSearchView = (function () {
 	}
 	
 	function EngagementSearchView(sitePanel, parent) {
-		SessionChildSearchView.call(this, sitePanel, parent);
+		ChildSearchView.call(this, sitePanel, parent);
 	}
 	
 	return EngagementSearchView;
 })();
 
 var EngagementsPanel = (function () {
-	EngagementsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
+	EngagementsPanel.prototype = Object.create(ChildrenPanel.prototype);
 	EngagementsPanel.prototype.constructor = EngagementsPanel;
 
 	EngagementsPanel.prototype.addPanelTitle = "Add Engagement";
@@ -622,7 +597,7 @@ var EngagementsPanel = (function () {
 	}
 	
 	function EngagementsPanel(parent, onShow) {
-		SessionChildrenPanel.call(this, parent, onShow);
+		ChildrenPanel.call(this, parent, onShow);
 		this.createRoot(parent, crv.buttonTexts.engagements, 'list', onShow);
 	}
 	
@@ -720,9 +695,10 @@ var PeriodPanel = (function () {
 })();
 
 var PeriodSearchView = (function () {
-	PeriodSearchView.prototype = Object.create(SessionChildSearchView.prototype);
+	PeriodSearchView.prototype = Object.create(ChildSearchView.prototype);
 	PeriodSearchView.prototype.constructor = PeriodSearchView;
 
+	PeriodSearchView.prototype.textPath = 'weekday';
 	PeriodSearchView.prototype.pathType = 'period';
 	
 	PeriodSearchView.prototype.resultType = function()
@@ -740,30 +716,15 @@ var PeriodSearchView = (function () {
 		return PeriodPanel;
 	}
 	
-	PeriodSearchView.prototype.fillItems = function(items)
-	{
-		SessionChildSearchView.prototype.fillItems.call(this, items);
-		
-		var _this = this;
-		items.each(function(d)
-			{
-				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
-					{
-						d3.select(eventObject.data).selectAll('div.description-text')
-							.text(d.description());
-					});
-			});
-	}
-	
 	function PeriodSearchView(sitePanel, parent) {
-		SessionChildSearchView.call(this, sitePanel, parent);
+		ChildSearchView.call(this, sitePanel, parent, null);
 	}
 	
 	return PeriodSearchView;
 })();
 
 var PeriodsPanel = (function () {
-	PeriodsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
+	PeriodsPanel.prototype = Object.create(ChildrenPanel.prototype);
 	PeriodsPanel.prototype.constructor = PeriodsPanel;
 
 	PeriodsPanel.prototype.addPanelTitle = "Add Period";
@@ -776,7 +737,7 @@ var PeriodsPanel = (function () {
 	
 
 	function PeriodsPanel(parent, onShow) {
-		SessionChildrenPanel.call(this, parent, onShow);
+		ChildrenPanel.call(this, parent, onShow);
 		this.createRoot(parent, crv.buttonTexts.periods, "list", onShow);
 	}
 	
@@ -1032,7 +993,8 @@ var NewEnrollmentSearchView = (function()
 						{
 							try
 							{
-								var offering = _this.session.offering();
+								var offering = _this.session.parent();
+								console.assert(offering);
 								if (enrollments.length)
 									cr.syncFail("{0} already enrolled in {1}/{2}"
 										.format(user.description(), offering.description(), _this.session.description()));
@@ -2153,33 +2115,33 @@ var SessionPanel = (function () {
 	return SessionPanel;
 })();
 
-var SessionChildSearchView = (function () {
-	SessionChildSearchView.prototype = Object.create(ChildSearchView.prototype);
-	SessionChildSearchView.prototype.constructor = SessionChildSearchView;
+var SessionSearchView = (function () {
+	SessionSearchView.prototype = Object.create(ChildSearchView.prototype);
+	SessionSearchView.prototype.constructor = SessionSearchView;
 
-	SessionChildSearchView.prototype.textPath = 'name>text';
-	SessionChildSearchView.prototype.pathType = 'session';
+	SessionSearchView.prototype.textPath = 'name>text';
+	SessionSearchView.prototype.pathType = 'session';
 	
-	SessionChildSearchView.prototype.resultType = function()
+	SessionSearchView.prototype.resultType = function()
 	{
 		return cr.Session;
 	}
 	
-	SessionChildSearchView.prototype.controllerType = function()
+	SessionSearchView.prototype.controllerType = function()
 	{
 		return SessionController;
 	}
 	
-	SessionChildSearchView.prototype.childPanelType = function()
+	SessionSearchView.prototype.childPanelType = function()
 	{
 		return SessionPanel;
 	}
 	
-	function SessionChildSearchView(sessionPanel, parent) {
+	function SessionSearchView(sessionPanel, parent) {
 		ChildSearchView.call(this, sessionPanel, parent);
 	}
 	
-	return SessionChildSearchView;
+	return SessionSearchView;
 })();
 
 var SessionsPanel = (function () {
@@ -2187,7 +2149,7 @@ var SessionsPanel = (function () {
 	SessionsPanel.prototype.constructor = SessionsPanel;
 
 	SessionsPanel.prototype.addPanelTitle = "Add Session";
-	SessionsPanel.prototype.searchViewType = SessionChildSearchView;
+	SessionsPanel.prototype.searchViewType = SessionSearchView;
 	
 	SessionsPanel.prototype.savedItems = function()
 	{

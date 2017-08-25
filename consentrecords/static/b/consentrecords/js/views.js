@@ -192,6 +192,7 @@ var crv = {
 		publicAccess: "Public Access",
 		readPublicAccess: "Public",
 		registrationDeadline: "Registration Deadline",
+		search: "Search",
 		service: "Service",
 		services: "Services",
 		session: "Session",
@@ -1770,36 +1771,31 @@ var SearchView = (function () {
 	SearchView.prototype.inputBox = null;
 	
 	function SearchView(containerNode, placeholder, chunkerType) {
-		if (containerNode)
+		console.assert(containerNode);
+
+		var _this = this;
+		if (placeholder)
 		{
-			var _this = this;
 			var inputBox = this.appendInput(containerNode, placeholder);
-		
+	
 			this.inputBox = inputBox.node();
 			$(this.inputBox).on("input", function() { _this.textChanged() });
 		}
 		
 		SearchOptionsView.call(this, containerNode, chunkerType);
-		if (containerNode)
-		{
-			/* Call setupInputBox at the end because it may trigger an input event. */
-			this.setupInputBox();
-		}
-	}
-	
-	SearchView.prototype.setupInputBox = function()
-	{
-		/* Do nothing by default */
 	}
 	
 	SearchView.prototype.inputText = function(val)
 	{
 		if (val === undefined)
-			return this.inputBox.value.trim();
+			return this.inputBox ? this.inputBox.value.trim() : "";
 		else
 		{
-			this.inputBox.value = val;
-			$(this.inputBox).trigger("input");
+			if (this.inputBox)
+			{
+				this.inputBox.value = val;
+				$(this.inputBox).trigger("input");
+			}
 		}
 	}
 	
