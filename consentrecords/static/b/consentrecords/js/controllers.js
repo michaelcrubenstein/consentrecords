@@ -844,6 +844,23 @@ var OrganizationController = (function() {
 	return OrganizationController;
 })();
 
+var PeriodController = (function() {
+	PeriodController.prototype = Object.create(ChildController.prototype);
+	PeriodController.prototype.constructor = PeriodController;
+	
+	PeriodController.prototype.addingMessage = "Adding Period...";
+	PeriodController.prototype.savingMessage = "Saving Period...";
+	PeriodController.prototype.groupKey = 'periods';
+	PeriodController.prototype.addEventType = 'periodAdded.cr';
+
+	function PeriodController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Period, duplicateForEdit);
+	}
+	
+	return PeriodController;
+})();
+
 var SessionController = (function() {
 	SessionController.prototype = Object.create(ChildController.prototype);
 	SessionController.prototype.constructor = SessionController;

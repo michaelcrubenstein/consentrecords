@@ -638,6 +638,96 @@ var EngagementsPanel = (function () {
 	return EngagementsPanel;
 })();
 
+var PickWeekdayPanel = (function () {
+	PickWeekdayPanel.prototype = Object.create(PickFromListPanel.prototype);
+	PickWeekdayPanel.prototype.constructor = PickWeekdayPanel;
+
+	PickWeekdayPanel.prototype.title = crv.buttonTexts.weekday;
+	
+	PickWeekdayPanel.prototype.data = function()
+	{
+		return [{code: '', name: crv.buttonTexts.nonePlaceholder},
+				{code: '0', name: "Sunday"},
+				{code: '1', name: "Monday"},
+				{code: '2', name: "Tuesday"},
+				{code: '3', name: "Wednesday"},
+				{code: '4', name: "Thursday"},
+				{code: '5', name: "Friday"},
+				{code: '6', name: "Saturday"},
+			   ];
+	}
+	
+	PickWeekdayPanel.prototype.isInitialValue = function(d)
+	{
+		return d.code === this.initialValue.toString();
+	}
+
+	PickWeekdayPanel.prototype.pickedValue = function(d)
+	{
+		return d.code;
+	}
+
+	PickWeekdayPanel.prototype.datumDescription = function(d)
+	{
+		return d.name;
+	}
+	
+	PickWeekdayPanel.prototype.createRoot = function(user, initialValue)
+	{
+		this.initialValue = initialValue;
+		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, initialValue);
+	}
+	
+	function PickWeekdayPanel() {
+		PickFromListPanel.call(this);
+	}
+	
+	PickWeekdayPanel.getDescription = function(storedValue)
+	{
+		var d = PickWeekdayPanel.prototype.data.call(null).find(function(d)
+			{
+				return d.code == storedValue;
+			})
+		return d && d.name;
+	}
+
+	return PickWeekdayPanel;
+})();
+
+var PeriodPanel = (function () {
+	PeriodPanel.prototype = Object.create(ChildPanel.prototype);
+	PeriodPanel.prototype.constructor = PeriodPanel;
+
+	PeriodPanel.prototype.deleteLabel = "Delete Period";
+
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	PeriodPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		return false;
+	}
+	
+	function PeriodPanel(controller, onShow) {
+		ChildPanel.call(this, controller);
+		
+		var _this = this;
+
+		this.createRoot(crv.buttonTexts.period, onShow);
+		
+		/* Fill in the controls for editing */
+		this.weekdaySection = this.appendEnumerationPickerSection(controller.newInstance(), controller.newInstance().weekday, crv.buttonTexts.weekday, PickWeekdayPanel)
+		this.weekdaySection.classed('first', true);
+				 
+		this.startTimeSection = this.appendTextSection(controller.newInstance(), cr.Period.prototype.startTime, crv.buttonTexts.startTime, 'time');
+		this.startTimeSection.classed('first', true);
+		this.endTimeSection = this.appendTextSection(controller.newInstance(), cr.Period.prototype.endTime, crv.buttonTexts.endTime, 'time');
+
+		/* Add a delete button. */
+		this.appendDeleteButton();
+	}
+	
+	return PeriodPanel;
+})();
+
 var PeriodSearchView = (function () {
 	PeriodSearchView.prototype = Object.create(SessionChildSearchView.prototype);
 	PeriodSearchView.prototype.constructor = PeriodSearchView;
@@ -685,10 +775,10 @@ var PeriodsPanel = (function () {
 	PeriodsPanel.prototype = Object.create(SessionChildrenPanel.prototype);
 	PeriodsPanel.prototype.constructor = PeriodsPanel;
 
-	EnrollmentsPanel.prototype.addPanelTitle = "Add Period";
-	EnrollmentsPanel.prototype.searchViewType = PeriodSearchView;
+	PeriodsPanel.prototype.addPanelTitle = "Add Period";
+	PeriodsPanel.prototype.searchViewType = PeriodSearchView;
 	
-	EnrollmentsPanel.prototype.savedItems = function()
+	PeriodsPanel.prototype.savedItems = function()
 	{
 		return this.parent.periods();
 	}
@@ -889,203 +979,6 @@ var EngagementPanel = (function () {
 	}
 	
 	return EngagementPanel;
-})();
-
-var PeriodPanel = (function () {
-	PeriodPanel.prototype = Object.create(EditPanel.prototype);
-	PeriodPanel.prototype.constructor = PeriodPanel;
-
-	PeriodPanel.prototype.session = null;
-	PeriodPanel.prototype.period = null;
-	PeriodPanel.prototype.panelTitle = "Period";
-	PeriodPanel.prototype.weekdayLabel = "Weekday";
-	PeriodPanel.prototype.startTimeLabel = "Start Time";
-	PeriodPanel.prototype.endTimeLabel = "End Time";
-	PeriodPanel.prototype.deleteLabel = "Delete Period";
-	PeriodPanel.prototype.weekdayDescriptions = {
-			'0': "Sunday",
-			'1': "Monday",
-			'2': "Tuesday",
-			'3': "Wednesday",
-			'4': "Thursday",
-			'5': "Friday",
-			'6': "Saturday",
-		};
-
-    PeriodPanel.prototype.promiseUpdateChanges = function()
-    {
-		var changes = {};
-		
-		var _this = this;
-		
-		var getWeekdayValue = function(enumValue)
-		{
-			if (enumValue == null)
-				return null;
-			else
-				return Date.CultureInfo.dayNames.indexOf(enumValue);
-		}
-
-		this.appendEnumerationChanges(this.weekdaySection, getWeekdayValue, 
-									  this.period.weekday(), changes, 'weekday')
-			.appendTimeChanges(this.startTimeSection, this.period.startTime(),
-							   changes, 'start time')
-			.appendTimeChanges(this.endTimeSection, this.period.endTime(),
-							   changes, 'end time');
-		
-		if (!('weekday' in changes) && !this.period.weekday())
-		{
-			r2 = $.Deferred();
-			r2.reject("Please specify a weekday.");
-			return r2;
-		}
-
-		if (this.period.id())
-		{
-			return this.period.update(changes);
-		}
-		else
-		{
-			if (Object.keys(changes).length == 0)
-			{
-				r2 = $.Deferred();
-				r2.resolve();
-				return r2;
-			}
-			else
-			{
-				changes['add'] = 1;
-				var sessionChanges = {'periods': [changes]};
-				return this.session.update(sessionChanges);
-			}
-		}
-    }
-    
-	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
-	PeriodPanel.prototype.onFocusInOtherInput = function(newReveal, done)
-	{
-		return false;
-	}
-	
-	function PeriodPanel(parent, period, onShow) {
-		var _this = this;
-		this.session = parent;
-		this.period = period;
-
-		this.createRoot(parent, this.panelTitle, "edit", onShow);
-		
-		this.appendBackButton();
-
-		var doneButton = this.navContainer.appendRightButton();
-			
-		this.navContainer.appendTitle(this.panelTitle);
-		
-		doneButton.on("click", function()
-			{
-				if (prepareClick('click', _this.panelTitle + ' done'))
-				{
-					showClickFeedback(this);
-		
-					try
-					{
-						/* Build up an update for initialData. */
-						_this.promiseUpdateChanges()
-							.then(function() { _this.hide(); },
-								  cr.syncFail)
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-		.append("span").text(crv.buttonTexts.done);
-		
-		this.weekdaySection = this.mainDiv.append('section')
-			.datum(this.period)
-			.classed('cell edit unique first', true)
-			.on('click', 
-				function(cell) {
-					if (prepareClick('click', 'pick weekday'))
-					{
-						try
-						{
-							var panel = new PickWeekdayPanel(weekdayTextContainer.text(), "Pick Weekday");
-							panel.showLeft().then(unblockClick);
-						
-							$(panel.node()).on('itemPicked.cr', function(eventObject, newDescription)
-								{
-									weekdayTextContainer.text(newDescription);
-								});
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
-			});
-			
-		function getWeekdayDescription(weekday)
-		{
-			if (weekday == null)
-				return "";
-			var i = parseInt(weekday);
-			if (i >= 0 && i <= 6)
-				return Date.CultureInfo.dayNames[i];
-			else
-				return "";
-		}
-
-		this.weekdaySection.append('label')
-			.text(this.weekdayLabel);
-		var items = this.appendEnumerationEditor(this.weekdaySection, getWeekdayDescription(period.weekday()));
-		weekdayTextContainer = items.selectAll('div.description-text');
-		crf.appendRightChevrons(items);	
-				 
-		this.startTimeSection = this.mainDiv.append('section')
-			.datum(this.period)
-			.classed('cell edit unique first', true);
-		this.startTimeSection.append('label')
-			.text(this.startTimeLabel);
-		this.appendTextEditor(this.startTimeSection,
-												 this.startTimeLabel,
-												 this.period.startTime(),
-												 'time');
-				 
-		this.endTimeSection = this.mainDiv.append('section')
-			.datum(this.period)
-			.classed('cell edit unique first', true);
-		this.endTimeSection.append('label')
-			.text(this.endTimeLabel);
-		this.appendTextEditor(this.endTimeSection,
-												 this.endTimeLabel,
-												 this.period.endTime(),
-												 'time');
-		
-		if (this.period.id())	
-		{	 
-			childrenButton = this.appendActionButton(this.deleteLabel, function() {
-				if (prepareClick('click', this.deleteLabel))
-				{
-					showClickFeedback(this);
-					try
-					{
-						new ConfirmDeleteAlert(_this.node(), _this.deleteLabel, 
-							function() { 
-								_this.period.deleteData()
-									.then(function() { _this.hide() },
-										  cr.syncFail);
-							}, 
-							unblockClick);
-					}
-					catch(err) { cr.syncFail(err); }
-				}
-			})
-			.classed('first', true);
-			childrenButton.selectAll('li>div')
-				.classed('site-active-text', false)
-				.classed('text-danger', true);
-		}
-	}
-	
-	return PeriodPanel;
 })();
 
 var PickUserSearchView = (function () {
@@ -1397,25 +1290,6 @@ var PickEngagementUserPanel = (function()
 	return PickEngagementUserPanel;
 })();
 
-var PickWeekdayPanel = (function () {
-	PickWeekdayPanel.prototype = Object.create(PickFromListPanel.prototype);
-	PickWeekdayPanel.prototype.constructor = PickWeekdayPanel;
-
-	PickWeekdayPanel.prototype.title = PeriodPanel.prototype.weekdayLabel;
-	PickWeekdayPanel.prototype.data = function()
-	{
-		return ["0", "1", "2", "3", "4", "5", "6"];
-	}
-	
-	PickWeekdayPanel.prototype.datumDescription = function(d)
-	{
-		return PeriodPanel.prototype.weekdayDescriptions[d];
-	}
-	
-	PickWeekdayPanel.prototype.createRoot = function(oldDescription)
-	{
-		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, oldDescription);
-	}
 	
 	function PickWeekdayPanel(oldDescription) {
 		PickFromListPanel.call(this);
