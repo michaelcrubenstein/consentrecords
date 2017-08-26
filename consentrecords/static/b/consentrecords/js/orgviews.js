@@ -4,6 +4,7 @@ var ChildPanel = (function () {
 
 	ChildPanel.prototype.appendDeleteButton = function()
 	{
+		var _this = this;
 		if (this.controller().oldInstance())	
 		{	 
 			childrenButton = this.appendActionButton(this.deleteLabel, function() {
