@@ -539,6 +539,28 @@ var EnrollmentSearchView = (function () {
 		return EnrollmentPanel;
 	}
 	
+	EnrollmentSearchView.prototype.onClickButton = function(enrollment, i, button) {
+		if (prepareClick('click', 'enrollment: ' + enrollment.description()))
+		{
+			try
+			{
+				showClickFeedback(button);
+				showUser(enrollment.user());
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+		d3.event.preventDefault();
+	}
+	EnrollmentSearchView.prototype.fillItems = function(items)
+	{
+		ChildSearchView.prototype.fillItems.call(this, items);
+		appendInfoButtons(items, function(d)
+			{
+				return d.user();
+			}, 
+			function(items) { return items.insert('div', 'button:last-of-type'); });
+	}
+	
 	function EnrollmentSearchView(sitePanel, parent) {
 		ChildSearchView.call(this, sitePanel, parent);
 	}
