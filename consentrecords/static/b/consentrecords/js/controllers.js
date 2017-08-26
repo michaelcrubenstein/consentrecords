@@ -42,6 +42,11 @@ var Controller = (function() {
 		this.newInstance().appendData(initialData);
 	}
 	
+	Controller.prototype.alertAdd = function()
+	{
+		return true;
+	}
+	
 	Controller.prototype.save = function()
 	{
 		var _this = this;
@@ -89,7 +94,7 @@ var Controller = (function() {
 		else
 		{
 			/* Test case: add an experience to a path. */
-			if (this.parent().id())
+			if (this.alertAdd())
 				bootstrap_alert.show($('.alert-container'), this.addingMessage, "alert-info");
 
 			var initialData = {'add': uuid.v4()};
@@ -173,7 +178,7 @@ var ChildController = (function() {
 	ChildController.prototype.constructor = ChildController;
 	ChildController.prototype._parent = null;
 	
-	Controller.prototype.parent = function(newValue)
+	ChildController.prototype.parent = function(newValue)
 	{
 		if (newValue === undefined)
 			return this._parent;
@@ -190,6 +195,11 @@ var ChildController = (function() {
 	ChildController.prototype.setupPrivilege = function()
 	{
 		this.newInstance().privilege(this._parent.privilege());
+	}
+	
+	ChildController.prototype.alertAdd = function()
+	{
+		return this.parent().id();
 	}
 	
 	ChildController.prototype.postAdd = function(initialData)
