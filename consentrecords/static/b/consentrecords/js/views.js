@@ -2212,6 +2212,17 @@ var EditPanel = (function() {
 			.text("Add {0}".format(name));
 	}
 
+	EditPanel.prototype.appendTranslationsSection = function(instance, sectionLabel, placeholder, data, dataType)
+	{
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit multiple', true);
+		section.append('label')
+			.text(sectionLabel);
+		this.appendTranslationEditor(section, instance, sectionLabel, placeholder, data, dataType);
+		return section;
+	}
+
 	EditPanel.prototype.appendTranslationEditor = function(section, container, sectionLabel, placeholder, data, dataType)
 	{
 		var _this = this;

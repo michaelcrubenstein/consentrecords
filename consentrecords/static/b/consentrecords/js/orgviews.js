@@ -1556,12 +1556,7 @@ var OfferingPanel = (function () {
 		this.createRoot(crv.buttonTexts.offering, onShow);
 		
 		/* Fill in the controls for editing */
-		this.namesSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit multiple', true);
-		this.namesSection.append('label')
-			.text(this.namesLabel);
-		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
+		this.namesSection = this.appendTranslationsSection(controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
 									 controller.newInstance().names(),
 									 cr.OfferingName);
 
@@ -1702,12 +1697,7 @@ var OrganizationPanel = (function () {
 
 		this.createRoot(crv.buttonTexts.organization, onShow);
 
-		this.namesSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit multiple', true);
-		this.namesSection.append('label')
-			.text(this.namesLabel);
-		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
+		this.namesSection = this.appendTranslationsSection(controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
 									 controller.newInstance().names(),
 									 cr.OrganizationName);
 
@@ -2179,12 +2169,7 @@ var SessionPanel = (function () {
 		this.createRoot(crv.buttonTexts.session, onShow);
 		
 		/* Fill in the controls for editing */
-		this.namesSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit multiple', true);
-		this.namesSection.append('label')
-			.text(this.namesLabel);
-		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
+		this.namesSection = this.appendTranslationsSection(controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
 									 controller.newInstance().names(),
 									 cr.SessionName);
 									 
@@ -2283,12 +2268,7 @@ var SitePanel = (function () {
 		this.createRoot(crv.buttonTexts.site, onShow);
 		
 		/* Fill in the controls for editing */
-		this.namesSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit multiple', true);
-		this.namesSection.append('label')
-			.text(this.namesLabel);
-		this.appendTranslationEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
+		this.namesSection = this.appendTranslationsSection(controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
 									 controller.newInstance().names(),
 									 cr.SiteName);
 
