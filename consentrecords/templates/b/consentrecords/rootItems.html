@@ -12,9 +12,9 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-transluscent">
 	
 	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-title" content="PathAdvisor Organizations">
+	<meta name="apple-mobile-web-app-title" content="PathAdvisor {{rootItemPluralName}}">
     
-    <title>PathAdvisor - Organizations</title>
+    <title>PathAdvisor - {{rootItemPluralName}}</title>
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
@@ -125,10 +125,10 @@
 		$(document).ready (function(e) {
 			try
 			{
-				var panel = new OrganizationsPanel(revealPanelLeft);
-				panel.showLeft().then(unblockClick);
+				var panel = new {{panelType}}(revealPanelLeft);
+				panel.showNow();
 			}
-			catch(err) { cr.syncFail(err); }
+			catch(err) { cr.asyncFail(err); }
 		});
 	</script>
 

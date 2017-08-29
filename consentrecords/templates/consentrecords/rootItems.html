@@ -12,16 +12,29 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-transluscent">
 	
 	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-title" content="PathAdvisor Experience Prompts">
+	<meta name="apple-mobile-web-app-title" content="PathAdvisor {{rootItemPluralName}}">
     
-    <title>PathAdvisor - Experience Prompts</title>
+    <title>PathAdvisor - {{rootItemPluralName}}</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 
     <!-- Custom styles for this template -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/showFollowing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/showSharing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/signup.css" %}?v={{jsversion}}" rel="stylesheet">
+    
+    <link href="{% static "custom_user/css/formsimple.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
+
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -59,13 +72,32 @@
 	<script src="{% static "consentrecords/js/controllers.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/getDataChunker.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/pathtreePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/showFollowing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/showSharing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/signup.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/settings.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 	
+		staticPath = '{% static "" %}';
+		jsVersionPathSuffix = '?v={{jsversion}}';
 		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
 		leftChevronPath = '{% static "consentrecords/png/ios7-arrow-back-512px.svg" %}'
+		settingsImagePath = '{% static "consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
+		notificationsImagePath = '{% static "consentrecords/png/notifications.png" %}' + jsVersionPathSuffix;
+		shareImagePath = '{% static "consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
+		myPathwayImagePath = '{% static "consentrecords/png/mypathway.svg" %}' + jsVersionPathSuffix;
+		compareImagePath = '{% static "consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
+		inquiryImagePath = '{% static "consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
 		
 		/* For show methods, the obj is the DOM object that contains the item being shown.
 							 the d object contains the field information.
@@ -93,10 +125,10 @@
 		$(document).ready (function(e) {
 			try
 			{
-				var panel = new ExperiencePromptsPanel(revealPanelLeft);
-				panel.showLeft().then(unblockClick);
+				var panel = new {{panelType}}(revealPanelLeft);
+				panel.showNow();
 			}
-			catch(err) { cr.syncFail(err); }
+			catch(err) { cr.asyncFail(err); }
 		});
 	</script>
 

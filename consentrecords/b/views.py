@@ -150,21 +150,22 @@ def find(request):
     return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
-def showRootItems(request):
+def showRootItems(request, language, rootItemPluralName, panelType):
     
     try:
-        url = request.path_info.split('/')[-2] + '.html'
         logPage(request, 'pathAdvisor/' + request.path_info)
-        template = loader.get_template(templateDirectory + url)
+        template = loader.get_template(templateDirectory + 'rootItems.html')
     
         argList = {
             'user': request.user,
             'jsversion': settings.JS_VERSION,
             'cdn_url': settings.CDN_URL,
+            'rootItemPluralName': rootItemPluralName,
+            'panelType': panelType,
             }
         
         if request.user.is_authenticated:
-            user = Context('en', request.user).user
+            user = Context(language, request.user).user
             if not user:
                 return HttpResponse("user is not set up: %s" % request.user.get_full_name())
             argList['userID'] = user.id.hex
@@ -172,6 +173,31 @@ def showRootItems(request):
         return HttpResponse(template.render(argList))
     except Exception as e:
         return HttpResponse(str(e))
+        
+@ensure_csrf_cookie
+def showCommentPrompts(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Comment Prompts', 'CommentPromptsPanel')
+
+@ensure_csrf_cookie
+def showExperiencePrompts(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Experience Prompts', 'ExperiencePromptsPanel')
+
+@ensure_csrf_cookie
+def showOrganizations(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Organizations', 'OrganizationsPanel')
+
+@ensure_csrf_cookie
+def showServices(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Services', 'ServicesPanel')
+
+@ensure_csrf_cookie
+def showUsers(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Users', 'UsersPanel')
 
 @ensure_csrf_cookie
 def showPathway(request, email):

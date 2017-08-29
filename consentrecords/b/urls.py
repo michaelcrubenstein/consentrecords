@@ -35,10 +35,10 @@ urlpatterns = [
     url(r'^signup/', views.signup),
     url(r'^experience/([^/]+)/', views.showExperience),
 
-    url(r'^organizations/', views.showRootItems),
-    url(r'^services/', views.showRootItems),
-    url(r'^users/', views.showRootItems),
-    url(r'^commentprompts/', views.showRootItems),
-    url(r'^experienceprompts/', views.showRootItems),
+    url(r'^commentprompts/', views.showCommentPrompts),
+    url(r'^experienceprompts/', views.showExperiencePrompts),
+    url(r'^organizations/', views.showOrganizations),
+    url(r'^services/', views.showServices),
+    url(r'^users/', views.showUsers),
 
 ]
