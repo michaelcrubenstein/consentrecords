@@ -808,7 +808,7 @@ var EngagementPanel = (function () {
 	{
 		if (this.controller().newInstance().user() == null)
 			throw new Error("The user of an engagement is required.");
-		ChildPanel.prototype.promiseUpdateChanges.call(this);
+		return ChildPanel.prototype.promiseUpdateChanges.call(this);
 	}
 
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
