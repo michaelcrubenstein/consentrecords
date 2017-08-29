@@ -238,7 +238,6 @@ var ChildrenPanel = (function () {
 				else
 				{
 					_this.searchView.showObjects([newInstance]);
-					_this.savedItems().push(newInstance);
 				}
 			}); 
 		

@@ -233,6 +233,7 @@ var ChildController = (function() {
 		
 		this.parent(parent);
 		Controller.call(this, source, duplicateForEdit);
+		this.newInstance().parent(parent);
 	}
 	
 	return ChildController;
@@ -263,6 +264,13 @@ var EngagementController = (function() {
 	EngagementController.prototype.savingMessage = "Saving Engagement...";
 	EngagementController.prototype.groupKey = 'engagements';
 	EngagementController.prototype.addEventType = 'engagementAdded.cr';
+
+	EngagementController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().enagements())
+			this.parent().engagements().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
 
 	function EngagementController(parent, source, duplicateForEdit)
 	{
@@ -599,8 +607,8 @@ var ExperienceController = (function() {
 		this.newInstance().experienceServices(this.distinctExperienceServices());
 		this.newInstance().path(this.parent());
 		
-		this.parent().experiences().push(this.newInstance());
-
+		if (this.parent().experiences())
+			this.parent().experiences().push(this.newInstance());
 		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
 	}
 
@@ -817,6 +825,13 @@ var OfferingController = (function() {
 		return null;
 	}
 	
+	OfferingController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().offerings())
+			this.parent().offerings().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
 	function OfferingController(parent, source, duplicateForEdit)
 	{
 		ChildController.call(this, parent, source || cr.Offering, duplicateForEdit);
@@ -880,6 +895,13 @@ var PeriodController = (function() {
 	PeriodController.prototype.groupKey = 'periods';
 	PeriodController.prototype.addEventType = 'periodAdded.cr';
 
+	PeriodController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().periods())
+			this.parent().periods().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
 	function PeriodController(parent, source, duplicateForEdit)
 	{
 		ChildController.call(this, parent, source || cr.Period, duplicateForEdit);
@@ -897,6 +919,13 @@ var SessionController = (function() {
 	SessionController.prototype.groupKey = 'sessions';
 	SessionController.prototype.addEventType = 'sessionAdded.cr';
 
+	SessionController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().sessions())
+			this.parent().sessions().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
 	function SessionController(parent, source, duplicateForEdit)
 	{
 		ChildController.call(this, parent, source || cr.Session, duplicateForEdit);
@@ -913,6 +942,13 @@ var SiteController = (function() {
 	SiteController.prototype.savingMessage = "Saving Site...";
 	SiteController.prototype.groupKey = 'sites';
 	SiteController.prototype.addEventType = 'siteAdded.cr';
+
+	SiteController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().sites())
+			this.parent().sites().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
 
 	function SiteController(parent, source, duplicateForEdit)
 	{
