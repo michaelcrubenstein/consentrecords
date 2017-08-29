@@ -1394,15 +1394,10 @@ crv.SitePanel = (function () {
 
 		window.scrollTo(0, 0);
 		$panelNode.css({top: 0,
-						left: "{0}px".format(window.innerWidth),
-						position: 'fixed'});
+						left: "{0}px".format(window.innerWidth)});
 		$panelNode.trigger("revealing.cr");
 		return $panelNode.animate({left: 0})
-			.promise()
-			.done(function()
-				{
-					$panelNode.css('position', '');
-				});
+			.promise();
 	}
 
 	SitePanel.prototype.hideDown = function(done)
