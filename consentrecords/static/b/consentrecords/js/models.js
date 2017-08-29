@@ -1887,6 +1887,12 @@ cr.UserLinkInstance = (function() {
 		return changed;
 	}
 
+    UserLinkInstance.prototype.getData = function(fields)
+    {
+    	fields = fields !== undefined ? fields : ['user'];
+    	return cr.IInstance.prototype.getData.call(this, fields);
+    }
+    
 	function UserLinkInstance() {
 	    cr.IInstance.call(this);
 	};
@@ -3332,12 +3338,6 @@ cr.Engagement = (function() {
 		return this;
     }
     
-    Engagement.prototype.getData = function(fields)
-    {
-    	fields = fields !== undefined ? fields : ['user'];
-    	return cr.IInstance.prototype.getData.call(this, fields);
-    }
-    
 	Engagement.prototype.setDefaultValues = function()
 	{
     	cr.UserLinkInstance.prototype.setDefaultValues.call(this);
@@ -3426,12 +3426,6 @@ cr.Enrollment = (function() {
 		}
 	}
 	
-    Enrollment.prototype.getData = function(fields)
-    {
-    	fields = fields !== undefined ? fields : ['user'];
-    	return cr.IInstance.prototype.getData.call(this, fields);
-    }
-    
 	Enrollment.prototype.triggerDeleted = function()
 	{
 		cr.IInstance.prototype.triggerDeleted.call(this);
