@@ -954,36 +954,53 @@ var NewInquirySearchView = (function()
 			{
 				var _this = this;
 				showClickFeedback(button);
-				cr.getData({path: this.session.urlPath() + "/inquiry[user={0}]".format(user.id()),
-							resultType: cr.Inquiry,
-							})
-				  .then(function(inquiries)
-						{
-							try
+				
+				var f = function()
+					{
+						var offering = _this.session.parent();
+						console.assert(offering);
+						bootstrap_alert.success(
+							"{0} inquiry added to {1}/{2}"
+								.format(user.description(), offering.description(), _this.session.description()),
+							".alert-container");
+						unblockClick();
+					}
+				if (this.session.id())
+				{
+					cr.getData({path: this.session.urlPath() + "/inquiry[user={0}]".format(user.id()),
+								resultType: cr.Inquiry,
+								})
+						.then(function(inquiries)
 							{
-								var offering = _this.session.offering();
 								if (inquiries.length)
-									cr.syncFail("{0} already inquired into {1}/{2}"
-										.format(user.description(), offering.description(), _this.session.description()));
+								{
+									var offering = _this.session.parent();
+									console.assert(offering);
+									cr.syncFail(new Error("{0} already inquired into {1}/{2}"
+										.format(user.description(), offering.description(), _this.session.description())));
+								}
 								else
 								{
 									changes = {'inquiries':
 										[{'add': '1', 'user': user.urlPath()}]};
 									_this.session.update(changes)
-										.then(function()
-											{
-												bootstrap_alert.success(
-													"{0} inquiry added to {1}/{2}"
-														.format(user.description(), offering.description(), _this.session.description()),
-													".alert-container");
-												unblockClick();
-											},
-											cr.syncFail);
+										.then(f, cr.syncFail);
 								}
-							}
-							catch(err) { cr.syncFail(err); }
-						});
-				
+							},
+							cr.syncFail);
+				}
+				else
+				{
+					var newInstance = new cr.Inquiry();
+					newInstance.clientID(uuid.v4());
+					newInstance.user(user);
+					newInstance.calculateDescription();
+					changes = {'inquiries':
+						[{'add': newInstance.clientID(), 'user': user.urlPath()}]};
+					_this.session.inquiries().push(newInstance);
+					_this.session.updateData(changes, {});
+					f();
+				}
 			}
 			catch (err) { cr.syncFail(err); }
 		}
@@ -1041,36 +1058,54 @@ var NewEnrollmentSearchView = (function()
 			{
 				var _this = this;
 				showClickFeedback(button);
-				cr.getData({path: this.session.urlPath() + "/enrollment[user={0}]".format(user.id()),
-							resultType: cr.Enrollment,
-							})
-				  .then(function(enrollments)
-						{
-							try
+				var f = function()
+					{
+						var offering = _this.session.parent();
+						console.assert(offering);
+						bootstrap_alert.success(
+							"{0} enrolled in {1}/{2}"
+								.format(user.description(), offering.description(), _this.session.description()),
+							".alert-container");
+						unblockClick();
+					}
+				if (this.session.id())
+				{
+					cr.getData({path: this.session.urlPath() + "/enrollment[user={0}]".format(user.id()),
+								resultType: cr.Enrollment,
+								})
+					  .then(function(enrollments)
 							{
-								var offering = _this.session.parent();
-								console.assert(offering);
-								if (enrollments.length)
-									cr.syncFail("{0} already enrolled in {1}/{2}"
-										.format(user.description(), offering.description(), _this.session.description()));
-								else
+								try
 								{
-									changes = {'enrollments':
-										[{'add': '1', 'user': user.urlPath()}]};
-									_this.session.update(changes)
-										.then(function()
-											{
-												bootstrap_alert.success(
-													"{0} enrolled in {1}/{2}"
-														.format(user.description(), offering.description(), _this.session.description()),
-													".alert-container");
-												_this.sitePanel.hide();
-											},
-											cr.syncFail);
+									var offering = _this.session.parent();
+									console.assert(offering);
+									if (enrollments.length)
+										cr.syncFail("{0} already enrolled in {1}/{2}"
+											.format(user.description(), offering.description(), _this.session.description()));
+									else
+									{
+										changes = {'enrollments':
+											[{'add': '1', 'user': user.urlPath()}]};
+										_this.session.update(changes)
+											.then(f, cr.syncFail);
+									}
 								}
-							}
-							catch(err) { cr.syncFail(err); }
-						});
+								catch(err) { cr.syncFail(err); }
+							},
+							cr.syncFail);
+					}
+					else
+					{
+						var newInstance = new cr.Enrollment();
+						newInstance.clientID(uuid.v4());
+						newInstance.user(user);
+						newInstance.calculateDescription();
+						changes = {'enrollments':
+							[{'add': newInstance.clientID(), 'user': user.urlPath()}]};
+						_this.session.enrollments().push(newInstance);
+						_this.session.updateData(changes, {});
+						f();
+					}
 				
 			}
 			catch (err) { cr.syncFail(err); }
@@ -1131,26 +1166,33 @@ var PickEngagementUserSearchView = (function()
 			{
 				var _this = this;
 				showClickFeedback(button);
-				cr.getData({path: this.session.urlPath() + "/engagement[user={0}]".format(user.id()),
-							resultType: cr.Engagement,
-							})
-				  .then(function(engagements)
-						{
-							try
+				if (this.session.id())
+				{
+					cr.getData({path: this.session.urlPath() + "/engagement[user={0}]".format(user.id()),
+								resultType: cr.Engagement,
+								})
+					  .then(function(engagements)
 							{
-								var offering = _this.session.offering();
-								if (engagements.length && engagements[0].id() != _this.engagement.id())
-									cr.syncFail("{0} already engaged in {1}/{2}"
-										.format(user.description(), offering.description(), _this.session.description()));
-								else
+								try
 								{
-									$(_this.sitePanel.node()).trigger('itemPicked.cr', user);
-									_this.sitePanel.hide();
+									var offering = _this.session.offering();
+									if (engagements.length && engagements[0].id() != _this.engagement.id())
+										cr.syncFail("{0} already engaged in {1}/{2}"
+											.format(user.description(), offering.description(), _this.session.description()));
+									else
+									{
+										$(_this.sitePanel.node()).trigger('itemPicked.cr', user);
+										_this.sitePanel.hide();
+									}
 								}
-							}
-							catch(err) { cr.syncFail(err); }
-						});
-				
+								catch(err) { cr.syncFail(err); }
+							});
+				}
+				else
+				{
+					$(_this.sitePanel.node()).trigger('itemPicked.cr', user);
+					_this.sitePanel.hide();
+				}
 			}
 			catch (err) { cr.syncFail(err); }
 		}
