@@ -2468,6 +2468,7 @@ var EditItemPanel = (function () {
 					showClickFeedback(this);
 					try
 					{
+						_this.controller().newInstance().calculateDescription();	/* In case a child needs to refer to this object */
 						var panel = new panelType(_this.controller().newInstance(), revealPanelLeft);
 						panel.showLeft().then(unblockClick);
 					}
