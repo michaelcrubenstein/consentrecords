@@ -849,12 +849,18 @@ cr.IInstance = (function() {
 	IInstance.prototype.setChildren = function(d, key, childType, children)
 	{
 		if (key in d)
+		{
+			var _this = this;
 			children.call(this, 
 						  d[key].map(function(d) {
 								var i = new childType();
 								i.setData(d);
-								return i;
+								i.parentID(_this.id())
+								return crp.pushInstance(i);
 							}));
+		}
+		else
+			children.call(this, null);
 	}
 
 	IInstance.prototype.setData = function(d)
@@ -1987,18 +1993,8 @@ cr.Grantable = (function() {
 		    this._primaryAdministrator.setData(d['primary administrator']);
 		    this._primaryAdministrator = crp.pushInstance(this._primaryAdministrator);
 		}
-		if ('user grants' in d)
-			this._userGrants = d['user grants'].map(function(d) {
-								var i = new cr.UserGrant();
-								i.setData(d);
-								return i;
-							});
-		if ('group grants' in d)
-			this._groupGrants = d['group grants'].map(function(d) {
-								var i = new cr.GroupGrant();
-								i.setData(d);
-								return i;
-							});
+		this.setChildren(d, 'user grants', cr.UserGrant, this.userGrants);
+		this.setChildren(d, 'group grants', cr.GroupGrant, this.groupGrants);
     }
     
     /** Merge the contents of the specified source into this Grantable for
@@ -2795,14 +2791,7 @@ cr.Address = (function() {
 		this._city = 'city' in d ? d['city'] : "";
 		this._state = 'state' in d ? d['state'] : "";
 		this._zipCode = 'zipCode' in d ? d['zipCode'] : "";
-		var _this = this;
-		if ('streets' in d)
-			this._streets = d['streets'].map(function(d) {
-								var i = new cr.Street();
-								i.setData(d);
-								i.parent(_this);
-								return i;
-							});
+		this.setChildren(d, 'streets', cr.Street, this.streets);
     }
     
     /** Merge the contents of the specified source into this Address for
@@ -3162,12 +3151,7 @@ cr.CommentPrompt = (function() {
 	CommentPrompt.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		if ('translations' in d)
-			this._translations = d['translations'].map(function(d) {
-								var i = new cr.CommentPromptText();
-								i.setData(d);
-								return i;
-							});
+		this.setChildren(d, 'translations', cr.CommentPromptText, this.translations);
     }
     
 	CommentPrompt.prototype.mergeData = function(source)
@@ -3704,28 +3688,9 @@ cr.Experience = (function() {
 		this._customSite = 'custom site' in d ? d['custom site'] : "";
 		this._customOffering = 'custom offering' in d ? d['custom offering'] : "";
 		this._timeframe = 'timeframe' in d ? d['timeframe'] : "";
-		var _this = this;
-		if ('services' in d)
-			this._services = d['services'].map(function(d) {
-								var i = new cr.ExperienceService();
-								i.setData(d);
-								i.parentID(_this.id());
-								return i;
-							});
-		if ('custom services' in d)
-			this._customServices = d['custom services'].map(function(d) {
-								var i = new cr.ExperienceCustomService();
-								i.setData(d);
-								i.parentID(_this.id());
-								return i;
-							});
-		if ('comments' in d)
-			this._comments = d['comments'].map(function(d) {
-								var i = new cr.Comment();
-								i.setData(d);
-								i.parentID(_this.id());
-								return i;
-							});
+		this.setChildren(d, 'services', cr.ExperienceService, this.experienceServices);
+		this.setChildren(d, 'custom services', cr.ExperienceCustomService, this.customServices);
+		this.setChildren(d, 'comments', cr.Comment, this.comments);
     }
     
     /** Merge the contents of the specified source into this Experience for
@@ -4274,24 +4239,9 @@ cr.ExperiencePrompt = (function() {
 		this._domainID = ('domain' in d) ? d['domain']['id'] : null;
 		this._stage = ('stage' in d) ? d['stage'] : "";
 		this._timeframe = ('timeframe' in d) ? d['timeframe'] : "";
-		if ('translations' in d)
-			this._translations = d['translations'].map(function(d) {
-								var i = new cr.ExperiencePromptText();
-								i.setData(d);
-								return i;
-							});
-		if ('services' in d)
-			this._services = d['services'].map(function(d) {
-								var i = new cr.ExperiencePromptService();
-								i.setData(d);
-								return i;
-							});
-		if ('disqualifying tags' in d)
-			this._disqualifyingTags = d['disqualifying tags'].map(function(d) {
-								var i = new cr.DisqualifyingTag();
-								i.setData(d);
-								return i;
-							});
+		this.setChildren(d, 'translations', cr.ExperiencePromptText, this.translations);
+		this.setChildren(d, 'services', cr.ExperiencePromptService, this.experiencePromptServices);
+		this.setChildren(d, 'disqualifying tags', cr.DisqualifyingTag, this.disqualifyingTags);
 	}
 	
     /** Merge the contents of the specified source into this ExperiencePrompt for
@@ -4576,12 +4526,7 @@ cr.Group = (function() {
 	{
 		cr.IInstance.prototype.setData.call(this, d);
 		cr.NamedInstance.prototype.setData.call(this, d, cr.GroupName);
-		if ('members' in d)
-			this._members = d['members'].map(function(d) {
-								var i = new cr.GroupMember();
-								i.setData(d);
-								return i;
-							});
+		this.setChildren(d, 'members', cr.GroupMember, this.members);
     }
     
     /** Merge the contents of the specified source into this Group for
@@ -5020,18 +4965,9 @@ cr.Offering = (function() {
 		this._maximumAge = 'maximum age' in d ? d['maximum age'] : "";
 		this._minimumGrade = 'minimum grade' in d ? d['minimum grade'] : "";
 		this._maximumGrade = 'maximum grade' in d ? d['maximum grade'] : "";
-		if ('services' in d)
-			this._services = d['services'].map(function(d) {
-								var i = new cr.OfferingService();
-								i.setData(d);
-								return i;
-							});
-		if ('sessions' in d)
-			this._sessions = d['sessions'].map(function(d) {
-								var i = new cr.Session();
-								i.setData(d);
-								return i;
-							});
+		this.setChildren(d, 'services', cr.OfferingService, this.offeringServices);
+		this.setChildren(d, 'sessions', cr.Session, this.sessions);
+
 		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
     }
@@ -5450,18 +5386,9 @@ cr.Organization = (function() {
 
 		this._webSite = 'web site' in d ? d['web site'] : "";
 
-		if ('groups' in d)
-			this._groups = d['groups'].map(function(d) {
-								var i = new cr.Group();
-								i.setData(d);
-								return crp.pushInstance(i);
-							});
-		if ('sites' in d)
-			this._sites = d['sites'].map(function(d) {
-								var i = new cr.Site();
-								i.setData(d);
-								return crp.pushInstance(i);
-							});
+		this.setChildren(d, 'groups', cr.Group, this.groups);
+		this.setChildren(d, 'sites', cr.Site, this.sites);
+
 		if ('inquiry access group' in d && 
 			'id' in d['inquiry access group'] &&
 			this._groups)
@@ -5749,14 +5676,13 @@ cr.Path = (function() {
 		this._name = 'name' in d ? d['name'] : "";
 		this._specialAccess = 'special access' in d ? d['special access'] : "";
 		this._canAnswerExperience = 'can answer experience' in d ? d['can answer experience'] : "";
-		var _this = this;
+		
+		this.setChildren(d, 'experiences', cr.Experience, this.experiences);
 		if ('experiences' in d)
-			this._experiences = d['experiences'].map(function(d) {
-								var i = new cr.Experience();
-								i.setData(d);
-								i.path(_this);
-								return i;
-							});
+		{
+			var _this = this;
+			this._experiences.forEach(function(e) { e.path(_this); });
+		}
 		if ('user' in d)
 		{
 			this._user = new cr.User();
@@ -6178,12 +6104,7 @@ cr.Service = (function() {
 			return this._organizationLabels;
 		else
 		{
-			this._organizationLabels = newData.map(function(d)
-				{
-					var i = new cr.ServiceOrganizationLabel();
-					i.setData(d);
-					return i;
-				});
+			this._organizationLabels = newData;
 			return this;
 		}
 	}
@@ -6194,12 +6115,7 @@ cr.Service = (function() {
 			return this._siteLabels;
 		else
 		{
-			this._siteLabels = newData.map(function(d)
-				{
-					var i = new cr.ServiceSiteLabel();
-					i.setData(d);
-					return i;
-				});
+			this._siteLabels = newData;
 			return this;
 		}
 	}
@@ -6210,12 +6126,7 @@ cr.Service = (function() {
 			return this._offeringLabels;
 		else
 		{
-			this._offeringLabels = newData.map(function(d)
-				{
-					var i = new cr.ServiceOfferingLabel();
-					i.setData(d);
-					return i;
-				});
+			this._offeringLabels = newData;
 			return this;
 		}
 	}
@@ -6226,12 +6137,7 @@ cr.Service = (function() {
 			return this._services;
 		else
 		{
-			this._services = newData.map(function(d)
-				{
-					var i = new cr.ServiceImplication();
-					i.setData(d);
-					return i;
-				});
+			this._services = newData;
 			return this;
 		}
 	}
@@ -6243,14 +6149,10 @@ cr.Service = (function() {
 
 		this._stage = 'stage' in d ? d['stage'] : "";
 
-		if ('organization labels' in d)
-			this.organizationLabels(d['organization labels']);
-		if ('site labels' in d)
-			this.siteLabels(d['site labels']);
-		if ('offering labels' in d)
-			this.offeringLabels(d['offering labels']);
-		if ('services' in d)
-			this.serviceImplications(d['services']);
+		this.setChildren(d, 'organization labels', cr.ServiceOrganizationLabel, this.organizationLabels);
+		this.setChildren(d, 'site labels', cr.ServiceSiteLabel, this.siteLabels);
+		this.setChildren(d, 'offering labels', cr.ServiceOfferingLabel, this.offeringLabels);
+		this.setChildren(d, 'services', cr.ServiceImplication, this.serviceImplications);
 	}
 	
     /** Merge the contents of the specified source into this Street for
@@ -6662,12 +6564,7 @@ cr.Session = (function() {
 			return this._inquiries;
 		else
 		{
-			this._inquiries = newData.map(function(d)
-				{
-					var i = new cr.Inquiry();
-					i.setData(d);
-					return i;
-				});
+			this._inquiries = newData;
 			return this;
 		}
 	}
@@ -6678,12 +6575,7 @@ cr.Session = (function() {
 			return this._enrollments;
 		else
 		{
-			this._enrollments = newData.map(function(d)
-				{
-					var i = new cr.Enrollment();
-					i.setData(d);
-					return i;
-				});
+			this._enrollments = newData;
 			return this;
 		}
 	}
@@ -6694,12 +6586,7 @@ cr.Session = (function() {
 			return this._engagements;
 		else
 		{
-			this._engagements = newData.map(function(d)
-				{
-					var i = new cr.Engagement();
-					i.setData(d);
-					return i;
-				});
+			this._engagements = newData;
 			return this;
 		}
 	}
@@ -6710,12 +6597,7 @@ cr.Session = (function() {
 			return this._periods;
 		else
 		{
-			this._periods = newData.map(function(d)
-				{
-					var i = new cr.Period();
-					i.setData(d);
-					return i;
-				});
+			this._periods = newData;
 			return this;
 		}
 	}
@@ -6875,30 +6757,11 @@ cr.Session = (function() {
 
 		this._registrationDeadline = 'registration deadline' in d ? d['registration deadline'] : "";
 		this._canRegister = 'can register' in d ? d['can register'] : "";
-		if ('inquiries' in d)
-			this._inquiries = d['inquiries'].map(function(d) {
-								var i = new cr.Inquiry();
-								i.setData(d);
-								return i;
-							});
-		if ('enrollments' in d)
-			this._enrollments = d['enrollments'].map(function(d) {
-								var i = new cr.Enrollment();
-								i.setData(d);
-								return i;
-							});
-		if ('engagements' in d)
-			this._engagements = d['engagements'].map(function(d) {
-								var i = new cr.Engagement();
-								i.setData(d);
-								return i;
-							});
-		if ('periods' in d)
-			this._periods = d['periods'].map(function(d) {
-								var i = new cr.Period();
-								i.setData(d);
-								return i;
-							});
+		
+		this.setChildren(d, 'inquiries', cr.Inquiry, this.inquiries);
+		this.setChildren(d, 'enrollments', cr.Enrollment, this.enrollments);
+		this.setChildren(d, 'engagements', cr.Engagement, this.engagements);
+		this.setChildren(d, 'periods', cr.Period, this.periods);
 
 		if ('offering' in d)
 		{
@@ -7166,12 +7029,8 @@ cr.Site = (function() {
 			this._address = new cr.Address(this);
 			this._address.setData(d['address']);
 		}
-		if ('offerings' in d)
-			this._offerings = d['offerings'].map(function(d) {
-								var i = new cr.Offering();
-								i.setData(d);
-								return crp.pushInstance(i);
-							});
+
+		this.setChildren(d, 'offerings', cr.Offering, this.offerings);
 		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
     }
     
@@ -7573,22 +7432,13 @@ cr.User = (function() {
 		this._lastName = 'last name' in d ? d['last name'] : "";
 		this._birthday = 'birthday' in d ? d['birthday'] : "";
 		this._systemAccess = 'system access' in d ? d['system access'] : null;
-		if ('emails' in d)
-			this.emails(d['emails']);
-		else
-			this._emails = null;
-		if ('notifications' in d)
-			this.notifications(d['notifications']);
-		else
-			this._notifications = null;
+		this.setChildren(d, 'emails', cr.UserEmail, this.emails);
+		this.setChildren(d, 'notifications', cr.Notification, this.notifications);
+		this.setChildren(d, 'user grant requests', cr.UserUserGrantRequest, this.userGrantRequests);
 		if ('path' in d)
 			this.path(d['path']);
 		else
 			this._path = null;
-		if ('user grant requests' in d)
-			this.userGrantRequests(d['user grant requests']);
-		else
-			this._userGrantRequests = null;
 			
 		/* Clear all of the promises. */
 		this._notificationsPromise = null;
@@ -7848,13 +7698,7 @@ cr.User = (function() {
 		else
 		{
 			var _this = this;
-			this._emails = newData.map(function(d)
-				{
-					var i = new cr.UserEmail();
-					i.setData(d);
-					i.parent(_this);
-					return i;
-				});
+			this._emails = newData;
 			return this;
 		}
 	}
@@ -7866,13 +7710,7 @@ cr.User = (function() {
 		else
 		{
 			var _this = this;
-			this._notifications = newData.map(function(d)
-				{
-					var i = new cr.Notification();
-					i.setData(d);
-					i.parent(_this);
-					return i;
-				});
+			this._notifications = newData;
 			return this;
 		}
 	}
@@ -7884,14 +7722,7 @@ cr.User = (function() {
 		else
 		{
 			var _this = this;
-			this._userGrantRequests = newData.map(function(d)
-				{
-					var i = new cr.UserUserGrantRequest();
-					i.parent(_this)
-					 .user(_this)
-					 .setData(d);
-					return i;
-				});
+			this._userGrantRequests = newData;
 			return this;
 		}
 	}
