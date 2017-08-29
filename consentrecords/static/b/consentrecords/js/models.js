@@ -3784,7 +3784,6 @@ cr.Experience = (function() {
 	}
 	
 	/* Copies all of the data associated with this instance prior to making changes.
-		For experiences, comments are not copied.
 	 */
 	Experience.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
@@ -3800,6 +3799,13 @@ cr.Experience = (function() {
 		newInstance._timeframe = this._timeframe;
 		newInstance._services = this.duplicateList(this._services, duplicateForEdit);
 		newInstance._customServices = this.duplicateList(this._customServices, duplicateForEdit);
+		
+		if (duplicateForEdit)
+		{
+			if (this._comments)
+				newInstance._comments = this.duplicateData(this._comments, duplicateForEdit);
+		}
+		
 		return this;
 	}
 	
@@ -5043,6 +5049,13 @@ cr.Offering = (function() {
 		newInstance._minimumGrade = this._minimumGrade;
 		newInstance._maximumGrade = this._maximumGrade;
 		newInstance._services = this.duplicateList(this._services, duplicateForEdit);
+
+		if (duplicateForEdit)
+		{
+			if (this._sessions)
+				newInstance._sessions = this.duplicateList(this._sessions);
+		}
+		
 		return this;
 	}
 	
@@ -5368,6 +5381,15 @@ cr.Organization = (function() {
 		
 		newInstance._webSite = this._webSite;
 		newInstance._inquiryAccessGroup = this._inquiryAccessGroup;
+
+		if (duplicateForEdit)
+		{
+			if (this._sites)
+				newInstance._sites = this.duplicateList(this._sites);
+			if (this._groups)
+				newInstance._groups = this.duplicateList(this._groups);
+		}
+		
 		return this;
 	}
 	
@@ -5738,7 +5760,6 @@ cr.Path = (function() {
 	}
 	
 	/* Copies all of the data associated with this instance prior to making changes.
-		For experiences, comments are not copied.
 	 */
 	Path.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
@@ -5747,6 +5768,12 @@ cr.Path = (function() {
 		newInstance._name = this._name;
 		newInstance._specialAccess = this._specialAccess;
 		newInstance._canAnswerExperience = this._canAnswerExperience;
+		
+		if (duplicateForEdit)
+		{
+			if (this._experiences)
+				newInstance._experiences = this.duplicateList(this._experiences);
+		}
 		
 		return this;
 	}
@@ -6854,6 +6881,19 @@ cr.Session = (function() {
 		
 		newInstance._registrationDeadline = this._registrationDeadline;
 		newInstance._canRegister = this._canRegister;
+
+		if (duplicateForEdit)
+		{
+			if (this._inquiries)
+				newInstance._inquiries = this.duplicateList(this._inquiries);
+			if (this._enrollments)
+				newInstance._enrollments = this.duplicateList(this._enrollments);
+			if (this._engagements)
+				newInstance._engagements = this.duplicateList(this._engagements);
+			if (this._periods)
+				newInstance._periods = this.duplicateList(this._periods);
+		}
+		
 		return this;
 	}
 	
@@ -7109,6 +7149,13 @@ cr.Site = (function() {
 		if (newInstance._address == null)
 			newInstance._address = new cr.Address();
 		this._address.duplicateData(newInstance._address, duplicateForEdit);
+		
+		if (duplicateForEdit)
+		{
+			if (this._offerings)
+				newInstance._offerings = this.duplicateList(this._offerings, duplicateForEdit);
+		}
+		
 		return this;
 	}
 	
