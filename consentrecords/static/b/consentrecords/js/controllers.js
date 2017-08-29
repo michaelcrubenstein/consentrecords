@@ -267,7 +267,7 @@ var EngagementController = (function() {
 
 	EngagementController.prototype.postAddDone = function(changes, newIDs)
 	{
-		if (this.parent().enagements())
+		if (this.parent().engagements())
 			this.parent().engagements().push(this.newInstance());
 		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
 	}
