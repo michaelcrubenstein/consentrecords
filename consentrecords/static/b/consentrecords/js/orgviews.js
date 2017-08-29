@@ -511,7 +511,7 @@ var InquiriesPanel = (function () {
 					_this.searchView.showObjects([newInstance]);
 				}
 			}); 
-		panel.showLeft().then(unblockClick);
+		panel.showUp().then(unblockClick);
 	}
 	
 	function InquiriesPanel(parent, onShow) {
@@ -598,7 +598,7 @@ var EnrollmentsPanel = (function () {
 					_this.searchView.showObjects([newInstance]);
 				}
 			}); 
-		panel.showLeft().then(unblockClick);
+		panel.showUp().then(unblockClick);
 	}
 	
 	function EnrollmentsPanel(parent, onShow) {
@@ -1322,7 +1322,7 @@ var RootItemsPanel = (function () {
 			{
 				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
 			}); 
-		panel.showLeft().then(unblockClick);
+		panel.showUp().then(unblockClick);
 	}
 
 	RootItemsPanel.prototype.createRoot = function(objectData, header, onShow)
