@@ -502,9 +502,14 @@ var InquiriesPanel = (function () {
 	{
 		var _this = this;
 		var panel = new NewInquiryPanel(this.parent, this.addPanelTitle);
-		setupOnViewEventHandler(this.parent, 'inquiryAdded.cr', panel.node(), function(eventObject)
+		setupOnViewEventHandler(this.parent, 'inquiryAdded.cr', panel.node(), function(eventObject, newInstance)
 			{
-				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+				if (_this.parent.id())
+					_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+				else
+				{
+					_this.searchView.showObjects([newInstance]);
+				}
 			}); 
 		panel.showLeft().then(unblockClick);
 	}
@@ -584,9 +589,14 @@ var EnrollmentsPanel = (function () {
 	{
 		var _this = this;
 		var panel = new NewEnrollmentPanel(this.parent, this.addPanelTitle);
-		setupOnViewEventHandler(this.parent, 'enrollmentAdded.cr', panel.node(), function(eventObject)
+		setupOnViewEventHandler(this.parent, 'enrollmentAdded.cr', panel.node(), function(eventObject, newInstance)
 			{
-				_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+				if (_this.parent.id())
+					_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+				else
+				{
+					_this.searchView.showObjects([newInstance]);
+				}
 			}); 
 		panel.showLeft().then(unblockClick);
 	}
@@ -935,6 +945,7 @@ var NewInquirySearchView = (function()
 	NewInquirySearchView.prototype = Object.create(PickUserSearchView.prototype);
 	NewInquirySearchView.prototype.constructor = NewInquirySearchView;
 
+	
 	/* Overrides SearchView.prototype.onClickButton */
 	NewInquirySearchView.prototype.onClickButton = function(user, i, button) {
 		if (prepareClick('click', 'user: ' + user.description()))
