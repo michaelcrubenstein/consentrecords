@@ -1177,7 +1177,7 @@ cr.IInstance = (function() {
 	{
 		return items.map(function(i)
 			{
-				target = new i.constructor();
+				var target = new i.constructor();
 				i.duplicateData(target, duplicateForEdit);
 				return target;
 			});
@@ -2806,7 +2806,7 @@ cr.Address = (function() {
 		if (!this._streets && source._streets)
 			this._streets = source._streets.map(function(i)
 				{
-					j = new cr.Street();
+					var j = new cr.Street();
 					j.mergeData(i);
 					return j;
 				});
