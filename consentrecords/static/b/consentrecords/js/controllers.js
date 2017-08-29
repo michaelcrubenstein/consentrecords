@@ -764,6 +764,30 @@ var ExperienceController = (function() {
 	return ExperienceController;
 })();
 
+var GroupController = (function() {
+	GroupController.prototype = Object.create(ChildController.prototype);
+	GroupController.prototype.constructor = GroupController;
+	
+	GroupController.prototype.addingMessage = "Adding Group...";
+	GroupController.prototype.savingMessage = "Saving Group...";
+	GroupController.prototype.groupKey = 'groups';
+	GroupController.prototype.addEventType = 'groupAdded.cr';
+
+	GroupController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().groups())
+			this.parent().groups().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
+	function GroupController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Group, duplicateForEdit);
+	}
+	
+	return GroupController;
+})();
+
 var OfferingController = (function() {
 	OfferingController.prototype = Object.create(ChildController.prototype);
 	OfferingController.prototype.constructor = OfferingController;

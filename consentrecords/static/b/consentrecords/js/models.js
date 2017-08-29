@@ -1864,7 +1864,7 @@ cr.UserLinkInstance = (function() {
 			if (typeof(userData) == 'string')
 			{
 				if (/^user\/[A-Za-z0-9]{32}$/.test(userData))
-					userID = userData.substring("user/".length);
+					userID = userData.substring('user/'.length);
 				else
 					console.assert(false);
 			}
@@ -2036,7 +2036,7 @@ cr.Grantable = (function() {
 				this._primaryAdministrator = null;
 			else
 			{
-				console.assert(d['primary administrator'].startsWith("user/"));
+				console.assert(d['primary administrator'].startsWith('user/'));
 				var userID = d['primary administrator'].substring(5);
 				this._primaryAdministrator = crp.getInstance(userID);
 			}
@@ -5509,7 +5509,10 @@ cr.Organization = (function() {
 			else
 			{
 				if (typeof(idData) == 'string')
-					console.log(false);	/* To Do: */
+				{
+					console.assert(/^group\/[A-Za-z0-9]{32}$/.test(idData));
+					id = idData.substring('group/'.length);
+				}
 				else
 					id = idData['id'];
 				this._inquiryAccessGroup = this.groups().find(function(group)

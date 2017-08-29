@@ -174,6 +174,7 @@ var crv = {
 		inquiries: "Inquiries",
 		maximumAge: "Maximum Age",
 		maximumGrade: "Maximum Grade",
+		members: "Members",
 		minimumAge: "Minimum Age",
 		minimumGrade: "Minimum Grade",
 		names: "Names",
