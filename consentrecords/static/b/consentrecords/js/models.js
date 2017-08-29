@@ -3248,6 +3248,13 @@ cr.DisqualifyingTag = (function() {
 		return 'disqualifying tag/{0}'.format(this.id());
 	}
 	
+	DisqualifyingTag.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().disqualifyingTags(), this);
+		$(this.parent()).trigger("disqualifyingTagDeleted.cr", this);
+	}
+	
 	function DisqualifyingTag() {
 	    cr.ServiceLinkInstance.call(this);
 	};
@@ -4432,6 +4439,13 @@ cr.ExperiencePromptService = (function() {
 		return 'experience prompt service/{0}'.format(this.id());
 	}
 	
+	ExperiencePromptService.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().experiencePromptServices(), this);
+		$(this.parent()).trigger("experiencePromptServiceDeleted.cr", this);
+	}
+	
 	function ExperiencePromptService() {
 	    cr.OrderedServiceLinkInstance.call(this);
 	};
@@ -4448,6 +4462,13 @@ cr.ExperiencePromptText = (function() {
 	{
 		console.assert(this.id());
 		return 'experience prompt text/{0}'.format(this.id());
+	}
+	
+	ExperiencePromptText.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().translations(), this);
+		$(this.parent()).trigger("experiencePromptTextDeleted.cr", this);
 	}
 	
 	function ExperiencePromptText() {
@@ -5248,6 +5269,13 @@ cr.OfferingService = (function() {
 	{
 		console.assert(this.id());
 		return 'offering service/{0}'.format(this.id());
+	}
+	
+	OfferingService.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().offeringServices(), this);
+		$(this.parent()).trigger("offeringServiceDeleted.cr", this);
 	}
 	
 	function OfferingService() {
