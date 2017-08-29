@@ -6126,7 +6126,7 @@ cr.Service = (function() {
 	Service.prototype._organizationLabels = null;
 	Service.prototype._siteLabels = null;
 	Service.prototype._offeringLabels = null;
-	Service.prototype._services = null;
+	Service.prototype._serviceImplications = null;
 	
 	Service.prototype.urlPath = function()
 	{
@@ -6186,10 +6186,10 @@ cr.Service = (function() {
 	Service.prototype.serviceImplications = function(newData)
 	{
 		if (newData === undefined)
-			return this._services;
+			return this._serviceImplications;
 		else
 		{
-			this._services = newData;
+			this._serviceImplications = newData;
 			return this;
 		}
 	}
@@ -6332,6 +6332,11 @@ cr.Service = (function() {
 		if ('offering labels' in d)
 		{
 			if (this.updateList(this.offeringLabels, d['offering labels'], newIDs, 'offeringLabelAdded.cr'))
+				changed = true;
+		}
+		if ('services' in d)
+		{
+			if (this.updateList(this.serviceImplications, d['services'], newIDs, 'implicationAdded.cr'))
 				changed = true;
 		}
 		
@@ -6488,6 +6493,12 @@ cr.ServiceOrganizationLabel = (function() {
 		return 'service organization label/{0}'.format(this.id());
 	}
 	
+	ServiceOrganizationLabel.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().organizationLabels(), this);
+	}
+	
 	function ServiceOrganizationLabel() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -6504,6 +6515,12 @@ cr.ServiceSiteLabel = (function() {
 	{
 		console.assert(this.id());
 		return 'service site label/{0}'.format(this.id());
+	}
+	
+	ServiceSiteLabel.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().siteLabels(), this);
 	}
 	
 	function ServiceSiteLabel() {
@@ -6524,6 +6541,12 @@ cr.ServiceOfferingLabel = (function() {
 		return 'service offering label/{0}'.format(this.id());
 	}
 	
+	ServiceOfferingLabel.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().offeringLabels(), this);
+	}
+	
 	function ServiceOfferingLabel() {
 	    cr.TranslationInstance.call(this);
 	};
@@ -6540,6 +6563,12 @@ cr.ServiceImplication = (function() {
 	{
 		console.assert(this.id());
 		return 'service implication/{0}'.format(this.id());
+	}
+	
+	ServiceImplication.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().serviceImplications(), this);
 	}
 	
 	function ServiceImplication() {

@@ -239,6 +239,58 @@ var ChildController = (function() {
 	return ChildController;
 })();
 
+var ServiceLinkController = (function() {
+	/* Args can either be a cr.Service or a string. */
+	ServiceLinkController.prototype.addService = function(args)
+	{
+		if (args instanceof cr.Service)
+		{
+			var i = new (this.serviceLinkType())();
+			i.description(args.description())
+			 .parent(this.newInstance())
+			 .service(args);
+			if ('position' in i)
+				i.position(this.serviceLinks().length
+			           ? this.serviceLinks()[this.serviceLinks().length - 1].position() + 1
+			           : 0);
+			this.serviceLinks().push(i);
+			return i;
+		}
+		else
+			throw new Error("Invalid arguments to addService");
+	}
+	
+	ServiceLinkController.prototype.removeService = function(service)
+	{
+		cr.removeElement(this.serviceLinks(), service);
+	}
+	
+	/** Returns True if this controller has a service that overrides the importance of
+		the first service directly associated with this controller's new instance.
+	 */
+	ServiceLinkController.prototype.hasPrimaryService = function()
+	{
+		return false;
+	}
+	
+	ServiceLinkController.prototype.primaryServices = function()
+	{
+		return [];
+	}
+	
+	ServiceLinkController.prototype.customServiceType = function()
+	{
+		return null;
+	}
+	
+	function ServiceLinkController()
+	{
+	}
+	
+	return ServiceLinkController;
+	
+})();
+
 var AddressController = (function() {
 	AddressController.prototype = Object.create(ChildController.prototype);
 	AddressController.prototype.constructor = AddressController;
@@ -790,6 +842,7 @@ var GroupController = (function() {
 
 var OfferingController = (function() {
 	OfferingController.prototype = Object.create(ChildController.prototype);
+	Object.assign(OfferingController.prototype, ServiceLinkController.prototype);
 	OfferingController.prototype.constructor = OfferingController;
 	
 	OfferingController.prototype.addingMessage = "Adding Offering...";
@@ -797,43 +850,6 @@ var OfferingController = (function() {
 	OfferingController.prototype.groupKey = 'offerings';
 	OfferingController.prototype.addEventType = 'offeringAdded.cr';
 
-	/* Args can either be a cr.Service or a string. */
-	OfferingController.prototype.addService = function(args)
-	{
-		if (args instanceof cr.Service)
-		{
-			var i = new (this.serviceLinkType())();
-			i.description(args.description())
-			 .parent(this.newInstance())
-			 .service(args)
-			 .position(this.serviceLinks().length
-			           ? this.serviceLinks()[this.serviceLinks().length - 1].position() + 1
-			           : 0);
-			this.serviceLinks().push(i);
-			return i;
-		}
-		else
-			throw new Error("Invalid arguments to addService");
-	}
-	
-	OfferingController.prototype.removeService = function(service)
-	{
-		cr.removeElement(this.newInstance().offeringServices(), service);
-	}
-	
-	/** Returns True if this controller has a service that overrides the importance of
-		the first service directly associated with this controller's new instance.
-	 */
-	OfferingController.prototype.hasPrimaryService = function()
-	{
-		return false;
-	}
-	
-	OfferingController.prototype.primaryServices = function()
-	{
-		return [];
-	}
-	
 	OfferingController.prototype.serviceLinks = function()
 	{
 		return this.newInstance().offeringServices();
@@ -842,11 +858,6 @@ var OfferingController = (function() {
 	OfferingController.prototype.serviceLinkType = function()
 	{
 		return cr.OfferingService;
-	}
-	
-	OfferingController.prototype.customServiceType = function()
-	{
-		return null;
 	}
 	
 	OfferingController.prototype.postAddDone = function(changes, newIDs)
@@ -932,6 +943,33 @@ var PeriodController = (function() {
 	}
 	
 	return PeriodController;
+})();
+
+var ServiceController = (function() {
+	ServiceController.prototype = Object.create(RootController.prototype);
+	Object.assign(ServiceController.prototype, ServiceLinkController.prototype);
+	ServiceController.prototype.constructor = ServiceController;
+	
+	ServiceController.prototype.addingMessage = "Adding Service...";
+	ServiceController.prototype.savingMessage = "Saving Savice...";
+	ServiceController.prototype.groupKey = 'services';
+	
+	ServiceController.prototype.serviceLinks = function()
+	{
+		return this.newInstance().serviceImplications();
+	}
+	
+	ServiceController.prototype.serviceLinkType = function()
+	{
+		return cr.ServiceImplication;
+	}
+	
+	function ServiceController(source, duplicateForEdit)
+	{
+		RootController.call(this, source || cr.Service, duplicateForEdit);
+	}
+	
+	return ServiceController;
 })();
 
 var SessionController = (function() {

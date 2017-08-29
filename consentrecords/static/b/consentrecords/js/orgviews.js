@@ -262,7 +262,7 @@ var PickStatePanel = (function () {
 	
 	PickStatePanel.prototype.data = function()
 	{
-		return [{code: '', name: "(None)"},
+		return [{code: '', name: crv.buttonTexts.nullString},
 				{code: 'AL', name: 'Alabama'},
 				{code: 'AK', name: 'Alaska'},
 				{code: 'AZ', name: 'Arizona'},
@@ -780,7 +780,7 @@ var EngagementPanel = (function () {
 			.text(crv.buttonTexts.user);
 		var user = controller.newInstance().user();
 		var items = this.appendEnumerationEditor(this.userSection, 
-			user ? controller.newInstance().user().description() : "(None)");
+			user ? controller.newInstance().user().description() : crv.buttonTexts.nullString);
 		this.userSection.datum(user);
 		crf.appendRightChevrons(items);	
 				 
@@ -1793,7 +1793,7 @@ var OfferingPanel = (function () {
 		this.appendChildrenPanelButton(crv.buttonTexts.sessions, SessionsPanel);
 
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, controller);
+		this.tagPoolSection = new TagPoolSection(this, controller, crv.buttonTexts.tags);
 		this.tagPoolSection.section.classed('first', true);
 
 		var tagsFocused = function(eventObject, inputNode)
@@ -2072,7 +2072,7 @@ var PickInquiryAccessGroupSearchView = (function () {
 			})
 			items.append('div')
 				.classed('description-text growable', true)
-				.text("(None)");
+				.text(crv.buttonTexts.nullString);
 		}
 		var items = SearchOptionsView.prototype.appendButtonContainers.call(this, foundObjects);
 		items.filter(function(d, i)
@@ -2310,6 +2310,150 @@ var OrganizationsPanel = (function () {
 	
 	return OrganizationsPanel;
 	
+})();
+
+var PickStagePanel = (function () {
+	PickStagePanel.prototype = Object.create(PickFromListPanel.prototype);
+	PickStagePanel.prototype.constructor = PickStagePanel;
+
+	PickStagePanel.prototype.title = crv.buttonTexts.stage;
+	
+	PickStagePanel.prototype.data = function()
+	{
+		return [{code: '', name: crv.buttonTexts.nullString},
+				{code: 'Housing', name: 'Housing'},
+				{code: 'Studying', name: 'Studying'},
+				{code: 'Certificate', name: 'Certificate'},
+				{code: 'Training', name: 'Training'},
+				{code: 'Whatever', name: 'Interest'},
+				{code: 'Working', name: 'Working'},
+				{code: 'Teaching', name: 'Teaching'},
+				{code: 'Expert', name: 'Expert'},
+				{code: 'Skills', name: 'Skills'},
+				{code: 'Mentoring', name: 'Mentoring'},
+				{code: 'Tutoring', name: 'Tutoring'},
+				{code: 'Coaching', name: 'Coaching'},
+				{code: 'Volunteering', name: 'Volunteering'},
+				{code: 'Wellness', name: 'Wellness'},
+			   ];
+	}
+	
+	PickStagePanel.prototype.isInitialValue = function(d)
+	{
+		return d.code === this.initialValue;
+	}
+
+	PickStagePanel.prototype.pickedValue = function(d)
+	{
+		return d.code;
+	}
+
+	PickStagePanel.prototype.datumDescription = function(d)
+	{
+		return d.name;
+	}
+	
+	PickStagePanel.getDescription = function(storedValue)
+	{
+		return storedValue || crv.buttonTexts.nullString;
+	}
+
+	PickStagePanel.prototype.createRoot = function(user, initialValue)
+	{
+		this.initialValue = initialValue;
+		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, initialValue);
+	}
+	
+	function PickStagePanel() {
+		PickFromListPanel.call(this);
+	}
+	
+	return PickStagePanel;
+})();
+
+var ServicePanel = (function () {
+	ServicePanel.prototype = Object.create(EditItemPanel.prototype);
+	ServicePanel.prototype.constructor = ServicePanel;
+
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	ServicePanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		return false;
+	}
+	
+	ServicePanel.prototype.onFocusInTagInput = function(inputNode)
+	{
+		var _this = this;
+		d3.select(inputNode)
+			.style('background-color', null)
+			.style('border-color', null)
+			.style('color', null);
+			
+		this.tagPoolSection.checkTagInput(inputNode);
+		this.tagPoolSection.revealSearchView(inputNode, false);
+	}
+	
+	function ServicePanel(controller, onShow) {
+		var _this = this;
+		EditItemPanel.call(this, controller);
+
+		this.createRoot(crv.buttonTexts.service, onShow);
+
+		this.namesSection = this.appendTranslationsSection(controller.newInstance(), crv.buttonTexts.names, crv.buttonTexts.name, 
+									 controller.newInstance().names(),
+									 cr.ServiceName);
+
+		this.appendTranslationsSection(controller.newInstance(), 
+			crv.buttonTexts.organizationLabels, crv.buttonTexts.organizationLabel, 
+			controller.newInstance().organizationLabels(),
+			cr.ServiceOrganizationLabel);
+
+		this.appendTranslationsSection(controller.newInstance(), 
+			crv.buttonTexts.siteLabels, crv.buttonTexts.siteLabel, 
+			controller.newInstance().siteLabels(),
+			cr.ServiceSiteLabel);
+
+		this.appendTranslationsSection(controller.newInstance(), 
+			crv.buttonTexts.offeringLabels, crv.buttonTexts.offeringLabel, 
+			controller.newInstance().offeringLabels(),
+			cr.ServiceOfferingLabel);
+
+		this.stageSection = this.appendEnumerationPickerSection(controller.newInstance(), controller.newInstance().stage, crv.buttonTexts.stage, PickStagePanel)
+		this.stageSection.classed('first', true);
+
+		/* The tags section. */
+		this.tagPoolSection = new TagPoolSection(this, controller, crv.buttonTexts.implications);
+		this.tagPoolSection.section.classed('first', true);
+
+		var tagsFocused = function(eventObject, inputNode)
+			{
+				try
+				{
+					_this.onFocusInTagInput(inputNode);
+				}
+				catch (err)
+				{
+					cr.asyncFail(err);
+				}
+			}
+		$(this.tagPoolSection).on('tagsFocused.cr', this.node(), tagsFocused);
+		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
+			function(eventObject)
+				{
+					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
+				});
+				
+
+		this.tagPoolSection.fillTags()
+			.then(function()
+				{
+					_this.tagPoolSection.checkTagInput(null);
+				},
+				cr.asyncFail)
+		
+	}
+	
+	return ServicePanel;
 })();
 
 var ServiceSearchView = (function () {

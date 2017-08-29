@@ -4983,6 +4983,10 @@ class Group(ChildInstance, dbmodels.Model):
         self.updateChildren(changes, 'names', context, GroupName, self.names, newIDs)
         self.updateChildren(changes, 'members', context, GroupMember, self.members, newIDs)
             
+    @property    
+    def dataString(self):
+        return "%s" % (self.id)
+           
 class GroupName(TranslationInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdGroupNames')
@@ -5099,6 +5103,10 @@ class GroupMember(ChildInstance, dbmodels.Model):
     def revert(self, h):
         self.user = h.user 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, str(self.user) if self.user else '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -5121,6 +5129,10 @@ class GroupMemberHistory(dbmodels.Model):
 
     user = dbmodels.ForeignKey('consentrecords.User', related_name='groupMemberHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, str(self.user) if self.user else '-')
+           
 class Inquiry(ChildInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdInquiries')
@@ -5206,6 +5218,10 @@ class Inquiry(ChildInstance, dbmodels.Model):
     def revert(self, h):
         self.user = h.user 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, str(self.user) if self.user else '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -5228,6 +5244,10 @@ class InquiryHistory(dbmodels.Model):
 
     user = dbmodels.ForeignKey('consentrecords.User', related_name='inquiryHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, str(self.user) if self.user else '-')
+           
 class Notification(ChildInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdNotifications')
@@ -6449,6 +6469,10 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
     def revert(self, h):
         self.stage = h.stage 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, self.stage or '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6475,6 +6499,10 @@ class ServiceHistory(dbmodels.Model):
     instance = historyInstanceField(Service)
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s" % (self.id, self.stage or '-')
+           
 class ServiceName(TranslationInstance, PublicInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdServiceNames')
@@ -6697,7 +6725,7 @@ class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
 
     @property    
     def dataString(self):
-        return "%s\t%s" % (self.id, self.impliedService or '-')
+        return "%s\t%s" % (self.id, str(self.impliedService) if self.impliedService else '-')
            
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -6723,7 +6751,7 @@ class ServiceImplicationHistory(dbmodels.Model):
 
     @property    
     def dataString(self):
-        return "%s\t%s" % (self.id, self.impliedService or '-')
+        return "%s\t%s" % (self.id, str(self.impliedService) if self.impliedService else '-')
            
 class Session(ChildInstance, dbmodels.Model):    
     id = idField()

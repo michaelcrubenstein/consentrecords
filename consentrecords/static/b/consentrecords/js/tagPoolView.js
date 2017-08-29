@@ -1209,7 +1209,7 @@ var TagPoolSection = (function () {
 				cr.chainFail);
 	}
 	
-	function TagPoolSection(panel, controller)
+	function TagPoolSection(panel, controller, sectionLabel)
 	{
 		this.controller = controller;
 		
@@ -1217,7 +1217,7 @@ var TagPoolSection = (function () {
 			.classed('cell tags custom', true);
 		var tagsTopContainer = this.section.append('div');
 		label = tagsTopContainer.append('label')
-			.text('Tags:');
+			.text("{0}:".format(sectionLabel));
 		
 		var tagsContainer = tagsTopContainer.append('span')
 			.classed('tags-container', true);

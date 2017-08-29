@@ -1971,7 +1971,7 @@ var NewExperiencePanel = (function () {
 		var searchContainer;
 		
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, experienceController);
+		this.tagPoolSection = new TagPoolSection(this, experienceController, crv.buttonTexts.tags);
 		
 		var tagsChanged = function() { _this.setPlaceholders(); }
 		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);

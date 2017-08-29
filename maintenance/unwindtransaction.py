@@ -96,7 +96,7 @@ def printTable(fieldsTitle, pluralName, singularName, f, created, changed, delet
         print("\nCreated {0: <24}".format(pluralName) + fieldsTitle)
         for i in created.all():
             f(i)
-    if changed.exclude(lastTransaction=F('transaction')).count():
+    if changed and changed.exclude(lastTransaction=F('transaction')).count():
         print("\nChanged {0: <24}".format(pluralName) + fieldsTitle)
         for i in changed.exclude(lastTransaction=F('transaction')):
             f(i)
@@ -104,7 +104,7 @@ def printTable(fieldsTitle, pluralName, singularName, f, created, changed, delet
         print("\nDeleted {0: <24}".format(pluralName) + fieldsTitle)
         for i in deleted.all():
             f(i)
-    if histories.count():
+    if histories and histories.count():
         print("\n{0: <32}".format(singularName + " Histories") + fieldsTitle)
         for i in histories.all():
             f(i)
@@ -154,6 +154,24 @@ def printTransaction(t):
                t.createdExperiencePromptServices, t.changedExperiencePromptServices, 
                t.deletedExperiencePromptServices, t.experiencePromptServiceHistories)
 
+    printTable("",
+               "Groups", "Groups",
+               printInstance,
+               t.createdGroups, None, 
+               t.deletedGroups, None)
+
+    printTable("\ttext\tlanguageCode",
+               "Group Names", "Group Name",
+               printInstance,
+               t.createdGroupNames, t.changedGroupNames, 
+               t.deletedGroupNames, t.groupNameHistories)
+
+    printTable("\tuser",
+               "Group Members", "Group Member",
+               printInstance,
+               t.createdGroupMembers, t.changedGroupMembers, 
+               t.deletedGroupMembers, t.groupMemberHistories)
+
     printTable("\tuser\tname\tis fresh",
                "Notifications", "Notification",
                printNotification,
@@ -195,6 +213,42 @@ def printTransaction(t):
                printPath,
                t.createdPaths, t.changedPaths, 
                t.deletedPaths, t.pathHistories)
+
+    printTable("\tstage",
+               "Services", "Service",
+               printInstance,
+               t.createdServices, t.changedServices, 
+               t.deletedServices, t.serviceHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Service Names", "Service Name",
+               printInstance,
+               t.createdServiceNames, t.changedServiceNames, 
+               t.deletedServiceNames, t.serviceNameHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Service Organization Labels", "Service Organization Label",
+               printInstance,
+               t.createdServiceOrganizationLabels, t.changedServiceOrganizationLabels, 
+               t.deletedServiceOrganizationLabels, t.serviceOrganizationLabelHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Service Site Labels", "Service Site Label",
+               printInstance,
+               t.createdServiceSiteLabels, t.changedServiceSiteLabels, 
+               t.deletedServiceSiteLabels, t.serviceSiteLabelHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Service Offering Labels", "Service Offering Label",
+               printInstance,
+               t.createdServiceOfferingLabels, t.changedServiceOfferingLabels, 
+               t.deletedServiceOfferingLabels, t.serviceOfferingLabelHistories)
+
+    printTable("\timplied service",
+               "Service Implications", "Service Implication",
+               printInstance,
+               t.createdServiceImplications, t.changedServiceImplications, 
+               t.deletedServiceImplications, t.serviceImplicationHistories)
 
     printTable("\tregistration deadline\tstart\tend\tcan register",
                "Sessions", "Session",
