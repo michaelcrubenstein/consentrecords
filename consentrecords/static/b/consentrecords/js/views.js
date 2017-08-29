@@ -367,7 +367,6 @@ function _pushTextChanged(d) {
 	}
 }
 
-function _getDataValue(d) { return d.text; }
 function _getDataDescription(d) { return d.description() }
 
 function checkItemsDisplay(node)
@@ -462,29 +461,6 @@ function _setupItemHandlers(d, done)
 		}
 		setupOneViewEventHandler(d, "deleted.cr", this, f);
 	}
-}
-
-function _showViewStringCell(obj, cell)
-{
-	var sectionObj = d3.select(obj);
-	
-	var itemsDiv = sectionObj.selectAll("ol");
-
-	var setupItems = function(items, cell) {
-		items.append("div")
-			.classed("description-text growable", true)
-			.text(_getDataValue)
-			.each(_pushTextChanged);
-	}
-		
-	function addedValue(eventObject, newValue)
-	{
-		setupItems(appendItem(d3.select(eventObject.data), newValue), this);
-	}
-	setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), addedValue);
-	
-	var items = appendItems(itemsDiv, cell.data);
-	setupItems(items, cell);
 }
 
 function editUniqueString(sectionObj, container, placeholder, value, inputType)
