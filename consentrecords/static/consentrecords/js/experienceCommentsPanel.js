@@ -277,23 +277,25 @@ var ExperienceCommentsPanel = (function() {
 		var _this = this;
 		var changes = [];
 
-		cr.signedinUser.notifications().forEach(function(n)
-			{
-				if (n.name() == "crn.ExperienceCommentRequested")
+		if (cr.signedinUser.notifications())
+		{
+			cr.signedinUser.notifications().forEach(function(n)
 				{
-					var args = n.args();
-					if (args.length >= 3 && 
-						args[1].id() == _this.fd.experience.id())
+					if (n.name() == "crn.ExperienceCommentRequested")
 					{
-						var comment = crp.getInstance(args[2].id());
-						if (comment && comment.text())
+						var args = n.args();
+						if (args.length >= 3 && 
+							args[1].id() == _this.fd.experience.id())
 						{
-							changes.push({'delete': n.id()});
+							var comment = crp.getInstance(args[2].id());
+							if (comment && comment.text())
+							{
+								changes.push({'delete': n.id()});
+							}
 						}
 					}
-				}
-			});
-			
+				});
+		}	
 		if (changes.length > 0)
 		{
 			return cr.signedinUser.update({'notifications': changes});
@@ -615,22 +617,6 @@ var ExperienceCommentsPanel = (function() {
 					_this.loadComments([newData]);
 				});
 		
-		function onCommentsChecked(experience)
-		{
-			_this.loadComments(experience.comments());
-		}
-		
-		setupOnViewEventHandler(fd.experience, 'changed.cr', commentsDiv.node(), 
-			function (eventObject, changeTarget)
-			{
-				if (changeTarget instanceof cr.Experience)
-					changeTarget.promiseComments()
-						.then(function()
-							{
-								onCommentsChecked(changeTarget);
-							}, cr.asyncFail)
-			});
-		
 		if (fd.experience.canWrite())
 		{
 			var newCommentDiv = panel2Div.append('section')
@@ -694,15 +680,16 @@ var ExperienceCommentsPanel = (function() {
 		if (fd.experience.id())
 		{
 			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
-				comments are loaded. This won't happen if the comments are already loaded.
+				comments are loaded. The panel's css won't be set up if the comments are 
+				already loaded.
 			 */
-			this.promise = fd.experience.promiseComments()
+			this.promise = fd.experience.promiseData(['comments'])
 				.then(function(comments)
 					{
 						var r = $.Deferred();
 						setTimeout(function()
 							{
-								onCommentsChecked(fd.experience);
+								_this.loadComments(fd.experience.comments());
 								r.resolve();
 							});
 						return r;

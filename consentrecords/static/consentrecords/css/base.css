@@ -5,16 +5,22 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 }
+html {
+	height: 100%;
+	width: 100%;
+}
 body {
   font-size: medium;
   overflow-y: hidden;
   overflow-x: hidden;
+	height: 100%;
+	width: 100%;
 }
 body>panel {
 	height: 100%;
 	width: 100%;
 	display: block;
-	position: absolute;
+	position: fixed;
 	overflow-y: hidden;
 }
 panel.site-panel>nav {
@@ -570,10 +576,10 @@ div.add-value>div {
 .info-button-container {
 	align-self: center;
 	-webkit-align-self: center;
+	margin-right: 12px;
 }
 
 .info-button {
-	margin-right: 12px;
 	background: transparent;
 	cursor: pointer;
 	border-color: #2C55CC;

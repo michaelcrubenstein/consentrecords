@@ -24,7 +24,13 @@ var WelcomeOrganizationPanel = (function () {
 					showClickFeedback(this);
 					if (prepareClick('click',  'Sign In button'))
 					{
-						showFixedPanel(_this.node(), "#id_sign_in_panel");
+						var signinPanel = new SigninPanel();
+						signinPanel.showLeft().then(
+							function()
+							{
+								signinPanel.initializeFocus();
+								unblockClick();
+							});
 					}
 					d3.event.preventDefault();
 				})

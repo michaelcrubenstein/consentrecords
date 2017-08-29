@@ -204,6 +204,8 @@ var GetDataChunker = (function() {
 
 	GetDataChunker.prototype.appendButtonContainers = function(data)
 	{
+		console.assert(data instanceof Array);
+		
 		var _this = this;
 		
 		/* Ensure that the container is visible, so that the new items will also appear. */

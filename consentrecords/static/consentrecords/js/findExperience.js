@@ -220,13 +220,19 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				eventObject.data.off("signin.cr", onSignin);
 			});
 			
-			showFixedPanel(panel, "#id_sign_in_panel");
+			var signinPanel = new SigninPanel();
+			signinPanel.showLeft().then(
+				function()
+				{
+					signinPanel.initializeFocus();
+					unblockClick();
+				});
 		}
 	}
 	
 	var addNameFunction = function(user)
 	{
-		if (prepareClick('click', 'Sign Up'))
+		if (prepareClick('click', 'add inquiry'))
 		{
 			showClickFeedback(this);
 			

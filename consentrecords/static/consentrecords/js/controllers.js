@@ -42,6 +42,11 @@ var Controller = (function() {
 		this.newInstance().appendData(initialData);
 	}
 	
+	Controller.prototype.alertAdd = function()
+	{
+		return true;
+	}
+	
 	Controller.prototype.save = function()
 	{
 		var _this = this;
@@ -57,9 +62,18 @@ var Controller = (function() {
 				return r2;
 			}
 							
-			bootstrap_alert.show($('.alert-container'), this.savingMessage, "alert-info");
-			
-			return this.oldInstance().update(updateData, false)
+			var r;
+			if (this.oldInstance().id())
+			{
+				bootstrap_alert.show($('.alert-container'), this.savingMessage, "alert-info");
+				r = this.oldInstance().update(updateData, false);
+			}
+			else
+			{
+				r = $.Deferred();
+				r.resolve(updateData, {});
+			}
+			return r
 				.then(function(changes, newIDs)
 					{
 						var r2 = $.Deferred();
@@ -80,7 +94,8 @@ var Controller = (function() {
 		else
 		{
 			/* Test case: add an experience to a path. */
-			bootstrap_alert.show($('.alert-container'), this.addingMessage, "alert-info");
+			if (this.alertAdd())
+				bootstrap_alert.show($('.alert-container'), this.addingMessage, "alert-info");
 
 			var initialData = {'add': uuid.v4()};
 
@@ -163,7 +178,7 @@ var ChildController = (function() {
 	ChildController.prototype.constructor = ChildController;
 	ChildController.prototype._parent = null;
 	
-	Controller.prototype.parent = function(newValue)
+	ChildController.prototype.parent = function(newValue)
 	{
 		if (newValue === undefined)
 			return this._parent;
@@ -182,12 +197,26 @@ var ChildController = (function() {
 		this.newInstance().privilege(this._parent.privilege());
 	}
 	
+	ChildController.prototype.alertAdd = function()
+	{
+		return this.parent().id();
+	}
+	
 	ChildController.prototype.postAdd = function(initialData)
 	{
 		console.assert(this.groupKey !== undefined);
 		var changes = {};
 		changes[this.groupKey] = [initialData];
-		return this.parent().update(changes, false);
+		if (this.parent().id())
+		{
+			return this.parent().update(changes, false);
+		}
+		else
+		{
+			r2 = $.Deferred();
+			r2.resolve(changes, {});
+			return r2;
+		}
 	}
 	
 	ChildController.prototype.postAddDone = function(changes, newIDs)
@@ -199,11 +228,56 @@ var ChildController = (function() {
 
 	function ChildController(parent, source, duplicateForEdit)
 	{
+		/* Ensure that addEventType is defined. */
+		console.assert(this.addEventType);
+		
 		this.parent(parent);
 		Controller.call(this, source, duplicateForEdit);
+		this.newInstance().parent(parent);
 	}
 	
 	return ChildController;
+})();
+
+var AddressController = (function() {
+	AddressController.prototype = Object.create(ChildController.prototype);
+	AddressController.prototype.constructor = AddressController;
+	
+	AddressController.prototype.addingMessage = "Adding Address...";
+	AddressController.prototype.savingMessage = "Saving Address...";
+	AddressController.prototype.groupKey = 'address';
+	AddressController.prototype.addEventType = 'addressAdded.cr';
+
+	function AddressController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Address, duplicateForEdit);
+	}
+	
+	return AddressController;
+})();
+
+var EngagementController = (function() {
+	EngagementController.prototype = Object.create(ChildController.prototype);
+	EngagementController.prototype.constructor = EngagementController;
+	
+	EngagementController.prototype.addingMessage = "Adding Engagement...";
+	EngagementController.prototype.savingMessage = "Saving Engagement...";
+	EngagementController.prototype.groupKey = 'engagements';
+	EngagementController.prototype.addEventType = 'engagementAdded.cr';
+
+	EngagementController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().enagements())
+			this.parent().engagements().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
+	function EngagementController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Engagement, duplicateForEdit);
+	}
+	
+	return EngagementController;
 })();
 
 var ExperienceController = (function() {
@@ -533,8 +607,8 @@ var ExperienceController = (function() {
 		this.newInstance().experienceServices(this.distinctExperienceServices());
 		this.newInstance().path(this.parent());
 		
-		this.parent().experiences().push(this.newInstance());
-
+		if (this.parent().experiences())
+			this.parent().experiences().push(this.newInstance());
 		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
 	}
 
@@ -643,6 +717,43 @@ var ExperienceController = (function() {
 			return "";
 	}
 	
+	/** Returns True if this controller has a service that overrides the importance of
+		the first service directly associated with this controller's new instance.
+	 */
+	ExperienceController.prototype.hasPrimaryService = function()
+	{
+		return this.offering() &&
+			   this.offering().offeringServices().length > 0;
+	}
+	
+	ExperienceController.prototype.primaryServices = function()
+	{
+		var offering = this.offering();
+		if (offering && offering.id())
+		{
+			return offering.offeringServices()
+				.filter(function(v) { return !v.isEmpty(); })
+				.map(function(s) { return s.service(); });
+		}
+		else
+			return [];
+	}
+	
+	ExperienceController.prototype.serviceLinks = function()
+	{
+		return this.experienceServices();
+	}
+	
+	ExperienceController.prototype.serviceLinkType = function()
+	{
+		return cr.ExperienceService;
+	}
+	
+	ExperienceController.prototype.customServiceType = function()
+	{
+		return cr.ExperienceCustomService;
+	}
+	
 	function ExperienceController(path, source, duplicateForEdit)
 	{
 		console.assert(path instanceof cr.Path);
@@ -651,6 +762,82 @@ var ExperienceController = (function() {
 	}
 	
 	return ExperienceController;
+})();
+
+var OfferingController = (function() {
+	OfferingController.prototype = Object.create(ChildController.prototype);
+	OfferingController.prototype.constructor = OfferingController;
+	
+	OfferingController.prototype.addingMessage = "Adding Offering...";
+	OfferingController.prototype.savingMessage = "Saving Offering...";
+	OfferingController.prototype.groupKey = 'offerings';
+	OfferingController.prototype.addEventType = 'offeringAdded.cr';
+
+	/* Args can either be a cr.Service or a string. */
+	OfferingController.prototype.addService = function(args)
+	{
+		if (args instanceof cr.Service)
+		{
+			var i = new (this.serviceLinkType())();
+			i.description(args.description())
+			 .parent(this.newInstance())
+			 .service(args)
+			 .position(this.serviceLinks().length
+			           ? this.serviceLinks()[this.serviceLinks().length - 1].position() + 1
+			           : 0);
+			this.serviceLinks().push(i);
+			return i;
+		}
+		else
+			throw new Error("Invalid arguments to addService");
+	}
+	
+	OfferingController.prototype.removeService = function(service)
+	{
+		cr.removeElement(this.newInstance().offeringServices(), service);
+	}
+	
+	/** Returns True if this controller has a service that overrides the importance of
+		the first service directly associated with this controller's new instance.
+	 */
+	OfferingController.prototype.hasPrimaryService = function()
+	{
+		return false;
+	}
+	
+	OfferingController.prototype.primaryServices = function()
+	{
+		return [];
+	}
+	
+	OfferingController.prototype.serviceLinks = function()
+	{
+		return this.newInstance().offeringServices();
+	}
+	
+	OfferingController.prototype.serviceLinkType = function()
+	{
+		return cr.OfferingService;
+	}
+	
+	OfferingController.prototype.customServiceType = function()
+	{
+		return null;
+	}
+	
+	OfferingController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().offerings())
+			this.parent().offerings().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
+	function OfferingController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Offering, duplicateForEdit);
+	}
+	
+	return OfferingController;
 })();
 
 var OrganizationController = (function() {
@@ -699,6 +886,54 @@ var OrganizationController = (function() {
 	return OrganizationController;
 })();
 
+var PeriodController = (function() {
+	PeriodController.prototype = Object.create(ChildController.prototype);
+	PeriodController.prototype.constructor = PeriodController;
+	
+	PeriodController.prototype.addingMessage = "Adding Period...";
+	PeriodController.prototype.savingMessage = "Saving Period...";
+	PeriodController.prototype.groupKey = 'periods';
+	PeriodController.prototype.addEventType = 'periodAdded.cr';
+
+	PeriodController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().periods())
+			this.parent().periods().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
+	function PeriodController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Period, duplicateForEdit);
+	}
+	
+	return PeriodController;
+})();
+
+var SessionController = (function() {
+	SessionController.prototype = Object.create(ChildController.prototype);
+	SessionController.prototype.constructor = SessionController;
+	
+	SessionController.prototype.addingMessage = "Adding Session...";
+	SessionController.prototype.savingMessage = "Saving Session...";
+	SessionController.prototype.groupKey = 'sessions';
+	SessionController.prototype.addEventType = 'sessionAdded.cr';
+
+	SessionController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().sessions())
+			this.parent().sessions().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
+	function SessionController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Session, duplicateForEdit);
+	}
+	
+	return SessionController;
+})();
+
 var SiteController = (function() {
 	SiteController.prototype = Object.create(ChildController.prototype);
 	SiteController.prototype.constructor = SiteController;
@@ -707,6 +942,13 @@ var SiteController = (function() {
 	SiteController.prototype.savingMessage = "Saving Site...";
 	SiteController.prototype.groupKey = 'sites';
 	SiteController.prototype.addEventType = 'siteAdded.cr';
+
+	SiteController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().sites())
+			this.parent().sites().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
 
 	function SiteController(parent, source, duplicateForEdit)
 	{

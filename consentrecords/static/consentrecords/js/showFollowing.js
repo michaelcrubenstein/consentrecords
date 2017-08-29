@@ -194,7 +194,7 @@ var FollowingPanel = (function() {
 			.on("click", function(user) {
 				if (prepareClick('click', 'compare to: ' + user.description()))
 				{
-					user.promisePath()
+					user.promiseData(['path'])
 						.then(function()
 						{
 							try

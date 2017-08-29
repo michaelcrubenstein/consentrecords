@@ -36,9 +36,6 @@
     <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <style>
-    	.consent-record {
-    		margin-top: 3px;
-    	}
     	.consent-form-title {
     	}
     	.consent-record-accept-button {
@@ -234,20 +231,11 @@
 			$(eventObject.data).text(cr.signedinUser.caption());
 		});
 		
-		cr.signedinUser.on("signout.cr", usernameLabel[0], function(eventObject)
-		{
-			$(eventObject.data).text("");
-		});
-		
 		/* Update the text of the signin button when a user signs in or out. */
 		var signinSpan = $("#sign-in-span")
 		cr.signedinUser.on("signin.cr", signinSpan[0], function(eventObject)
 		{
 			$(eventObject.data).text("Sign Out");
-		});
-		cr.signedinUser.on("signout.cr", signinSpan[0], function(eventObject)
-		{
-			$(eventObject.data).text("Sign In");
 		});
 		
 		/* Update the list of organizations associated with the user when a user signs in or out. */
@@ -257,9 +245,12 @@
 		{
 			load_organizations.call(eventObject.data);
 		});
-		cr.signedinUser.on("signout.cr", orgSection[0], function(eventObject)
+		
+		var clearUserElements = function()
 		{
-			hide_organizations.call(eventObject.data);
+			usernameLabel.text("");
+			signinSpan.text("Sign In");
+			hide_organizations.call(orgSection[0]);
 		});
 		
 		/* Initialize all of the objects that are dependent on whether or not the user is
@@ -267,7 +258,7 @@
 		 */
 		if (!cr.signedinUser.id())
 		{
-			$(cr.signedinUser).trigger("signout.cr");
+			clearUserElements();
 		}
 		/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
 
@@ -283,7 +274,7 @@
 						.then(function()
 							{
 								cr.signedinUser.clear();
-								$(cr.signedinUser).trigger("signout.cr");
+								clearUserElements();
 								unblockClick();
 							}, 
 							cr.syncFail);
@@ -373,43 +364,6 @@
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 			return cr.submitSignout();
-		}
-		
-		function cells_get_cell_by_name(cells, name)
-		{
-			for (var i = 0; i < cells.length; ++i)
-			{
-				var cell = cells[i];
-				if (cell.field.name == name)
-					return cell;
-			}
-			return undefined;
-		}
-		
-		function compareSessions(a, b)
-		{
-			var aDate = a.start();
-			var bDate = b.start();
-			if (aDate)
-			{
-				if (bDate)
-				{
-					result = aDate.localeCompare(bDate);
-					if (result == 0)
-						return a.description().localeCompare(b.description());
-					else
-						return result;
-				}
-				else
-					return -1;
-			}
-			else
-			{
-				if (bDate)
-					return 1;
-				else
-					return a.description().localeCompare(b.description());
-			}
 		}
 		
 		function hide_organizations()

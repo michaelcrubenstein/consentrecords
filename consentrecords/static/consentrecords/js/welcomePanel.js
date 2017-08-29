@@ -600,7 +600,7 @@ var WelcomePanel = (function () {
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
 			pathwayPanel.setupSearchPanel();
-			cr.signedinUser.promisePath()
+			cr.signedinUser.promiseData(['path'])
 				.then(function()
 					{
 						var promise = pathwayPanel.pathtree.setUser(cr.signedinUser.path(), true);

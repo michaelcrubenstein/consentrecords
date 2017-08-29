@@ -100,6 +100,7 @@ var ExperienceDatumSearchView = (function() {
 	ExperienceDatumSearchView.prototype.inputBox = null;
 	ExperienceDatumSearchView.prototype.helpNode = null;
 	
+	ExperienceDatumSearchView.prototype.reveal = null;
 	ExperienceDatumSearchView.prototype.minRevealHeight = 100;	/* pixels */
 
 	ExperienceDatumSearchView.prototype.inputText = function(val)
@@ -329,10 +330,23 @@ var ExperienceDatumSearchView = (function() {
 				 children: $(this.listElement.node())},
 				duration, step, done);
 		}
-	}	
+	}
+	
+	ExperienceDatumSearchView.prototype.resizeVisibleSearch = function(duration)
+	{
+		if (this.reveal.isVisible())
+		{
+			this.showSearch(duration);
+			return true;
+		}
+		else
+			return false;
+	}
 
 	function ExperienceDatumSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
+		console.assert(containerNode);
+		
 		this.typeNames = [""];
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.initialTypeName;
@@ -341,350 +355,38 @@ var ExperienceDatumSearchView = (function() {
 		
 		var _this = this;
 
-		if (containerNode)
-		{
-			this.inputBox = inputNode;
-			$(this.inputBox).on("input", function() { 
-					try { _this.textChanged(); }
-					catch(err) { cr.asyncFail(err); }
-				});
-			
-			this.helpNode = helpNode;
+		this.inputBox = inputNode;
+		$(this.inputBox).on("input", function() { 
+				try { _this.textChanged(); }
+				catch(err) { cr.asyncFail(err); }
+			});
+		
+		this.helpNode = helpNode;
 
-			this.reveal = new VerticalReveal(containerNode);
-			this.reveal.hide();
+		this.reveal = new VerticalReveal(containerNode);
+		this.reveal.hide();
 
-			this.getDataChunker._onDoneSearch = function()
+		this.getDataChunker._onDoneSearch = function()
+			{
+				var i = _this.typeNames.indexOf(_this.typeName);
+				if (i < _this.typeNames.length - 1)
 				{
-					var i = _this.typeNames.indexOf(_this.typeName);
-					if (i < _this.typeNames.length - 1)
+					_this.typeName = _this.typeNames[i+1];
+					_this.setupChunkerArguments(_this._foundCompareText);
+					this.checkStart(_this._foundCompareText);
+				}
+				else if (!_this.getDataChunker.hasButtons() && !_this.inputText())
+				{
+					if ("checkHelp" in _this)
 					{
-						_this.typeName = _this.typeNames[i+1];
-						_this.setupChunkerArguments(_this._foundCompareText);
-						this.checkStart(_this._foundCompareText);
+						_this.checkHelp(true);
+						_this.showSearch();
 					}
-					else if (!_this.getDataChunker.hasButtons() && !_this.inputText())
-					{
-						if ("checkHelp" in _this)
-						{
-							_this.checkHelp(true);
-							_this.showSearch();
-						}
-					}
-				};
-		}
+				}
+			};
 	}
 	
 	return ExperienceDatumSearchView;
-})();
-
-/* Displays Services. Since the services are taken from the global Services list, this
-	search view should never need to interact with the server.
- */
-var TagSearchView = (function() {
-	TagSearchView.prototype = Object.create(TagPoolView.prototype);
-	TagSearchView.prototype.constructor = TagSearchView;
-
-	TagSearchView.prototype.reveal = null;
-	TagSearchView.prototype.focusNode = null;
-	TagSearchView.prototype.sitePanel = null;
-	TagSearchView.prototype.experienceController = null;
-	
-	TagSearchView.prototype.minRevealedHeight = 118;
-	
-	TagSearchView.prototype.onTagAdded = function()
-	{
-	}
-	
-	TagSearchView.prototype.hideSearch = function(done)
-	{
-		this.reveal.hide({duration: 200,
-						  before: done});
-	}
-	
-	/* Expand this object view so that it fills as much of the window as possible without
-		scrolling other elements off screen.
-	 */
-	TagSearchView.prototype.showSearch = function(duration, step, done)
-	{
-		duration = duration !== undefined ? duration : 400;
-		var parent = $(this.reveal.node).parent();
-		var oldHeight = $(this.reveal.node).height();
-		$(this.reveal.node).height(0);
-		var newHeight = parent.getFillHeight() - 
-						parent.outerHeight(true);
-
-		if (this.minRevealedHeight > newHeight)
-			newHeight = this.minRevealedHeight;
-			
-		$(this.reveal.node).height(oldHeight);
-		var _this = this;
-		if (oldHeight != newHeight)
-		{
-			this.reveal.show(
-				/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
-					and subtract the parent's height and add back the reveal node's height. */
-				{newHeight: newHeight,
-				 before: function()
-				 	{
-				 		_this.layoutFlags();
-				 	}},
-				duration, step, done);
-		}
-		else
-			this.layoutFlags();
-	}
-	
-	TagSearchView.prototype.firstTagInputNode = function()
-	{
-		return this.sitePanel.mainDiv.select('.tags-container>input.tag').node();
-	}
-	
-	/* Set the visible flags for each of the services associated with this flags. */
-	TagSearchView.prototype.setFlagVisibles = function()
-	{
-		if (this.focusNode.value)
-			TagPoolView.prototype.setFlagVisibles.call(this);
-		else if (this.focusNode != this.firstTagInputNode() ||
-				 (this.experienceController.offering() &&
-			 	  this.experienceController.offering().offeringServices().length > 0))
-		{
-			this.flags().each(function(fs)
-				{
-					fs.visible = (fs.service.serviceImplications().length > 1) ? false : undefined;
-				});
-		}
-		else
-		{
-			var types = ["Job", 
-						 "School",
-						 "Class", 
-						 "Interest", 
-						 "Skills", 
-						 "Internship", 
-						 "Volunteer", 
-						 "Exercise", 
-						 "Housing"];
-			this.flags().each(function(fs)
-				{
-					fs.visible = (types.indexOf(fs.description()) < 0 ? false : undefined);
-				});
-		}
-	}
-
-	TagSearchView.prototype.filterFlags = function(filterText)
-	{
-		TagPoolView.prototype.filterFlags.call(this, filterText);
-		
-		if (filterText)
-		{
-			var flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
-			var flagData = flags.data();
-			var flagDescriptions = flagData.map(function(fs) { return fs.description().toLocaleUpperCase(); });
-			
-			var flagIndexOf = function(s)
-			{
-				var min, mid, max;
-				min = 0; 
-				max = flagData.length - 1;
-				
-				var t = s;
-				while (max >= min)
-				{
-					mid = Math.floor((min + max) / 2);
-					var target = flagDescriptions[mid];
-					if (target < t)
-						min = mid + 1;
-					else if (target > t)
-						max = mid - 1;
-					else
-						return mid;
-				}
-				return -1;
-			}
-			
-			var flagIndex = flagIndexOf(filterText.toLocaleUpperCase());
-			if (flagIndex >= 0)
-			{
-				var rootService = flagData[flagIndex];
-				// Add to the visible list any item that contains the root service as a sub service.
-				this.flags().each(function(fs)
-					{
-						if (!fs.visible && fs.service.serviceImplications().find(function(subService)
-							{
-								return subService.service().id() == rootService.service.id();
-							}))
-							fs.visible = true;
-					});
-				flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
-				flagData = flags.data();
-				flagDescriptions = flagData.map(function(fs) { return fs.description().toLocaleUpperCase(); });
-			}
-			
-			var levels = {};
-			var levelCount = 1;
-			var flagServices = {};
-			
-			// Fill flagServices with all of the subServices associated with each flag that are
-			// in the set of visible flags except for the service itself.
-			flags.each(function(fs)
-			{
-				flagServices[fs.service.id()] = fs.service.serviceImplications()
-					.map(function(serviceImplication) { return serviceImplication.service(); })
-					.filter(function(s) {
-						return flagIndexOf(s.description().toLocaleUpperCase()) >= 0 && 
-										   s.id() != fs.service.id();
-					});
-			});
-			
-			for (levelCount = 1; 
-			     (Object.keys(levels).length < flagData.length &&
-				   levelCount <= 3);
-				 ++levelCount)
-			{
-				flags.each(function(fs)
-				{
-					var thisID = fs.service.id();
-					
-					if (!(thisID in levels))
-					{
-						// Add a service into the levels list if all of its visible flags 
-						// are already in the levels except for itself.
-						var f = function(s)
-							{
-								return s.id() in levels && levels[s.id()] < levelCount;
-							};
-						
-						if (flagServices[thisID].filter(f).length == flagServices[thisID].length)
-							levels[thisID] = levelCount;
-					}
-				});
-			}
-			
-			flags.each(function(fs)
-				{
-					fs.visible = fs.service.id() in levels;
-				});
-		}
-	}
-	
-	TagSearchView.prototype.constrainTagFlags = function()
-	{
-		this.filterFlags(this.focusNode.value);
-		this.layoutFlags();
-	}
-	
-	TagSearchView.prototype.hasSubService = function(service)
-	{
-		serviceID = service.id();
-		
-		return this.sitePanel.allServices.find(function(s)
-			{
-				if (s.id() == serviceID)
-					return false;
-				return s.serviceImplications().find(function(subS)
-					{
-						return subS.service().id() == serviceID;
-					});
-			});
-	}
-	
-	TagSearchView.prototype.onClickButton = function(d) {
-		if (prepareClick('click', 'service: ' + d.description()))
-		{
-			try
-			{
-				/* If the user clicks a flag that is the same as the flag already there, then move on. 
-					If the user clicks a flag that has no sub-flags other than itself, then move on.
-					Otherwise, stay there.
-				 */	
-				var d3Focus = this.focusNode && this.focusNode.parentNode && d3.select(this.focusNode);
-				var newDatum;
-				
-				var moveToNewInput = !this.hasSubService(d.service) ||
-					(this.focusNode && 
-					 this.focusNode.value.toLocaleUpperCase() == d.description().toLocaleUpperCase());
-					
-				if (d3Focus && d3Focus.datum())
-				{
-					var oldService = d3Focus.datum();
-					if (oldService instanceof cr.ServiceLinkInstance)
-					{
-						/* Replace the old experienceService with a new one. */
-						if (this.experienceController.experienceServices().indexOf(oldService) >= 0)
-						{
-							oldService.service(d.service)
-							     .description(d.service.description())
-							     .id(null);
-						}
-						else
-						{
-							oldService = this.experienceController.addService(d.service);
-						}
-					}
-					else if (oldService instanceof cr.ExperienceCustomService)
-					{
-						this.experienceController.removeCustomService(oldService);
-						oldService = this.experienceController.addService(d.service);
-					}
-					else
-					{
-						console.assert(false);
-					}
-					this.focusNode.value = d.description();
-				}
-				else
-				{
-					this.experienceController.addService(d.service);
-				}
-				newDatum = d.service;
-				
-				this.sitePanel.updateInputs();
-				this.sitePanel.showTags();
-
-				var container = this.sitePanel.mainDiv.select('.tags-container');
-				var node;
-				if (moveToNewInput)
-					node = null;
-				else
-					node = container
-						.selectAll('input.tag')
-						.filter(function(d)	
-							{ return d instanceof cr.ServiceLinkInstance &&
-									 d.service() == newDatum; })
-						.node();
-				/* Node can be null if you have just selected a service that is part of
-					an offering's services.
-				 */
-				if (!node)
-				{
-					var newInput = this.sitePanel.appendTag(container, null);
-					newInput.node().focus();
-				}
-				else
-					node.focus();
-				unblockClick();
-			}
-			catch(err)
-			{
-				cr.syncFail(err);
-			}
-		}
-
-		d3.event.preventDefault();
-	}
-	
-	function TagSearchView(container, sitePanel, experienceController)
-	{
-		TagPoolView.call(this, container, 'pool-container');
-		
-		this.sitePanel = sitePanel;
-		this.experienceController = experienceController;
-		
-		this.reveal = new VerticalReveal(container.node());
-	}
-	
-	return TagSearchView;
 })();
 
 /* Displays site or organization */
@@ -1223,7 +925,7 @@ var OfferingSearchView = (function() {
 
 		if (this.experienceController.siteName())
 		{
-			if (this.experienceController.site)
+			if (this.experienceController.site())
 			{
 				if (!val)
 				{
@@ -1337,7 +1039,7 @@ var OfferingSearchView = (function() {
 
 		if (this.experienceController.siteName())
 		{
-			if (this.experienceController.site)
+			if (this.experienceController.site())
 			{
 				if (this.typeName === "Offering")
 					return cr.Offering;
@@ -1409,7 +1111,7 @@ var OfferingSearchView = (function() {
 		/* For each state, set up typeName, and the list of typeNames. */
 		if (this.experienceController.siteName())
 		{
-			if (this.experienceController.site)
+			if (this.experienceController.site())
 			{
 				this.typeNames = ["Offering"];
 			}
@@ -1528,106 +1230,6 @@ var OfferingSearchView = (function() {
 	}
 	
 	return OfferingSearchView;
-})();
-
-var VerticalReveal = (function() {
-	VerticalReveal.prototype.node = null;
-
-	VerticalReveal.prototype.isVisible = function()
-	{
-		return this._isVisible;
-	}
-	
-	VerticalReveal.prototype.show = function(args, duration, step, done)
-	{
-		var jNode = $(this.node);
-
-		if (!args)
-			args = {};
-		if (args.newHeight === undefined)
-			args.newHeight = 'auto';
-		if (args.children === undefined)
-			args.children = jNode.children();
-
-		args.children.css('display', '');
-		this._isVisible = true;
-		var oldHeight = jNode.height();
-		jNode.height(args.newHeight);
-		if (args.before)
-			args.before();
-			
-		if (!duration)
-		{
-			if (step) step();
-			if (done) done();
-			jNode.css('padding-top', "0px")
-				 .css('padding-bottom', "0px");
-		}
-		else if (args.newHeight == 'auto')
-		{
-			/* This hack smells bad, but it seems to work. The problem occurs in that the code
-				below doesn't do the right thing if this item has padding on the bottom. (and maybe the top,
-				but I didn't test that. */
-			var outerHeight = jNode.outerHeight(false);
-			jNode.height(oldHeight);
-			jNode.animate({height: outerHeight, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
-			
-		}
-		else
-		{
-			var height = jNode.height();
-			jNode.height(oldHeight);
-			jNode.animate({height: height, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
-		}
-	}
-	
-	VerticalReveal.prototype.hide = function(args)
-	{
-		var duration = (args && args.duration) ? args.duration : 0;
-		var step = (args && args.step) ? args.step : null;
-		var done = (args && args.done) ? args.done : null;
-		var before = (args && args.before) ? args.before : null;
-		
-		var jNode = $(this.node);
-
-		var oldHeight = jNode.height();
-		var oldPaddingTop = jNode.css('padding-top');
-		var oldPaddingBottom = jNode.css('padding-bottom');
-		jNode.css('padding-top', '0px')
-			 .css('padding-bottom', '0px')
-			 .height(0);
-		if (before)
-			before();
-			
-		if (!duration)
-		{
-			if (step) step();
-			if (done) done();
-			jNode.children().css('display', 'none');
-			this._isVisible = false;
-		}
-		else
-		{
-			var _this = this;
-			jNode.css('padding-top', oldPaddingTop)
-				 .css('padding-bottom', oldPaddingBottom)
-				 .height(oldHeight)
-				 .animate({height: '0px', 'padding-top': '0px', 'padding-bottom': '0px'}, {duration: duration, easing: 'swing', step: step, done: 
-				function() {
-					jNode.children().css('display', 'none');
-					_this._isVisible = false;
-					if (done) done();
-				}});
-		}
-	}
-			
-	function VerticalReveal(node)
-	{
-		this.node = node;
-		this._isVisible = true;
-	}
-	
-	return VerticalReveal;
 })();
 
 /* This is the entry panel for the workflow. The experience contains no data on entry. 
@@ -1795,8 +1397,6 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = Object.create(crv.SitePanel.prototype);
 	NewExperiencePanel.prototype.constructor = NewExperiencePanel;
 
-	NewExperiencePanel.prototype.allServices = null;
-	
 	NewExperiencePanel.prototype.organizationSearchView = null;
 	NewExperiencePanel.prototype.siteSearchView = null;
 	NewExperiencePanel.prototype.offeringSearchView = null;
@@ -1918,185 +1518,25 @@ var NewExperiencePanel = (function () {
 		};
 	}
 	
-	NewExperiencePanel.prototype.getInputTextWidth = function(inputNode)
-	{
-		var div = document.createElement('span');
-		$(div).addClass('textWidth')
-			.text(inputNode.value || $(inputNode).attr('placeholder'));
-		$(inputNode).parent().append(div);
-		var width = $(div).outerWidth();
-		$(div).remove();
-		return width;
-	}
-	
 	NewExperiencePanel.prototype.setTagColor = function(node)
 	{
-		if (node == document.activeElement)
-		{
-			d3.select(node)
-				.style('background-color', null)
-				.style('border-color', null)
-				.style('color', null);
-		}
-		else
-		{
-			var pathGuide;
-			var d = d3.select(node).datum();
-			var service = null;
-			
-			if (d)
-			{
-				if (d instanceof cr.Service)
-					service = d;
-				else if (d instanceof cr.ServiceLinkInstance)
-					service = d.service();
-			}
-			
-			if (service)
-			{
-				pathGuide = PathGuides.data[service.getColumn()];
-		
-				d3.select(node)
-					.style('background-color', pathGuide.flagColor)
-					.style('border-color', pathGuide.poleColor)
-					.style('color', pathGuide.fontColor);
-			}
-			else if (d)
-			{
-				pathGuide = PathGuides.data[PathGuides.data.length - 1];
-		
-				d3.select(node)
-					.style('background-color', pathGuide.flagColor)
-					.style('border-color', pathGuide.poleColor)
-					.style('color', pathGuide.fontColor);
-			}
-			else
-			{
-				d3.select(node)
-					.style('background-color', null)
-					.style('border-color', null)
-					.style('color', null);
-			}
-		}
+		this.tagPoolSection.setTagColor(node);
 	}
 	
 	NewExperiencePanel.prototype.setTagInputWidth = function(inputNode)
 	{
-		var newWidth = this.getInputTextWidth(inputNode) + 18;
-		$(inputNode).outerWidth(newWidth);
-		
-		this.setTagColor(inputNode);
-		
+		this.tagPoolSection.setTagInputWidth(inputNode);
 	}
 	
 	NewExperiencePanel.prototype.appendTag = function(container, instance)
 	{
-		var input = container.insert('input', 'button')
-			.datum(instance)
-			.classed('tag', true)
-			.attr('placeholder', 'Tag')
-			.attr('value', instance && instance.description());
-		
-		var startFocus;	
-		$(input.node())
-			.on('mousedown', function(e)
-			{
-				startFocus = (this != document.activeElement);
-			})
-			.on('click', function(e)
-			{
-				if (startFocus && this.selectionStart == this.selectionEnd)
-					this.setSelectionRange(0, this.value.length);
-				e.preventDefault();
-			});
-		
-		var _this = this;	
-		
-		$(input.node()).on('input', function()
-			{
-				/* Check for text changes for all input boxes.  */
-				if (this == document.activeElement)
-				{
-					if (!document.activeElement.value)
-						_this.hideAddTagButton();
-					else
-						_this.showAddTagButton();
-					_this.tagSearchView.constrainTagFlags();
-				}
-				_this.setTagInputWidth(this);
-			})
-			.on('focusin', function()
-			{
-				try
-				{
-					_this.tagSearchView.focusNode = this;
-					_this.onFocusInTagInput(this);
-				}
-				catch (err)
-				{
-					cr.asyncFail(err);
-				}
-			})
-			.on('focusout', function()
-			{
-				_this.setTagInputWidth(this);
-				_this.setPlaceholders();
-				if (!_this.inMouseDown)
-				{
-					_this.checkTagInput();
-					_this.showAddTagButton();
-				}
-			})
-			.keypress(function(e) {
-				if (e.which == 13)
-				{
-					_this.checkTagInput();
-					_this.showAddTagButton();
-					e.preventDefault();
-				}
-			})
-			.keydown( function(event) {
-				if (event.keyCode == 9) {
-					/* If this is an empty node with no instance to remove, then don't handle here. */
-					if (!input.node().value && !instance)
-						return;
-					/* If this is a node whose value matches the previous value, then don't handle here. */
-					else if (instance && input.node().value == instance.description())
-						return;
-					else if (instance && input.node().value != instance.description())
-					{
-						_this.checkTagInput();
-						_this.showAddTagButton();
-						/* Do not prevent default. */
-					}
-					else
-					{
-						_this.checkTagInput();
-						_this.showAddTagButton();
-						_this.tagSearchView.constrainTagFlags();
-						event.preventDefault();
-					}
-				}
-			});
-
-		this.setTagInputWidth(input.node());
-		
-		return input;
+		return this.tagPoolSection.appendTag(container, instance);
 	}
 	
 	NewExperiencePanel.prototype.showTags = function()
 	{
-		var offeringTags = [];
-		var tags = [];
+		var offeringTags = this.experienceController.primaryServices() || [];
 		var _this = this;
-		
-		var offering = this.experienceController.offering();
-		if (offering && offering.id())
-		{
-			offeringTags = offering.offeringServices()
-				.filter(function(v) { return !v.isEmpty(); })
-				.map(function(s) { return s.service(); });
-		}
 		
 		var container = this.mainDiv.select('span.offering-tags-container');
 		container.selectAll('span').remove();
@@ -2118,49 +1558,6 @@ var NewExperiencePanel = (function () {
 		else
 		{
 			parent.css('display', 'none');
-		}
-			
-		container = this.mainDiv.select('.tags-container');
-		var tagDivs = container.selectAll('input.tag');
-		tags = tags.concat(this.experienceController.experienceServices()
-			.filter(function(s) 
-			{
-				sDescription = s.description();
-				return !offeringTags.find(function(d)
-					{
-						return d.description() === sDescription;
-					})
-			}));
-		tags = tags.concat(this.experienceController.customServices()
-			.filter(function(s) 
-			{
-				sDescription = s.description();
-				return !offeringTags.find(function(d)
-					{
-						return d.description() === sDescription;
-					}) &&
-					!tags.find(function(d) 
-					{ 
-						return d.description() === sDescription; 
-					})
-			}));
-		
-		tagDivs.filter(function(d) { return d == null || tags.indexOf(d) < 0; } ).remove();
-		
-		var ds = tagDivs.data();
-		for (var i = 0; i < tags.length; ++i)
-		{
-			var input;
-			if (ds.indexOf(tags[i]) < 0)
-			{
-				input = this.appendTag(container, tags[i]);
-			}
-			else
-			{
-				input = tagDivs.filter(function(d) { return d == tags[i]; });
-				input.node().value = tags[i].description();
-				this.setTagInputWidth(input.node());
-			}
 		}
 	}
 	
@@ -2222,16 +1619,6 @@ var NewExperiencePanel = (function () {
 		this.updateInputs();
 		this.showTags();
 		this.calculateHeight();
-	}
-	
-	NewExperiencePanel.prototype.getTagConstrainText = function()
-	{
-		var tagsContainer = this.mainDiv.select('.tags-container');
-		var inputs = tagsContainer.selectAll('input:focus');
-		if (inputs.size() > 0)
-			return inputs.node().value.trim();
-		else
-			return "";
 	}
 	
 	NewExperiencePanel.prototype.checkOrganizationInput = function()
@@ -2329,87 +1716,7 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.checkTagInput = function(exceptNode)
 	{
-		var tagsContainer = this.mainDiv.select('.tags-container');
-		var _this = this;
-		tagsContainer.selectAll('input.tag').each(function(d, i)
-			{
-				/* Skip the exceptNode */
-				if (this == exceptNode)
-					return;
-					
-				var newText = this.value.trim();
-				var newService = newText && _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
-				if (!newText)
-				{
-					if (d instanceof cr.ExperienceService)
-					{
-						/* Remove a standard service */
-						_this.experienceController.removeService(d);
-					}
-					else if (d instanceof cr.ExperienceCustomService)
-					{
-						/* Remove a custom service */
-						_this.experienceController.removeCustomService(d);
-					}
-					else if (d)
-						throw new Error("Invalid object to remove");
-					$(this).remove();
-				}
-				else if (d instanceof cr.ExperienceService)
-				{
-					if (!newService)
-					{
-						/* Replace standard service with a custom service */
-						_this.experienceController.removeService(d);
-						var newValue = _this.experienceController.addService(newText);
-						d3.select(this).datum(newValue);
-						$(this).trigger('input');
-					}
-					else if (newService != d.service())
-					{
-						/* Replace standard service with a different standard service */
-						d.service(newService)
-						 .description(newService.description());
-						this.value = newService.description();
-						$(this).trigger('input');
-					}
-					else
-						{	/* No change */ }
-				}
-				else if (d instanceof cr.ExperienceCustomService)
-				{
-					if (!newService)
-					{
-						if (newText != d.name())
-						{
-							/* Replace custom service with a different custom service */
-							d.name(newText)
-							 .description(newText);
-							this.value = newText;
-							$(this).trigger('input');
-						}
-					}
-					else
-					{
-						/* Replace a custom service with a standard service */
-						_this.experienceController.removeCustomService(d);
-						var newValue = _this.experienceController.addService(newService);
-						d3.select(this).datum(newValue);
-						this.value = newService.description();
-						$(this).trigger('input');
-					}
-				}
-				else
-				{
-					/* The blank tag. */
-					_this.experienceController.addService(newService || newText);
-					_this.showTags();
-					this.value = "";
-					$(this).attr('placeholder', $(this).attr('placeholder'));
-				}
-			});
-			
-		this.setPlaceholders();
+		this.tagPoolSection.checkTagInput(exceptNode);
 	}
 	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
@@ -2442,12 +1749,10 @@ var NewExperiencePanel = (function () {
 			this.showTags();
 			return true;
 		}
-		else if (newReveal != this.tagSearchView.reveal &&
-			this.tagSearchView.reveal.isVisible())
+		else if (newReveal != this.tagPoolSection.reveal() &&
+			this.tagPoolSection.reveal().isVisible())
 		{
-			this.checkTagInput();
-			this.showAddTagButton();
-			this.tagSearchView.hideSearch(done);
+			this.tagPoolSection.hideReveal(done);
 			return true;
 		}
 		else if (newReveal != this.startHidable.wheelReveal &&
@@ -2468,41 +1773,17 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.setTagHelp = function()
 	{
-		if (this.tagSearchView.focusNode == this.tagSearchView.firstTagInputNode() &&
-			(!this.experienceController.offering() ||
-			  this.experienceController.offering().offeringServices().length == 0))
-			this.tagHelp.text(this.firstTagHelp);
-		else
-			this.tagHelp.text(this.otherTagHelp);
+		this.tagPoolSection.setTagHelp();
 	}
 	
 	NewExperiencePanel.prototype.hideAddTagButton = function()
 	{
-		var button = this.mainDiv.select('.tags-container>button');
-		if (button.style('display') != 'none')
-		{
-			button.interrupt().transition()
-				.style('opacity', 0)
-				.each('end', function()
-					{
-						button.style('display', 'none');
-					});
-		}
+		this.tagPoolSection.hideAddTagButton();
 	}
 	
 	NewExperiencePanel.prototype.showAddTagButton = function()
 	{
-		var button = this.mainDiv.select('.tags-container>button');
-		if (button.style('display') == 'none')
-		{
-			button.style('display', null);
-			button.interrupt().transition()
-				.style('opacity', 1)
-				.each('end', function()
-					{
-						button.style('display', null);
-					});
-		}
+		this.tagPoolSection.showAddTagButton();
 	}
 	
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
@@ -2514,60 +1795,22 @@ var NewExperiencePanel = (function () {
 			.style('color', null);
 			
 		var done = function()
-				{
-					_this.setTagHelp();
-					_this.tagSearchView.constrainTagFlags();
-					if (!inputNode.value)
-						_this.hideAddTagButton();
-					else
-						_this.showAddTagButton();
-						
-					_this.tagSearchView.showSearch(200, undefined, function()
-						{
-							var oldTop = $(_this.tagsSection.node()).offset().top;
-							if (oldTop < $(window).scrollTop())
-							{
-								var body = $("html, body");
-								body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-							}
-						});
-				};
-		if (!this.onFocusInOtherInput(_this.tagSearchView.reveal, done))
-		{
-			this.checkTagInput(inputNode);
-			this.setTagHelp();
-			this.tagSearchView.constrainTagFlags();
-			if (!inputNode.value)
-				_this.hideAddTagButton();
-			else
-				_this.showAddTagButton();
-				
-			if (!this.tagSearchView.reveal.isVisible())
 			{
-				this.tagSearchView.showSearch();
-			}
+				_this.tagPoolSection.revealSearchView(inputNode, true);
+			};
+		if (!this.onFocusInOtherInput(_this.tagPoolSection.reveal(), done))
+		{
+			this.tagPoolSection.checkTagInput(inputNode);
+			this.tagPoolSection.revealSearchView(inputNode, false);
 		}
 	}
 	
 	NewExperiencePanel.prototype.resizeVisibleSearch = function(duration)
 	{
-		/* This may be called before tagSearchView is initialized. */
-		if (this.tagSearchView && this.tagSearchView.reveal.isVisible())
-		{
-			this.tagSearchView.showSearch(duration);
-		}
-		else if (this.organizationSearchView.reveal.isVisible())
-		{
-			this.organizationSearchView.showSearch(duration);
-		}
-		else if (this.siteSearchView.reveal.isVisible())
-		{
-			this.siteSearchView.showSearch(duration);
-		}
-		else if (this.offeringSearchView.reveal.isVisible())
-		{
-			this.offeringSearchView.showSearch(duration);
-		}
+		this.tagPoolSection.resizeVisibleSearch(duration) ||
+		this.organizationSearchView.resizeVisibleSearch(duration) ||
+		this.siteSearchView.resizeVisibleSearch(duration) ||
+		this.offeringSearchView.resizeVisibleSearch(duration);
 	}
 
 	NewExperiencePanel.prototype.handleDeleteButtonClick = function()
@@ -2727,41 +1970,54 @@ var NewExperiencePanel = (function () {
 		var label;
 		var searchContainer;
 		
-		section = panel2Div.append('section');
-		
 		/* The tags section. */
-		this.tagsSection = panel2Div.append('section')
-			.classed('cell tags custom', true);
-		var tagsTopContainer = this.tagsSection.append('div');
-		label = tagsTopContainer.append('label')
-			.text('Tags:');
+		this.tagPoolSection = new TagPoolSection(this, experienceController);
 		
-		var tagsContainer = tagsTopContainer.append('span')
-			.classed('tags-container', true);
-			
-		tagsContainer.append('button')
-			.classed('site-active-text', true)
-			.text('Add Tag')
-			.on('click', function()
+		var tagsChanged = function() { _this.setPlaceholders(); }
+		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);
+		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
+			function(eventObject)
 				{
-					$(this).stop()
-						.animate({opacity: 0}, {duration: 200})
-						.promise()
-						.then(function()
-							{ 
-								_this.checkTagInput(null);
-								var tagInput = _this.appendTag(tagsContainer, null);
-								tagInput.node().focus();
-							});
+					$(_this.tagPoolSection).off('tagsChanged.cr', tagsChanged);
 				});
-		
-		searchContainer = this.tagsSection.append('div');
-		
-		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
-		this.tagHelp.text(this.firstTagHelp);
-			
-		this.tagSearchView = new TagSearchView(searchContainer, this, experienceController);
-												
+
+		var tagsFocused = function()
+			{
+				try
+				{
+					_this.onFocusInTagInput(_this.tagPoolSection.searchView.focusNode);
+				}
+				catch (err)
+				{
+					cr.asyncFail(err);
+				}
+			}
+		$(this.tagPoolSection).on('tagsFocused.cr', this.node(), tagsFocused);
+		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
+			function(eventObject)
+				{
+					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
+				});
+				
+		this.tagPoolSection.fillTags()
+			.then(function()
+				{
+					var tagPoolSection = _this.tagPoolSection;
+					
+					if (experienceController.serviceLinks().length == 0)
+					{
+						var tagsContainer = tagPoolSection.section.select('.tags-container');
+						var tagInput = tagPoolSection.appendTag(tagsContainer, null);
+						tagInput.node().focus();
+					}
+					else
+					{
+						var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
+						tagInput.node().focus();
+					}
+				},
+				cr.asyncFail);
+
 		/* Code starting for the date range. */
 		var birthday = experienceController.parent().birthday() ||
 			(function()
@@ -3011,47 +2267,6 @@ var NewExperiencePanel = (function () {
 				setDateRangeLabels();
 			});
 
-		cr.Service.servicesPromise()
-			.then(function(services)
-				{
-					_this.allServices = services;
-					var controllers = services.map(function(s) { return new ServiceFlagController(s); });
-					_this.tagSearchView.appendFlags(controllers)
-						.on('mousedown', function()
-							{
-								/* Set this variable so that the focusout event of an active 
-									tag text box doesn't over-process.
-								 */
-								_this.inMouseDown = true;
-							})
-						.on('mouseup', function()
-							{
-								_this.inMouseDown = false;
-							})
-						.on('click', function(s)
-							{
-								if (s.visible === undefined || s.visible)
-									_this.tagSearchView.onClickButton(s);
-								else
-									d3.event.preventDefault();
-							});
-					
-					/* Have to hide after appending the flags or the metrics aren't calculated. */
-					_this.tagSearchView.reveal.hide();
-
-					if (_this.experienceController.experienceServices().length == 0)
-					{
-						var tagInput = _this.appendTag(tagsContainer, null);
-						tagInput.node().focus();
-					}
-					else
-					{
-						var tagInput = _this.mainDiv.select('.tags-container>input.tag');
-						tagInput.node().focus();
-					}
-				},
-				cr.syncFail);
-		
 		$(panel2Div.node()).on('resize.cr', function()
 		{
 			_this.resizeVisibleSearch(0);
