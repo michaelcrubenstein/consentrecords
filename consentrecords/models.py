@@ -6004,6 +6004,11 @@ class Path(IInstance, dbmodels.Model):
         return querySet
         
     def select_related(querySet, fields=[]):
+        if 'user' in fields:
+            return querySet.prefetch_related(Prefetch('parent',
+                                                 queryset=\
+                                                     User.select_related(User.objects.filter(deleteTransaction__isnull=True)),
+                                                 to_attr='currentUser'))
         return querySet
         
     @property    
@@ -6040,7 +6045,7 @@ class Path(IInstance, dbmodels.Model):
         if 'parents' in fields:
             if context.canRead(self.parent):
                 if 'user' in fields:
-                    data['user'] = self.parent.getData([], context)
+                    data['user'] = self.currentUser.getData([], context)
                 else:
                     data['user'] = self.parent.headData(context)
         

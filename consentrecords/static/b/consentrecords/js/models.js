@@ -5734,7 +5734,7 @@ cr.Path = (function() {
 		{
 			this._user = new cr.User();
 			this._user.setData(d['user']);
-			this._user = crp.getInstance(this._user);
+			this._user = crp.getInstance(this._user.id());
 		}
     }
     
