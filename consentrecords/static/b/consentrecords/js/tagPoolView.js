@@ -789,8 +789,6 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.setTagColor = function(node)
 	{
-		console.assert(node.tagName == 'INPUT');
-		
 		if (node == document.activeElement)
 		{
 			d3.select(node)
