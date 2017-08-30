@@ -6328,7 +6328,15 @@ class Period(ChildInstance, dbmodels.Model):
         self.weekday = h.weekday 
         self.startTime = h.startTime 
         self.endTime = h.endTime 
-
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s" % \
+        	(self.id,
+        	self.weekday or '-',
+        	self.startTime or '-',
+        	self.endTime or '-')
+    
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6359,6 +6367,14 @@ class PeriodHistory(dbmodels.Model):
     weekday = dbmodels.IntegerField(db_index=True, null=True, editable=False)
     startTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     endTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s" % \
+        	(self.id,
+        	self.weekday or '-',
+        	self.startTime or '-',
+        	self.endTime or '-')
 
 class Service(RootInstance, PublicInstance, dbmodels.Model):    
     id = idField()

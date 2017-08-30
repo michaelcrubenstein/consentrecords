@@ -200,6 +200,12 @@ def printTransaction(t):
                t.createdPaths, t.changedPaths, 
                t.deletedPaths, t.pathHistories)
 
+    printTable("\tweekday\tstart time\tend time",
+               "Periods", "Period",
+               printInstance,
+               t.createdPeriods, t.changedPeriods, 
+               t.deletedPeriods, t.periodHistories)
+
     printTable("\tstage",
                "Services", "Service",
                printInstance,
