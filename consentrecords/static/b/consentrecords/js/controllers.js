@@ -12,6 +12,8 @@ var Controller = (function() {
 		    if (newValue != this._oldInstance)
 		    {
 				this._oldInstance = newValue;
+				if (this._newInstance)
+					this._newInstance.privilege(this._oldInstance.privilege());
 			}
 			return this;
 		}
