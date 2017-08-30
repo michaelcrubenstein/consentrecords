@@ -332,7 +332,7 @@ var PickStatePanel = (function () {
 		return d.name;
 	}
 	
-	PickStatePanel.getDescription = function(storedValue)
+	PickStatePanel.prototype.getDescription = function(storedValue)
 	{
 		return storedValue || crv.buttonTexts.nullString;
 	}
@@ -428,7 +428,7 @@ var PickCanRegisterPanel = (function () {
 		PickFromListPanel.call(this);
 	}
 	
-	PickCanRegisterPanel.getDescription = function(storedValue)
+	PickCanRegisterPanel.prototype.getDescription = function(storedValue)
 	{
 		var d = PickCanRegisterPanel.prototype.data.call(null).find(function(d)
 			{
@@ -620,7 +620,7 @@ var PickWeekdayPanel = (function () {
 		PickFromListPanel.call(this);
 	}
 	
-	PickWeekdayPanel.getDescription = function(storedValue)
+	PickWeekdayPanel.prototype.getDescription = function(storedValue)
 	{
 		var d = PickWeekdayPanel.prototype.data.call(null).find(function(d)
 			{
@@ -2358,7 +2358,7 @@ var PickStagePanel = (function () {
 		return d.name;
 	}
 	
-	PickStagePanel.getDescription = function(storedValue)
+	PickStagePanel.prototype.getDescription = function(storedValue)
 	{
 		return storedValue || crv.buttonTexts.nullString;
 	}
