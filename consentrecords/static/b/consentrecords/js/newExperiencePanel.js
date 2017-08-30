@@ -390,11 +390,11 @@ var ExperienceDatumSearchView = (function() {
 })();
 
 /* Displays site or organization */
-var OrganizationSearchView = (function() {
-	OrganizationSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
-	OrganizationSearchView.prototype.constructor = OrganizationSearchView;
+var OrganizationLinkSearchView = (function() {
+	OrganizationLinkSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	OrganizationLinkSearchView.prototype.constructor = OrganizationLinkSearchView;
 
-	OrganizationSearchView.prototype.clearFromOrganization = function()
+	OrganizationLinkSearchView.prototype.clearFromOrganization = function()
 	{
 		if (this.experienceController.organization())
 		{
@@ -420,7 +420,7 @@ var OrganizationSearchView = (function() {
 		}
 	}
 	
-	OrganizationSearchView.prototype.searchPath = function(val)
+	OrganizationLinkSearchView.prototype.searchPath = function(val)
 	{
 		var path;
 		if (val)
@@ -440,7 +440,7 @@ var OrganizationSearchView = (function() {
 			return '';
 	}
 	
-	OrganizationSearchView.prototype.resultType = function(val)
+	OrganizationLinkSearchView.prototype.resultType = function(val)
 	{
 		var path;
 		if (val)
@@ -460,7 +460,7 @@ var OrganizationSearchView = (function() {
 			return null;
 	}
 	
-	OrganizationSearchView.prototype.setupSearchTypes = function(searchText)
+	OrganizationLinkSearchView.prototype.setupSearchTypes = function(searchText)
 	{
 		if (searchText)
 		{
@@ -474,7 +474,7 @@ var OrganizationSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	OrganizationSearchView.prototype.checkHelp = function(showHelp)
+	OrganizationLinkSearchView.prototype.checkHelp = function(showHelp)
 	{
 		var helpDiv = d3.select(this.helpNode);
 
@@ -501,7 +501,7 @@ var OrganizationSearchView = (function() {
 		return true;
 	}
 	
-	OrganizationSearchView.prototype.fillItems = function(buttons)
+	OrganizationLinkSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
@@ -539,26 +539,26 @@ var OrganizationSearchView = (function() {
 			});
 	}
 	
-	OrganizationSearchView.prototype.isDirtyText = function()
+	OrganizationLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
 		return this.inputText() != (this.experienceController.organizationName() || "");
 	}
 	
-	function OrganizationSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
+	function OrganizationLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
 		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
-	return OrganizationSearchView;
+	return OrganizationLinkSearchView;
 })();
 
 /* Displays organization, site, offering */
-var SiteSearchView = (function() {
-	SiteSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
-	SiteSearchView.prototype.constructor = SiteSearchView;
+var SiteLinkSearchView = (function() {
+	SiteLinkSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	SiteLinkSearchView.prototype.constructor = SiteLinkSearchView;
 
-	SiteSearchView.prototype.clearFromSite = function()
+	SiteLinkSearchView.prototype.clearFromSite = function()
 	{
 		if (this.experienceController.site())
 		{
@@ -578,7 +578,7 @@ var SiteSearchView = (function() {
 		}
 	}
 	
-	SiteSearchView.prototype.searchPath = function(val)
+	SiteLinkSearchView.prototype.searchPath = function(val)
 	{
 		var path;
 		if (this.experienceController.organizationName())
@@ -668,7 +668,7 @@ var SiteSearchView = (function() {
 			return '';
 	}
 	
-	SiteSearchView.prototype.resultType = function(val)
+	SiteLinkSearchView.prototype.resultType = function(val)
 	{
 		var path;
 		if (this.experienceController.organizationName())
@@ -737,7 +737,7 @@ var SiteSearchView = (function() {
 			return null;
 	}
 	
-	SiteSearchView.prototype.setupSearchTypes = function(searchText)
+	SiteLinkSearchView.prototype.setupSearchTypes = function(searchText)
 	{
 		/* For each state, set up typeName, and the list of typeNames. */
 		if (this.experienceController.organizationName())
@@ -773,7 +773,7 @@ var SiteSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	SiteSearchView.prototype.checkHelp = function(showHelp)
+	SiteLinkSearchView.prototype.checkHelp = function(showHelp)
 	{
 		var helpDiv = d3.select(this.helpNode);
 
@@ -805,7 +805,7 @@ var SiteSearchView = (function() {
 		return true;
 	}
 	
-	SiteSearchView.prototype.fillItems = function(buttons)
+	SiteLinkSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
@@ -862,31 +862,31 @@ var SiteSearchView = (function() {
 			});
 	}
 	
-	SiteSearchView.prototype.isDirtyText = function()
+	SiteLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
 		return this.inputText() != (this.experienceController.siteName() || "");
 	}
 	
-	function SiteSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
+	function SiteLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
 		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
-	return SiteSearchView;
+	return SiteLinkSearchView;
 })();
 
 /* Typenames can be "Offering" or "Offering from Site" or "Service". The return types can be Offerings. */
-var OfferingSearchView = (function() {
-	OfferingSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
-	OfferingSearchView.prototype.constructor = OfferingSearchView;
+var OfferingLinkSearchView = (function() {
+	OfferingLinkSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	OfferingLinkSearchView.prototype.constructor = OfferingLinkSearchView;
 
-	OfferingSearchView.prototype.clearFromOffering = function()
+	OfferingLinkSearchView.prototype.clearFromOffering = function()
 	{
 		this.experienceController.clearOffering();
 	}
 	
-	OfferingSearchView.prototype.onClickButton = function(d, i) {
+	OfferingLinkSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
 		if (d instanceof cr.Service)
 		{
@@ -919,7 +919,7 @@ var OfferingSearchView = (function() {
 		d3.event.preventDefault();
 	}
 	
-	OfferingSearchView.prototype.searchPath = function(val)
+	OfferingLinkSearchView.prototype.searchPath = function(val)
 	{
 		var path;
 
@@ -1033,7 +1033,7 @@ var OfferingSearchView = (function() {
 			return '';
 	}
 	
-	OfferingSearchView.prototype.resultType = function(val)
+	OfferingLinkSearchView.prototype.resultType = function(val)
 	{
 		var path;
 
@@ -1106,7 +1106,7 @@ var OfferingSearchView = (function() {
 			return '';
 	}
 	
-	OfferingSearchView.prototype.setupSearchTypes = function(searchText)
+	OfferingLinkSearchView.prototype.setupSearchTypes = function(searchText)
 	{
 		/* For each state, set up typeName, and the list of typeNames. */
 		if (this.experienceController.siteName())
@@ -1152,7 +1152,7 @@ var OfferingSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	OfferingSearchView.prototype.checkHelp = function(showHelp)
+	OfferingLinkSearchView.prototype.checkHelp = function(showHelp)
 	{
 		var helpDiv = d3.select(this.helpNode);
 
@@ -1179,7 +1179,7 @@ var OfferingSearchView = (function() {
 		return true;
 	}
 	
-	OfferingSearchView.prototype.fillItems = function(buttons)
+	OfferingLinkSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
@@ -1218,18 +1218,18 @@ var OfferingSearchView = (function() {
 			});
 	}
 	
-	OfferingSearchView.prototype.isDirtyText = function()
+	OfferingLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
 		return this.inputText() != (this.experienceController.offeringName() || "");
 	}
 	
-	function OfferingSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
+	function OfferingLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
 		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
-	return OfferingSearchView;
+	return OfferingLinkSearchView;
 })();
 
 /* This is the entry panel for the workflow. The experience contains no data on entry. 
@@ -2185,7 +2185,7 @@ var NewExperiencePanel = (function () {
 			
 		searchContainer = section.append('div');
 			
-		this.organizationSearchView = new OrganizationSearchView(searchContainer.node(), 
+		this.organizationSearchView = new OrganizationLinkSearchView(searchContainer.node(), 
 																 this, experienceController, 
 																 this.organizationInput.node(), 
 																 organizationHelp.node());
@@ -2201,7 +2201,7 @@ var NewExperiencePanel = (function () {
 		
 		searchContainer = section.append('div');
 			
-		this.siteSearchView = new SiteSearchView(searchContainer.node(), 
+		this.siteSearchView = new SiteLinkSearchView(searchContainer.node(), 
 												 this, experienceController, 
 												 this.siteInput.node(), 
 												 siteHelp.node());
@@ -2217,7 +2217,7 @@ var NewExperiencePanel = (function () {
 			
 		searchContainer = section.append('div');
 			
-		this.offeringSearchView = new OfferingSearchView(searchContainer.node(), 
+		this.offeringSearchView = new OfferingLinkSearchView(searchContainer.node(), 
 														 this, experienceController, 
 														 this.offeringInput.node(), 
 														 offeringHelp.node());
