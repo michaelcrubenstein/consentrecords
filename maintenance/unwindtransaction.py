@@ -35,13 +35,6 @@ def printExperience(i):
     for j in i.experienceImplications.all():
         print("\tImplied Service: %s" % str(j.service))
 
-def printExperienceCustomService(i):
-    print("%s\t%s\t%s" % \
-        (i.id, 
-         (i.position if (i.position != None) else nullString),
-         i.name or nullString,
-         ))
-         
 def printExperienceImplication(i):
     print("%s\t%s\t%s" % \
         (i.id, 
@@ -138,7 +131,7 @@ def printTransaction(t):
 
     printTable("\tposition\tname",
                "Experience Custom Services", "Experience Custom Service",
-               printExperienceCustomService,
+               printInstance,
                t.createdExperienceCustomServices, t.changedExperienceCustomServices, 
                t.deletedExperienceCustomServices, t.experienceCustomServiceHistories)
 

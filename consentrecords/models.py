@@ -4515,6 +4515,10 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         self.position = h.position 
         self.name = h.name 
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, (self.position if (self.position != None) else '-'), self.name or '-')
+           
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -4537,6 +4541,10 @@ class ExperienceCustomServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
+    @property    
+    def dataString(self):
+        return "%s\t%s\t%s" % (self.id, (self.position if (self.position != None) else '-'), self.name or '-')
+           
 class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdExperienceServices')
@@ -7537,7 +7545,7 @@ class User(SecureRootInstance, dbmodels.Model):
     @property
     def dataString(self):
         return "%s\t%s\t%s\t%s" % \
-            (i.id, i.firstName or '-', i.lastName or '-', i.birthday or '-',
+            (self.id, self.firstName or '-', self.lastName or '-', self.birthday or '-',
             )
     
     def update(self, changes, context, newIDs={}):
