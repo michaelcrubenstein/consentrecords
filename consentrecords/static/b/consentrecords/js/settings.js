@@ -381,6 +381,151 @@ var PickUserAccessPanel = (function () {
 	return PickUserAccessPanel;
 })();
 
+var PickUserAccessPanel = (function () {
+	PickUserAccessPanel.prototype = Object.create(PickFromListPanel.prototype);
+	PickUserAccessPanel.prototype.constructor = PickUserAccessPanel;
+
+	PickUserAccessPanel.prototype.title = crv.buttonTexts.publicAccess;
+	
+	PickUserAccessPanel.prototype.data = function()
+	{
+		return [{userAccess: '', pathAccess: '', name: crv.buttonTexts.hidden},
+				{userAccess: 'find', pathAccess: '', name: crv.buttonTexts.emailPublic},
+				{userAccess: 'find', pathAccess: 'read', name: crv.buttonTexts.pathPublic},
+				{userAccess: 'read', pathAccess: '', name: crv.buttonTexts.userPublic},
+			   ];
+	}
+	
+	PickUserAccessPanel.prototype.isInitialValue = function(d)
+	{
+		return d.userAccess === this.initialUserPublicAccess &&
+			   d.pathAccess === this.initialPathPublicAccess;
+	}
+
+	PickUserAccessPanel.prototype.pickedValue = function(d)
+	{
+		return d;
+	}
+
+	PickUserAccessPanel.prototype.datumDescription = function(d)
+	{
+		return d.name;
+	}
+	
+	PickUserAccessPanel.prototype.getDescription = function(d)
+	{
+		return d.name;
+	}
+	
+	PickUserAccessPanel.prototype.createRoot = function(user, initialValue)
+	{
+		this.initialUserPublicAccess = user.publicAccess();
+		this.initialPathPublicAccess = user.path().publicAccess();
+		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, null);
+	}
+	
+	function PickUserAccessPanel() {
+		PickFromListPanel.call(this);
+	}
+	
+	return PickUserAccessPanel;
+})();
+
+var ShareOptions = (function () {
+
+	function ShareOptions(panelNode, user)
+	{
+		var dimmer = new Dimmer(panelNode);
+		var panel = d3.select(panelNode).append('panel')
+			.classed("confirm", true);
+
+		function onCancel(e)
+		{
+			if (prepareClick('click', 'Cancel'))
+			{
+				try
+				{
+					$(confirmButton.node()).off('blur');
+					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+						$(panel.node()).remove();
+						unblockClick();
+					});
+					clipboard.destroy();
+					dimmer.hide();
+				}
+				catch(err)
+				{
+					syncFailFunction(err);
+				}
+			}
+			e.preventDefault();
+		}
+		
+		var div = panel.append('div');
+		$(div.node()).click(onCancel);
+		
+		var copyButton = div.append('button')
+			.text("Copy Path")
+			.classed("site-active-text copy", true)
+			.attr('data-clipboard-text', 
+			      '{0}/for/{1}'.format(window.location.origin, user.emails()[0].text()));
+		
+		var clipboard = new Clipboard(copyButton.node());
+			
+		clipboard.on('error', function(e) {
+			cr.asyncFail('Press Ctrl+C to copy');
+		});
+			
+		var confirmButton = div.append('button')
+			.text("Share Via Mail")
+			.classed("site-active-text", true)
+			.on("click", function()
+				{
+					/* Test case: Email Pathway Link. */
+					if (prepareClick('click', "Email Pathway Link"))
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							$(panel.node()).remove();
+							if (user.id() == cr.signedinUser.id())
+							{
+								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
+											.format(window.location.origin, user.emails()[0].text());
+							}
+							else
+							{
+								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
+											.format(user.caption(), window.location.origin, user.emails()[0].text());
+							}
+							unblockClick();
+						});
+						dimmer.hide();
+					}
+				});
+				
+		$(confirmButton.node()).on('blur', onCancel);
+		var cancelButton = div.append('button')
+			.text(crv.buttonTexts.cancel)
+			.classed("site-active-text", true);
+		
+		$(cancelButton.node()).click(onCancel);
+		
+		dimmer.show();
+		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
+		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
+			function() {
+				$(confirmButton.node()).focus();
+				unblockClick();
+			}});
+		dimmer.mousedown(onCancel);
+		$(panel.node()).mousedown(function(e)
+			{
+				e.preventDefault();
+			});
+	}
+	
+	return ShareOptions;
+})();
+
 var crn = {}
 
 crn.Notification = (function() {
