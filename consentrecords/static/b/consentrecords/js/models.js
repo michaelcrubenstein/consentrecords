@@ -3797,7 +3797,7 @@ cr.Experience = (function() {
 		if (duplicateForEdit)
 		{
 			if (this._comments)
-				newInstance._comments = this.duplicateData(this._comments, duplicateForEdit);
+				newInstance._comments = this.duplicateList(this._comments, duplicateForEdit);
 		}
 		
 		return this;
