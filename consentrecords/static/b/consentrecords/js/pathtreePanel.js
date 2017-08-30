@@ -1380,7 +1380,9 @@ var SettingsButton = (function() {
 		{
 			try
 			{
-				var panel = new Settings(this.user);
+				var controller = new UserController(this.user, true);
+				controller.oldInstance(this.user);
+				var panel = new Settings(controller, revealPanelUp);
 				panel.showUp().always(unblockClick);
 			}
 			catch(err)

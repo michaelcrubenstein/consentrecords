@@ -332,6 +332,11 @@ var PickStatePanel = (function () {
 		return d.name;
 	}
 	
+	PickStatePanel.getDescription = function(storedValue)
+	{
+		return storedValue || crv.buttonTexts.nullString;
+	}
+
 	PickStatePanel.prototype.createRoot = function(user, initialValue)
 	{
 		this.initialValue = initialValue;

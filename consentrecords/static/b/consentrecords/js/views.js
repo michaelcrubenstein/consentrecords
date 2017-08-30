@@ -155,24 +155,29 @@ var crv = {
 	buttonTexts: {
 		add: "Add",
 		address: "Address",
+		birthday: "Birthday",
 		cancel: "Cancel",
 		canRegister: "Can Register",
 		city: "City",
 		done: "Done",
 		edit: "Edit",
-		emails: "Emails",
 		email: "Email",
+		emailPublic: "By Request",
+		emails: "Emails",
 		end: "End",
 		endTime: "End Time",
 		enrollment: "Enrollment",
 		enrollments: "Enrollments",
 		engagement: "Engagement",
 		engagements: "Engagements",
+		firstName: "First Name",
 		group: "Group",
 		groups: "Groups",
+		hidden: "Hidden",
 		implications: "Implications",
 		inquiry: "Inquiry",
 		inquiries: "Inquiries",
+		lastName: "Last Name",
 		maximumAge: "Maximum Age",
 		maximumGrade: "Maximum Grade",
 		members: "Members",
@@ -192,12 +197,14 @@ var crv = {
 		organizationLabel: "Organization Label",
 		organizationLabels: "Organization Labels",
 		organizations: "Organizations",
+		pathPublic: "Public Path Only",
 		period: "Period",
 		periods: "Periods",
 		primaryAdministrator: "Primary Administrator",
 		publicAccess: "Public Access",
 		readPublicAccess: "Public",
 		registrationDeadline: "Registration Deadline",
+		screenName: "Screen Name",
 		search: "Search",
 		service: "Service",
 		services: "Services",
@@ -216,6 +223,7 @@ var crv = {
 		streets: "Streets",
 		tags: "Tags",
 		user: "User",
+		userPublic: "Public Profile and Path",
 		users: "Users",
 		webSite: "Web Site",
 		weekday: "Weekday",
@@ -1999,7 +2007,7 @@ var EditPanel = (function() {
 		return inputs;
 	}
 	
-	EditPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText)
+	EditPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText, minDate, maxDate)
 	{
 		var section = this.mainDiv.append('section')
 			.datum(instance)
@@ -2009,7 +2017,8 @@ var EditPanel = (function() {
 			.text(labelText);
 		section.editor = this.appendDateEditor(section,
 												 crv.buttonTexts.nonePlaceholder,
-												 instanceProperty.call(instance));
+												 instanceProperty.call(instance),
+												 minDate, maxDate);
 		
 		var handler = function(eventObject)
 		{
@@ -2331,10 +2340,7 @@ var EditPanel = (function() {
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newValue)
 								{
-									if ('getDescription' in pickPanelType)
-										textContainer.text(pickPanelType.getDescription(newValue));
-									else
-										textContainer.text(newValue);
+									textContainer.text(panel.getDescription(newValue));
 									instanceProperty.call(instance, newValue);
 								});
 						}
@@ -2348,9 +2354,7 @@ var EditPanel = (function() {
 		section.append('label')
 			.text(labelText);
 			
-		var initialDescription = instanceProperty.call(instance);
-		if ('getDescription' in pickPanelType)
-			initialDescription = pickPanelType.getDescription(initialDescription);
+		var initialDescription = pickPanelType.prototype.getDescription(instanceProperty.call(instance));
 		var items = this.appendEnumerationEditor(section, initialDescription);
 		
 		crf.appendRightChevrons(items);	
