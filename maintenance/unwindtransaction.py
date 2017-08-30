@@ -61,13 +61,6 @@ def printOrganization(i):
          str(i.primaryAdministrator) if i.primaryAdministrator else nullString,
         ))
 
-def printPath(i):
-    print("%s\t%s\t%s\t%s\t%s\t%s" % \
-        (i.id, i.parent, i.birthday or nullString, i.name or nullString, 
-         i.specialAccess or nullString, 
-         i.canAnswerExperience or nullString,
-        ))
-
 def printInstance(i):
 	print(i.dataString)
          
@@ -201,9 +194,9 @@ def printTransaction(t):
                t.createdOrganizationNames, t.changedOrganizationNames, 
                t.deletedOrganizationNames, t.organizationNameHistories)
 
-    printTable("\tuser\tbirthday\tscreen name\tspecial access\tcan answer",
+    printTable("\tuser\tbirthday\tscreen name\tspecial access\tpublic access\tcan answer",
                "Paths", "Path",
-               printPath,
+               printInstance,
                t.createdPaths, t.changedPaths, 
                t.deletedPaths, t.pathHistories)
 
@@ -273,7 +266,7 @@ def printTransaction(t):
                t.createdStreets, t.changedStreets, 
                t.deletedStreets, t.streetHistories)
 
-    printTable("\tfirst name\tlast name\tbirthday",
+    printTable("\tfirst name\tlast name\tbirthday\tpublic access\tprimary administrator",
                "Users", "User",
                printInstance,
                t.createdUsers, t.changedUsers, 

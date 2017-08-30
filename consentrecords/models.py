@@ -6171,6 +6171,15 @@ class Path(IInstance, dbmodels.Model):
         self.publicAccess = h.publicAccess
         self.canAnswerExperience = self.canAnswerExperience
     
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
+        (self.id, self.parent, self.birthday or '-', self.name or '-', 
+         self.specialAccess or '-', 
+         self.publicAccess or '-', 
+         self.canAnswerExperience or '-',
+        )
+    
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6217,6 +6226,15 @@ class PathHistory(dbmodels.Model):
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
+        (self.id, self.parent, self.birthday or '-', self.name or '-', 
+         self.specialAccess or '-', 
+         self.publicAccess or '-', 
+         self.canAnswerExperience or '-',
+        )
+    
 class Period(ChildInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdPeriods')
@@ -7544,8 +7562,13 @@ class User(SecureRootInstance, dbmodels.Model):
     
     @property
     def dataString(self):
-        return "%s\t%s\t%s\t%s" % \
-            (self.id, self.firstName or '-', self.lastName or '-', self.birthday or '-',
+        return "%s\t%s\t%s\t%s\t%s\t%s" % \
+            (self.id, 
+             self.firstName or '-', 
+             self.lastName or '-', 
+             self.birthday or '-',
+             self.publicAccess or '-',
+             str(self.primaryAdministrator) if self.primaryAdministrator else '-',
             )
     
     def update(self, changes, context, newIDs={}):
@@ -7568,6 +7591,7 @@ class User(SecureRootInstance, dbmodels.Model):
         
         self.updateChildren(changes, 'emails', context, UserEmail, self.emails, newIDs)
         if 'path' in changes:
+            print('updating path', changes['path'])
             self.path.update(changes['path'], context, newIDs)
         self.updateChildren(changes, 'user grant requests', context, UserUserGrantRequest, self.userGrantRequests, newIDs)
         if 'public access' in changes and changes['public access'] != self.publicAccess:
