@@ -6028,9 +6028,9 @@ cr.Period = (function() {
 		if (this.weekday() != null)
 			initialData['weekday'] = this.weekday();
 		if (this.startTime() != null)
-			initialData['start time'] = this.startTime();
+			initialData['start time'] = this.getISOTime(this.startTime());
 		if (this.endTime() != null)
-			initialData['end time'] = this.endTime();
+			initialData['end time'] = this.getISOTime(this.endTime());
 	}
 	
 	/* Copies all of the data associated with this instance prior to making changes.
@@ -6046,6 +6046,14 @@ cr.Period = (function() {
 		return this;
 	}
 	
+	Period.prototype.getISOTime = function(newValue)
+	{
+		if (!newValue)
+			return "";
+		else
+			return Date.parse(newValue).toString("HH:mm");
+	}
+	
 	/* Returns a dictionary that describes all of the operations needed to change
 		the data in this object to the data in the revision.
 	 */
@@ -6055,10 +6063,14 @@ cr.Period = (function() {
 		
 		if (cr.stringChanged(this.weekday(), revision.weekday()))
 			changes['weekday'] = revision.weekday();
-		if (cr.stringChanged(this.startTime(), revision.startTime()))
-			changes['start time'] = revision.startTime();
-		if (cr.stringChanged(this.endTime(), revision.endTime()))
-			changes['end time'] = revision.endTime();
+		
+		var newValue = this.getISOTime(revision.startTime());
+		if (cr.stringChanged(this.startTime(), newValue))
+			changes['start time'] = newValue;
+
+		newValue = this.getISOTime(revision.endTime());
+		if (cr.stringChanged(this.endTime(), newValue))
+			changes['end time'] = newValue;
 		
 		return changes;
 	}
