@@ -6032,6 +6032,8 @@ class Path(IInstance, dbmodels.Model):
             data['name'] = self.name
         if self.specialAccess:
             data['special access'] = self.specialAccess
+        if self.publicAccess:
+        	data['public access'] = self.publicAccess
         if self.canAnswerExperience:
             data['can answer experience'] = self.canAnswerExperience
 
