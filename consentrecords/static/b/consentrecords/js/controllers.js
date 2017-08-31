@@ -880,49 +880,6 @@ var ExperiencePromptController = (function() {
 	ExperiencePromptController.prototype.savingMessage = "Saving Experience Prompt...";
 	ExperiencePromptController.prototype.groupKey = 'experience prompts';
 	
-	/* Args can either be a cr.Service or a string. */
-	ExperiencePromptController.prototype.addService = function(args)
-	{
-		if (args instanceof cr.Service)
-		{
-			var i = new (this.serviceLinkType())();
-			i.description(args.description())
-			 .parent(this.newInstance())
-			 .service(args);
-			if ('position' in i)
-				i.position(this.serviceLinks().length
-			           ? this.serviceLinks()[this.serviceLinks().length - 1].position() + 1
-			           : 0);
-			this.serviceLinks().push(i);
-			return i;
-		}
-		else
-			throw new Error("Invalid arguments to addService");
-	}
-	
-	ExperiencePromptController.prototype.removeService = function(service)
-	{
-		cr.removeElement(this.serviceLinks(), service);
-	}
-	
-	/** Returns True if this controller has a service that overrides the importance of
-		the first service directly associated with this controller's new instance.
-	 */
-	ExperiencePromptController.prototype.hasPrimaryService = function()
-	{
-		return false;
-	}
-	
-	ExperiencePromptController.prototype.primaryServices = function()
-	{
-		return [];
-	}
-	
-	ExperiencePromptController.prototype.customServiceType = function()
-	{
-		return null;
-	}
-	
 	function ExperiencePromptController(source, duplicateForEdit)
 	{
 		RootController.call(this, source || cr.ExperiencePrompt, duplicateForEdit);
