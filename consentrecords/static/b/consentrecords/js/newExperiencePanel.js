@@ -1752,6 +1752,7 @@ var NewExperiencePanel = (function () {
 		else if (newReveal != this.tagPoolSection.reveal() &&
 			this.tagPoolSection.reveal().isVisible())
 		{
+			this.tagPoolSection.checkTagInput(null);
 			this.tagPoolSection.hideReveal(done);
 			return true;
 		}
