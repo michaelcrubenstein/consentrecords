@@ -4768,7 +4768,19 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
         self.domain = h.domain 
         self.stage = h.stage 
         self.timeframe = h.timeframe 
-
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" %\
+            (self.name or '-',
+             str(self.organization) if self.organization else '-',
+             str(self.site) if self.site else '-',
+             str(self.offering) if self.offering else '-',
+             self.domain or '-',
+             self.stage or '-',
+             self.timeframe or '-'
+            )
+             
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
@@ -6038,7 +6050,7 @@ class Path(IInstance, dbmodels.Model):
         if self.specialAccess:
             data['special access'] = self.specialAccess
         if self.publicAccess:
-        	data['public access'] = self.publicAccess
+            data['public access'] = self.publicAccess
         if self.canAnswerExperience:
             data['can answer experience'] = self.canAnswerExperience
 
@@ -6337,10 +6349,10 @@ class Period(ChildInstance, dbmodels.Model):
     @property
     def dataString(self):
         return "%s\t%s\t%s\t%s" % \
-        	(self.id,
-        	self.weekday or '-',
-        	self.startTime or '-',
-        	self.endTime or '-')
+            (self.id,
+            self.weekday or '-',
+            self.startTime or '-',
+            self.endTime or '-')
     
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -6376,10 +6388,10 @@ class PeriodHistory(dbmodels.Model):
     @property
     def dataString(self):
         return "%s\t%s\t%s\t%s" % \
-        	(self.id,
-        	self.weekday or '-',
-        	self.startTime or '-',
-        	self.endTime or '-')
+            (self.id,
+            self.weekday or '-',
+            self.startTime or '-',
+            self.endTime or '-')
 
 class Service(RootInstance, PublicInstance, dbmodels.Model):    
     id = idField()
