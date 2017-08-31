@@ -4580,6 +4580,9 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
         service = _orNoneForeignKey(data, 'service', context, Service)
         if not service:
             raise ValueError("service of a new experience service is not specified")
+        
+        if 'position' not in data:
+            raise ValueError("position of a new experience service is not specified")
             
         newItem = ExperienceService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,

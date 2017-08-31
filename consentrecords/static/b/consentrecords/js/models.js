@@ -1708,7 +1708,8 @@ cr.OrderedServiceLinkInstance = (function() {
 	OrderedServiceLinkInstance.prototype.mergeData = function(source)
 	{
 		cr.ServiceLinkInstance.prototype.mergeData.call(this, source);
-		if (!this._position) this._position = source._position;
+		if (this._position === undefined || this._position === null) 
+			this._position = source._position;
 		return this;
 	}
 	
@@ -1738,12 +1739,10 @@ cr.OrderedServiceLinkInstance = (function() {
 	
 	OrderedServiceLinkInstance.prototype.appendData = function(initialData)
 	{
-		console.assert(this.position() !== undefined);
+		console.assert(this.position() !== undefined && this.position() !== null);
 		
 		cr.ServiceLinkInstance.prototype.appendData.call(this, initialData);
-		
-		if (this.position() != null)
-			initialData.position = this.position();
+		initialData.position = this.position();
 	}
 	
 	/** Called after the contents of the OrderedServiceLinkInstance have been updated on the server. */
