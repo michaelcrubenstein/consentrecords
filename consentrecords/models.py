@@ -4775,7 +4775,8 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
     @property
     def dataString(self):
         return "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" %\
-            (self.name or '-',
+            (self.id,
+             self.name or '-',
              str(self.organization) if self.organization else '-',
              str(self.site) if self.site else '-',
              str(self.offering) if self.offering else '-',
