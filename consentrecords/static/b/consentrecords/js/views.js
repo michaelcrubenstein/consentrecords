@@ -2331,8 +2331,10 @@ var EditItemPanel = (function () {
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newLink)
 								{
-									instanceProperty.call(instance, newLink);
-									section.selectAll('li>div').text(newLink.description());
+									/* newLink will be undefined if null was passed in. */
+									instanceProperty.call(instance, newLink || null);
+									section.selectAll('li>div').text(
+										newLink ? newLink.description() : crv.buttonTexts.nullString);
 								});
 						}
 						catch(err)
