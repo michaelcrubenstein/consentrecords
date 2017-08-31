@@ -1842,7 +1842,7 @@ cr.UserLinkInstance = (function() {
 		changes = changes !== undefined ? changes : {};
 		
 		if (cr.linkChanged(this.user(), revision.user()))
-			changes.user = revision.user().urlPath();
+			changes.user = revision.user() && revision.user().urlPath();
 			
 		return changes;
 	}
@@ -4154,9 +4154,10 @@ cr.ExperiencePrompt = (function() {
 		}
 		else
 		{
-		    if (newValue.id() != this._domainID)
+			var newID = (newValue && newValue.id());
+		    if (newID != this._domainID)
 		    {
-				this._domainID = newValue.id();
+				this._domainID = newID;
 			}
 			return this;
 		}
@@ -4345,8 +4346,8 @@ cr.ExperiencePrompt = (function() {
 		cr.SiteLinkInstance.prototype.getUpdateData.call(this, revision, changes);
 		cr.OfferingLinkInstance.prototype.getUpdateData.call(this, revision, changes);
 		
-		if (cr.stringChanged(this.domain(), revision.domain()))
-			changes.domain = revision.domain().urlPath();
+		if (cr.linkChanged(this.domain(), revision.domain()))
+			changes.domain = revision.domain() && revision.domain().urlPath();
 		if (cr.stringChanged(this.stage(), revision.stage()))
 			changes.stage = revision.stage();
 		if (cr.stringChanged(this.timeframe(), revision.timeframe()))
@@ -4396,7 +4397,7 @@ cr.ExperiencePrompt = (function() {
 			if (typeof(domainData) == 'string')
 				console.assert(false);	/* Not yet implemented */
 			else
-				this._domainID = domainData['id'];
+				this._domainID = domainData && domainData['id'];
 			changed = true;
 		}
 		if ('stage' in d)
