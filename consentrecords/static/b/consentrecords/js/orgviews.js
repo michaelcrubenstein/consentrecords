@@ -3273,6 +3273,18 @@ var ExperiencePromptPanel = (function () {
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	ExperiencePromptPanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
+		if (newReveal != this.tagsSection.reveal() &&
+			this.tagsSection.reveal().isVisible())
+		{
+			this.tagsSection.hideReveal(done);
+			return true;
+		}
+		else if (newReveal != this.disqualifyingTagsSection.reveal() &&
+			this.disqualifyingTagsSection.reveal().isVisible())
+		{
+			this.disqualifyingTagsSection.hideReveal(done);
+			return true;
+		}
 		return false;
 	}
 	
@@ -3338,7 +3350,12 @@ var ExperiencePromptPanel = (function () {
 			{
 				try
 				{
-					_this.onFocusInTagInput(inputNode);
+					var done = function()
+						{
+							_this.onFocusInTagInput(inputNode);
+						}
+					if (!_this.onFocusInOtherInput(_this.tagsSection.reveal(), done))
+						done();
 				}
 				catch (err)
 				{
@@ -3369,18 +3386,23 @@ var ExperiencePromptPanel = (function () {
 			{
 				try
 				{
-					_this.onFocusInDisqualifyingTagInput(inputNode);
+					var done = function()
+						{
+							_this.onFocusInDisqualifyingTagInput(inputNode);
+						}
+					if (!_this.onFocusInOtherInput(_this.disqualifyingTagsSection.reveal(), done))
+						done();
 				}
 				catch (err)
 				{
 					cr.asyncFail(err);
 				}
 			}
-		$(this.disqualifyingTagsSection).on('disqualifyingTagsFocused.cr', this.node(), disqualifyingTagsFocused);
+		$(this.disqualifyingTagsSection).on('tagsFocused.cr', this.node(), disqualifyingTagsFocused);
 		$(this.node()).on('clearTriggers.cr remove', null, this.disqualifyingTagsSection, 
 			function(eventObject)
 				{
-					$(_this.disqualifyingTagsSection).off('disqualifyingTagsFocused.cr', disqualifyingTagsFocused);
+					$(_this.disqualifyingTagsSection).off('tagsFocused.cr', disqualifyingTagsFocused);
 				});
 				
 		this.disqualifyingTagsSection.fillTags()

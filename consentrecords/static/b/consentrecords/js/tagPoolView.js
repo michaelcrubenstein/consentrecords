@@ -953,7 +953,6 @@ var TagPoolSection = (function () {
 			.on('mousedown', function(e)
 			{
 				startFocus = (this != document.activeElement);
-				_this.inMouseDown = true;
 			})
 			.on('click', function(e)
 			{
@@ -993,10 +992,6 @@ var TagPoolSection = (function () {
 			{
 				_this.setTagInputWidth(this);
 				$(_this).trigger('tagsChanged.cr', this);
-				if (!_this.inMouseDown)
-				{
-					_this.hideReveal();
-				}
 			})
 			.keypress(function(e) {
 				if (e.which == 13)
@@ -1185,13 +1180,6 @@ var TagPoolSection = (function () {
 					_this.allServices = services;
 					var controllers = services.map(function(s) { return new ServiceFlagController(s); });
 					_this.searchView.appendFlags(controllers)
-						.on('mousedown', function()
-							{
-								/* Set this variable so that the focusout event of an active 
-									tag text box doesn't over-process.
-								 */
-								_this.inMouseDown = true;
-							})
 						.on('click', function(s)
 							{
 								if (s.visible === undefined || s.visible)
@@ -1224,10 +1212,6 @@ var TagPoolSection = (function () {
 		tagsContainer.append('button')
 			.classed('site-active-text', true)
 			.text('Add Tag')
-			.on('mousedown', function()
-				{
-					_this.inMouseDown = true;
-				})
 			.on('click', function()
 				{
 					var _thisButton = this;
@@ -1249,25 +1233,6 @@ var TagPoolSection = (function () {
 		this.tagHelp.text(this.firstTagHelp);
 			
 		this.searchView = new TagSearchView(searchContainer, this, controller);
-		
-		var wasMouseDown = false;
-		$(this.section.node()).mouseup(function()
-			{
-				_this.inMouseDown = false;
-			})
-			.mouseleave(function()
-			{
-				wasMouseDown = _this.inMouseDown;
-				_this.inMouseDown = false;
-			})
-			.mouseenter(function()
-			{
-				_this.inMouseDown = wasMouseDown;
-				wasMouseDown = false;
-			})
-			.mousedown(function() {
-				wasMouseDown = false;
-			});
 	}
 	
 	return TagPoolSection;
