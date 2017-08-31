@@ -3205,6 +3205,11 @@ cr.CommentPrompt = (function() {
     CommentPrompt.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
 
 	/** Called after the contents of the CommentPrompt have been updated on the server. */
+	CommentPrompt.prototype.pullElements = function(source)
+	{
+		return this.pullNewElements(this.translations(), source.translations());
+	}
+	
 	CommentPrompt.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -3238,6 +3243,13 @@ cr.CommentPromptText = (function() {
 	{
 		console.assert(this.id());
 		return 'comment prompt translation/{0}'.format(this.id());
+	}
+	
+	CommentPromptText.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().translations(), this);
+		$(this.parent()).trigger("commentPromptTextDeleted.cr", this);
 	}
 	
 	function CommentPromptText() {

@@ -2878,6 +2878,31 @@ var UsersPanel = (function () {
 	
 })();
 
+var CommentPromptPanel = (function () {
+	CommentPromptPanel.prototype = Object.create(EditItemPanel.prototype);
+	CommentPromptPanel.prototype.constructor = CommentPromptPanel;
+
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	CommentPromptPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		return false;
+	}
+	
+	function CommentPromptPanel(controller, onShow) {
+		var _this = this;
+		EditItemPanel.call(this, controller);
+
+		this.createRoot(crv.buttonTexts.commentPrompt, onShow);
+
+		this.namesSection = this.appendTranslationsSection(controller.newInstance(), crv.buttonTexts.texts, crv.buttonTexts.text, 
+									 controller.newInstance().translations(),
+									 cr.CommentPromptText);
+
+	}
+	
+	return CommentPromptPanel;
+})();
+
 var CommentPromptSearchView = (function () {
 	CommentPromptSearchView.prototype = Object.create(RootPanelSearchView.prototype);
 	CommentPromptSearchView.prototype.constructor = CommentPromptSearchView;

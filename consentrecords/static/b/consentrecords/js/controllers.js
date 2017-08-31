@@ -310,6 +310,22 @@ var AddressController = (function() {
 	return AddressController;
 })();
 
+var CommentPromptController = (function() {
+	CommentPromptController.prototype = Object.create(RootController.prototype);
+	CommentPromptController.prototype.constructor = CommentPromptController;
+	
+	CommentPromptController.prototype.addingMessage = "Adding Comment Prompt...";
+	CommentPromptController.prototype.savingMessage = "Saving Comment Prompt...";
+	CommentPromptController.prototype.groupKey = 'comment prompts';
+	
+	function CommentPromptController(source, duplicateForEdit)
+	{
+		RootController.call(this, source || cr.CommentPrompt, duplicateForEdit);
+	}
+	
+	return CommentPromptController;
+})();
+
 var EngagementController = (function() {
 	EngagementController.prototype = Object.create(ChildController.prototype);
 	EngagementController.prototype.constructor = EngagementController;

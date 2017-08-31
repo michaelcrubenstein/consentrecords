@@ -110,6 +110,18 @@ def printTransaction(t):
                t.createdComments, t.changedComments, 
                t.deletedComments, t.commentHistories)
 
+    printTable("",
+               "Comment Prompts", "Comment Prompt",
+               printInstance,
+               t.createdCommentPrompts, t.changedCommentPrompts, 
+               t.deletedCommentPrompts, t.commentPromptHistories)
+
+    printTable("\ttext\tlanguageCode",
+               "Comment Prompt Translations", "Comment Prompt Translation",
+               printInstance,
+               t.createdCommentPromptTexts, t.changedCommentPromptTexts, 
+               t.deletedCommentPromptTexts, t.commentPromptTextHistories)
+
     printTable("\tservice",
                "Disqualifying Tags", "Disqualifying Tag",
                printInstance,
