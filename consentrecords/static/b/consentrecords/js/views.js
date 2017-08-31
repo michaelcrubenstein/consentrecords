@@ -159,6 +159,9 @@ var crv = {
 		cancel: "Cancel",
 		canRegister: "Can Register",
 		city: "City",
+		currentTimeframe: "Something I'm Doing Now",
+		disqualifyingTags: "Disqualifying Tags",
+		domain: "Domain",
 		done: "Done",
 		edit: "Edit",
 		email: "Email",
@@ -171,6 +174,7 @@ var crv = {
 		engagement: "Engagement",
 		engagements: "Engagements",
 		firstName: "First Name",
+		goalTimeframe: "My Goal",
 		group: "Group",
 		groups: "Groups",
 		hidden: "Hidden",
@@ -200,6 +204,11 @@ var crv = {
 		pathPublic: "Public Path Only",
 		period: "Period",
 		periods: "Periods",
+		pickOffering: "Pick Offering",
+		pickOrganization: "Pick Organization",
+		pickService: "Pick Tag",
+		pickSite: "Pick Site",
+		previousTimeframe: "Done",
 		primaryAdministrator: "Primary Administrator",
 		publicAccess: "Public Access",
 		readPublicAccess: "Public",
@@ -222,6 +231,9 @@ var crv = {
 		street: "Street",
 		streets: "Streets",
 		tags: "Tags",
+		text: "Text",
+		texts: "Texts",
+		timeframe: "Timeframe",
 		user: "User",
 		userPublic: "Public Profile and Path",
 		users: "Users",
@@ -2301,6 +2313,45 @@ var EditItemPanel = (function () {
 		return section;
 	}
 	
+	EditItemPanel.prototype.appendLinkSection = function(instanceProperty, sectionLabel, pickPanelType)
+	{
+		var instance = this.controller().newInstance();
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit unique', true)
+			.on('click', 
+				function(cell) {
+					if (prepareClick('click', 'pick organization'))
+					{
+						try
+						{
+							var panel = new pickPanelType(instance.parent(), instance);
+							panel.createRoot(instance, instanceProperty.call(instance))
+								.showLeft().then(unblockClick);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newLink)
+								{
+									instanceProperty.call(instance, newLink);
+									section.selectAll('li>div').text(newLink.description());
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+
+		section.append('label')
+			.text(sectionLabel);
+		var newLink = instanceProperty.call(instance);
+		var items = this.appendEnumerationEditor(section, 
+			newLink ? newLink.description() : crv.buttonTexts.nullString);
+		section.datum(newLink);
+		crf.appendRightChevrons(items);	
+		return section;
+	}
+	
 	EditItemPanel.prototype.appendEnumerationEditor = function(section, newValue)
 	{
 		var itemsDiv = crf.appendItemList(section);
@@ -2405,23 +2456,14 @@ var PickFromListPanel = (function () {
 
 	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
 	{
-		crv.SitePanel.prototype.createRoot.call(this, datum, headerText, "list", revealPanelLeft);
+		crv.SitePanel.prototype.createRoot.call(this, datum, headerText, 'list', revealPanelLeft);
 		var _this = this;
 		
-		var navContainer = this.appendNavContainer();
+		this.navContainer = this.appendNavContainer();
 
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'pick from list panel: Cancel'))
-				{
-					_this.hideRight(unblockClick);
-				}
-				d3.event.preventDefault();
-			});
-		backButton.append("span").text(crv.buttonTexts.cancel);
+		this.appendBackButton();
 	
-		navContainer.appendTitle(this.title);
+		this.navContainer.appendTitle(this.title);
 
 		var section = this.appendScrollArea().append("section")
 			.classed("cell multiple", true);

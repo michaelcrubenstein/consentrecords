@@ -1027,6 +1027,9 @@ cr.IInstance = (function() {
 							
 	IInstance.prototype.updateList = function(items, data, newIDs, addEventType)
 	{
+		console.assert(typeof(items) == "function");
+		console.assert(data instanceof Array);
+		
 		var _this = this;
 		items = items.call(this);
 		if (items)
@@ -1735,6 +1738,8 @@ cr.OrderedServiceLinkInstance = (function() {
 	
 	OrderedServiceLinkInstance.prototype.appendData = function(initialData)
 	{
+		console.assert(this.position() !== undefined);
+		
 		cr.ServiceLinkInstance.prototype.appendData.call(this, initialData);
 		
 		if (this.position() != null)
@@ -4243,7 +4248,14 @@ cr.ExperiencePrompt = (function() {
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
 		cr.OfferingLinkInstance.prototype.setData.call(this, d);
 		this._name = ('name' in d) ? d['name'] : "";
-		this._domainID = ('domain' in d) ? d['domain']['id'] : null;
+		if ('domain' in d)
+		{
+			var s = new cr.Service();
+			s.setData(d['domain']);
+			this._domainID = crp.pushInstance(s).id();
+		}
+		else
+			this._domainID = null;
 		this._stage = ('stage' in d) ? d['stage'] : "";
 		this._timeframe = ('timeframe' in d) ? d['timeframe'] : "";
 		this.setChildren(d, 'translations', cr.ExperiencePromptText, this.translations);
@@ -4409,7 +4421,7 @@ cr.ExperiencePrompt = (function() {
 		}
 		if ('services' in d)
 		{
-			if (this.updateList(this.services, d['services'], newIDs, 'serviceAdded.cr'))
+			if (this.updateList(this.experiencePromptServices, d['services'], newIDs, 'serviceAdded.cr'))
 				changed = true;
 		}
 		if ('disqualifyingTags' in d)

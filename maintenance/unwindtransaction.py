@@ -113,8 +113,8 @@ def printTransaction(t):
     printTable("\tservice",
                "Disqualifying Tags", "Disqualifying Tag",
                printInstance,
-               t.createdExperiencePromptServices, t.changedExperiencePromptServices, 
-               t.deletedExperiencePromptServices, t.experiencePromptServiceHistories)
+               t.createdDisqualifyingTags, t.changedDisqualifyingTags, 
+               t.deletedDisqualifyingTags, t.disqualifyingTagHistories)
 
     printTable("\torganization\tcustom organization\tsite\tcustom site\toffering\tcustom offering\tstart\tend\ttimeframe",
                "Experiences", "Experience",
@@ -133,6 +133,12 @@ def printTransaction(t):
                printInstance,
                t.createdExperienceServices, t.changedExperienceServices, 
                t.deletedExperienceServices, t.experienceServiceHistories)
+
+    printTable("\tname\torganization\tsite\toffering\tdomain\tstage\ttimeframe",
+               "Experience Prompts", "Experience Prompt",
+               printInstance,
+               t.createdExperiencePrompts, t.changedExperiencePrompts, 
+               t.deletedExperiencePrompts, t.experiencePromptHistories)
 
     printTable("\tposition\tservice",
                "Experience Prompt Services", "Experience Prompt Service",
