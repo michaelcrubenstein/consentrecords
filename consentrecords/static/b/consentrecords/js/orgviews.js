@@ -3270,6 +3270,8 @@ var ExperiencePromptPanel = (function () {
 	ExperiencePromptPanel.prototype = Object.create(EditItemPanel.prototype);
 	ExperiencePromptPanel.prototype.constructor = ExperiencePromptPanel;
 
+	ExperiencePromptPanel.prototype.title = crv.buttonTexts.experiencePrompt;
+	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	ExperiencePromptPanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
@@ -3450,7 +3452,7 @@ var ExperiencePromptsPanel = (function () {
 	ExperiencePromptsPanel.prototype = Object.create(RootItemsPanel.prototype);
 	ExperiencePromptsPanel.prototype.constructor = ExperiencePromptsPanel;
 
-	ExperiencePromptsPanel.prototype.panelTitle = "Experience Prompts";
+	ExperiencePromptsPanel.prototype.panelTitle = crv.buttonTexts.experiencePrompts;
 	ExperiencePromptsPanel.prototype.addPanelTitle = "Add Experience Prompt";
 	ExperiencePromptsPanel.prototype.searchViewType = ExperiencePromptSearchView;
 	

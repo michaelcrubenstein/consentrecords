@@ -173,6 +173,8 @@ var crv = {
 		enrollments: "Enrollments",
 		engagement: "Engagement",
 		engagements: "Engagements",
+		experiencePrompt: "Experience Prompt",
+		experiencePrompts: "Experience Prompts",
 		firstName: "First Name",
 		goalTimeframe: "My Goal",
 		group: "Group",
