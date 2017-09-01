@@ -37,47 +37,6 @@ var Settings = (function () {
 		this.createRoot("Settings", onShow, false);
 		this.panelDiv.classed("settings", true);
 
-		var getAccessDescription = function() 
-			{
-				if (user.publicAccess() == cr.privileges.read)
-					return _this.allVisibleLabel;
-				else if (path.publicAccess() == cr.privileges.read)
-				    return _this.pathVisibleLabel;
-				else if (user.publicAccess() == cr.privileges.find)
-					return _this.emailVisibleLabel;
-				else
-					return _this.profileHiddenLabel;
-			};
-		
-		var pathSpecialAccess = function(label)
-		{
-			if (label == _this.pathVisibleLabel)
-				return cr.specialAccesses.custom;
-			else
-				return "";
-		}
-			
-		var userPublicAccess = function(label)
-		{
-			if (label == _this.allVisibleLabel)
-				return cr.privileges.read;
-			else if (label == _this.pathVisibleLabel ||
-					 label == _this.emailVisibleLabel)
-				return cr.privileges.find;
-			else
-				return "";
-		}
-		
-		var pathPublicAccess = function(label)
-		{
-			if (label == _this.pathVisibleLabel)
-				return cr.privileges.read;
-			else
-				return "";
-		}
-		
-		
-		
 		var firstNameSection = this.appendTextSection(controller.newInstance(), 
 			controller.newInstance().firstName, crv.buttonTexts.firstName, 'text');
 				 
@@ -897,14 +856,15 @@ var NotificationsPanel = (function () {
 		var panel2Div = this.appendScrollArea();
 		
 		doneButton.on("click", function()
+			{
+				if (prepareClick('click', 'done editing'))
 				{
-					panel2Div.handleDoneEditingButton.call(this);
-				})
+					showClickFeedback(this);
+					_this.hide();
+				}
+			})
  			.append("span").text(crv.buttonTexts.done);
 
-		var cells = [user.notifications()];
-		
-		
 		var sections = this.mainDiv.append('section')
 		    .datum(user.notifications())
 			.classed("cell edit", true)

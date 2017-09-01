@@ -377,16 +377,6 @@ function showClickFeedback(obj, done)
 		   	});
 }
 
-function _isPickCell(cell)
-{
-	if (("objectAddRule" in cell.field) &&
-			 (cell.field["objectAddRule"] == cr.objectAddRules.pickOne ||
-			  cell.field["objectAddRule"] == cr.objectAddRules.pickOrCreateOne))
-		return true;
-	else
-		return false;
-}
-
 function _pushTextChanged(d) {
 	var f = function(eventObject) {
 		d3.select(eventObject.data).text(this.description());
@@ -1229,95 +1219,7 @@ crv.SitePanel = (function () {
 					.enter()
 					.append("section");
 		}
-		this.mainDiv.appendSection = function(datum)
-		{
-			return this.append("section").datum(datum);
-		}
-		
-		this.mainDiv.isEmptyItems = function(itemsDiv)
-		{
-			var isEmpty = true;
-			itemsDiv.selectAll("li")
-				.each(function(d) { if (isEmpty && !d.isEmpty()) isEmpty = false; });
-			return isEmpty;
-		}
-		
-		this.mainDiv.handleDoneEditingButton = function(done) {
-			if (prepareClick('click', 'done editing'))
-			{
-				showClickFeedback(this);
-		
-				try
-				{
-					var sections = _this.mainDiv.selectAll("section");
-					var initialData = [];
-					var sourceObjects = [];
-					sections.each(function(cell) {
-							/* cell may be null if this is a pseudo-section, such as for the Change Password
-								section in the Settings panel.
-							 */
-							if (cell)
-							{
-								if ("appendUpdateCommands" in cell)
-									cell.appendUpdateCommands(this, initialData, sourceObjects);
-							}
-						});
-						
-					var allDone = function() {
-						if (done)
-							done();
-						_this.hide();
-					}
-					if (initialData.length > 0) {
-						/* Test case: Change the text of an existing string or translation field and click Done */
-						cr.updateValues(initialData, sourceObjects)
-							.then(allDone, cr.syncFail);
-					}
-					else
-					{
-						allDone();
-					}
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-			d3.event.preventDefault();
-		}
-		
 		return this.mainDiv;
-	}
-	
-	/**
-	 *	Adds UI elements to display the contents of the specified cells.
-	 */
-	/**
-	 *	Adds UI elements to edit the specified cells.
-	 *	labelTest is an optional function that takes a cell and determines
-	 *	if the cell should be labeled. If not specified, then cells that are
-	 *	not unique or are not descriptorTypes.byText are labeled.
-	 */
-	SitePanel.prototype.showEditCells = function(cells, labelTest)
-	{
-		labelTest = labelTest !== undefined ? labelTest :
-			function(cell) 
-			    { 
-			    	return !cell.isUnique() ||
-							cell.field.descriptorType != cr.descriptorTypes.byText; 
-				};
-						
-		var _this = this;
-		return this.mainDiv.appendSections(cells)
-			.classed("cell edit", true)
-			.classed("unique", function(cell) { return cell.isUnique(); })
-			.classed("multiple", function(cell) { return !cell.isUnique(); })
-			.each(function(cell) {
-					if (labelTest(cell))
-						cell.appendLabel(this);
-						
-					cell.showEdit(this, _this.headerText);
-				});
 	}
 	
 	SitePanel.prototype.appendActionButton = function(text, onClick)
@@ -2323,7 +2225,7 @@ var EditItemPanel = (function () {
 			.datum(instance)
 			.classed('cell edit unique', true)
 			.on('click', 
-				function(cell) {
+				function() {
 					if (prepareClick('click', 'pick organization'))
 					{
 						try
