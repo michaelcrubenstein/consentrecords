@@ -3689,11 +3689,12 @@ class Comment(ChildInstance, dbmodels.Model):
         self.question = h.question 
         self.asker = h.asker 
     
+    @property
     def dataString(self):
         return "%s\t%s\n\t%s\n\t%s" % \
             (self.id, 
              self.text or '-',
-             str(self.asker) if i.asker else '-',
+             str(self.asker) if self.asker else '-',
              self.question or '-',
              )
            
@@ -3726,12 +3727,13 @@ class CommentHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedCommentHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
-
+    
+    @property
     def dataString(self):
         return "%s\t%s\n\t%s\n\t%s" % \
             (self.id, 
              self.text or '-',
-             str(self.asker) if i.asker else '-',
+             str(self.asker) if self.asker else '-',
              self.question or '-',
              )
            
@@ -3841,7 +3843,7 @@ class CommentPromptTextHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-    @property    
+    @property
     def dataString(self):
         return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
            
@@ -3885,7 +3887,7 @@ class DisqualifyingTagHistory(dbmodels.Model):
 
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTagHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
-    @property    
+    @property
     def dataString(self):
         return "%s\t%s" % (self.id, self.service or '-')
            
@@ -3987,7 +3989,8 @@ class Engagement(ChildInstance, dbmodels.Model):
         self.user = h.user 
         self.start = h.start 
         self.end = h.end 
-           
+    
+    @property
     def dataString(self):
         return "%s\t%s\n\t%s\n\t%s" % \
             (self.id, 
@@ -4342,7 +4345,24 @@ class Experience(ChildInstance, dbmodels.Model):
         self.start = h.start 
         self.end = h.end 
         self.timeframe = h.timeframe 
-           
+    
+    @property
+    def dataString(self):
+        s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
+            (self.id, str(self.organization) if self.organization else nullString, 
+             self.customOrganization or nullString,
+             str(self.site) if self.site else nullString,
+             self.customSite or nullString,
+             str(self.offering) if self.offering else nullString,
+             self.customOffering or nullString,
+             self.start or nullString,
+             self.end or nullString,
+             self.timeframe or nullString,
+             )
+        for j in self.experienceImplications.all():
+            s += "\tImplied Service: %s" % str(j.service)
+        return s
+    
     def update(self, changes, context, newIDs={}):
         history = None
 
@@ -4432,6 +4452,23 @@ class ExperienceHistory(dbmodels.Model):
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
+    @property
+    def dataString(self):
+        s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
+            (self.id, str(self.organization) if self.organization else nullString, 
+             self.customOrganization or nullString,
+             str(self.site) if self.site else nullString,
+             self.customSite or nullString,
+             str(self.offering) if self.offering else nullString,
+             self.customOffering or nullString,
+             self.start or nullString,
+             self.end or nullString,
+             self.timeframe or nullString,
+             )
+        for j in self.experienceImplications.all():
+            s += "\tImplied Service: %s" % str(j.service)
+        return s
+    
 class ExperienceImplication(dbmodels.Model):
     id = idField()
     experience = dbmodels.ForeignKey('consentrecords.Experience', related_name='experienceImplications', db_index=True, null=False, on_delete=dbmodels.CASCADE)
@@ -4442,6 +4479,14 @@ class ExperienceImplication(dbmodels.Model):
     elementMap = {'experience': ('experience__', 'Experience', 'experienceImplications'),
                   'service': ('service__', 'Service', 'experienceImplications'),
                  }
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s" % \
+            (self.id, 
+             str(self.experience) if self.experience else '-',
+             str(self.service) if self.service else '-',
+             )
     
 class ExperienceCustomService(ChildInstance, dbmodels.Model):
     id = idField()
@@ -4515,7 +4560,7 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         self.position = h.position 
         self.name = h.name 
 
-    @property    
+    @property
     def dataString(self):
         return "%s\t%s\t%s" % (self.id, (self.position if (self.position != None) else '-'), self.name or '-')
            
@@ -4541,7 +4586,7 @@ class ExperienceCustomServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
-    @property    
+    @property
     def dataString(self):
         return "%s\t%s\t%s" % (self.id, (self.position if (self.position != None) else '-'), self.name or '-')
            
@@ -4627,7 +4672,7 @@ class ExperienceServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
-    @property    
+    @property
     def dataString(self):
         return "%s\t%s\t%s" % (self.id, self.position, self.service or '-')
            
@@ -5380,6 +5425,19 @@ class Notification(ChildInstance, dbmodels.Model):
     def revert(self, h):
         self.name = h.name 
         self.isFresh = h.isFresh 
+    
+    @property
+    def dataString(self):
+        s = "%s\t%s\t%s\t%s" % \
+        (self.id, 
+         str(self.parent),
+         self.name or '-',
+         self.isFresh or '-',
+         )
+        for na in self.notificationArguments.filter(deleteTransaction__isnull=True).order_by('position'):
+            s+= "\n\t%s\t%s\t%s" % \
+                  (na.id, na.position, na.argument)
+        return s
 
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
@@ -5403,6 +5461,16 @@ class NotificationHistory(dbmodels.Model):
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     isFresh = dbmodels.CharField(max_length=10, null=True, editable=False)
     
+    @property
+    def dataString(self):
+        s = "%s\t%s\t%s\t%s" % \
+        (self.id, 
+         str(self.parent),
+         self.name or '-',
+         self.isFresh or '-',
+         )
+        return s
+
 class NotificationArgument(ChildInstance, dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('createdNotificationArguments')

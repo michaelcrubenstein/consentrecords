@@ -19,40 +19,7 @@ def printComment(i):
          str(i.asker) if i.asker else nullString,
          i.question or nullString,
          ))
-         
-def printExperience(i):
-    print("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
-        (i.id, str(i.organization) if i.organization else nullString, 
-         i.customOrganization or nullString,
-         str(i.site) if i.site else nullString,
-         i.customSite or nullString,
-         str(i.offering) if i.offering else nullString,
-         i.customOffering or nullString,
-         i.start or nullString,
-         i.end or nullString,
-         i.timeframe or nullString,
-         ))
-    for j in i.experienceImplications.all():
-        print("\tImplied Service: %s" % str(j.service))
-
-def printExperienceImplication(i):
-    print("%s\t%s\t%s" % \
-        (i.id, 
-         str(i.experience) if i.experience else nullString,
-         str(i.service) if i.service else nullString,
-         ))
-         
-def printNotification(i):
-    print("%s\t%s\t%s\t%s" % \
-        (i.id, 
-         str(i.parent),
-         i.name or nullString,
-         i.isFresh or nullString,
-         ))
-    for na in i.notificationArguments.filter(deleteTransaction__isnull=True).order_by('position'):
-        print("\t%s\t%s\t%s" % \
-              (na.id, na.position, na.argument))
-         
+                  
 def printInstance(i):
 	print(i.dataString)
          
@@ -122,7 +89,7 @@ def printTransaction(t):
 
     printTable("\torganization\tcustom organization\tsite\tcustom site\toffering\tcustom offering\tstart\tend\ttimeframe",
                "Experiences", "Experience",
-               printExperience,
+               printInstance,
                t.createdExperiences, t.changedExperiences, 
                t.deletedExperiences, t.experienceHistories)
 
@@ -182,7 +149,7 @@ def printTransaction(t):
 
     printTable("\tuser\tname\tis fresh",
                "Notifications", "Notification",
-               printNotification,
+               printInstance,
                t.createdNotifications, t.changedNotifications, 
                t.deletedNotifications, t.notificationHistories)
 
