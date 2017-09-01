@@ -5209,6 +5209,8 @@ class Inquiry(ChildInstance, dbmodels.Model):
         user = _orNoneForeignKey(data, 'user', context, User)
         if not user:
             raise ValueError('no user was specified for a new inquiry')
+        elif type(user) != User:
+            raise ValueError('the specified user was not a user: %s' % user)
         
         newItem = Inquiry.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
