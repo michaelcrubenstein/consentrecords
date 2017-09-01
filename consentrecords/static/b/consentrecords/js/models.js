@@ -7882,7 +7882,7 @@ cr.User = (function() {
     User.prototype.clearGroupGrants = function()
     {
     	this._groupGrants = null;
-    	cr.removeElement(this._fieldsLoaded, 'group grants')
+    	cr.removeElement(this._fieldsLoaded, 'group grants');
     }
     
 	function User() {
