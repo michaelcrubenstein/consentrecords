@@ -266,6 +266,11 @@
 			{% else %}var offeringName = null;
 			{% endif %}
 			{% if service %}var serviceName = decodeEntities("{{service}}");
+			var service;
+			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+				service = crp.getInstance(serviceName);
+			else
+				service = null;
 			{% else %}var serviceName = null;
 			{% endif %}
 	
@@ -284,7 +289,7 @@
 								{
 									if (offerings[0] instanceof cr.Offering)
 									{
-										controller.createFromOffering(offerings[0], service);
+										controller.createFromOffering(offerings[0], [service]);
 										var panel = new NewExperiencePanel(controller);
 										panel.showUp();
 									}
@@ -307,7 +312,7 @@
 								{
 									if (sites[0] instanceof cr.Site)
 									{
-										controller.createFromSite(sites[0], service);
+										controller.createFromSite(sites[0], [service]);
 										var panel = new NewExperiencePanel(controller);
 										panel.showUp();
 									}
@@ -330,19 +335,16 @@
 							{
 								if (organizations.length > 0)
 								{
-									if (organizations[0] instanceof cr.Organization)
-									{
-										controller.newInstance()
-											.organization(organizations[0])
-											.customSite(siteName)
-											.customOffering(offeringName);
-										controller.service(service)
-												  .initPreviousDateRange();
-										var panel = new NewExperiencePanel(controller);
-										panel.showUp();
-									}
-									else
-										cr.asyncFail("The specified organization does not appear to be an organization.");
+									console.assert(organizations[0] instanceof cr.Organization);
+									controller.newInstance()
+										.organization(organizations[0])
+										.customSite(siteName)
+										.customOffering(offeringName);
+									controller.initPreviousDateRange()
+									if (serviceName)
+										controller.addService(service || serviceName);
+									var panel = new NewExperiencePanel(controller);
+									panel.showUp();
 								}
 								else
 									cr.asyncFail("The specified organization does not exist or you do not have permission to view it.");
@@ -355,8 +357,9 @@
 						.customOrganization(organizationName)
 						.customSite(siteName)
 						.customOffering(offeringName)
-						.service(service)
 						.initPreviousDateRange();
+					if (serviceName)
+					    controller.addService(service || serviceName);
 					var panel = new NewExperiencePanel(controller);
 					panel.showUp();
 				}
@@ -370,13 +373,13 @@
 					controller.addService(serviceName);
 					controller.initPreviousDateRange();
 
-					new NewExperiencePanel(controller, controller.getPhase())
+					new NewExperiencePanel(controller, revealPanelUp)
 						.showUp();
 				}
 				else
 				{
 					controller.initPreviousDateRange();
-					new NewExperiencePanel(controller, controller.getPhase())
+					new NewExperiencePanel(controller, revealPanelUp)
 						.showUp();
 				}
 			}
@@ -388,10 +391,11 @@
 						{
 							if (services.length == 0)
 								cr.asyncFail(new Error("The specified tag does not exist or you do not have permission to view it."));
-							else if (services[0].getTypeName() != "Service")
-								cr.asyncFail(new Error("The specified tag does not appear to be a tag."));
 							else
+							{
+								console.assert(services[0] instanceof cr.Service);
 								done(services[0]);
+							}
 						})
 					.fail(cr.asyncFail);
 			}
@@ -515,13 +519,9 @@
 				else if (stateString.startsWith("addToPathway"))
 				{
 					/* Add an experience specified in the URL to this pathway. */
-					var handleState = function(pathwayPanel)
+					handleState = function(pathwayPanel)
 					{
-						cr.signedinUser.promiseCellsFromCache()
-							.then(function() {
-								addToPathway(pathwayPanel);
-							},
-							cr.asyncFail);
+						addToPathway(pathwayPanel);
 					}
 					needsSignin = true;
 				}
