@@ -163,6 +163,7 @@
 	<script src="{% static "consentrecords/js/findExperience.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/pathtreePanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/searchPaths.js" %}?v={{jsversion}}"></script>
@@ -594,7 +595,9 @@
 					{
 						try
 						{
-							new Settings(cr.signedinUser, pathwayPanel.node())
+							var controller = new UserController(cr.signedinUser, true);
+							controller.oldInstance(cr.signedinUser);
+							new Settings(controller, revealPanelUp)
 								.showUp();
 						}
 						catch(err)

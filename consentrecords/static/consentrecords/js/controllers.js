@@ -12,6 +12,8 @@ var Controller = (function() {
 		    if (newValue != this._oldInstance)
 		    {
 				this._oldInstance = newValue;
+				if (this._newInstance)
+					this._newInstance.privilege(this._oldInstance.privilege());
 			}
 			return this;
 		}
@@ -239,6 +241,58 @@ var ChildController = (function() {
 	return ChildController;
 })();
 
+var ServiceLinkController = (function() {
+	/* Args can either be a cr.Service or a string. */
+	ServiceLinkController.prototype.addService = function(args)
+	{
+		if (args instanceof cr.Service)
+		{
+			var i = new (this.serviceLinkType())();
+			i.description(args.description())
+			 .parent(this.newInstance())
+			 .service(args);
+			if ('position' in i)
+				i.position(this.serviceLinks().length
+			           ? this.serviceLinks()[this.serviceLinks().length - 1].position() + 1
+			           : 0);
+			this.serviceLinks().push(i);
+			return i;
+		}
+		else
+			throw new Error("Invalid arguments to addService");
+	}
+	
+	ServiceLinkController.prototype.removeService = function(service)
+	{
+		cr.removeElement(this.serviceLinks(), service);
+	}
+	
+	/** Returns True if this controller has a service that overrides the importance of
+		the first service directly associated with this controller's new instance.
+	 */
+	ServiceLinkController.prototype.hasPrimaryService = function()
+	{
+		return false;
+	}
+	
+	ServiceLinkController.prototype.primaryServices = function()
+	{
+		return [];
+	}
+	
+	ServiceLinkController.prototype.customServiceType = function()
+	{
+		return null;
+	}
+	
+	function ServiceLinkController()
+	{
+	}
+	
+	return ServiceLinkController;
+	
+})();
+
 var AddressController = (function() {
 	AddressController.prototype = Object.create(ChildController.prototype);
 	AddressController.prototype.constructor = AddressController;
@@ -256,6 +310,22 @@ var AddressController = (function() {
 	return AddressController;
 })();
 
+var CommentPromptController = (function() {
+	CommentPromptController.prototype = Object.create(RootController.prototype);
+	CommentPromptController.prototype.constructor = CommentPromptController;
+	
+	CommentPromptController.prototype.addingMessage = "Adding Comment Prompt...";
+	CommentPromptController.prototype.savingMessage = "Saving Comment Prompt...";
+	CommentPromptController.prototype.groupKey = 'comment prompts';
+	
+	function CommentPromptController(source, duplicateForEdit)
+	{
+		RootController.call(this, source || cr.CommentPrompt, duplicateForEdit);
+	}
+	
+	return CommentPromptController;
+})();
+
 var EngagementController = (function() {
 	EngagementController.prototype = Object.create(ChildController.prototype);
 	EngagementController.prototype.constructor = EngagementController;
@@ -267,7 +337,7 @@ var EngagementController = (function() {
 
 	EngagementController.prototype.postAddDone = function(changes, newIDs)
 	{
-		if (this.parent().enagements())
+		if (this.parent().engagements())
 			this.parent().engagements().push(this.newInstance());
 		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
 	}
@@ -764,8 +834,103 @@ var ExperienceController = (function() {
 	return ExperienceController;
 })();
 
+var ExperiencePromptServicesController = (function() {
+	ExperiencePromptServicesController.prototype = Object.create(ServiceLinkController.prototype);
+	ExperiencePromptServicesController.prototype.constructor = ExperiencePromptServicesController;
+	
+	ExperiencePromptServicesController.prototype.newInstance = function()
+	{
+		return this.parent;
+	}
+	
+	ExperiencePromptServicesController.prototype.serviceLinks = function()
+	{
+		return this.parent.experiencePromptServices();
+	}
+	
+	ExperiencePromptServicesController.prototype.serviceLinkType = function()
+	{
+		return cr.ExperiencePromptService;
+	}
+	
+	function ExperiencePromptServicesController(parent)
+	{
+		this.parent = parent;
+	}
+	
+	return ExperiencePromptServicesController;
+})();
+
+var DisqualifyingTagsController = (function() {
+	DisqualifyingTagsController.prototype = Object.create(ServiceLinkController.prototype);
+	DisqualifyingTagsController.prototype.constructor = DisqualifyingTagsController;
+	
+	DisqualifyingTagsController.prototype.newInstance = function()
+	{
+		return this.parent;
+	}
+	
+	DisqualifyingTagsController.prototype.serviceLinks = function()
+	{
+		return this.parent.disqualifyingTags();
+	}
+	
+	DisqualifyingTagsController.prototype.serviceLinkType = function()
+	{
+		return cr.DisqualifyingTag;
+	}
+	
+	function DisqualifyingTagsController(parent)
+	{
+		this.parent = parent;
+	}
+	
+	return DisqualifyingTagsController;
+})();
+
+var ExperiencePromptController = (function() {
+	ExperiencePromptController.prototype = Object.create(RootController.prototype);
+	ExperiencePromptController.prototype.constructor = ExperiencePromptController;
+	
+	ExperiencePromptController.prototype.addingMessage = "Adding Experience Prompt...";
+	ExperiencePromptController.prototype.savingMessage = "Saving Experience Prompt...";
+	ExperiencePromptController.prototype.groupKey = 'experience prompts';
+	
+	function ExperiencePromptController(source, duplicateForEdit)
+	{
+		RootController.call(this, source || cr.ExperiencePrompt, duplicateForEdit);
+	}
+	
+	return ExperiencePromptController;
+})();
+
+var GroupController = (function() {
+	GroupController.prototype = Object.create(ChildController.prototype);
+	GroupController.prototype.constructor = GroupController;
+	
+	GroupController.prototype.addingMessage = "Adding Group...";
+	GroupController.prototype.savingMessage = "Saving Group...";
+	GroupController.prototype.groupKey = 'groups';
+	GroupController.prototype.addEventType = 'groupAdded.cr';
+
+	GroupController.prototype.postAddDone = function(changes, newIDs)
+	{
+		if (this.parent().groups())
+			this.parent().groups().push(this.newInstance());
+		return ChildController.prototype.postAddDone.call(this, changes, newIDs);
+	}
+
+	function GroupController(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source || cr.Group, duplicateForEdit);
+	}
+	
+	return GroupController;
+})();
+
 var OfferingController = (function() {
 	OfferingController.prototype = Object.create(ChildController.prototype);
+	Object.assign(OfferingController.prototype, ServiceLinkController.prototype);
 	OfferingController.prototype.constructor = OfferingController;
 	
 	OfferingController.prototype.addingMessage = "Adding Offering...";
@@ -773,43 +938,6 @@ var OfferingController = (function() {
 	OfferingController.prototype.groupKey = 'offerings';
 	OfferingController.prototype.addEventType = 'offeringAdded.cr';
 
-	/* Args can either be a cr.Service or a string. */
-	OfferingController.prototype.addService = function(args)
-	{
-		if (args instanceof cr.Service)
-		{
-			var i = new (this.serviceLinkType())();
-			i.description(args.description())
-			 .parent(this.newInstance())
-			 .service(args)
-			 .position(this.serviceLinks().length
-			           ? this.serviceLinks()[this.serviceLinks().length - 1].position() + 1
-			           : 0);
-			this.serviceLinks().push(i);
-			return i;
-		}
-		else
-			throw new Error("Invalid arguments to addService");
-	}
-	
-	OfferingController.prototype.removeService = function(service)
-	{
-		cr.removeElement(this.newInstance().offeringServices(), service);
-	}
-	
-	/** Returns True if this controller has a service that overrides the importance of
-		the first service directly associated with this controller's new instance.
-	 */
-	OfferingController.prototype.hasPrimaryService = function()
-	{
-		return false;
-	}
-	
-	OfferingController.prototype.primaryServices = function()
-	{
-		return [];
-	}
-	
 	OfferingController.prototype.serviceLinks = function()
 	{
 		return this.newInstance().offeringServices();
@@ -818,11 +946,6 @@ var OfferingController = (function() {
 	OfferingController.prototype.serviceLinkType = function()
 	{
 		return cr.OfferingService;
-	}
-	
-	OfferingController.prototype.customServiceType = function()
-	{
-		return null;
 	}
 	
 	OfferingController.prototype.postAddDone = function(changes, newIDs)
@@ -908,6 +1031,33 @@ var PeriodController = (function() {
 	}
 	
 	return PeriodController;
+})();
+
+var ServiceController = (function() {
+	ServiceController.prototype = Object.create(RootController.prototype);
+	Object.assign(ServiceController.prototype, ServiceLinkController.prototype);
+	ServiceController.prototype.constructor = ServiceController;
+	
+	ServiceController.prototype.addingMessage = "Adding Service...";
+	ServiceController.prototype.savingMessage = "Saving Savice...";
+	ServiceController.prototype.groupKey = 'services';
+	
+	ServiceController.prototype.serviceLinks = function()
+	{
+		return this.newInstance().serviceImplications();
+	}
+	
+	ServiceController.prototype.serviceLinkType = function()
+	{
+		return cr.ServiceImplication;
+	}
+	
+	function ServiceController(source, duplicateForEdit)
+	{
+		RootController.call(this, source || cr.Service, duplicateForEdit);
+	}
+	
+	return ServiceController;
 })();
 
 var SessionController = (function() {

@@ -679,16 +679,16 @@ var ExperienceCommentsPanel = (function() {
 		
 		if (fd.experience.id())
 		{
-			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
-				comments are loaded. The panel's css won't be set up if the comments are 
-				already loaded.
-			 */
 			this.promise = fd.experience.promiseData(['comments'])
 				.then(function(comments)
 					{
 						var r = $.Deferred();
 						setTimeout(function()
 							{
+			/* Put the call to loadComments in a setTimeout to ensure that the panel's css 
+				is set up before the comments are loaded. The panel's css won't be set up 
+				if the comments are already loaded.
+			 */
 								_this.loadComments(fd.experience.comments());
 								r.resolve();
 							});

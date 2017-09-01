@@ -155,25 +155,38 @@ var crv = {
 	buttonTexts: {
 		add: "Add",
 		address: "Address",
+		birthday: "Birthday",
 		cancel: "Cancel",
 		canRegister: "Can Register",
 		city: "City",
+		currentTimeframe: "Something I'm Doing Now",
+		disqualifyingTags: "Disqualifying Tags",
+		domain: "Domain",
 		done: "Done",
 		edit: "Edit",
-		emails: "Emails",
 		email: "Email",
+		emailPublic: "By Request",
+		emails: "Emails",
 		end: "End",
 		endTime: "End Time",
 		enrollment: "Enrollment",
 		enrollments: "Enrollments",
 		engagement: "Engagement",
 		engagements: "Engagements",
+		experiencePrompt: "Experience Prompt",
+		experiencePrompts: "Experience Prompts",
+		firstName: "First Name",
+		goalTimeframe: "My Goal",
 		group: "Group",
 		groups: "Groups",
+		hidden: "Hidden",
+		implications: "Implications",
 		inquiry: "Inquiry",
 		inquiries: "Inquiries",
+		lastName: "Last Name",
 		maximumAge: "Maximum Age",
 		maximumGrade: "Maximum Grade",
+		members: "Members",
 		minimumAge: "Minimum Age",
 		minimumGrade: "Minimum Grade",
 		names: "Names",
@@ -183,15 +196,27 @@ var crv = {
 		noPublicAccess: "Hidden",
 		nullString: "(None)",
 		offering: "Offering", 
+		offeringLabel: "Offering Label",
+		offeringLabels: "Offering Labels",
 		offerings: "Offerings", 
 		organization: "Organization",
+		organizationLabel: "Organization Label",
+		organizationLabels: "Organization Labels",
 		organizations: "Organizations",
+		pathPublic: "Public Path Only",
 		period: "Period",
 		periods: "Periods",
+		pickOffering: "Pick Offering",
+		pickOrganization: "Pick Organization",
+		pickService: "Pick Tag",
+		pickSite: "Pick Site",
+		previousTimeframe: "Done",
 		primaryAdministrator: "Primary Administrator",
 		publicAccess: "Public Access",
 		readPublicAccess: "Public",
+		registerByDate: "register by {0}",
 		registrationDeadline: "Registration Deadline",
+		screenName: "Screen Name",
 		search: "Search",
 		service: "Service",
 		services: "Services",
@@ -199,13 +224,21 @@ var crv = {
 		sessions: "Sessions",
 		settings: "Settings",
 		site: "Site",
+		siteLabel: "Site Label",
+		siteLabels: "Site Labels",
 		sites: "Sites",
+		stage: "Stage",
 		start: "Start",
 		startTime: "Start Time",
 		state: "State",
 		street: "Street",
 		streets: "Streets",
+		tags: "Tags",
+		text: "Text",
+		texts: "Texts",
+		timeframe: "Timeframe",
 		user: "User",
+		userPublic: "Public Profile and Path",
 		users: "Users",
 		webSite: "Web Site",
 		weekday: "Weekday",
@@ -342,16 +375,6 @@ function showClickFeedback(obj, done)
 		   	function() {
 		   		$(obj).css("opacity", "");
 		   	});
-}
-
-function _isPickCell(cell)
-{
-	if (("objectAddRule" in cell.field) &&
-			 (cell.field["objectAddRule"] == cr.objectAddRules.pickOne ||
-			  cell.field["objectAddRule"] == cr.objectAddRules.pickOrCreateOne))
-		return true;
-	else
-		return false;
 }
 
 function _pushTextChanged(d) {
@@ -1196,132 +1219,7 @@ crv.SitePanel = (function () {
 					.enter()
 					.append("section");
 		}
-		this.mainDiv.appendSection = function(datum)
-		{
-			return this.append("section").datum(datum);
-		}
-		
-		this.mainDiv.isEmptyItems = function(itemsDiv)
-		{
-			var isEmpty = true;
-			itemsDiv.selectAll("li")
-				.each(function(d) { if (isEmpty && !d.isEmpty()) isEmpty = false; });
-			return isEmpty;
-		}
-		
-		this.mainDiv.appendCellData = function(sectionNode, cell)
-		{
-			var _thisPanel2Div = this;
-			var section = d3.select(sectionNode);
-			var itemsDiv = section.select("ol");
-			cell.show(sectionNode, _this.headerText);
-			$(sectionNode).css('display', _thisPanel2Div.isEmptyItems(itemsDiv) ? 'none' : "");
-			
-			/* Make sure the section gets shown if a value is added to it. */
-			var checkDisplay = function(eventObject, newValue)
-			{
-				$(eventObject.data).css('display', _thisPanel2Div.isEmptyItems(itemsDiv) ? 'none' : "");
-			}
-			setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr changed.cr", sectionNode, checkDisplay);
-			sitePanel.setupItemsDivHandlers(itemsDiv, cell);
-		}
-		
-		this.mainDiv.handleDoneEditingButton = function(done) {
-			if (prepareClick('click', 'done editing'))
-			{
-				showClickFeedback(this);
-		
-				try
-				{
-					var sections = _this.mainDiv.selectAll("section");
-					var initialData = [];
-					var sourceObjects = [];
-					sections.each(function(cell) {
-							/* cell may be null if this is a pseudo-section, such as for the Change Password
-								section in the Settings panel.
-							 */
-							if (cell)
-							{
-								if ("appendUpdateCommands" in cell)
-									cell.appendUpdateCommands(this, initialData, sourceObjects);
-							}
-						});
-						
-					var allDone = function() {
-						if (done)
-							done();
-						_this.hide();
-					}
-					if (initialData.length > 0) {
-						/* Test case: Change the text of an existing string or translation field and click Done */
-						cr.updateValues(initialData, sourceObjects)
-							.then(allDone, cr.syncFail);
-					}
-					else
-					{
-						allDone();
-					}
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-			d3.event.preventDefault();
-		}
-		
 		return this.mainDiv;
-	}
-	
-	/**
-	 *	Adds UI elements to display the contents of the specified cells.
-	 */
-	SitePanel.prototype.showViewCells = function(cells)
-	{
-		var _this = this;
-		var sections = this.mainDiv.appendSections(cells.filter(function(cell) 
-				{ 
-					return cell.field.descriptorType != cr.descriptorTypes.byText 
-				}))
-			.classed("cell view", true)
-			.classed("unique", function(cell) { return cell.isUnique(); })
-			.classed("multiple", function(cell) { return !cell.isUnique(); })
-			.each(function(cell) {
-					var section = d3.select(this);
-					cell.appendLabel(this);
-					var itemsDiv = crf.appendItemList(section);
-					_this.mainDiv.appendCellData(this, cell);
-				});
-		
-		return sections;
-	}
-	
-	/**
-	 *	Adds UI elements to edit the specified cells.
-	 *	labelTest is an optional function that takes a cell and determines
-	 *	if the cell should be labeled. If not specified, then cells that are
-	 *	not unique or are not descriptorTypes.byText are labeled.
-	 */
-	SitePanel.prototype.showEditCells = function(cells, labelTest)
-	{
-		labelTest = labelTest !== undefined ? labelTest :
-			function(cell) 
-			    { 
-			    	return !cell.isUnique() ||
-							cell.field.descriptorType != cr.descriptorTypes.byText; 
-				};
-						
-		var _this = this;
-		return this.mainDiv.appendSections(cells)
-			.classed("cell edit", true)
-			.classed("unique", function(cell) { return cell.isUnique(); })
-			.classed("multiple", function(cell) { return !cell.isUnique(); })
-			.each(function(cell) {
-					if (labelTest(cell))
-						cell.appendLabel(this);
-						
-					cell.showEdit(this, _this.headerText);
-				});
 	}
 	
 	SitePanel.prototype.appendActionButton = function(text, onClick)
@@ -1875,69 +1773,124 @@ var EditPanel = (function() {
 	EditPanel.prototype.constructor = EditPanel;
 
 	EditPanel.prototype.navContainer = null;
-	EditPanel.prototype.lastNewIDKey = 1;
 	
-	/** Sets up event handles that ensure that the specified itemsDiv is properly hidden
-		or shown depending on the specified changes.
-	 */
-	EditPanel.prototype.setupItemsDivHandlers = function(itemsDiv, container, eventType)
+	EditPanel.prototype.createRoot = function(objectData, header, onShow)
 	{
-		node = itemsDiv.node();
-		function checkVisible(eventObject)
-		{
-			checkItemsDisplay(eventObject.data);
-		}
-		setupOnViewEventHandler(container, eventType, node, checkVisible);
-		checkItemsDisplay(node);
+		crv.SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
+		this.navContainer = this.appendNavContainer();
+		this.appendScrollArea();
 	}
 
-	EditPanel.prototype.appendTextChanges = function(section, oldValue, changes, key)
+	function EditPanel()
 	{
-		var newValue = section.selectAll('input').node().value;
-		if (newValue != oldValue)
-			changes[key] = newValue;
-		return this;
 	}
 	
-	EditPanel.prototype.appendTimeChanges = function(section, oldValue, changes, key)
+	return EditPanel;
+})();
+
+var EditItemPanel = (function () {
+	EditItemPanel.prototype = Object.create(EditPanel.prototype);
+	EditItemPanel.prototype.constructor = EditItemPanel;
+
+	EditItemPanel.prototype._controller = null;
+	
+	EditItemPanel.prototype.newInstance = function()
 	{
-		var newValue = section.selectAll('input').node().value;
-		try
+		return this._controller.newInstance();
+	}
+
+	EditItemPanel.prototype.controller = function()
+	{
+		return this._controller;
+	}
+	
+	EditItemPanel.prototype.promiseUpdateChanges = function()
+	{
+		return this.controller().save();
+	}
+	
+	EditItemPanel.prototype.onConfirmDelete = function(data, d, deleteControl)
+	{
+		/* Test case: Delete an existing value in a cell that has multiple values. */
+		if (prepareClick('click', 'confirm delete: ' + d.description()))
 		{
-			if (!newValue)
-				newValue = null;
-			else
-				newValue = Date.parse(newValue).toString("HH:mm");
+			try {
+				cr.removeElement(data, d);
+				removeItem($(deleteControl).parents('li')[0], unblockClick);
+			} catch(err) { cr.syncFail(err); }
 		}
-		catch(err)
-		{
-			newValue = null;
-		}
-		if (newValue != oldValue)
-			changes[key] = newValue;
-		return this;
 	}
 	
-	EditPanel.prototype.appendEnumerationChanges = function(section, getValue, oldValue, changes, key)
+	EditItemPanel.prototype.appendItemControls = function(itemsDiv, items, data, appendInputControls)
 	{
-		var newValue = getValue(section.selectAll('.description-text').text());
-		if (newValue != oldValue)
-			changes[key] = newValue;
-		return this;
+		var _this = this;
+		
+		crf.appendDeleteControls(items);
+		appendInputControls(items);
+		crf.appendConfirmDeleteControls(items, function(d)
+			{
+				_this.onConfirmDelete(data, d, this);
+			});
+		var dials = $(itemsDiv.node()).find('li>button:first-of-type');
+		crf.showDeleteControls(dials, 0);
+		items.each(function(d)
+			{
+				setupOneViewEventHandler(d, 'deleted.cr', this, function(eventObject)
+					{
+						var item = d3.select(eventObject.data);
+						item.remove();
+					});
+			});
 	}
+
 	
-	EditPanel.prototype.appendDateChanges = function(dateEditor, oldValue, changes, key)
+	/** Adds a row to a multiple item within a panel to add another item of that type. */
+	EditItemPanel.prototype.appendAddButton = function(sectionObj, container, data, dataType, name, appendInputControls)
 	{
-		var newValue = dateEditor.dateWheel.value();
-		if (newValue != oldValue)
-			changes[key] = newValue;
-		return this;
+		var _this = this;
+		/* Add one more button for the add Button item. */
+		var buttonDiv = sectionObj.append("div")
+			.classed('add-value site-active-text', true)
+			.on("click", function(cell) {
+				if (prepareClick('click', "add {0}".format(name)))
+				{
+					try
+					{
+						var newValue = new dataType();
+						newValue.setDefaultValues();
+						if ('position' in newValue)
+							newValue.position(data.length ? data[data.length - 1].position() + 1 : 0);
+							
+						data.push(newValue);
+						newValue.parent(container);
+					
+						var itemsDiv = sectionObj.selectAll('ol');
+						var item = itemsDiv.append('li')
+							.datum(newValue);
+						_this.appendItemControls(itemsDiv, item, data, appendInputControls);
+						itemsDiv.style('display', null);
+						var input = item.selectAll('input');
+						if (input.node())
+							input.node().focus();
+							
+						unblockClick();
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
+				}
+				d3.event.preventDefault();
+			});
+		buttonDiv.append('div')
+			.classed('overlined', !sectionObj.classed('first'))
+			.text("Add {0}".format(name));
 	}
-	
+
 	/** Adds a section that contains a unique text block. 
 		instanceProperty is a function that can get or set its value.
 	 */
-	EditPanel.prototype.appendTextSection = function(instance, instanceProperty, labelText, inputType)
+	EditItemPanel.prototype.appendTextSection = function(instance, instanceProperty, labelText, inputType)
 	{
 		var section = this.mainDiv.append('section')
 			.datum(instance)
@@ -1955,7 +1908,7 @@ var EditPanel = (function() {
 		return section;	 
 	}
 	
-	EditPanel.prototype.appendTextEditor = function(section, placeholder, value, inputType)
+	EditItemPanel.prototype.appendTextEditor = function(section, placeholder, value, inputType)
 	{
 		var itemsDiv = crf.appendItemList(section);
 		var items = itemsDiv.append('li');
@@ -1989,7 +1942,7 @@ var EditPanel = (function() {
 		return inputs;
 	}
 	
-	EditPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText)
+	EditItemPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText, minDate, maxDate)
 	{
 		var section = this.mainDiv.append('section')
 			.datum(instance)
@@ -1999,7 +1952,8 @@ var EditPanel = (function() {
 			.text(labelText);
 		section.editor = this.appendDateEditor(section,
 												 crv.buttonTexts.nonePlaceholder,
-												 instanceProperty.call(instance));
+												 instanceProperty.call(instance),
+												 minDate, maxDate);
 		
 		var handler = function(eventObject)
 		{
@@ -2016,7 +1970,7 @@ var EditPanel = (function() {
 		
 	}
 	
-	EditPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)
+	EditItemPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)
 	{
 		/* If minDate is not defined, set it to January 1, 50 years ago. */
 		if (minDate === undefined)
@@ -2134,85 +2088,18 @@ var EditPanel = (function() {
 		};
 	}
 	
-	EditPanel.prototype.onConfirmDelete = function(data, d, deleteControl)
+	EditItemPanel.prototype.appendTranslationsSection = function(instance, sectionLabel, placeholder, data, dataType)
 	{
-		/* Test case: Delete an existing value in a cell that has multiple values. */
-		if (prepareClick('click', 'confirm delete: ' + d.description()))
-		{
-			try {
-				cr.removeElement(data, d);
-				removeItem($(deleteControl).parents('li')[0], unblockClick);
-			} catch(err) { cr.syncFail(err); }
-		}
-	}
-	
-	EditPanel.prototype.appendItemControls = function(itemsDiv, items, data, appendInputControls)
-	{
-		var _this = this;
-		
-		crf.appendDeleteControls(items);
-		appendInputControls(items);
-		crf.appendConfirmDeleteControls(items, function(d)
-			{
-				_this.onConfirmDelete(data, d, this);
-			});
-		var dials = $(itemsDiv.node()).find('li>button:first-of-type');
-		crf.showDeleteControls(dials, 0);
-		items.each(function(d)
-			{
-				setupOneViewEventHandler(d, 'deleted.cr', this, function(eventObject)
-					{
-						var item = d3.select(eventObject.data);
-						item.remove();
-					});
-			});
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit multiple', true);
+		section.append('label')
+			.text(sectionLabel);
+		this.appendTranslationEditor(section, instance, sectionLabel, placeholder, data, dataType);
+		return section;
 	}
 
-	
-	/** Adds a row to a multiple item within a panel to add another item of that type. */
-	EditPanel.prototype.appendAddButton = function(sectionObj, container, data, dataType, name, appendInputControls)
-	{
-		var _this = this;
-		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div")
-			.classed('add-value site-active-text', true)
-			.on("click", function(cell) {
-				if (prepareClick('click', "add {0}".format(name)))
-				{
-					try
-					{
-						var newValue = new dataType();
-						newValue.setDefaultValues();
-						if ('position' in newValue)
-							newValue.position(data.length ? data[data.length - 1].position() + 1 : 0);
-							
-						data.push(newValue);
-						newValue.parent(container);
-					
-						var itemsDiv = sectionObj.selectAll('ol');
-						var item = itemsDiv.append('li')
-							.datum(newValue);
-						_this.appendItemControls(itemsDiv, item, data, appendInputControls);
-						itemsDiv.style('display', null);
-						var input = item.selectAll('input');
-						if (input.node())
-							input.node().focus();
-							
-						unblockClick();
-					}
-					catch(err)
-					{
-						cr.syncFail(err);
-					}
-				}
-				d3.event.preventDefault();
-			});
-		buttonDiv.append('div')
-			.classed('overlined', !sectionObj.classed('first'))
-			.text("Add {0}".format(name));
-	}
-
-	EditPanel.prototype.appendTranslationEditor = function(section, container, sectionLabel, placeholder, data, dataType)
+	EditItemPanel.prototype.appendTranslationEditor = function(section, container, sectionLabel, placeholder, data, dataType)
 	{
 		var _this = this;
 		section.classed("string translation", true);
@@ -2263,7 +2150,7 @@ var EditPanel = (function() {
 		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
 	}
 	
-	EditPanel.prototype.appendOrderedTextEditor = function(section, container, sectionLabel, placeholder, data, dataType)
+	EditItemPanel.prototype.appendOrderedTextEditor = function(section, container, sectionLabel, placeholder, data, dataType)
 	{
 		var _this = this;
 		section.classed("string translation", true);
@@ -2292,7 +2179,7 @@ var EditPanel = (function() {
 	}
 	
 	/** Appends an enumeration that is associated with a picker panel for picking new values. */
-	EditPanel.prototype.appendEnumerationPickerSection = function(instance, instanceProperty, labelText, pickPanelType)
+	EditItemPanel.prototype.appendEnumerationPickerSection = function(instance, instanceProperty, labelText, pickPanelType)
 	{
 		var section = this.mainDiv.append('section')
 			.classed('cell edit unique', true)
@@ -2310,10 +2197,7 @@ var EditPanel = (function() {
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newValue)
 								{
-									if ('getDescription' in pickPanelType)
-										textContainer.text(pickPanelType.getDescription(newValue));
-									else
-										textContainer.text(newValue);
+									textContainer.text(panel.getDescription(newValue));
 									instanceProperty.call(instance, newValue);
 								});
 						}
@@ -2327,16 +2211,55 @@ var EditPanel = (function() {
 		section.append('label')
 			.text(labelText);
 			
-		var initialDescription = instanceProperty.call(instance);
-		if ('getDescription' in pickPanelType)
-			initialDescription = pickPanelType.getDescription(initialDescription);
+		var initialDescription = pickPanelType.prototype.getDescription(instanceProperty.call(instance));
 		var items = this.appendEnumerationEditor(section, initialDescription);
 		
 		crf.appendRightChevrons(items);	
 		return section;
 	}
 	
-	EditPanel.prototype.appendEnumerationEditor = function(section, newValue)
+	EditItemPanel.prototype.appendLinkSection = function(instanceProperty, sectionLabel, pickPanelType)
+	{
+		var instance = this.controller().newInstance();
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit unique', true)
+			.on('click', 
+				function() {
+					if (prepareClick('click', 'pick organization'))
+					{
+						try
+						{
+							var panel = new pickPanelType(instance.parent(), instance);
+							panel.createRoot(instance, instanceProperty.call(instance))
+								.showLeft().then(unblockClick);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newLink)
+								{
+									/* newLink will be undefined if null was passed in. */
+									instanceProperty.call(instance, newLink || null);
+									section.selectAll('li>div').text(
+										newLink ? newLink.description() : crv.buttonTexts.nullString);
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+
+		section.append('label')
+			.text(sectionLabel);
+		var newLink = instanceProperty.call(instance);
+		var items = this.appendEnumerationEditor(section, 
+			newLink ? newLink.description() : crv.buttonTexts.nullString);
+		section.datum(newLink);
+		crf.appendRightChevrons(items);	
+		return section;
+	}
+	
+	EditItemPanel.prototype.appendEnumerationEditor = function(section, newValue)
 	{
 		var itemsDiv = crf.appendItemList(section);
 
@@ -2347,116 +2270,6 @@ var EditPanel = (function() {
 			.text(newValue);
 			
 		return items;
-	}
-	
-	EditPanel.prototype.appendTranslationChanges = function(section, translations, changes, key)
-	{
-		var subChanges = [];
-		var _this = this;
-		
-		var items = section.selectAll('li');
-		items.each(function(d)
-			{
-				var item = d3.select(this);
-				var newText = item.selectAll('input').node().value;
-				var newLanguageCode = crv.languages[item.selectAll('select').node().selectedIndex].code;
-				if (d.id() && this.getAttribute('isDeleted'))
-				{
-					subChanges.push({'delete': d.id()});
-				}
-				else if (!d.id())
-				{
-					
-					if (newText)
-					{
-						_this.lastNewIDKey += 1;
-						subChanges.push({'add': "name" + _this.lastNewIDKey.toString(), 
-										 'text': newText,
-										 'languageCode': newLanguageCode});
-					}
-				}
-				else
-				{
-					var itemChanges = {};
-					var foundChange = false;
-					if (newText != d.text())
-					{
-						itemChanges['text'] = newText;
-						foundChange = true;
-					}
-					if (newLanguageCode != d.language())
-					{
-						itemChanges['languageCode'] = newLanguageCode;
-						foundChange = true;
-					}
-					if (foundChange)
-					{
-						itemChanges['id'] = d.id();
-						subChanges.push(itemChanges);
-					}
-				}
-			});
-		
-		if (subChanges.length > 0)
-			changes[key] = subChanges;
-	}
-	
-	EditPanel.prototype.pushTranslationChanges = function(parent, translations, changes, resultType)
-	{
-		console.assert(translations);
-		
-		changes.forEach(function(change)
-		{
-			if ('delete' in change)
-			{
-				var d = translations.find(function(t)
-					{ return t.id() == change['delete']; })
-				cr.removeElement(translations, d);	
-			}
-			else if ('add' in change)
-			{
-				var d = new resultType();
-				d.clientID(change['add']);
-				d.parent(parent);
-				translations.push(d);
-			}
-		});
-		return this;
-	}
-	
-	EditPanel.prototype.createRoot = function(objectData, header, onShow)
-	{
-		crv.SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
-		this.navContainer = this.appendNavContainer();
-		this.appendScrollArea();
-	}
-
-	function EditPanel()
-	{
-	}
-	
-	return EditPanel;
-})();
-
-var EditItemPanel = (function () {
-	EditItemPanel.prototype = Object.create(EditPanel.prototype);
-	EditItemPanel.prototype.constructor = EditItemPanel;
-
-	EditItemPanel.prototype._controller = null;
-	
-	EditItemPanel.prototype.newInstance = function()
-	{
-		return this._controller.newInstance();
-	}
-
-	EditItemPanel.prototype.controller = function()
-	{
-		return this._controller;
-	}
-	
-	EditItemPanel.prototype.promiseUpdateChanges = function()
-	{
-		return this.controller().save();
 	}
 	
 	EditItemPanel.prototype.appendChildrenPanelButton = function(label, panelType)
@@ -2480,21 +2293,25 @@ var EditItemPanel = (function () {
 		crf.appendRightChevrons(childrenButton.selectAll('li'));	
 	}
 	
-	EditItemPanel.prototype.createRoot = function(header, onShow)
+	EditItemPanel.prototype.createRoot = function(header, onShow, canCancel)
 	{
+		canCancel = (canCancel !== undefined) ? canCancel : true;
 		var _this = this;
 		EditPanel.prototype.createRoot.call(this, null, header, onShow);
 
-		this.navContainer.appendLeftButton()
-			.on("click", function()
-				{
-					if (prepareClick('click', header + ' Cancel'))
+		if (canCancel)
+		{
+			this.navContainer.appendLeftButton()
+				.on("click", function()
 					{
-						_this.hide();
-					}
-					d3.event.preventDefault();
-				})
-			.append('span').text(crv.buttonTexts.cancel);
+						if (prepareClick('click', header + ' Cancel'))
+						{
+							_this.hide();
+						}
+						d3.event.preventDefault();
+					})
+				.append('span').text(crv.buttonTexts.cancel);
+		}
 		
 		var doneButton = this.navContainer.appendRightButton();
 			
@@ -2550,23 +2367,14 @@ var PickFromListPanel = (function () {
 
 	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
 	{
-		crv.SitePanel.prototype.createRoot.call(this, datum, headerText, "list", revealPanelLeft);
+		crv.SitePanel.prototype.createRoot.call(this, datum, headerText, 'list', revealPanelLeft);
 		var _this = this;
 		
-		var navContainer = this.appendNavContainer();
+		this.navContainer = this.appendNavContainer();
 
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'pick from list panel: Cancel'))
-				{
-					_this.hideRight(unblockClick);
-				}
-				d3.event.preventDefault();
-			});
-		backButton.append("span").text(crv.buttonTexts.cancel);
+		this.appendBackButton();
 	
-		navContainer.appendTitle(this.title);
+		this.navContainer.appendTitle(this.title);
 
 		var section = this.appendScrollArea().append("section")
 			.classed("cell multiple", true);
