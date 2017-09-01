@@ -150,7 +150,7 @@ var SearchPathsResultsView = (function () {
 	 */
 	SearchPathsResultsView.prototype.fields = function()
 	{
-		return ["parents", cr.fieldNames.user];
+		return ['parents', 'user'];
 	}
 	
 	SearchPathsResultsView.prototype.resultType = function()
