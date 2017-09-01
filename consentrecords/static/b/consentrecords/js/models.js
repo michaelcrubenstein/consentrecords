@@ -122,37 +122,12 @@ var crp = new CRP();
 
 var cr = {}
 
-cr.descriptorTypes = {
-	byText: "by text",
-	byFirstText: "by first text",
-	byCount: "by count"
-}
-
 cr.privileges = {
 	find: "find",
 	read: "read",
 	write: "write",
 	administer: "administer",
 	register: "register"
-}
-
-cr.objectAddRules = {
-	pickOne: "pick one",
-	createOne: "create one",
-	pickOrCreateOne: "pick or create one",
-}
-
-cr.specialAccesses = {
-	custom: "custom"
-}
-
-cr.maxCapacities = {
-	uniqueValue: "unique value",
-	multipleValues: "multiple values"
-}
-
-cr.dataTypes = {
-	objectType: "object"
 }
 
 cr.booleans = {

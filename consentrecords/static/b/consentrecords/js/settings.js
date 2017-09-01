@@ -243,54 +243,6 @@ var Settings = (function () {
 	return Settings;
 })();
 
-/* When the user picks an access that includes a special access for the path, 
-	the _special access value is set. Otherwise, it is cleared. Currently, there is 
-	no check for whether there are access records on the path because there is no such
-	functionality.
- */ 
-var PickUserAccessPanel = (function () {
-	PickUserAccessPanel.prototype = Object.create(PickFromListPanel.prototype);
-	PickUserAccessPanel.prototype.constructor = PickUserAccessPanel;
-
-	PickUserAccessPanel.prototype.title = Settings.prototype.userPublicAccessLabel;
-	PickUserAccessPanel.prototype.data = function()
-	{
-		return [{description: Settings.prototype.profileHiddenLabel,
-						   instancePath: null
-						  },
-						  {description: Settings.prototype.emailVisibleLabel,
-						   instancePath: "term[name=privilege]>enumerator[name=find]"
-						  },
-						  {description: Settings.prototype.pathVisibleLabel,
-						   instancePath: "term[name=privilege]>enumerator[name=find]",
-						   pathPrivilegePath: "term[name=privilege]>enumerator[name=read]",
-						   pathPrivilegeDescription: cr.privileges.read,
-						   pathSpecialAccessPath: 'term[name="special access"]>enumerator[name=custom]',
-						   pathSpecialAccessDescription: cr.specialAccesses.custom
-						  },
-						  {description: Settings.prototype.allVisibleLabel,
-						   instancePath: "term[name=privilege]>enumerator[name=read]"
-						  }
-						 ];
-	}
-	
-	PickUserAccessPanel.prototype.datumDescription = function(d)
-	{
-		return d.description;
-	}
-	
-	PickUserAccessPanel.prototype.createRoot = function(user, path, oldDescription)
-	{
-		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, oldDescription);
-	}
-	
-	function PickUserAccessPanel() {
-		PickFromListPanel.call(this);
-	}
-	
-	return PickUserAccessPanel;
-})();
-
 var PickUserAccessPanel = (function () {
 	PickUserAccessPanel.prototype = Object.create(PickFromListPanel.prototype);
 	PickUserAccessPanel.prototype.constructor = PickUserAccessPanel;
