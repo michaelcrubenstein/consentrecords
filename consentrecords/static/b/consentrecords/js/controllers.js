@@ -687,6 +687,7 @@ var ExperienceController = (function() {
 		var todayDate = getUTCTodayDate();
 		this.newInstance().start("{0}-{1}".format(todayDate.getUTCFullYear() - 1, getMonthString(todayDate)));
 		this.newInstance().end("{0}-{1}".format(todayDate.getUTCFullYear(), getMonthString(todayDate)));
+		return this;
 	}
 	
 	ExperienceController.prototype.initCurrentDateRange = function()
@@ -694,6 +695,7 @@ var ExperienceController = (function() {
 		var todayDate = getUTCTodayDate();
 		this.newInstance().start("{0}-{1}".format(todayDate.getUTCFullYear(), getMonthString(todayDate)));
 		this.newInstance().end("");
+		return this;
 	}
 	
 	ExperienceController.prototype.initGoalDateRange = function()
@@ -701,6 +703,7 @@ var ExperienceController = (function() {
 		var todayDate = getUTCTodayDate();
 		this.newInstance().start("");
 		this.newInstance().end("");
+		return this;
 	}
 	
 	ExperienceController.prototype.initDateRange = function(phase)
@@ -715,27 +718,12 @@ var ExperienceController = (function() {
 			this.initPreviousDateRange();
 		}
 		this.timeframe(phase);
+		return this;
 	}
 	
 	ExperienceController.prototype.service = function(service)
 	{
-		if (!service)
-			throw new Error("service is not specified");
-			
-		if (service instanceof cr.Service)
-		{
-			var services = [new cr.ExperienceService()];
-			services[0].service(service)
-					   .position(0);
-			this.newInstance().experienceServices(services);
-		}
-		else
-		{
-			var services = [new cr.ExperienceCustomService()];
-			services[0].name(service)
-					   .position(0);
-			this.newInstance().customServices(services);
-		}
+		this.addService(service);
 		return this;
 	}
 	
