@@ -489,11 +489,15 @@ def _getOrganizationChildren(organization, siteName, offeringName):
     site = None
     offering = None
     if siteName:
-        sites = organization.getSubInstance(terms['Sites']).getChildrenByName(terms['Site'], terms.name, siteName)
-        site = sites[0].referenceValue if len(sites) else None
-        if site and offeringName:
-            offerings = site.getSubInstance(terms['Offerings']).getChildrenByName(terms['Offering'], terms.name, offeringName)
-            offering = offerings[0].referenceValue if len(offerings) else None
+        try:
+            site = organization.sites.get(names__text=siteName, names__deleteTransaction__isnull=True)
+            if offeringName:
+                try:
+                    offering = site.offerings.get(names__text=offeringName, names__deleteTransaction__isnull=True)
+                except Offering.DoesNotExist:
+                    pass
+        except Site.DoesNotExist:
+            pass
             
     return site, offering
 
@@ -504,36 +508,51 @@ def addToPathway(request):
     organizationName = request.GET.get('o', None)
     siteName = request.GET.get('s', None)
     offeringName = request.GET.get('f', None)
-    serviceName = request.GET.get('m', None)
-
-    userInfo = UserInfo(request.user)
+    serviceName = request.GET.get('t', None)
+    
+    languageCode = request.GET.get('language', 'en')
+    context = Context(languageCode, request.user)
 
     if offeringName and terms.isUUID(offeringName):
-        offering = terms[offeringName]
+        try:
+            offering = Offering.objects.get(pk=offeringName, deleteTransaction__isnull=True)
+            site = offering.parent
+            organization = site.parent
+        except Offering.DoesNotExist:
+            organization, site, offering = None, None, None
     elif siteName and terms.isUUID(siteName):
-        site = terms[siteName]
-        if offeringName:
-            offerings = site.getChildrenByName(terms['Offering'], terms.name, offeringName)
-            offering = offerings[0] if len(offerings) else None
+        try:
+            site = Site.objects.get(pk=siteName, deleteTransaction__isnull=True)
+            organization = site.parent
+            if offeringName:
+                try:
+                    offering = site.offerings.get(names__text=offeringName, names__deleteTransaction__isnull=True)
+                except Offering.DoesNotExist:
+                    offering = None
+        except Site.DoesNotExist:
+            organization, site, offering = None, None, None
     elif organizationName and terms.isUUID(organizationName):
-        organization = terms[organizationName]
-        site, offering = _getOrganizationChildren(organization, siteName, offeringName)
-    elif organizationName:
-        organization = terms['Organization'].getInstanceByName(terms.name, organizationName, userInfo)
-        if organization:
+        try:
+            organization = Organization.objects.get(pk=organizationName, deleteTransaction__isnull=True)
             site, offering = _getOrganizationChildren(organization, siteName, offeringName)
-        else:
-            site, offering = None, None
+        except Organization.DoesNotExist:
+            organization, site, offering = None, None, None
+    elif organizationName:
+        try:
+            organization = Organization.objects.get(names__text=organizationName, names__deleteTransaction__isnull=True)
+            site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+        except Organization.DoesNotExist:
+            organization, site, offering = None, None, None
     else:
         organization, site, offering = None, None, None
-
+    
     if serviceName and terms.isUUID(serviceName):
         try:
-            service = terms[serviceName]
-        except Instance.DoesNotExist:
+            service = Service.objects.get(pk=serviceName, deleteTransaction__isnull=True)
+        except Service.DoesNotExist:
             service = None
     elif serviceName:
-        service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
+        service = Service.objects.get(names__text=serviceName, deleteTransaction__isnull=True, names__deleteTransaction__isnull=True)
     else:
         service = None
     
