@@ -1891,10 +1891,10 @@ cr.UserLinkInstance = (function() {
 		return changed;
 	}
 
-    UserLinkInstance.prototype.getData = function(fields)
+    UserLinkInstance.prototype.promiseData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['user'];
-    	return cr.IInstance.prototype.getData.call(this, fields);
+    	return cr.IInstance.prototype.promiseData.call(this, fields);
     }
     
 	function UserLinkInstance() {
@@ -4994,10 +4994,10 @@ cr.Offering = (function() {
 	Offering.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
 	Offering.prototype.site = cr.SiteLinkInstance.prototype.site;
 
-    Offering.prototype.getData = function(fields)
+    Offering.prototype.promiseData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['names', 'services'];
-    	return cr.IInstance.prototype.getData.call(this, fields);
+    	return cr.IInstance.prototype.promiseData.call(this, fields);
     }
     
 	Offering.prototype.setData = function(d)
@@ -5550,9 +5550,14 @@ cr.Organization = (function() {
 		return changed;
 	}
 	
-    Organization.prototype.getData = function(fields)
+    Organization.prototype.promiseData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['sites', 'groups'];
+    	return cr.IInstance.prototype.promiseData.call(this, fields);
+    }
+    
+    Organization.prototype.getData = function(fields)
+    {
     	var _this = this;
     	return cr.IInstance.prototype.getData.call(this, fields)
         	.then(function()
@@ -7053,12 +7058,11 @@ cr.Session = (function() {
 		return changed;
 	}
 	
-    Session.prototype.getData = function(fields)
+    Session.prototype.promiseData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['periods'];
     	/* Do not get the inquiries, enrollments or engagements, as these may number in the thousands. */
-    	var _this = this;
-    	return cr.IInstance.prototype.getData.call(this, fields);
+    	return cr.IInstance.prototype.promiseData.call(this, fields);
     }
     
 	Session.prototype.triggerDeleted = function()
@@ -7864,10 +7868,10 @@ cr.User = (function() {
 		}
 	}
 	
-    User.prototype.getData = function(fields)
+    User.prototype.promiseData = function(fields)
     {
     	fields = fields !== undefined ? fields : ['path'];
-    	return cr.IInstance.prototype.getData.call(this, fields);
+    	return cr.IInstance.prototype.promiseData.call(this, fields);
     }
     
     User.prototype.promiseUserGrantRequests = function()
