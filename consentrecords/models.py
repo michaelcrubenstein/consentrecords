@@ -780,15 +780,15 @@ class AccessInstance(IInstance):
     
     @property
     def dataString(self):
-        if User.objects.filter(pk=i.grantor_id).exists():
-            grantor = User.objects.get(pk=i.grantor_id)
-        elif Organization.objects.filter(pk=i.grantor_id).exists():
-            grantor = Organization.objects.get(pk=i.grantor_id)
+        if User.objects.filter(pk=self.grantor_id).exists():
+            grantor = User.objects.get(pk=self.grantor_id)
+        elif Organization.objects.filter(pk=self.grantor_id).exists():
+            grantor = Organization.objects.get(pk=self.grantor_id)
         else:
-            grantor = i.grantor_id
+            grantor = self.grantor_id
         return "%s\t%s\t%s\t%s" % \
               (
-                i.id, str(grantor), str(i.grantee), i.privilege or '-'
+                self.id, str(grantor), str(self.grantee), self.privilege or '-'
               )
      
     @property    

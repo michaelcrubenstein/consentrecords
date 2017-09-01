@@ -159,10 +159,16 @@ def printTransaction(t):
                t.deletedExperiencePromptServices, t.experiencePromptServiceHistories)
 
     printTable("",
-               "Groups", "Groups",
+               "Groups", "Group",
                printInstance,
                t.createdGroups, None, 
                t.deletedGroups, None)
+
+    printTable("\tuser\tgrantee\tprivilege",
+               "Group Grants", "Group Grant",
+               printInstance,
+               t.createdGroupGrants, t.changedGroupGrants, 
+               t.deletedGroupGrants, t.groupAccessHistories)
 
     printTable("\ttext\tlanguageCode",
                "Group Names", "Group Name",
@@ -175,6 +181,12 @@ def printTransaction(t):
                printInstance,
                t.createdGroupMembers, t.changedGroupMembers, 
                t.deletedGroupMembers, t.groupMemberHistories)
+
+    printTable("\tuser",
+               "Inquiries", "Inquiry",
+               printInstance,
+               t.createdInquiries, t.changedInquiries, 
+               t.deletedInquiries, t.inquiryHistories)
 
     printTable("\tuser\tname\tis fresh",
                "Notifications", "Notification",
