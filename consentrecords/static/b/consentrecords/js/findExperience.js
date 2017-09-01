@@ -61,13 +61,13 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var firstDiv = null;
 	var nextDiv;
-	firstDiv = appendStringDatum("Registration Deadline", session.registrationDeadline());
+	firstDiv = appendStringDatum(crv.buttonTexts.registrationDeadline, session.registrationDeadline());
 	
-	nextDiv = appendStringDatum("Start", session.start());
+	nextDiv = appendStringDatum(crv.buttonTexts.start, session.start());
 	if (!firstDiv)
 		firstDiv = nextDiv;
 		
-	nextDiv = appendStringDatum("End", session.end());
+	nextDiv = appendStringDatum(crv.buttonTexts.end, session.end());
 	if (!firstDiv)
 		firstDiv = nextDiv;
 
@@ -130,64 +130,84 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			},
 			cr.asyncFail);
 
-	var inquiryValueID = null;
-	
-	var checkInquiryFunction = function(user, newValueID)
+	var checkInquiryFunction = function(user, newInquiry)
 	{
-		inquiryValueID = newValueID;
-		if (newValueID)
+		if (newInquiry)
 		{
 			buttonDiv.text("Back Out");
-			buttonDiv.on("click", function() { deleteInquiryFunction.call(this, user); });
+			buttonDiv.on('click', function() {
+				if (prepareClick('click', 'Back Out'))
+				{
+					showClickFeedback(this);
+			
+					newInquiry.deleteData()
+						.then(function()
+							{
+								bootstrap_alert.success("You have backed out of " + 
+											  offering.description() + "/" + session.description() + ".",
+											  ".alert-container");
+								checkInquiryFunction(user, null);
+								unblockClick();
+							}, cr.syncFail);
+				}
+				d3.event.preventDefault();
+			});
 		}
 		else
 		{
 			buttonDiv.text("Sign Up");
-			buttonDiv.on("click", function() { addNameFunction.call(this, user); });
+			buttonDiv.on('click', function() { 
+				if (prepareClick('click', 'add inquiry'))
+				{
+					showClickFeedback(this);
+					tryAddInquiry(session, user);
+				}
+				d3.event.preventDefault();
+			});
 		}
 	};
 	
-	var addInquiry = function(user)
+	var addInquiry = function(session, user)
 	{
 		groupPath = organization.urlPath() + '/inquiry access group';
 		cr.getData({path: groupPath, fields: ['none'], resultType: cr.Group})
 			.then(function(groupPaths)
 				{
-					changes = {'inquiries': [{'add': '1', 'user': user.urlPath() }]};
-					var sourceObjects = [new cr.ObjectValue()];
-					sourceObjects[0].on('changed.cr', user, function(eventObject)
-						{
-							var newInquiryID = this.id;
-							function done()
-							{
-							};
-							if (groupPaths.length == 0)
-								done();
-							else {
-								addMissingAccess(user, cr.privileges.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
-							}
-						});
-					return session.update(changes)
-						.then(function()
-							{
-								s = "{2} signed up for {0}/{1}.\n\nLook out for a notice when {3} enrolled."
-									.format(offering.description(),
-											session.description(),
-											user === cr.signedinUser ? "You have" : user.caption() + " has",
-											user === cr.signedinUser ? "you are" : user.caption() + " is");
-								bootstrap_alert.success(s,
-											  ".alert-container");
-								checkInquiryFunction(user, newInquiryID); 
-							});
+					try
+					{
+						changes = {'inquiries': [{'add': '1', 'user': user.urlPath() }]};
+						return session.update(changes)
+							.then(function(changes, newIDs)
+								{
+									var inquiry = new cr.Inquiry();
+									inquiry.id(newIDs['1']);
+									inquiry.parent(session);
+									inquiry.setData(changes);
+									inquiry.calculateDescription();									
+									s = "{2} signed up for {0}/{1}.\n\nLook out for a notice when {3} enrolled."
+										.format(offering.description(),
+												session.description(),
+												user === cr.signedinUser ? "You have" : user.caption() + " has",
+												user === cr.signedinUser ? "you are" : user.caption() + " is");
+									bootstrap_alert.success(s,
+												  ".alert-container");
+									checkInquiryFunction(user, inquiry);
+									user.clearGroupGrants();
+								});
+					}
+					catch(err)
+					{
+						cr.asyncFail(err);
+					}
 				})
 			.then(undefined, cr.asyncFail);
 	}
 	
-	var tryAddInquiry = function(user)
+	var tryAddInquiry = function(session, user)
 	{
-		if (user.id())
+		if (cr.signedinUser.id())
 		{
-			addInquiry(user);
+			addInquiry(session, user);
 			unblockClick();
 		}
 		else
@@ -196,12 +216,12 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getData({path: "session/{0}/inquiry/user/{1}".format(session.id(), this.id())})
-					.then(function(valueIDs)
+				cr.getData({path: "session/{0}/inquiry[user={1}]".format(session.id(), this.id())})
+					.then(function(inquiries)
 						{
-							if (valueIDs.length > 0)
+							if (inquiries.length > 0)
 							{
-								checkInquiryFunction(user, valueIDs[0].id);
+								checkInquiryFunction(user, inquiries[0]);
 								bootstrap_alert.success(_this.description() + 
 													  " already signed up for " + 
 													  offering.description() + "/" + session.description(),
@@ -209,7 +229,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 							}
 							else
 							{
-								addInquiry(_this);
+								addInquiry(session, user);
 							}
 						},
 						cr.asyncFail);
@@ -230,47 +250,14 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		}
 	}
 	
-	var addNameFunction = function(user)
-	{
-		if (prepareClick('click', 'add inquiry'))
-		{
-			showClickFeedback(this);
-			
-			tryAddInquiry(user);
-		}
-		d3.event.preventDefault();
-	};
-	
-	var deleteInquiryFunction = function(user)
-	{
-		if (prepareClick('click', 'Back Out'))
-		{
-			showClickFeedback(this);
-			
-			var successFunction = function()
-			{
-				bootstrap_alert.success("You have backed out of " + 
-							  offering.description() + "/" + session.description() + ".",
-							  ".alert-container");
-				checkInquiryFunction(user, null);
-			}
-			
-			cr.deleteValue(inquiryValueID)
-				.then(successFunction, cr.asyncFail);
-			
-			unblockClick();
-		}
-		d3.event.preventDefault();
-	};
-	
 	if (user.id())
 	{
-		function done(values)
+		function done(inquiries)
 		{
-			checkInquiryFunction(user, values.length ? values[0].id : null);
+			checkInquiryFunction(user, inquiries.length ? inquiries[0] : null);
 		}
-		cr.getData({path: "session/{0}/inquiry/user/{1}".format(session.id(), user.id()),
-				    resultType: cr.User})
+		cr.getData({path: "session/{0}/inquiry[user={1}]".format(session.id(), user.id()),
+				    resultType: cr.Inquiry})
 					.then(done, cr.asyncFail);
 	}
 	else
@@ -279,102 +266,13 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	return sitePanel;
 }
 		
-var PickOfferingSearchView = (function () {
-	PickOfferingSearchView.prototype = Object.create(PanelSearchView.prototype);
-	PickOfferingSearchView.prototype.constructor = PickOfferingSearchView;
+var PickExperienceOfferingPanel = (function() {
+	PickExperienceOfferingPanel.prototype = Object.create(crv.SitePanel.prototype);
+	PickExperienceOfferingPanel.prototype.constructor = PickExperienceOfferingPanel;
 
-	PickOfferingSearchView.prototype.tag = null;
-	PickOfferingSearchView.prototype.user = null;
+	PickExperienceOfferingPanel.prototype.offeringID = null;
 	
-	/* SearchView.prototype.onClickButton 
-		onClickButton does not need to be overwritten because showObjects is overwritten. */
-	
-	/* Overrides SearchView.prototype.isButtonVisible */
-	PickOfferingSearchView.prototype.isButtonVisible = function(button, d, compareText)
-	{
-		if (compareText.length === 0)
-			return true;
-			
-		return d.description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
-			   d.getValue("Offering").description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
-			   d.getValue("Site").description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
-			   d.getValue("Organization").description().toLocaleLowerCase().indexOf(compareText) >= 0;
-	}
-	
-	/* Overrides SearchView.searchPath */
-	PickOfferingSearchView.prototype.searchPath = function(val)
-	{
-		var currentDate = new Date();
-		var todayString = currentDate.toISOString().substring(0, 10);
-		var s = 'offering[service>service={0}]/session'.format(this.tag.id());
-		s += '[registration deadline~<"{0}"]'.format(todayString);
-		s += '[end~<"{0}"]'.format(todayString);
-		if (val.length == 0)
-			return s;
-		else
-		{
-			return s + '[name>text*="{0}"]|[offering>name>text*="{0}"]|[offering>site>name>text*="{0}"]|[offering>site>organization>name>text*="{0}"]'
-				.format(encodeURIComponent(val));
-		}
-	}
-	
-	PickOfferingSearchView.prototype.resultType = function()
-	{
-		return cr.Session;
-	}
-	
-	PickOfferingSearchView.prototype.showObjects = function(foundObjects)
-	{
-		var _this = this;
-		var sections = this.appendButtonContainers(foundObjects)
-			.on("click", function(session)
-				{
-					if (prepareClick('click', 'show details: ' + session.description()))
-					{
-						showClickFeedback(this);
-
-						var sitePanel = showSessionDetails(_this.user, session, _this.tag, _this.sitePanel.node());
-	
-						sitePanel.showLeft()
-							.then(unblockClick);
-					}
-				});
-
-		appendSessionDescriptions(sections);
-		
-		this.constrainFoundObjects();
-		return sections;
-	}
-	
-	PickOfferingSearchView.prototype.textCleared = function()
-	{
-		SearchView.prototype.textCleared.call(this);
-		
-		this.startSearchTimeout("");
-	}
-	
-	PickOfferingSearchView.prototype.noResultString = function()
-	{
-		return "There are no upcoming opportunities for {0}.".format(this.tag.description());
-	}
-	
-	function PickOfferingSearchView(sitePanel, user, tag)
-	{
-		this.tag = tag;
-		this.user = user;
-		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
-	}
-	
-	return PickOfferingSearchView;
-})();
-
-var PickOfferingPanel = (function() {
-	PickOfferingPanel.prototype = Object.create(crv.SitePanel.prototype);
-	PickOfferingPanel.prototype.constructor = PickOfferingPanel;
-
-	PickOfferingPanel.prototype.offeringID = null;
-	
-	function PickOfferingPanel(user, tag, offeringID) {
+	function PickExperienceOfferingPanel(user, tag, offeringID) {
 		var _this = this;
 		
 		var header = "Find a New Experience";
@@ -387,7 +285,7 @@ var PickOfferingPanel = (function() {
 			
 		navContainer.appendTitle(header);
 
-		var searchView = new PickOfferingSearchView(this, user, tag);
+		var searchView = new PickExperienceOfferingPanel.SV(this, user, tag);
 		$(this.node()).one("revealing.cr", function() { 
 				searchView.search(""); 
 				searchView.inputBox.focus();
@@ -396,7 +294,96 @@ var PickOfferingPanel = (function() {
 		this.showLeft().then(unblockClick);
 	}
 	
-	return PickOfferingPanel;
+	PickExperienceOfferingPanel.SV = (function () {
+		SV.prototype = Object.create(PanelSearchView.prototype);
+		SV.prototype.constructor = SV;
+
+		SV.prototype.tag = null;
+		SV.prototype.user = null;
+	
+		/* SearchView.prototype.onClickButton 
+			onClickButton does not need to be overwritten because showObjects is overwritten. */
+	
+		/* Overrides SearchView.prototype.isButtonVisible */
+		SV.prototype.isButtonVisible = function(button, d, compareText)
+		{
+			if (compareText.length === 0)
+				return true;
+			
+			return d.description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+				   d.getValue("Offering").description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+				   d.getValue("Site").description().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+				   d.getValue("Organization").description().toLocaleLowerCase().indexOf(compareText) >= 0;
+		}
+	
+		/* Overrides SearchView.searchPath */
+		SV.prototype.searchPath = function(val)
+		{
+			var currentDate = new Date();
+			var todayString = currentDate.toISOString().substring(0, 10);
+			var s = 'offering[service>service={0}]/session'.format(this.tag.id());
+			s += '[registration deadline~<"{0}"]'.format(todayString);
+			s += '[end~<"{0}"]'.format(todayString);
+			if (val.length == 0)
+				return s;
+			else
+			{
+				return s + '[name>text*="{0}"]|[offering>name>text*="{0}"]|[offering>site>name>text*="{0}"]|[offering>site>organization>name>text*="{0}"]'
+					.format(encodeURIComponent(val));
+			}
+		}
+	
+		SV.prototype.resultType = function()
+		{
+			return cr.Session;
+		}
+	
+		SV.prototype.showObjects = function(foundObjects)
+		{
+			var _this = this;
+			var sections = this.appendButtonContainers(foundObjects)
+				.on("click", function(session)
+					{
+						if (prepareClick('click', 'show details: ' + session.description()))
+						{
+							showClickFeedback(this);
+
+							var sitePanel = showSessionDetails(_this.user, session, _this.tag, _this.sitePanel.node());
+	
+							sitePanel.showLeft()
+								.then(unblockClick);
+						}
+					});
+
+			appendSessionDescriptions(sections);
+		
+			this.constrainFoundObjects();
+			return sections;
+		}
+	
+		SV.prototype.textCleared = function()
+		{
+			SearchView.prototype.textCleared.call(this);
+		
+			this.startSearchTimeout("");
+		}
+	
+		SV.prototype.noResultString = function()
+		{
+			return "There are no upcoming opportunities for {0}.".format(this.tag.description());
+		}
+	
+		function SV(sitePanel, user, tag)
+		{
+			this.tag = tag;
+			this.user = user;
+			PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+		}
+	
+		return SV;
+	})();
+
+	return PickExperienceOfferingPanel;
 })();
 
 var FindExperienceSearchView = (function () {
@@ -412,7 +399,7 @@ var FindExperienceSearchView = (function () {
 		{
 			showClickFeedback(button);
 			
-			var panel = new PickOfferingPanel(this.user, d, this.offeringID);
+			var panel = new PickExperienceOfferingPanel(this.user, d, this.offeringID);
 		}
 		d3.event.preventDefault();
 	}

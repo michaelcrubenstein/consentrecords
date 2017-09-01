@@ -214,6 +214,7 @@ var crv = {
 		primaryAdministrator: "Primary Administrator",
 		publicAccess: "Public Access",
 		readPublicAccess: "Public",
+		registerByDate: "register by {0}",
 		registrationDeadline: "Registration Deadline",
 		screenName: "Screen Name",
 		search: "Search",

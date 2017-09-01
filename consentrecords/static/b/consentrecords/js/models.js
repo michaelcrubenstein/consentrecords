@@ -296,16 +296,6 @@ cr.chainFail = function(err)
 		return r2;
 	};
 	
-cr.deleteValue = function(valueID, successFunction, failFunction)
-	{
-		return $.ajax({
-				url: cr.urls.getData + "value/" + valueID + "/",
-				type: 'DELETE',
-			})
-			.then(undefined,
-			cr.thenFail);
-	};
-			
 cr.createInstance = function(field, containerUUID, initialData)
 	{
 		var jsonArray = {
@@ -7883,6 +7873,16 @@ cr.User = (function() {
         			return result;
         		});
         return this._notificationsPromise;
+    }
+    
+    /* Clear the group grants from the user so that they can be subsequently reloaded
+    	on demand. This is necessary if the group grants have been updated on the 
+    	server but not downloaded to the client.
+     */
+    User.prototype.clearGroupGrants = function()
+    {
+    	this._groupGrants = null;
+    	cr.removeElement(this._fieldsLoaded, 'group grants')
     }
     
 	function User() {

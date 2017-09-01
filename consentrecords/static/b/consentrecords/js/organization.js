@@ -68,7 +68,9 @@ function appendSessionDescriptions(buttons)
 		.text(function(d) {
 			var registrationDeadline = d.registrationDeadline();
 			if (registrationDeadline)
-				return "register by " + registrationDeadline;
+			{
+				return crv.buttonTexts.registerByDate.format(getLocaleDateString(registrationDeadline));
+			}
 			else
 				return "";
 		});
@@ -238,106 +240,5 @@ function checkOfferingCells(experience)
 	r = $.Deferred();
 	r.resolve();
 	return r;
-}
-
-function getNamedInstance(data, name)
-{
-	for (i = 0; i < data.length; ++i)
-	{
-		var d = data[i];
-		if (d.getDatum(cr.fieldNames.name) === name)
-			return d;
-	}
-	return null;
-}
-
-/* Returns a dictionary describing which privileges can be used to provide 
-	the capabilities of each privilege.
- */
-function getValidPrivileges(enumerators, priv)
-{
-	var administerValue = getNamedInstance(enumerators, cr.privileges.administer);
-	var writeValue = getNamedInstance(enumerators, cr.privileges.write);
-	var readValue = getNamedInstance(enumerators, cr.privileges.read);
-	var findValue = getNamedInstance(enumerators, cr.privileges.find);
-	var registerValue = getNamedInstance(enumerators, cr.privileges.register);
-	
-	if (priv === findValue)
-		return [findValue, readValue, registerValue, writeValue, administerValue];
-	else if (priv === readValue)
-		return [readValue, writeValue, administerValue];
-	else if (priv === registerValue)
-		return [registerValue, writeValue, administerValue];
-	else if (priv === writeValue)
-		return [writeValue, administerValue];
-	else if (priv === administerValue)
-		return [administerValue];
-	else
-		return [];
-}
-
-/* Adds a missing access record to the source user. */
-function addMissingAccess(source, privilege, target, cellName, done, fail)
-{
-	var privilegePath = "term[name=privilege]/enumerator";
-	var p1 = crp.promise({path: privilegePath});
-	var p2 = cr.getData({path: source.getInstanceID() + '/' + cr.fieldNames.accessRecord});
-	$.when(p1, p2)
-	 .then(function(enumerators, accessRecords)
-		{
-			var priv = getNamedInstance(enumerators, privilege);
-			var validPrivs = getValidPrivileges(enumerators, priv).map(function(d) { return d.getInstanceID(); });
-
-			var a = accessRecords.filter(
-				function(ar) {
-					var privCell = ar.getCell(cr.fieldNames.privilege);
-					return privCell.data.some(
-						function(d) { 
-							return validPrivs.indexOf(d.getInstanceID()) >= 0; 
-						});
-				});
-			var b = a.filter(
-				function(ar) {
-					var groupCell = ar.getCell(cellName);
-					function hasTargetValueID(d)
-					{
-						return d.getInstanceID() === target.getInstanceID();
-					}
-					return groupCell.data.some(hasTargetValueID);
-				});
-			if (b.length > 0)
-				done();
-			else
-			{
-				var c = a.filter(
-					function(ar) {
-						var storedPrivilegeValue = ar.getValue(cr.fieldNames.privilege);
-						return storedPrivilegeValue &&
-							   storedPrivilegeValue.getInstanceID() === priv.getInstanceID();
-					});
-					
-				var promise;
-				if (c.length > 0)
-				{
-					/* Test case: Sign up for a session (using the /find/ URL) when the 
-						user shares read access with some users but not the group that owns this session. */
-					var cell = c[0].getCell(cellName);
-					
-					promise = cr.updateValues([cell.getAddCommand(target)], [cell]);
-				}
-				else
-				{
-					/* Test case: Sign up for a session (using the /find/ URL) when the 
-						user shares read access with no users or groups. */
-					var field = source.getCell(cr.fieldNames.accessRecord).field;
-					var initialData = {};
-					initialData[cr.fieldNames.privilege] = [{instanceID: priv.getInstanceID()}];
-					initialData[cellName] = [{instanceID: target.getInstanceID()}];
-					promise = cr.createInstance(field, source.getInstanceID(), initialData);
-				}
-				promise.then(done, fail);
-			}
-		},
-		fail);
 }
 
