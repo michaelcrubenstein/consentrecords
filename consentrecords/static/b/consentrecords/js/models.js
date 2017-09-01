@@ -4574,6 +4574,13 @@ cr.GroupGrant = (function() {
 		return 'group grant/{0}'.format(this.id());
 	}
 	
+	GroupGrant.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().groupGrants(), this);
+		$(this.parent()).trigger("groupGrantDeleted.cr", this);
+	}
+	
 	GroupGrant.prototype.granteeType = function()
 	{
 		return cr.Group;
@@ -8034,6 +8041,13 @@ cr.UserGrant = (function() {
 	{
 		console.assert(this.id());
 		return 'user grant/{0}'.format(this.id());
+	}
+	
+	UserGrant.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().userGrants(), this);
+		$(this.parent()).trigger("userGrantDeleted.cr", this);
 	}
 	
 	UserGrant.prototype.granteeType = function()
