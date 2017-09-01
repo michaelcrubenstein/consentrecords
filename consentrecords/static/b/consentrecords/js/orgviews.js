@@ -2854,6 +2854,13 @@ var UserSearchView = (function () {
 		return UserPanel;
 	}
 	
+	UserSearchView.prototype.fillItems = function(items)
+	{
+		ChildSearchView.prototype.fillItems.call(this, items);
+		appendInfoButtons(items, undefined, 
+			function(items) { return items.insert('div', 'button:last-of-type'); });
+	}
+	
 	function UserSearchView(sitePanel) {
 		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
 	}

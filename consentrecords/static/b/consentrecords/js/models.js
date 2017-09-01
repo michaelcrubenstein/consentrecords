@@ -7612,6 +7612,8 @@ cr.User = (function() {
 		newInstance._birthday = this._birthday;
 		newInstance._systemAccess = this._systemAccess;
 		
+		newInstance._emails = this.duplicateList(this.emails(), duplicateForEdit);
+		
 		if (newInstance._path == null)
 		{
 			newInstance._path = new cr.Path();
