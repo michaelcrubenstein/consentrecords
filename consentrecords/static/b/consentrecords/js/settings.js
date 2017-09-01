@@ -34,7 +34,7 @@ var Settings = (function () {
 		var _this = this;
 		EditItemPanel.call(this, controller);
 		
-		this.createRoot("Settings", onShow);
+		this.createRoot("Settings", onShow, false);
 		this.panelDiv.classed("settings", true);
 
 		var getAccessDescription = function() 

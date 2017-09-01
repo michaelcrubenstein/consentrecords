@@ -2391,21 +2391,25 @@ var EditItemPanel = (function () {
 		crf.appendRightChevrons(childrenButton.selectAll('li'));	
 	}
 	
-	EditItemPanel.prototype.createRoot = function(header, onShow)
+	EditItemPanel.prototype.createRoot = function(header, onShow, canCancel)
 	{
+		canCancel = (canCancel !== undefined) ? canCancel : true;
 		var _this = this;
 		EditPanel.prototype.createRoot.call(this, null, header, onShow);
 
-		this.navContainer.appendLeftButton()
-			.on("click", function()
-				{
-					if (prepareClick('click', header + ' Cancel'))
+		if (canCancel)
+		{
+			this.navContainer.appendLeftButton()
+				.on("click", function()
 					{
-						_this.hide();
-					}
-					d3.event.preventDefault();
-				})
-			.append('span').text(crv.buttonTexts.cancel);
+						if (prepareClick('click', header + ' Cancel'))
+						{
+							_this.hide();
+						}
+						d3.event.preventDefault();
+					})
+				.append('span').text(crv.buttonTexts.cancel);
+		}
 		
 		var doneButton = this.navContainer.appendRightButton();
 			
