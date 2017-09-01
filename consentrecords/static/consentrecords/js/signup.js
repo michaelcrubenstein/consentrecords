@@ -62,7 +62,7 @@ var Signup = (function () {
 				var initialData = {'birthday': birthDay,
 				                   'path':{'birthday': birthMonth}
 				                  };
-				initialData[cr.fieldNames.publicAccess] = 'find';
+				initialData['public access'] = 'find';
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
 					initialData)
 					.then(function(data)

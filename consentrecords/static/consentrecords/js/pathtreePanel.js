@@ -1170,11 +1170,6 @@ var PathLines = (function() {
 		$(this.bg.node()).width(newWidth);
 	}
 	
-	PathLines.prototype.getUser = function()
-	{
-		return this.path.getValue(cr.fieldNames.user);
-	}
-	
 	PathLines.prototype.setUser = function(path, editable)
 	{
 		if (path.privilege() === cr.privileges.find)

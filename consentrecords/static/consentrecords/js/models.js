@@ -122,72 +122,12 @@ var crp = new CRP();
 
 var cr = {}
 
-cr.fieldNames = {
-    /* These names are associated with fields. */
-    accessRecord: 'access record',
-    accessRequest: 'access request',
-    addObjectRule: 'object add rule',
-    argument: 'argument',
-    configuration: 'configuration',
-    booleans: 'boolean',
-    canBeAskedAboutExperience: 'can be asked about experience',
-    dataType: 'data type',
-    defaultAccess: 'default access',
-    descriptorType: 'descriptor type',
-    email: 'email',
-    enumerator: 'enumerator',
-    field: 'field',
-    firstName: 'first name',
-    group: 'group',
-    isFresh: 'is fresh',
-    lastName: 'last name',
-    maxCapacity: 'max capacity',
-    name: 'name',
-    notification: 'notification',
-    ofKind: 'of kind',
-    pickObjectPath: 'pick object path',
-    privilege: 'privilege',
-    publicAccess: 'public access',
-    primaryAdministrator: 'primary administrator',
-    specialAccess: 'special access',
-    systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
-    term: 'term',
-    text: 'text',
-    user: 'user',
-    userID: 'userID',
-}
-
-cr.descriptorTypes = {
-	byText: "by text",
-	byFirstText: "by first text",
-	byCount: "by count"
-}
-
 cr.privileges = {
 	find: "find",
 	read: "read",
 	write: "write",
 	administer: "administer",
 	register: "register"
-}
-
-cr.objectAddRules = {
-	pickOne: "pick one",
-	createOne: "create one",
-	pickOrCreateOne: "pick or create one",
-}
-
-cr.specialAccesses = {
-	custom: "custom"
-}
-
-cr.maxCapacities = {
-	uniqueValue: "unique value",
-	multipleValues: "multiple values"
-}
-
-cr.dataTypes = {
-	objectType: "object"
 }
 
 cr.booleans = {
@@ -8050,7 +7990,7 @@ cr.signedinUser = new cr.User();
 cr.createSignedinUser = function(id, fields)
 {
 	fields = fields !== undefined ? fields 
-								  : ['path', cr.fieldNames.systemAccess, 'user grant requests', 'notifications'];
+								  : ['path', 'system access', 'user grant requests', 'notifications'];
 	crp.clear();
 	cr.Service.clearPromises();
 	cr.signedinUser.id(id);
