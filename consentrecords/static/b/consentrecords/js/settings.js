@@ -142,7 +142,7 @@ var Settings = (function () {
 
 		if (oldUser.privilege() === cr.privileges.administer)
 		{
-			oldUser.promiseGrants()
+			oldUser.promiseData(['user grants', 'group grants'])
 				.then(function()
 				{
 					function accessProperty(newValue)

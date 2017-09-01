@@ -296,33 +296,6 @@ cr.chainFail = function(err)
 		return r2;
 	};
 	
-cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
-	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-		/* oldValue must be an object value */
-		var initialData = [];
-		var sourceObjects = [];
-		oldValue.appendUpdateCommands(i, d, initialData, sourceObjects);
-		$.post(cr.urls.updateValues, 
-				{ commands: JSON.stringify(initialData)
-				})
-			  .done(function(json, textStatus, jqXHR)
-				{
-					oldValue.id = json.valueIDs[0];
-					oldValue.instance(d.instance());
-					oldValue.triggerDataChanged();
-					successFunction();
-				})
-			  .fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-					}
-				);
-	};
-	
 cr.deleteValue = function(valueID, successFunction, failFunction)
 	{
 		return $.ajax({
@@ -2073,36 +2046,6 @@ cr.Grantable = (function() {
 		return this;
 	}
 	
-    Grantable.prototype.promiseGrants = function()
-    {
-    	p = this.administerCheckPromise();
-    	if (p) return p;
-
-        if (this._grantsPromise)
-        	return this._grantsPromise;
-        else if (this.userGrants())
-        {
-        	result = $.Deferred();
-        	result.resolve(this);
-        	return result;
-        }
-        
-        var _this = this;	
-        this._grantsPromise = cr.getData(
-        	{
-        		path: this.urlPath(),
-        		fields: ['user grants', 'group grants'],
-        		resultType: cr.User
-        	})
-        	.then(function(users)
-        		{
-        			result = $.Deferred();
-        			result.resolve(users[0]);
-        			return result;
-        		});
-        return this._grantsPromise;
-    }
-    
 	Grantable.prototype.postUserGrant = function(privilege, path)
 	{
 		var _this = this;
