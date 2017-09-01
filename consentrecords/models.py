@@ -5897,7 +5897,16 @@ class Organization(SecureRootInstance, dbmodels.Model):
         self.inquiryAccessGroup = h.inquiryAccessGroup 
         self.publicAccess = h.publicAccess 
         self.primaryAdministrator = h.primaryAdministrator 
-           
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s\t%s" % \
+            (self.id, self.webSite or '-', 
+             str(self.inquiryAccessGroup) if self.inquiryAccessGroup else '-',
+             self.publicAccess or '-',
+             str(self.primaryAdministrator) if self.primaryAdministrator else '-',
+            )
+    
     def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')

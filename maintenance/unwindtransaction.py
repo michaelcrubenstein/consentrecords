@@ -53,14 +53,6 @@ def printNotification(i):
         print("\t%s\t%s\t%s" % \
               (na.id, na.position, na.argument))
          
-def printOrganization(i):
-    print("%s\t%s\t%s\t%s\t%s" % \
-        (i.id, i.webSite or nullString, 
-         str(i.inquiryAccessGroup) if i.inquiryAccessGroup else nullString,
-         i.publicAccess or nullString,
-         str(i.primaryAdministrator) if i.primaryAdministrator else nullString,
-        ))
-
 def printInstance(i):
 	print(i.dataString)
          
@@ -214,7 +206,7 @@ def printTransaction(t):
 
     printTable("\tweb site\tinquiry access group\tpublic access\tprimary administrator",
                "Organizations", "Organization",
-               printOrganization,
+               printInstance,
                t.createdOrganizations, t.changedOrganizations, 
                t.deletedOrganizations, t.organizationHistories)
 
