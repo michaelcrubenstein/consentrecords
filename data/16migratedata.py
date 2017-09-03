@@ -164,6 +164,7 @@ def buildPositionedElements(instances, parentType, sourceType, historyType, uniq
 def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerms):
     print("buildNameElements", parentType, sourceType, historyType)
     for u in instances:
+        print(u.id, u.description)
         parent = parentType.objects.get(pk=u.id)
         d = defaultdict(list)
         for v in u.value_set.filter(field__in=uniqueTerms.keys()):
@@ -237,14 +238,17 @@ def buildRootInstances(instances, sourceType, historyType, uniqueTerms):
 def buildOrganizations(instances, sourceType):
     print("buildOrganizations")
     for u in instances:
+        primaryAdministrator = getUniqueReference(u, 'primary administrator')
+        publicAccess = getUniqueReference(u, 'public access')
         defaults={'transaction': u.transaction,
                   'deleteTransaction': u.deleteTransaction,
                   'webSite': getUniqueDatum(u, 'Web Site'),
-                  'publicAccess': str(u.publicAccess) if u.publicAccess else None,
-                  'primaryAdministrator': User.objects.get(pk=u.primaryAdministrator.id) if u.primaryAdministrator else None,
+                  'publicAccess': str(publicAccess) if publicAccess else None,
+                  'primaryAdministrator': User.objects.get(pk=primaryAdministrator.id) if primaryAdministrator else None,
                  }
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
+        print(newItem.id)
 
 def buildGroups(instances, parentType, sourceType):
     print("buildGroups")
@@ -259,6 +263,7 @@ def buildGroups(instances, parentType, sourceType):
 def buildChildren(instances, parentType, sourceType, historyType, uniqueTerms, parentIDF):
     print("buildChildren", parentType, sourceType, historyType)
     for u in instances:
+        print(u.id, u.description)
         vs = u.value_set.filter(field__in=uniqueTerms.keys())
         tList = getValueTransactions(u, vs)
         try:
@@ -267,15 +272,16 @@ def buildChildren(instances, parentType, sourceType, historyType, uniqueTerms, p
                       'deleteTransaction': u.deleteTransaction,
                       'parent': parentType.objects.get(pk=parentIDF(u))}
         except parentType.DoesNotExist:
-            print(u, parentIDF(u))
+            print('parent does not exist', u, parentIDF(u))
             raise
             
         for field in uniqueTerms.keys():
             termData = uniqueTerms[field]
             v = getUniqueValue(u, field)
-            defaults[termData['dbField']] = v and termData['f'](getUniqueValue(u, field))
+            defaults[termData['dbField']] = v and termData['f'](v)
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
+        print('',sourceType, newItem.id)
         
         defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], None), uniqueTerms.keys()))
         for t in tList[:-1]:
@@ -399,8 +405,19 @@ if __name__ == "__main__":
     
     try:
         with transaction.atomic():
-            print("build users")
             users = Instance.objects.filter(typeID=terms.user)
+            orgs = Instance.objects.filter(typeID=terms['Organization'])
+            groups = Instance.objects.filter(typeID=terms['group'], parent__typeID=terms['Organization'])
+            sites = Instance.objects.filter(typeID=terms['Site'])
+            offerings = Instance.objects.filter(typeID=terms['Offering'], parent__parent__id__in=sites)
+            addresses = Instance.objects.filter(typeID=terms['Address'])
+            sessions = Instance.objects.filter(typeID=terms['Session'], parent__parent__id__in=offerings)
+            inquiries = Instance.objects.filter(typeID=terms['Inquiries'], parent__id__in=sessions)
+            enrollments = Instance.objects.filter(typeID=terms['Enrollment'], parent__parent__id__in=sessions)
+            engagements = Instance.objects.filter(typeID=terms['Experience'], parent__parent__id__in=sessions)
+            periods = Instance.objects.filter(typeID=terms['Period'], parent__parent__parent__parent__parent__typeID=terms['Site'])
+
+            print("build users")
             for u in users:
                 firstName = getUniqueDatum(u, 'first name')
                 lastName = getUniqueDatum(u, 'last name')
@@ -420,11 +437,15 @@ if __name__ == "__main__":
                    defaults=defaults)
             
             # Set the primary administrator for all users.
-            for u in users:
-                if u.primaryAdministrator:
-                    target = User.objects.get(pk=u.id)
-                    target.primaryAdministrator = User.objects.get(pk=u.primaryAdministrator.id)
-                    target.save()
+			for u in users:
+				try:
+					primaryAdministrator = u.value_set.get(field=terms['primary administrator'],deleteTransaction__isnull=True).referenceValue
+					target = User.objects.get(pk=u.id)
+					target.primaryAdministrator = User.objects.get(pk=primaryAdministrator.id)
+					target.save()
+					print(target.firstName, target.lastName)
+				except Value.DoesNotExist:
+					pass
                 
             # Create the user history
             uniqueTerms = {terms['first name']: {'dbField': 'firstName', 'f': lambda v: v.stringValue},
