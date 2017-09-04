@@ -132,12 +132,17 @@ aws elb create-load-balancer --load-balancer-name btc-load-balancer --listeners 
 virtualenv -p python3 ~/eb_django_app/prod
 
 ##################################################################
-# Create the requirements file for elb
+# Create the requirements file for elastic beanstalk
 ##################################################################
 
 -- from the eb-django-app directory
+cd ~/eb-django-app
 pip3 freeze > requirements.txt
--- After you do this, you have to prefix the line that contains mysql-connector-python with --allow-external
+-- After you create the requirements.txt file, you have to remove the line that 
+-- contains mysql-connector-python because a patched version of mysql-connector-python 
+-- is in the PYTHONPATH. If you fail to remove the line, then the unpatched version 
+-- takes precedence on the elastic beanstalk instance.
+-- The patches are enumerated in setupenvironment.txt
 sudo nano requirements.txt
 
 ##################################################################
@@ -368,3 +373,10 @@ def d1(i):
         transactionState = TransactionState(user.transaction.user)
         i.value_set.get(field=terms.name, deleteTransaction__isnull=True).updateValue({'text': i.description.text[1:]}, transactionState)
         Instance.updateDescriptions([i], nameLists)
+
+##################################################################
+# If the key needs to change, it is referenced by name in the following locations:
+##################################################################
+
+grep -n 'Be The Change Projects' config.yml
+grep -n 'Be The Change Projects' ~/eb_django_app/.elasticbeanstalk/consentrecords-prod.env.yml
