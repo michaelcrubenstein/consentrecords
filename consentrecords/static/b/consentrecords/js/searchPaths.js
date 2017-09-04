@@ -44,15 +44,13 @@ var SearchPathsResultsView = (function () {
 		var offering = fc.experience.offering();
 		if (offering && offering.id())
 		{
-			if (!offering.areCellsLoaded())
-				throw ("Runtime error: offering data is not loaded");
-				
 			var services = offering.offeringServices();
+			console.assert(services);
 			if (services.findIndex(function(s)
 				{
 					return queryFlags.findIndex(function(qf)
 						{
-							return s.services().findIndex(function(s2)
+							return s.service().serviceImplications().findIndex(function(s2)
 								{
 									return qf.service.id() == s2.id();
 								}) >= 0;
@@ -61,19 +59,22 @@ var SearchPathsResultsView = (function () {
 				return true;
 		}
 		
-		var services = fc.experience.experienceServices();
-		if (services)
+		if (fc.experience instanceof cr.Experience)
 		{
-			if (services.findIndex(function(s) {
-					return queryFlags.findIndex(function(qf)
-					{
-						return s.service().serviceImplications().findIndex(function(s2)
-							{
-								return qf.service.id() == s2.service().id();
-							}) >= 0;
-					}) >= 0;
-				}) >= 0)
-				return true;
+			var services = fc.experience.experienceServices();
+			if (services)
+			{
+				if (services.findIndex(function(s) {
+						return queryFlags.findIndex(function(qf)
+						{
+							return s.service().serviceImplications().findIndex(function(s2)
+								{
+									return qf.service.id() == s2.service().id();
+								}) >= 0;
+						}) >= 0;
+					}) >= 0)
+					return true;
+			}
 		}
 		return false;
 	}
