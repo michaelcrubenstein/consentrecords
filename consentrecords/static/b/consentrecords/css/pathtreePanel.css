@@ -79,41 +79,6 @@ svg.pathway g.guide rect.column-icon {
 	fill-opacity: 0.0;
 }
 
-g.flag rect.opaque {
-	fill-opacity: 1.0;
-	fill: white;
-	stroke-opacity: 0.0;
-}
-g.flag rect.bg {
-	fill-opacity: 0.2;
-	stroke-width: 0;
-	stroke-opacity: 0.0;
-}
-g.flag.selected rect.bg {
-	fill-opacity: 0.6;
-}
-g.flag line.flag-pole {
-	stroke-opacity: 0.6;
-	stroke-width: 3;
-}
-
-g.flag .flag-label {	/* For flags */
-	text-anchor: start;
-	-webkit-user-select: none;  /* Chrome all / Safari all */
-	-moz-user-select: none;     /* Firefox all */
-	-ms-user-select: none;      /* IE 10+ */
-	user-select: none;
-	cursor: default;
-}
-
-g.flag .flag-label>tspan:nth-child(1) {	/* For flags */
-	font-weight: 600;
-}
-
-g.flag .flag-label>tspan:nth-child(2) {	/* For flags */
-	font-weight: 400;
-}
-
 g.detail .flag-label {	/* For detail panels */
 	text-anchor: start;
 	font-weight: 500;

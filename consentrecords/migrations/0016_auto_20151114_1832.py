@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='deletedinstance',
             name='id',
-            field=models.OneToOneField(serialize=False, db_column='id', to='consentrecords.Instance', primary_key=True, editable=False),
+            field=models.OneToOneField(serialize=False, db_column='id', to='consentrecords.Instance', primary_key=True, editable=False, on_delete=models.CASCADE),
         ),
     ]

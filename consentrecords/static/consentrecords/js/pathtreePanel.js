@@ -22,67 +22,70 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getDescription = function()
 	{
-		var _this = this;
-		var f = function(name)
-		{
-			var d = _this.experience.getValue(name);
-			return d && d.getInstanceID() && d.getDescription();
-		}
-		return f("Offering") ||
-			this.experience.getDatum("User Entered Offering") ||
-			f("Service") ||
-			this.experience.getDatum("User Entered Service") ||
-			"None";
+		e = this.experience;
+		return (e.offering() && e.offering().description()) ||
+		    (e instanceof cr.Experience &&
+		     (e.customOffering() ||
+		      (e.experienceServices() &&
+		       e.experienceServices().length &&
+		       e.experienceServices()[0].description()) ||
+		      (e.customServices() &&
+		       e.customServices().length &&
+		       e.customServices()[0].description()))) ||
+		    "None";
 	}
 	
 	FlagController.prototype.subHeading = function()
 	{
-		var _this = this;
-		var f = function(name)
-		{
-			var d = _this.experience.getValue(name);
-			return d && d.getInstanceID() && d.getDescription();
-		}
-		return f("Organization") ||
-			this.experience.getDatum("User Entered Organization") ||
-			f("Site") ||
-			this.experience.getDatum("User Entered Site") ||
-			"";
+		e = this.experience;
+		return (e.organization() && e.organization().description()) ||
+		       (e instanceof cr.Experience && e.customOrganization()) ||
+		       (e.site() && e.site().description()) ||
+		       (e instanceof cr.Experience && e.customSite()) ||
+		       "";
 	}
 	
-	FlagController.prototype.pickedOrCreatedValue = function(pickedName, createdName)
+	FlagController.prototype.pickedOrCreatedText = function(picked, created)
 	{
-		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
+		return this.experience.pickedOrCreatedText(picked, created);
 	}
 	
+	/* Returns the column of the first service (either from 
+		the experience's offering or the experience itself)
+		that has a designated column.
+	 */
 	FlagController.prototype.getColumn = function()
 	{
 		var minColumn = PathGuides.data.length - 1;
 		var maxColumn = minColumn;
 		
-		var offering = this.experience.getValue("Offering");
-		if (offering && offering.getInstanceID())
+		var offering = this.experience.offering();
+		if (offering && offering.id())
 		{
-			if (!offering.areCellsLoaded())
-				throw new Error("Runtime error: offering data is not loaded");
-				
-			var services = offering.getCell("Service");
-			minColumn = services.data.map(function(s) {
-					return new Service(s).getColumn();
-				})
-				.reduce(function(a, b) {
-					if (a < maxColumn)
-						return a;
-					else
-						return b;
-				}, minColumn);
+			var services = offering.offeringServices();
+			
+			/* Services will not be instantiated if the currently logged-in
+				user does not have read access to the offering.
+			 */
+			if (services)
+			{
+				minColumn = services.map(function(s) {
+						return s.service().getColumn();
+					})
+					.reduce(function(a, b) {
+						if (a < maxColumn)
+							return a;
+						else
+							return b;
+					}, minColumn);
+			}
 		}
 		
-		var service = this.experience.getCell("Service");
-		if (service)
+		if (this.experience instanceof cr.Experience)
 		{
-			minColumn = service.data.map(function(s) {
-						return new Service(s).getColumn();
+			var services = this.experience.experienceServices();
+			minColumn = services.map(function(s) {
+						return s.service().getColumn();
 					})
 					.reduce(function(a, b) {
 						if (a < maxColumn)
@@ -96,22 +99,38 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getStartDate = function()
 	{
-		return this.experience.getDatum("Start") || this.getTimeframeText() || this.goalDateString;
+		return this.experience.start() || this.getTimeframeText() || this.goalDateString;
 	}
 	
 	FlagController.prototype.getTimeframe = function()
 	{
-		var timeframeValue = this.experience.getValue("Timeframe");
-		return timeframeValue && timeframeValue.getInstanceID() && timeframeValue.getDescription();
+		if (this.experience instanceof cr.Engagement)
+		{
+			var end = this.experience.end();
+			if (end && end < getUTCTodayDate().toISOString().substr(0, 10))
+			{
+				return "Previous";
+			}
+			else
+			{
+				var start = this.experience.start();
+				if (start && start < getUTCTodayDate().toISOString().substr(0, 10))
+					return "Current";
+				else
+					return "Goal";
+			}
+		}
+		else
+			return this.experience.timeframe();
 	}
 	
 	FlagController.prototype.getEndDate = function()
 	{
-		var s = this.experience.getDatum("End");
+		var s = this.experience.end();
 		if (s) return s;
 		
 		var timeframe = this.getTimeframe();
-		s = this.experience.getDatum("Start");
+		s = this.experience.start();
 		if (s)
 		{
 			if (timeframe == "Previous" || timeframe == "Current" ||
@@ -149,27 +168,30 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getYearArray = function()
 	{
-		var e = this.experience.getDatum("End");
-		var s = this.experience.getDatum("Start");
-		var t = this.experience.getValue("Timeframe");
+		var e = this.experience.end();
+		var s = this.experience.start();
+		var t;
 		var top, bottom;
 		
 		if (e)
 			top = new Date(e).getUTCFullYear();
 		else if (s)
 			top = (new Date().toISOString().substr(0, s.length) < s) ? "Goal" : "Now"
-		else if (t && t.getDescription() == "Previous")
-			top = "Done";
-		else if (t && t.getDescription() == "Current")
-			top = "Now";
-		else
-			top = "Goal";
+		else {
+			t = this.experience.timeframe();
+			if (t == "Previous")
+				top = "Done";
+			else if (t == "Current")
+				top = "Now";
+			else
+				top = "Goal";
+		}
 			
 		if (s)
 			bottom = new Date(s).getUTCFullYear();
-		else if (t && t.getDescription() == "Previous")
+		else if (t == "Previous")
 			bottom = "Done";
-		else if (t && t.getDescription() == "Current")
+		else if (t == "Current")
 			bottom = "Now";
 		else
 			bottom = "Goal";
@@ -191,13 +213,14 @@ var FlagController = (function() {
 	
 	FlagController.prototype.checkOfferingCells = function(done)
 	{
-		var offering = this.experience.getValue("Offering");
-		if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
-		{
-			offering.promiseCellsFromCache()
-				.then(done, cr.asyncFail);
-		}
-		else
+		// Is this needed any longer?
+// 		var offering = this.experience.getValue("Offering");
+// 		if (offering && offering.id() && !offering.areCellsLoaded())
+// 		{
+// 			offering.promiseCellsFromCache()
+// 				.then(done, cr.asyncFail);
+// 		}
+// 		else
 			done();
 	}
 	
@@ -244,23 +267,24 @@ var FlagController = (function() {
 		
 		var title;
 		var tspan;
-		title = this.pickedOrCreatedValue("Offering", "User Entered Offering");
+		var e = this.experience;
+		title = e.pickedOrCreatedText(e.offering(), e.customOffering());
 		if (!title)
 		{
-			var serviceValue = this.experience.getValue("Service");
-			var userServiceValue = this.experience.getValue("User Entered Service");
+			var service = e.experienceServices().length > 0 ? e.experienceServices()[0] : null;
+			var customService = e.customServices().length > 0 ? e.customServices()[0] : null;
 
-			if (serviceValue)
-				title = serviceValue.getDescription();
-			else if (userServiceValue)
-				title = userServiceValue.getDescription();
+			if (service)
+				title = service.description();
+			else if (customService)
+				title = customService.description();
 		}
-		var orgString = this.pickedOrCreatedValue("Organization", "User Entered Organization");
-		var siteString = this.pickedOrCreatedValue("Site", "User Entered Site");
+		var orgString = e.pickedOrCreatedText(e.organization(), e.customOrganization());
+		var siteString = e.pickedOrCreatedText(e.site(), e.customSite());
 		if (siteString == orgString)
 			siteString = "";
-		var dateRange = getDateRange(this.experience);
-		var tagDescriptions = getTagList(this.experience);
+		var dateRange = e.dateRange();
+		var tagDescriptions = e.getTagList();
 		var lineHeight = 0;
 		var lineMargin = 3;
 		
@@ -361,42 +385,7 @@ var FlagController = (function() {
 	FlagController.prototype.setupChangeEventHandler = function(data, handler)
 	{
 		var experience = this.experience;
-		
-		var allCells = [experience.getCell("Organization"),
-		 experience.getCell("User Entered Organization"),
-		 experience.getCell("Site"),
-		 experience.getCell("User Entered Site"),
-		 experience.getCell("Offering"),
-		 experience.getCell("User Entered Offering"),
-		 experience.getCell("Start"),
-		 experience.getCell("End"),
-		 experience.getCell("Timeframe"),
-		 experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		var serviceCells = [experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		allCells.forEach(function(cell)
-		 {
-			/* cell will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (cell)
-			{
-				setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", data, handler);
-			}
-		 });
-		serviceCells.forEach(function(cell)
-		 {
-			/* cell will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (cell)
-			{
-				setupOnViewEventHandler(cell, "valueDeleted.cr", data, handler);
-			}
-		 });
+		setupOnViewEventHandler(this.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr", data, handler);
 	}
 	
 	FlagController.prototype.selected = function(newValue)
@@ -455,7 +444,7 @@ var PathView = (function() {
 							  
 	PathView.prototype.handleChangedExperience = function(r, fd)
 	{
-		setupOnViewEventHandler(fd.experience, "dataChanged.cr", r, function(eventObject)
+		setupOnViewEventHandler(fd.experience, "changed.cr", r, function(eventObject)
 		{
 			fd.colorElement(eventObject.data);
 		});
@@ -465,40 +454,26 @@ var PathView = (function() {
 		The trigger runs the specified handler.
 	 */
 	PathView.prototype.setupServiceTriggers = function(r, fd, handler)
-		{
-			var e = fd.experience;
-			var serviceCell = e.getCell("Service");
-			var userServiceCell = e.getCell("User Entered Service");
-			var f = function(eventObject, v)
-			{
-				if (!v.isEmpty())
-					handler(eventObject, v);
-			}
-			
-			setupOnViewEventHandler(serviceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
-			setupOnViewEventHandler(userServiceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
-		}
+	{
+		setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr", r, handler);
+	}
 	
 	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
 		The trigger sets the color of the specified element (r).
 	 */	
 	PathView.prototype.setupColorWatchTriggers = function(r, fd)
 	{
-		var e = fd.experience;
-		var offeringCell = e.getCell("Offering");
-		
 		var f = function(eventObject)
-			{
-				fd.colorElement(eventObject.data);
-			}
+		{
+			fd.colorElement(eventObject.data);
+		}
 		
-		setupOneViewEventHandler(offeringCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
 		this.setupServiceTriggers(r, fd, f);
 	}
 	
 	PathView.prototype.canEditExperience = function(fd)
 	{
-		return fd.experience.getTypeName() == "More Experience" && fd.experience.canWrite();
+		return fd.experience instanceof cr.Experience && fd.experience.canWrite();
 	}
 	
 	PathView.prototype.clearDetail = function()
@@ -523,7 +498,7 @@ var PathView = (function() {
 	
 	PathView.prototype.showDetailPanel = function(fd)
 	{
-		if (fd.experience.getTypeName() == "Experience") {
+		if (fd.experience instanceof cr.Engagement) {
 			;	/* Nothing to edit */
 		}
 		else
@@ -532,10 +507,10 @@ var PathView = (function() {
 			{
 				try
 				{
-					var experience = new Experience(fd.experience.cell.parent, fd.experience);
-					experience.replaced(fd.experience);
+					var experienceController = new ExperienceController(fd.experience.path(), fd.experience, true);
+					experienceController.oldInstance(fd.experience);
 					
-					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
+					var editPanel = new NewExperiencePanel(experienceController, revealPanelLeft);
 					
 					editPanel.showLeft().then(unblockClick);
 				}
@@ -550,7 +525,7 @@ var PathView = (function() {
 	
 	PathView.prototype.showCommentsPanel = function(flag, fd)
 	{
-		if (fd.experience.getTypeName() == "Experience") {
+		if (fd.experience instanceof cr.Engagement) {
 			;	/* Nothing to edit */
 		}
 		else
@@ -603,20 +578,13 @@ var PathView = (function() {
 					{
 						_this.clearLayout();
 						_this.checkLayout();
+						_this.transitionPositions();
 					},
 					cr.asyncFail);
 		}
 	
-		var handleExperienceDateChanged = function(eventObject)
-		{
-			_this.transitionPositions();
-		}
-	
 		var node = this.sitePanel.node();
-		setupOnViewEventHandler(experience, "dataChanged.cr", node, handleDataChanged);
-		setupOnViewEventHandler(experience.getCell("Start"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
-		setupOnViewEventHandler(experience.getCell("End"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
-		setupOnViewEventHandler(experience.getCell("Timeframe"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
+		setupOnViewEventHandler(experience, "changed.cr", node, handleDataChanged);
 	}
 	
 	PathView.prototype._setFlagText = function(node)
@@ -636,20 +604,11 @@ var PathView = (function() {
 	{
 		var _this = this;
 		
-		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, function(eventObject)
+		setupOneViewEventHandler(fd.experience, "deleted.cr", node, function(eventObject)
 			{
 				$(eventObject.data).remove();
-				_this.handleValueDeleted(this);
+				_this.handleExperienceDeleted(this);
 			});
-		
-		var flagCells = ["Organization",
-		 	"User Entered Organization",
-		 	"Site",
-		 	"User Entered Site",
-		 	"Offering",
-		 	"User Entered Offering",
-		 	"Service",
-		 	"User Entered Service"];
 		
 		var flagDataChanged =  function(eventObject)
 			{
@@ -665,17 +624,7 @@ var PathView = (function() {
 						});	
 			}
 						
-		flagCells.forEach(function(s)
-		 {
-			/* cell will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			var cell = fd.experience.getCell(s);
-			if (cell)
-			{
-				setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, flagDataChanged);
-			}
-		 });
+		setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr", node, flagDataChanged);
 	}
 	
 	PathView.prototype.compareDates = function (d1, d2)
@@ -769,7 +718,7 @@ var PathView = (function() {
 			.attr('fill', function(d) { return d.fontColor(); })
 			.each(function(d)
 				{
-					setupOnViewEventHandler(d.experience, "dataChanged.cr", this, function(eventObject)
+					setupOnViewEventHandler(d.experience, "changed.cr", this, function(eventObject)
 					{
 						d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
 					});
@@ -784,7 +733,7 @@ var PathView = (function() {
 			.attr('fill', function(d) { return d.fontColor(); })
 			.each(function(d)
 				{
-					setupOnViewEventHandler(d.experience, "dataChanged.cr", this, function(eventObject)
+					setupOnViewEventHandler(d.experience, "changed.cr", this, function(eventObject)
 					{
 						d3.select(eventObject.data).attr('fill', d.fontColor());
 					});
@@ -1033,8 +982,9 @@ var PathView = (function() {
 })();
 
 var PathLines = (function() {
-	PathLines.prototype = new PathView();
-		
+	PathLines.prototype = Object.create(PathView.prototype);
+	PathLines.prototype.constructor = PathLines;
+
 	PathLines.prototype.textLeftMargin = 10;
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
 	PathLines.prototype.pathBackground = "white";
@@ -1065,10 +1015,9 @@ var PathLines = (function() {
 	/* A flag indicating whether or not the userSet event has been triggered. */
 	PathLines.prototype.isUserSet = false;
 
-	PathLines.prototype.handleValueDeleted = function(experience)
+	PathLines.prototype.handleExperienceDeleted = function(experience)
 	{
 		var index = this.allExperiences.indexOf(experience);
-		var _this = this;
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
 		this.clearLayout();
@@ -1178,7 +1127,7 @@ var PathLines = (function() {
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
-				return d.getTypeName() === "More Experience";
+				return d instanceof cr.Experience;
 			})
 			.forEach(function(d)
 			{
@@ -1221,15 +1170,10 @@ var PathLines = (function() {
 		$(this.bg.node()).width(newWidth);
 	}
 	
-	PathLines.prototype.getUser = function()
-	{
-		return this.path.getValue(cr.fieldNames.user);
-	}
-	
 	PathLines.prototype.setUser = function(path, editable)
 	{
-		if (path.getPrivilege() === cr.privileges.find)
-			throw "You do not have permission to see information about {0}".format(path.getDescription());
+		if (path.privilege() === cr.privileges.find)
+			throw "You do not have permission to see information about {0}".format(path.description());
 		if (this.path)
 			throw "path has already been set for this pathtree";
 			
@@ -1320,39 +1264,25 @@ var PathLines = (function() {
 				_this.handleResize();
 			});
 
-		var successFunction2 = function()
+		var successFunction2 = function(engagements, experiences)
 		{
 			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
 			
 			try
 			{	
-				var cell = _this.path.getCell("More Experience");
 				var addedFunction = function(eventObject, newData)
 					{
 						eventObject.data.addMoreExperience(newData);
 					}
-				cell.on("valueAdded.cr", _this, addedFunction);
+				_this.path.on("experienceAdded.cr", _this, addedFunction);
 				$(_this.pathwayContainer.node()).on("remove", function()
 					{
-						cell.off("valueAdded.cr", addedFunction);
+						_this.path.off("experienceAdded.cr", addedFunction);
 					});
 				
-				var experiences = cell.data;
+				_this.allExperiences = engagements.slice().concat(experiences);
 			
-				_this.allExperiences = _this.allExperiences.concat(experiences);
-			
-				$(experiences).each(function()
-				{
-					this.calculateDescription();
-				});
-			
-				/* Ensure that all of the offerings have their associated cells. */
-				_this.allExperiences.forEach(function(experience)
-					{
-						checkOfferingCells(experience);
-					});
-		
 				_this.showAllExperiences();
 			
 				$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
@@ -1373,28 +1303,9 @@ var PathLines = (function() {
 			}
 		}
 		
-		return crp.promise({path:  this.path.getInstanceID() + '::reference(user)::reference(Experience)', 
-				   fields: ["parents"]})
-		.then(function(experiences)
-			{
-				_this.allExperiences = experiences.slice();
-				$(experiences).each(function()
-				{
-					this.setDescription(this.getValue("Offering").getDescription());
-				});
-			})
-		.then(function() {
-			return crp.promise({path: _this.path.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
-								'::reference(Session)::reference(Sessions)::reference(Offering)'});
-			})
-		.then(function() {
-				return crp.promise({path: _this.path.getInstanceID() + '/More Experience/Offering'});
-			})
-		.then(function() {
-				return crp.promise({path: "Service"});
-			})
-		.then(function() {
-				return _this.path.promiseCellsFromCache(["More Experience", "parents"]);
+		return cr.Service.servicesPromise()
+			.then(function() {
+				return _this.path.promiseExperiences();
 			})
 		.then(successFunction2, cr.asyncFail);
 	}
@@ -1438,7 +1349,7 @@ var AlertButton = (function() {
 					_this.onClick();
 				})
 			.classed("settings", true)
-			.style("display", this.user.getPrivilege() == cr.privileges.administer ? null : "none")
+			.style("display", this.user.privilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", imagePath);
 		this.button.append("span")
@@ -1455,15 +1366,18 @@ var AlertButton = (function() {
 })();
 
 var SettingsButton = (function() {
-	SettingsButton.prototype = new AlertButton();
-	
+	SettingsButton.prototype = Object.create(AlertButton.prototype);
+	SettingsButton.prototype.constructor = SettingsButton;
+
 	SettingsButton.prototype.onClick = function()
 	{
 		if (prepareClick('click', "Settings"))
 		{
 			try
 			{
-				var panel = new Settings(this.user);
+				var controller = new UserController(this.user, true);
+				controller.oldInstance(this.user);
+				var panel = new Settings(controller, revealPanelUp);
 				panel.showUp().always(unblockClick);
 			}
 			catch(err)
@@ -1476,9 +1390,9 @@ var SettingsButton = (function() {
 	
 	SettingsButton.prototype.badgeCount = function()
 	{
-		var cell = this.user.getCell(cr.fieldNames.accessRequest);
-		if (cell && cell.data.length > 0)
-			return cell.data.length;
+		var cell = this.user.userGrantRequests();
+		if (cell && cell.length > 0)
+			return cell.length;
 		else
 			return "";
 	}
@@ -1488,9 +1402,13 @@ var SettingsButton = (function() {
 		AlertButton.prototype.setup.call(this, settingsImagePath);
 		
 		var _this = this;
-		setupOnViewEventHandler(this.user.getCell(cr.fieldNames.accessRequest), "valueDeleted.cr valueAdded.cr", 
-			this.button.node(), function() { _this.checkBadge(); });
-		this.checkBadge();
+		this.user.promiseUserGrantRequests()
+			.then(function()
+				{
+					setupOnViewEventHandler(_this.user, "userGrantRequestDeleted.cr userGrantRequestAdded.cr", 
+						_this.button.node(), function() { _this.checkBadge(); });
+					_this.checkBadge();
+				});
 	}
 	
 	function SettingsButton(button, user)
@@ -1502,8 +1420,9 @@ var SettingsButton = (function() {
 })();
 
 var NotificationsButton = (function() {
-	NotificationsButton.prototype = new AlertButton();
-	
+	NotificationsButton.prototype = Object.create(AlertButton.prototype);
+	NotificationsButton.prototype.constructor = NotificationsButton;
+
 	NotificationsButton.prototype.onClick = function()
 	{
 		if (prepareClick('click', "Notifications"))
@@ -1523,14 +1442,13 @@ var NotificationsButton = (function() {
 	
 	NotificationsButton.prototype.badgeCount = function()
 	{
-		var cell = this.user.getCell(cr.fieldNames.notification);
-		if (!cell)
+		var notifications = this.user.notifications();
+		if (!notifications)
 			return "";
 		else {
-			var freshItems = cell.data.filter(function (d) 
+			var freshItems = notifications.filter(function (d) 
 			{ 
-				var isFreshEnum = d.getValue(cr.fieldNames.isFresh);
-				return isFreshEnum && isFreshEnum.getDescription() == cr.booleans.yes; 
+				return d.isFresh() == cr.booleans.yes; 
 			});
 			return freshItems.length || "";
 		}
@@ -1541,15 +1459,15 @@ var NotificationsButton = (function() {
 		AlertButton.prototype.setup.call(this, notificationsImagePath);
 		
 		var _this = this;
-		crp.promise({path: "{0}/notification".format(this.user.getInstanceID())})
+		this.user.promiseNotifications()
 			.then(function()
 				{
-					var cell = _this.user.getCell(cr.fieldNames.notification);
-					cell.on("valueDeleted.cr valueAdded.cr dataChanged.cr", 
+					var cell = _this.user;
+					cell.on("notificationDeleted.cr notificationAdded.cr", 
 						_this.button.node(), function() { _this.checkBadge(); });
-					cell.data.forEach(function(d)
+					_this.user.notifications().forEach(function(d)
 						{
-							d.getCell(cr.fieldNames.isFresh).on("dataChanged.cr", _this.button.node(),
+							setupOnViewEventHandler(d, "changed.cr", _this.button.node(),
 								 function() { _this.checkBadge(); });
 						})
 		
@@ -1567,7 +1485,9 @@ var NotificationsButton = (function() {
 })();
 
 var PathlinesPanel = (function () {
-	PathlinesPanel.prototype = new SitePanel();
+	PathlinesPanel.prototype = Object.create(crv.SitePanel.prototype);
+	PathlinesPanel.prototype.constructor = PathlinesPanel;
+
 	PathlinesPanel.prototype.user = null;
 	PathlinesPanel.prototype.pathtree = null;
 	PathlinesPanel.prototype.navContainer = null;
@@ -1579,10 +1499,9 @@ var PathlinesPanel = (function () {
 		
 	PathlinesPanel.prototype.notificationsBadgeCount = function(user)
 	{
-		// TODO:
-		var cell = user.getCell(cr.fieldNames.notification);
-		if (cell && cell.data.length > 0)
-			return cell.data.length;
+		var length = user.notifications().length;
+		if (length > 0)
+			return length;
 		else
 			return "";
 	}
@@ -1608,7 +1527,7 @@ var PathlinesPanel = (function () {
 					d3.event.preventDefault();
 				})
 			.classed("settings", true)
-			.style("display", user.getPrivilege() == cr.privileges.administer ? null : "none")
+			.style("display", user.privilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", notificationsImagePath);
 		button.append("span")
@@ -1618,17 +1537,17 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.createExperience = function()
 	{
-		return new Experience(this.pathtree.path);
+		return new ExperienceController(this.pathtree.path, null, false);
 	}
 	
 	PathlinesPanel.prototype.startNewExperience = function(phase, done, fail)
 	{
 		try
 		{
-			var experience = this.createExperience();
-			experience.initDateRange(phase);
+			var experienceController = this.createExperience();
+			experienceController.initDateRange(phase);
 							
-			new NewExperiencePanel(experience, phase)
+			new NewExperiencePanel(experienceController)
 				.showUp()
 				.done(done);
 		}
@@ -1662,8 +1581,8 @@ var PathlinesPanel = (function () {
 			.classed('site-active-text', true)
 			.text("+");
 			
-		var moreExperiences = user.getValue("Path");
-		var canAddExperience = (moreExperiences.getInstanceID() === null ? user.canWrite() : moreExperiences.canWrite());
+		var moreExperiences = user.path();
+		var canAddExperience = (moreExperiences.id() === null ? user.canWrite() : moreExperiences.canWrite());
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
 	
@@ -1687,12 +1606,17 @@ var PathlinesPanel = (function () {
 		this.searchPanel = new SearchPathsPanel();
 	}
 	
+	/** Returns the FlagController whose experience matches the specified id. */
 	PathlinesPanel.prototype.getFlagData = function(id)
 	{
 		var $group = $(this.panelDiv.node()).find(".experiences>g")
 			.filter(function() { 
-				return d3.select(this).datum().experience.id == id; 
+				return d3.select(this).datum().experience.id() == id; 
 				});
+				
+		if (!$group.get(0))
+			throw new Error("This experience is not in the path of {0}.".format(this.pathtree.path.caption()));
+			
 		return d3.select($group.get(0)).datum();
 	}
 	
@@ -1749,7 +1673,7 @@ var PathlinesPanel = (function () {
 
 		var addExperienceButton = this.navContainer.appendRightButton();
 		
-		this.navContainer.appendTitle(getUserDescription(user));
+		this.navContainer.appendTitle(user.caption());
 		
 // 		var findButton = this.bottomNavContainer.appendRightButton()
 // 				.on("click",
@@ -1779,7 +1703,7 @@ var PathlinesPanel = (function () {
 		
 		function checkTitle()
 		{
-			_this.navContainer.setTitle(getUserDescription(user));
+			_this.navContainer.setTitle(user.caption());
 		}
 				
 		$(this.pathtree).on("userSet.cr", function()
@@ -1794,11 +1718,9 @@ var PathlinesPanel = (function () {
 					_this.notificationsAlertButton.setup();
 				}
 				
-				setupOnViewEventHandler(user.getCell(cr.fieldNames.firstName), "dataChanged.cr", _this.node(), checkTitle);
-				setupOnViewEventHandler(user.getCell(cr.fieldNames.lastName), "dataChanged.cr", _this.node(), checkTitle);
-				setupOnViewEventHandler(user.getCell(cr.fieldNames.email), "dataChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user, "changed.cr", _this.node(), checkTitle);
 				
-// 				findButton.style("display", user.getPrivilege() === cr.privileges.administer ? null : "none");
+// 				findButton.style("display", user.privilege() === cr.privileges.administer ? null : "none");
 				
 				this.isMinHeight = true;
 				this.handleResize();
@@ -1806,103 +1728,6 @@ var PathlinesPanel = (function () {
 	}
 	
 	return PathlinesPanel;
-})();
-
-var ShareOptions = (function () {
-
-	function ShareOptions(panelNode, user)
-	{
-		var dimmer = new Dimmer(panelNode);
-		var panel = d3.select(panelNode).append('panel')
-			.classed("confirm", true);
-
-		function onCancel(e)
-		{
-			if (prepareClick('click', 'Cancel'))
-			{
-				try
-				{
-					$(confirmButton.node()).off('blur');
-					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-						$(panel.node()).remove();
-						unblockClick();
-					});
-					clipboard.destroy();
-					dimmer.hide();
-				}
-				catch(err)
-				{
-					syncFailFunction(err);
-				}
-			}
-			e.preventDefault();
-		}
-		
-		var div = panel.append('div');
-		$(div.node()).click(onCancel);
-		
-		var copyButton = div.append('button')
-			.text("Copy Path")
-			.classed("site-active-text copy", true)
-			.attr('data-clipboard-action', 'copy');
-		
-		var clipboard = new Clipboard('button.copy', {
-			text: function(trigger) {
-				return '{0}/for/{1}'.format(window.location.origin, user.getDatum(cr.fieldNames.email));
-			}});
-			
-		clipboard.on('error', function(e) {
-			cr.asyncFail('Press Ctrl+C to copy');
-		});
-			
-		var confirmButton = div.append('button')
-			.text("Share Via Mail")
-			.classed("site-active-text", true)
-			.on("click", function()
-				{
-					/* Test case: Email Pathway Link. */
-					if (prepareClick('click', "Email Pathway Link"))
-					{
-						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-							$(panel.node()).remove();
-							if (user.getInstanceID() == cr.signedinUser.getInstanceID())
-							{
-								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-											.format(window.location.origin, user.getDatum(cr.fieldNames.email));
-							}
-							else
-							{
-								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(getUserDescription(user), window.location.origin, user.getDatum(cr.fieldNames.email));
-							}
-							unblockClick();
-						});
-						dimmer.hide();
-					}
-				});
-				
-		$(confirmButton.node()).on('blur', onCancel);
-		var cancelButton = div.append('button')
-			.text("Cancel")
-			.classed("site-active-text", true);
-		
-		$(cancelButton.node()).click(onCancel);
-		
-		dimmer.show();
-		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
-		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
-			function() {
-				$(confirmButton.node()).focus();
-				unblockClick();
-			}});
-		dimmer.mousedown(onCancel);
-		$(panel.node()).mousedown(function(e)
-			{
-				e.preventDefault();
-			});
-	}
-	
-	return ShareOptions;
 })();
 
 var AddOptions = (function () {
@@ -2048,49 +1873,52 @@ var ExperienceIdeas = (function() {
 		  return array;
 		}
 
-		crp.promise({path: 'Experience Prompt'})
+		crp.promise({path: 'experience prompt',
+		             resultType: cr.ExperiencePrompt})
 			.done(function(prompts)
 				{
 					try
 					{
 						/* Remove prompts that have disqualifying tags */
-						var moreExperienceData = path.getCell("More Experience").data;
+						var experiences = path.experiences();
 						prompts = prompts.filter(function(d)
 							{
-								return !d.getCell("Disqualifying Tag").data.find(function(dt)
+								return !d.disqualifyingTags().find(function(dt)
 									{
-										var dtID = dt.getInstanceID();
-										return moreExperienceData.find(function(experience)
+										var dtID = dt.id();
+										return experiences.find(function(experience)
 											{
-												return experience.getCell("Service").data.find(function(service)
+												return experience.experienceServices().find(function(experienceService)
 													{
-														return service.getInstanceID() == dtID;
+														return experienceService.service().id() == dtID;
 													}) ||
-													experience.getCell("Offering").data.find(function(offering)
-														{
-															return !offering.isEmpty() && offering.getCell("Service").data.find(function(service)
+													(experience.offering() &&
+													 !experience.offering().isEmpty() &&
+													 experience.offering().offeringServices().find(function(offeringService)
 																{
-																	return service.getInstanceID() == dtID;
-																});
-														});
+																	return offeringService.service().id() == dtID;
+																}));
 											});
 									});
 							});
 						prompts = shuffle(prompts);
 						data = prompts.map(function(d)
 							{
-								var datum = {name: d.getDatum(cr.fieldNames.name),
-											 prompt: d.getDatum(cr.fieldNames.text),
-											 experience: new Experience(path)};
-								var s = d.getNonNullValue('Service');
-								if (s) datum.experience.addService({instance: s});
-								datum.experience.domain = d.getNonNullValue('Domain');
-								datum.experience.stage = d.getNonNullValue('Stage');
-								datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
-								datum.experience.setSite({instance: d.getNonNullValue('Site')});
-								datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
-								datum.experience.timeframe = d.getNonNullValue('Timeframe');
-								datum.experience.title = d.getDatum(cr.fieldNames.name);
+								var datum = {name: d.name(),
+											 prompt: d.text(),
+											 experience: new ExperienceController(path, null, false)};
+								if (d.experiencePromptServices().length)
+								{
+									var s = d.experiencePromptServices()[0].service();
+									datum.experience.addService(s);
+								}
+								datum.experience.domain(d.domain());
+								datum.experience.stage(d.stage());
+								datum.experience.organization(d.organization())
+												.site(d.site())
+												.offering(d.offering());
+								datum.experience.timeframe(d.timeframe());
+								datum.experience.title(d.name());
 								return datum;
 							});
 						getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
@@ -2144,7 +1972,7 @@ var ExperienceIdeaPanel = (function() {
 			{done: done});
 	}
 	
-	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experience, getNext)
+	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experienceController, getNext)
 	{
 		var _this = this;
 		this.panelNode = panelNode;
@@ -2193,14 +2021,7 @@ var ExperienceIdeaPanel = (function() {
 					{
 						try
 						{
-							var phase;
-							if (experience.timeframe)
-								phase = experience.timeframe.getDescription();
-							else
-								phase = 'Previous';
-								
-							experience.initDateRange(phase);
-							var panel = new NewExperiencePanel(experience, phase);
+							var panel = new NewExperiencePanel(experienceController);
 							panel.done = function()
 								{
 									skipButton.on('click')();
@@ -2228,7 +2049,9 @@ var ExperienceIdeaPanel = (function() {
 })();
 
 var OtherPathlines = (function() {
-	OtherPathlines.prototype = new PathLines();
+	OtherPathlines.prototype = Object.create(PathLines.prototype);
+	OtherPathlines.prototype.constructor = OtherPathlines;
+
 	OtherPathlines.prototype.detailAddToPathRect = null;
 	
 	OtherPathlines.prototype.canEditExperience = function(fd, i)
@@ -2242,8 +2065,8 @@ var OtherPathlines = (function() {
 		{
 			try
 			{
-				var tempExperience = new Experience(cr.signedinUser.getValue("Path"), fd.experience);
-				new NewExperiencePanel(tempExperience, tempExperience.getPhase())
+				var tempExperience = new ExperienceController(cr.signedinUser.path(), fd.experience, false);
+				new NewExperiencePanel(tempExperience)
 					.showUp()
 					.always(unblockClick);
 			}
@@ -2263,7 +2086,9 @@ var OtherPathlines = (function() {
 })();
 
 var OtherPathPanel = (function () {
-	OtherPathPanel.prototype = new SitePanel();
+	OtherPathPanel.prototype = Object.create(crv.SitePanel.prototype);
+	OtherPathPanel.prototype.constructor = OtherPathPanel;
+
 	OtherPathPanel.prototype.path = null;
 	OtherPathPanel.prototype.pathtree = null;
 	OtherPathPanel.prototype.navContainer = null;
@@ -2308,15 +2133,15 @@ var OtherPathPanel = (function () {
 		}
 
 		var title;
-		var screenName = path.getDatum(cr.fieldNames.name);
-		var user = path.getValue(cr.fieldNames.user);
+		var screenName = path.name();
+		var user = path.user();
 		
 		if (screenName)
 			title = screenName;
 		else if (user)
-			title = getUserName(user) || user.getDescription();
+			title = user.caption();
 		else
-			title = (new AgeCalculator(path.getValue("Birthday").getDescription())).toString();
+			title = (new AgeCalculator(path.birthday())).toString();
 		
 		this.navContainer.appendTitle(title);
 		

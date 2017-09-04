@@ -14,7 +14,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
 from django.conf.urls import include, url
-from django.contrib import admin
 
 from consentrecords.b import views
 
@@ -24,7 +23,6 @@ urlpatterns = [
     url(r'^org/$', views.orgHome),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^find/', views.find),
-    url(r'^list', views.showInstances),
     url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
     url(r'^add/([A-Fa-f0-9]{32})/', views.addExperience),
     url(r'^add/', views.addToPathway),
@@ -36,5 +34,11 @@ urlpatterns = [
     url(r'^signup/([^/@]+@[^/@]+\.[^/@]+)/', views.signup),
     url(r'^signup/', views.signup),
     url(r'^experience/([^/]+)/', views.showExperience),
+
+    url(r'^commentprompts/', views.showCommentPrompts),
+    url(r'^experienceprompts/', views.showExperiencePrompts),
+    url(r'^organizations/', views.showOrganizations),
+    url(r'^services/', views.showServices),
+    url(r'^users/', views.showUsers),
 
 ]

@@ -14,11 +14,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instance',
             name='deleteTransaction',
-            field=models.ForeignKey(to='consentrecords.Transaction', null=True, related_name='deletedInstance'),
+            field=models.ForeignKey(to='consentrecords.Transaction', null=True, related_name='deletedInstance', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='value',
             name='deleteTransaction',
-            field=models.ForeignKey(to='consentrecords.Transaction', null=True, related_name='deletedValue'),
+            field=models.ForeignKey(to='consentrecords.Transaction', null=True, related_name='deletedValue', on_delete=models.CASCADE),
         ),
     ]

@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instance',
             name='parentValue',
-            field=models.OneToOneField(related_name='valueChild', to='consentrecords.Value', null=True),
+            field=models.OneToOneField(related_name='valueChild', to='consentrecords.Value', null=True, on_delete=models.CASCADE),
         ),
     ]

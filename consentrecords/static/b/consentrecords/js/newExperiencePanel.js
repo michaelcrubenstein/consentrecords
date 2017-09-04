@@ -1,694 +1,9 @@
-var Experience = (function() {
-	Experience.prototype.organization = null;
-	Experience.prototype.organizationName = null;
-	Experience.prototype.site = null;
-	Experience.prototype.siteName = null;
-	Experience.prototype.offering = null;
-	Experience.prototype.offeringName = null;
-	Experience.prototype.services = null;
-	Experience.prototype.startDate = null;
-	Experience.prototype.endDate = null;
-	
-	/* The path containing the object to which to add the experience. */
-	Experience.prototype.path = null;
-	
-	/* The instance is an instance to be replaced. */
-	Experience.prototype.instance = null;
-	
-	Experience.prototype.setOrganization = function(args) {
-		if ("instance" in args && args.instance)
-		{
-			var d = args.instance;
-			if (d.getValue("Organization"))
-			{
-				this.organization = d.getValue("Organization");
-				this.site = d;
-				this.organizationName = d.getValue("Organization").getDescription();
-				this.siteName = d.getDescription();
-			}
-			else
-			{
-				this.organization = d;
-				this.site = null;
-				this.organizationName = d.getDescription();
-				this.siteName = null;
-			}
-		}
-		else if ("text" in args && args.text)
-		{
-			var textValue = args.text;
-			if ((this.site && textValue != this.site.getDescription() && textValue != this.organization.getDescription()) ||
-				(!this.site && this.organization && textValue != this.organization.getDescription()) ||
-				(!this.site && !this.organization))
-			{
-				this.organization = null;
-				this.site = null;
-				this.organizationName = textValue;
-				this.siteName = null;
-			}
-		}
-	}
-	
-	Experience.prototype.clearOrganization = function()
-	{
-		this.organization = null;
-		this.site = null;
-		this.organizationName = null;
-		this.siteName = null;
-	}
-	
-	Experience.prototype.setSite = function(args) {
-		if ("instance" in args && args.instance)
-		{
-			var d = args.instance;
-			this.site = d;
-			this.siteName = d.getDescription();
-		}
-		else if ("text" in args && args.text)
-		{
-			var textValue = args.text;
-			if ((this.site && textValue != this.site.getDescription()) ||
-				!this.site)
-			{
-				this.site = null;
-				this.siteName = textValue;
-			}
-		}
-	}
-
-	Experience.prototype.clearSite = function()
-	{
-		this.site = null;
-		this.siteName = null;
-	}
-	
-	Experience.prototype.setOffering = function(args) {
-		if ("instance" in args && args.instance)
-		{
-			var d = args.instance;
-			this.offering = d;
-			this.offeringName = d.getDescription();
-		}
-		else if ("text" in args && args.text)
-		{
-			var textValue = args.text;
-			if ((this.offering && textValue != this.offering.getDescription()) ||
-				!this.offering)
-			{
-				this.offering = null;
-				this.offeringName = textValue;
-			}
-		}
-	}
-	
-	Experience.prototype.clearOffering = function()
-	{
-		this.offering = null;
-		this.offeringName = null;
-	}
-	
-	/* Args can either be a ReportedObject or a dictionary with a "text" or "instance" property. */
-	Experience.prototype.addService = function(args)
-	{
-		var service;
-		
-		if (args.constructor === ReportedObject)
-		{
-			service = args;
-			this.services.push(service);
-		}
-		else if ("text" in args && args.text)
-		{
-			var newName = args.text;
-			var d = args.instance;
-			if (d && d.getTypeName() != "Service")
-				throw new Error("Invalid instance to addService");
-				
-			service = new ReportedObject({name: newName, pickedObject: d});
-			if (newName.length > 0)
-			{
-				this.services.push(service);
-			}
-		}
-		else if ("instance" in args && args.instance)
-		{
-			if (args.instance.getTypeName() != "Service")
-				throw new Error("Invalid instance to addService");
-				
-			var d = args.instance;
-			var service = new ReportedObject({pickedObject: d})
-			this.services.push(service);
-		}
-		else
-			throw new Error("Invalid arguments to addService");
-			
-		return service;
-	}
-	
-	Experience.prototype.removeService = function(service)
-	{
-		var index = this.services.indexOf(service);
-		if (index >= 0)
-			this.services.splice(index, 1);
-	}
-	
-	Experience.prototype.appendData = function(initialData)
-	{
-		if (this.startDate)
-			initialData["Start"] = [{text: this.startDate}];
-		if (this.endDate)
-			initialData["End"] = [{text: this.endDate}];
-		
-		if (this.organization)
-			initialData["Organization"] = [{instanceID: this.organization.getInstanceID()}];
-		else if (this.organizationName)
-			initialData["User Entered Organization"] = [{text: this.organizationName}];
-			
-		if (this.site)
-			initialData["Site"] = [{instanceID: this.site.getInstanceID()}];
-		else if (this.siteName)
-			initialData["User Entered Site"] = [{text: this.siteName}];
-			
-		if (this.offering)
-			initialData["Offering"] = [{instanceID: this.offering.getInstanceID()}];
-		else if (this.offeringName)
-			initialData["User Entered Offering"] = [{text: this.offeringName}];
-		
-		var existingServices = null;
-		if (this.offering && this.offering.getCell("Service"))
-			existingServices = this.offering.getCell("Service").data;
-			
-		if (this.timeframe)
-			initialData["Timeframe"] = [{instanceID: this.timeframe.getInstanceID()}];
-				
-		for (i = 0; i < this.services.length; ++i)
-		{
-			var s = this.services[i];
-			
-			/* Make sure the service isn't part of the offering's services. */
-			if (s.pickedObject)
-			{
-				if (!existingServices || 
-					!existingServices.find(function(d) { 
-						return s.pickedObject.getInstanceID() == d.getInstanceID(); 
-					}))
-				{
-					if (!initialData["Service"])
-						initialData["Service"] = [{instanceID: s.pickedObject.getInstanceID()}];
-					else
-						initialData["Service"].push({instanceID: s.pickedObject.getInstanceID()});
-				}
-			}
-			else if (s.name)
-			{
-				if (!initialData["User Entered Service"])
-					initialData["User Entered Service"] = [{text: s.name}];
-				else
-					initialData["User Entered Service"].push({text: s.name});
-			}
-		}
-		
-		initialData["Comments"] = [{cells:
-				{
-					"Comment": []
-				}}
-			];
-	}
-	
-	Experience.prototype.getServiceByName = function(name)
-	{
-		for (i = 0; i < this.services.length; ++i)
-		{
-			if (this.services[i].getDescription() == name)
-				return this.services[i];
-		}
-		return null;
-	}
-	
-	Experience.prototype.getTagList = function()
-	{
-		var names = [];
-	
-		var offering = this.offering;
-		if (offering && offering.getInstanceID())
-		{
-			names = offering.getCell("Service").data
-				.filter(function(v) { return !v.isEmpty(); })
-				.map(function(v) { return v.getDescription(); });
-		}
-	
-		this.services.forEach(function(d)
-			{
-				var name = d.getDescription();
-				if (!names.find(function(d) { return d === name; }))
-					names.push(name);
-			});
-	
-		return names.join(", ");
-	}
-	
-	Experience.prototype.setHeightByText = function(node, textDiv, text, step)
-	{
-		var jNode = $(node);
-		if (text)
-		{
-			textDiv.text(text);
-			var oldHeight = jNode.height();
-			jNode.height('auto');
-			var height = jNode.height();
-			jNode.height(oldHeight);
-			jNode.animate({height: height}, {duration: 400, easing: 'swing', step: step});
-		}
-		else
-			jNode.animate({height: 0}, {duration: 400, easing: 'swing', step: step, done: function() { textDiv.text(text); }});
-	}
-	
-	Experience.prototype.appendTags = function(container, tagDivs, addFunction)
-	{
-		tagDivs = tagDivs !== undefined ? tagDivs : container.selectAll('span');
-		addFunction = addFunction !== undefined ? addFunction : function(container, instance)
-			{
-				container.append('span')
-					.datum(instance)
-					.classed('tag', true)
-					.text(instance.getDescription());
-			};
-			
-		var tags = [];
-		
-		var offering = this.offering;
-		if (offering && offering.getInstanceID())
-		{
-			names = offering.getCell("Service").data
-				.filter(function(v) { return !v.isEmpty(); });
-			tags = tags.concat(names);
-		}
-
-		tags = tags.concat(this.services.filter(function(v) 
-			{ 
-				return !tags.find(function(d) 
-					{ 
-						return d.getDescription() === v.getDescription(); 
-					})
-			}));
-		
-		if (this.domain)
-			tags.push(this.domain);
-		if (this.stage)
-			tags.push(this.stage);
-		if (this.serviceDomain)
-			tags.push(this.serviceDomain);
-			
-		tagDivs.filter(function(d) { return d != null && tags.indexOf(d) < 0; } ).remove();
-		
-		var ds = tagDivs.data();
-		for (var i = 0; i < tags.length; ++i)
-		{
-			if (ds.indexOf(tags[i]) < 0)
-			{
-				addFunction(container, tags[i]);
-			}
-		}
-	}
-
-	Experience.prototype.appendView = function(header, step)
-	{
-		function checkChild(container, className)
-		{
-			var div = container.selectAll('div.{0}'.format(className));
-			if (div.size() == 0)
-				return container.append('div').classed(className, true);
-			else
-				return div;
-		}
-		var titleContainerDiv = checkChild(header, 'title');
-		var titleDiv = checkChild(titleContainerDiv, 'title');
-		this.setHeightByText(titleContainerDiv.node(), titleDiv, this.offeringName, step);
-		
-		var orgDiv = checkChild(header, 'organization');
-		var organizationDiv = checkChild(orgDiv, 'organization');
-		this.setHeightByText(orgDiv.node(), organizationDiv, this.organizationName, step);
-	
-		var siteContainerDiv = checkChild(header, 'site');
-		var siteDiv = checkChild(siteContainerDiv, 'site');
-		var siteText = this.siteName != this.organizationName ? this.siteName : null;
-		this.setHeightByText(siteContainerDiv.node(), siteDiv, siteText, step);
-			
-		{
-			var startDate = this.startDate;
-			var endDate = this.endDate;
-			if (startDate && endDate)
-				t = startDate + " - " + endDate;
-			else if (startDate)
-				t = startDate + " - ";
-			else if (endDate)
-				t = " - " + endDate;
-			else
-				t = "";
-			if (t.length)
-			{
-				var section = header.append('section')
-					.classed('cell view unique', true);
-				crf.appendItemList(section)
-					.append('li')
-					.append('div').classed('growable string-value-view', true)
-					.text(t);
-			}
-		}
-
-		var tagsDiv = checkChild(header, 'tags');
-		
-		this.appendTags(tagsDiv);
-	}
-	
-	Experience.prototype.add = function()
-	{
-		var _this = this;
-	
-		if (this.instance)
-		{
-			var updateData = [];
-			var sourceObjects = [];
-			this.instance.getValue("Organization").appendUpdateCommands(0, this.organization, updateData, sourceObjects);
-			this.instance.getValue("User Entered Organization").appendUpdateCommands(
-					0, this.organization ? null : this.organizationName, updateData, sourceObjects);
-					
-			this.instance.getValue("Site").appendUpdateCommands(0, this.site, updateData, sourceObjects);
-			this.instance.getValue("User Entered Site").appendUpdateCommands(
-					0, this.site ? null : this.siteName, updateData, sourceObjects);
-					
-			this.instance.getValue("Offering").appendUpdateCommands(0, this.offering, updateData, sourceObjects);
-			this.instance.getValue("User Entered Offering").appendUpdateCommands(
-					0, this.offering ? null : this.offeringName, updateData, sourceObjects);
-					
-			this.instance.getValue("Start").appendUpdateCommands(0, this.startDate, updateData, sourceObjects);	
-			this.instance.getValue("End").appendUpdateCommands(0, this.endDate, updateData, sourceObjects);
-			
-			this.instance.getValue("Timeframe").appendUpdateCommands(0, this.timeframe, updateData, sourceObjects);
-			
-			var i = 0;
-			var j = 0;
-			var oldServices = this.instance.getCell("Service");
-			
-			var existingServices = null;
-			if (this.offering && this.offering.getCell("Service"))
-				existingServices = this.offering.getCell("Service").data
-					.map(function(d) { return d.getInstanceID(); });
-
-			var newServices = this.services.filter(function(s) {
-					return s.pickedObject &&
-						(!existingServices || 
-					     !existingServices.find(function(d) { 
-							return s.pickedObject.getInstanceID() == d;
-							}));
-				})
-				.map(function(d) { return d.pickedObject; });
-			var newUserEnteredServices = this.services.filter(function(d) { return !d.pickedObject; })
-				.map(function(d) { return d.name; });
-			
-			var collateValues = function(cell, newValues, updateData, sourceObjects)
-			{
-				var j = 0;
-				newValues.forEach(function(d)
-					{
-						if (j < cell.data.length)
-						{
-							var oldService = cell.data[j];
-							oldService.appendUpdateCommands(j, d, updateData, sourceObjects);
-							++j;
-						}
-						else
-						{
-							updateData.push(cell.getAddCommand(d));
-							sourceObjects.push(cell);
-						}
-					});
-				while (j < cell.data.length)
-				{
-					var oldService = cell.data[j];
-					oldService.appendUpdateCommands(j, null, updateData, sourceObjects);
-					++j;
-				}
-			}
-			
-			collateValues(this.instance.getCell("Service"), newServices, updateData, sourceObjects);
-			collateValues(this.instance.getCell("User Entered Service"), newUserEnteredServices, updateData, sourceObjects);
-			
-			bootstrap_alert.show($('.alert-container'), "Saving Experience...", "alert-info");
-			
-			return cr.updateValues(updateData, sourceObjects)
-				.then(function()
-					{
-						var offering = _this.instance.getValue("Offering");
-						if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
-							return offering.promiseCellsFromCache();
-						else
-							return undefined;
-					});
-		}
-		else
-		{
-			/* Test case: add an experience to a path. */
-			bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
-
-			field = {ofKind: "More Experience", name: "More Experience"};
-			var initialData = {};
-
-			this.appendData(initialData);
-		
-			return cr.createInstance(field, this.path.getInstanceID(), initialData)
-			 .then(function(newData)
-					{
-						var r = $.Deferred();
-						newData.promiseCellsFromCache(["Offering"])
-							.then(function()
-								{
-									r.resolve(newData);
-									return r;
-								},
-								function(err)
-								{
-									r.reject(err);
-								})
-						return r;
-					})
-			 .then(function(newData)
-			 		{
-			 			_this.path.getCell("More Experience").addValue(newData);
-			 		});
-		}
-	}
-	
-	Experience.prototype.initPreviousDateRange = function()
-	{
-		var todayDate = getUTCTodayDate();
-		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear() - 1, getMonthString(todayDate));
-		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear(), getMonthString(todayDate));
-	}
-	
-	Experience.prototype.initCurrentDateRange = function()
-	{
-		var todayDate = getUTCTodayDate();
-		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear(), getMonthString(todayDate));
-		this.endDate = "";
-	}
-	
-	Experience.prototype.initGoalDateRange = function()
-	{
-		var todayDate = getUTCTodayDate();
-		this.startDate = "";
-		this.endDate = "";
-	}
-	
-	Experience.prototype.initDateRange = function(phase)
-	{
-		if (phase === 'Goal')
-			this.initGoalDateRange();
-		else if (phase === 'Current')
-			this.initCurrentDateRange();
-		else
-			this.initPreviousDateRange();
-	}
-	
-	Experience.prototype.createFromData = function(organizationD, siteD, offeringD, services, previousNode, done)
-	{
-		var _this = this;
-		var panel;
-		
-		this.initPreviousDateRange();
-		
-		this.setOrganization(organizationD);
-		m = services.map(function(d) { return _this.addService(d); });
-		
-		if (siteD)
-		{
-			this.setSite(siteD);
-			if (offeringD)
-			{
-				this.setOffering(offeringD);
-				panel = new NewExperiencePanel(this);
-			}
-			else
-			{
-				panel = new NewExperiencePanel(this);
-			}
-		}
-		else
-		{
-			panel = new NewExperiencePanel(this);
-		}
-		done(panel.node());
-	}
-	
-	Experience.prototype.createFromSite = function(d, services, previousNode, done)
-	{
-		this.initPreviousDateRange();
-		
-		/* Call setOrganization, which recognizes this as a site and does the correct thing. */
-		this.setOrganization({instance: d});
-		
-		var _this = this;
-		m = services.map(function(serviceD) { return _this.addService(serviceD); });
-			
-		var panel = new NewExperiencePanel(this);
-		done(panel.node());
-	}
-
-	Experience.prototype.createFromOffering = function(d, services, previousNode, done)
-	{
-		if (!d.getValue("Organization"))
-			throw new Error("Runtime Error: Organization is not present in offering record.")
-		if (!d.getValue("Site"))
-			throw new Error("Runtime Error: Site is not present in offering record.")
-
-		this.initPreviousDateRange();
-		
-		this.setOffering({instance: d});
-		
-		/* Set the organization, then the site, because setting the organization may
-			also set the site.
-		 */
-		this.setOrganization({instance: d.getValue("Organization")});
-		this.setSite({instance: d.getValue("Site")});
-		
-		var _this = this;
-		m = services.map(function(serviceD) { return _this.addService(serviceD); });
-			
-		var panel = new NewExperiencePanel(this);
-		done(panel.node());
-	}
-	
-	Experience.prototype.createFromService = function(d, previousNode, done)
-	{
-		this.initPreviousDateRange();
-		
-		var service = this.addService(d);
-		var panel = new NewExperiencePanel(this);
-		done(panel.node());
-	}
-	
-	Experience.prototype.getOfferingConstraint = function()
-	{
-		if (this.services.length > 0 &&
-			this.services[0].pickedObject)
-			return '[Service[Service={0}]]'.format(this.services[0].pickedObject.getInstanceID());
-		else if (this.domain)
-			return '[Service[Service={0}]]'.format(this.domain.getInstanceID());
-		else if (this.stage)
-			return '[Service[Stage={0}]]'.format(this.stage.getInstanceID());
-		else
-			return "";
-	}
-	
-	Experience.prototype.replaced = function(instance)
-	{
-		this.instance = instance;
-	}
-	
-	Experience.prototype.getPhase = function()
-	{
-		var t = this.instance && this.instance.getValue('Timeframe');
-		if (t && t.getInstanceID())
-			return t.getDescription();
-			
-		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
-		if (!this.startDate || this.startDate > todayDate)
-			return 'Goal';
-		else if (!this.endDate || this.endDate > todayDate)
-			return 'Current';
-		else
-			return 'Previous';
-	}
-	
-	function Experience(path, dataExperience)
-	{
-		if (!path)
-			throw "path is not specified";
-		if (typeof(path) !== "object")
-			throw "path is not an object";
-			
-		this.services = [];
-		this.path = path;
-		
-		if (dataExperience)
-		{
-			function getReportedObject(dataExperience, pickedName, createdName)
-			{
-				var pickedObject = dataExperience.getValue(pickedName);
-				if (pickedObject && pickedObject.isEmpty())
-					pickedObject = null;
-				if (pickedObject)
-					return new ReportedObject({name: pickedObject.getDescription(), pickedObject: pickedObject});
-				else
-				{
-					var createdObject = dataExperience.getValue(createdName);
-					if (createdObject && !createdObject.isEmpty())
-						return new ReportedObject({name: createdObject.getDescription()});
-					else
-						return new ReportedObject();
-				}
-			}
-			
-			var r;
-			r = getReportedObject(dataExperience, "Organization", "User Entered Organization");
-			this.organization = r.pickedObject;
-			this.organizationName = r.name;
-			
-			r = getReportedObject(dataExperience, "Site", "User Entered Site");
-			this.site = r.pickedObject;
-			this.siteName = r.name;
-			
-			r = getReportedObject(dataExperience, "Offering", "User Entered Offering");
-			this.offering = r.pickedObject;
-			this.offeringName = r.name;
-			
-			var servicesCell = dataExperience.getCell("Service");
-			var _this = this;
-			servicesCell.data.forEach(function(d)
-				{
-					if (!d.isEmpty())
-						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: d}));
-				});
-				
-			servicesCell = dataExperience.getCell("User Entered Service");
-			servicesCell.data.forEach(function(d)
-				{
-					if (!d.isEmpty())
-						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: null}));
-				});
-				
-			this.startDate = dataExperience.getDatum("Start");
-			this.endDate = dataExperience.getDatum("End");
-		}
-	}
-	
-	return Experience;
-})();
-
 var MultiTypeOptionView = (function() {
-	MultiTypeOptionView.prototype = new SearchOptionsView();
+	MultiTypeOptionView.prototype = Object.create(SearchOptionsView.prototype);
+	MultiTypeOptionView.prototype.constructor = MultiTypeOptionView;
+
 	MultiTypeOptionView.prototype.containerNode = null;
-	MultiTypeOptionView.prototype.experience = null;
+	MultiTypeOptionView.prototype.experienceController = null;
 	MultiTypeOptionView.prototype.typeName = "";
 	MultiTypeOptionView.prototype.initialTypeName = "";
 	
@@ -698,9 +13,10 @@ var MultiTypeOptionView = (function() {
 			return true;
 		var data = this.buttons().data();
 		return data.find(function(d) {
-				return d.getCell && d.getCell(cr.fieldNames.name).data.find(
-					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
-					(d.getDescription && d.getDescription().toLocaleLowerCase() === compareText);
+				console.assert(d.names());
+				return d.names().find(
+					function(d) { return d.text().toLocaleLowerCase() === compareText;}) ||
+					(d.description && d.description().toLocaleLowerCase() === compareText);
 			});
 	}
 	
@@ -715,8 +31,8 @@ var MultiTypeOptionView = (function() {
 		if (compareText.length === 0)
 			return true;
 		
-		return d.getDescription && 
-			   this.stringContains(d.getDescription(), compareText);
+		console.assert(d.description)
+		return this.stringContains(d.description(), compareText);
 	}
 	
 	MultiTypeOptionView.prototype.canConstrain = function(searchText, constrainText)
@@ -755,58 +71,27 @@ var MultiTypeOptionView = (function() {
 			.classed('hover-items search', true);
 	}
 	
-	function MultiTypeOptionView(containerNode, experience, appendDescriptions)
+	function MultiTypeOptionView(containerNode, experienceController)
 	{
 		this.containerNode = containerNode;
 		if (containerNode)
 		{
-			if (!experience)
-				throw "experience is not specified";
-			if (typeof(experience) != "object")
-				throw "experience is not an object";
+			console.assert(experienceController);
+			console.assert(experienceController instanceof ExperienceController);
 
-			this.experience = experience;
+			this.experienceController = experienceController;
 		}
-		SearchOptionsView.call(this, containerNode, appendDescriptions, GetDataChunker)
+		SearchOptionsView.call(this, containerNode, GetDataChunker)
 	}
 	
 	return MultiTypeOptionView;
 	
 })();
 
-/* A reported object combines a name and a ModelObject that might be picked. */
-var ReportedObject = function () {
-	ReportedObject.prototype.name = null;
-	ReportedObject.prototype.pickedObject = null;
-	
-	function ReportedObject(args) {
-		args = args !== undefined ? args : {};
-		if (!("name" in args)) args.name = null;
-		if (!("pickedObject" in args)) args.pickedObject = null;
-		
-		this.name = args.name;
-		this.pickedObject = args.pickedObject;
-    };
-    
-    ReportedObject.prototype.getDescription = function()
-    {
-    	if (this.pickedObject) return this.pickedObject.getDescription();
-    	return this.name;
-    }
-    
-    ReportedObject.prototype.equal = function(v2)
-    {
-    	if (this.pickedObject)
-    		return v2.pickedObject && v2.pickedObject.getInstanceID() == this.pickedObject.getInstanceID();
-    	else
-    		return !v2.pickedObject && this.name == v2.name;
-    }
-    
-    return ReportedObject;
-}();
-
 var ExperienceDatumSearchView = (function() {
-	ExperienceDatumSearchView.prototype = new MultiTypeOptionView();
+	ExperienceDatumSearchView.prototype = Object.create(MultiTypeOptionView.prototype);
+	ExperienceDatumSearchView.prototype.constructor = ExperienceDatumSearchView;
+
 	ExperienceDatumSearchView.prototype.typeNames = null;
 	ExperienceDatumSearchView.prototype.initialTypeName = null;
 	ExperienceDatumSearchView.prototype.typeName = null;
@@ -815,6 +100,7 @@ var ExperienceDatumSearchView = (function() {
 	ExperienceDatumSearchView.prototype.inputBox = null;
 	ExperienceDatumSearchView.prototype.helpNode = null;
 	
+	ExperienceDatumSearchView.prototype.reveal = null;
 	ExperienceDatumSearchView.prototype.minRevealHeight = 100;	/* pixels */
 
 	ExperienceDatumSearchView.prototype.inputText = function(val)
@@ -830,18 +116,19 @@ var ExperienceDatumSearchView = (function() {
 	
 	ExperienceDatumSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.getTypeName() === 'Service')
+		if (d instanceof cr.Service)
 		{
-			if (prepareClick('click', 'service: ' + d.getDescription()))
+			if (prepareClick('click', 'service: ' + d.description()))
 			{
-				if (!this.experience.offeringName &&
-					this.experience.services.find(function(d2)
+				if (!this.experienceController.offeringName() &&
+					this.experienceController.experienceServices().find(function(es)
 						{
-							return d2.pickedObject && d2.pickedObject.getInstanceID() == d.getInstanceID();
+							return es.service().id() == d.id();
 						}))
-					this.experience.setOffering({text: d.getDescription() });
+					this.experienceController.customOffering(d.description())
+								   .offering(null);
 				else
-					this.experience.addService({instance: d});
+					this.experienceController.addService(d);
 				this.sitePanel.onExperienceUpdated();
 				this.hideSearch(function()
 					{
@@ -850,32 +137,14 @@ var ExperienceDatumSearchView = (function() {
 					});
 			}
 		}
-		else if (d.getTypeName() === 'Organization')
+		else if (d instanceof cr.Organization)
 		{
-			if (prepareClick('click', 'organization: ' + d.getDescription()))
+			if (prepareClick('click', 'organization: ' + d.description()))
 			{
 				try
 				{
 					/* Clear the site and offering if they aren't within the new organization. */
-					if (_this.experience.site &&
-						_this.experience.organization &&
-						_this.experience.organization.getInstanceID() != d.getInstanceID())
-					{
-						if (this.experience.offering)
-						{
-							this.experience.clearOffering();
-							this.experience.clearSite();
-						}
-						else
-						{
-							this.experience.clearSite();
-						}
-					}
-					/* Set the organization and organizationName explicitly so that the site
-						isn't cleared inappropriately.
-					 */
-					this.experience.organization = d;
-					this.experience.organizationName = d.getDescription();
+					this.experienceController.organizationPicked(d);
 					
 					this.sitePanel.onExperienceUpdated();
 					this.hideSearch(function()
@@ -893,21 +162,17 @@ var ExperienceDatumSearchView = (function() {
 				}
 			}
 		}
-		else if (d.getTypeName() === 'Site')
+		else if (d instanceof cr.Site)
 		{
-			if (prepareClick('click', 'site: ' + d.getDescription()))
+			if (prepareClick('click', 'site: ' + d.description()))
 			{
 				/* Need to check the cells in case this site was a value within an offering. */
-				d.promiseCellsFromCache(["parents"])
+				d.promiseData(['address', 'parents'])
 					.then(function()
 						{
 							try
 							{
-								if (_this.experience.offering &&
-									_this.experience.site &&
-									_this.experience.site.getInstanceID() != d.getInstanceID())
-									_this.experience.clearOffering();
-								_this.experience.setOrganization({instance: d});
+								_this.experienceController.sitePicked(d);
 								_this.sitePanel.onExperienceUpdated();
 								_this.hideSearch(function()
 									{
@@ -926,16 +191,11 @@ var ExperienceDatumSearchView = (function() {
 						cr.syncFail);
 			}
 		}
-		else if (d.getTypeName() === 'Offering')
+		else if (d instanceof cr.Offering)
 		{
-			if (prepareClick('click', 'offering: ' + d.getDescription()))
+			if (prepareClick('click', 'offering: ' + d.description()))
 			{
-				this.experience.setOffering({instance: d});
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
+				this.experienceController.offeringPicked(d);
 				this.sitePanel.onExperienceUpdated();
 				_this.hideSearch(function()
 					{
@@ -949,36 +209,50 @@ var ExperienceDatumSearchView = (function() {
 	
 	ExperienceDatumSearchView.prototype.hasUniqueSite = function(d)
 	{
-		var compareText = d.getDescription();
+		var compareText = d.description();
 	
 		var data = this.buttons().data();
 		return data.find(function(d) {
-				return d.getTypeName() === "Site" &&
-					   d.getDescription() === compareText &&
-					   d.getValue("Organization").getDescription() === compareText;
+				return d instanceof cr.Site &&
+					   d.description() === compareText &&
+					   d.organization().description() === compareText;
 			});
+	}
+	
+	ExperienceDatumSearchView.prototype.fields = function(compareText)
+	{
+		var resultType = this.resultType(compareText);
+		if (resultType == cr.Site)
+			return ['parents', 'address'];
+		else if (resultType == cr.Offering)
+			return ['parents', 'services'];
+		else
+			return ['parents'];
 	}
 	
 	ExperienceDatumSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		/* Do not display organizations if there is a site with the same name. */
-		if (d.getTypeName() === "Organization" &&
+		if (d instanceof cr.Organization &&
 			this.hasUniqueSite(d))
 			return false;
 		
 		if (this.isMatchingDatum(d, compareText))
 			return true;
 
-		if (d.getTypeName() === "Offering")
+		if (d instanceof cr.Offering)
 		{
-			if (this.stringContains(d.getValue("Site").getDescription(), compareText))
+			console.assert(d.organization());
+			console.assert(d.site());
+			if (this.stringContains(d.site().description(), compareText))
 				return true;
-			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
+			if (this.stringContains(d.organization().description(), compareText))
 				return true;
 		}
-		else if (d.getTypeName() === "Site")
+		else if (d instanceof cr.Site)
 		{
-			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
+			console.assert(d.organization());
+			if (this.stringContains(d.organization().description(), compareText))
 				return true;
 		}
 		return false;
@@ -1056,389 +330,137 @@ var ExperienceDatumSearchView = (function() {
 				 children: $(this.listElement.node())},
 				duration, step, done);
 		}
-	}	
-
-	function ExperienceDatumSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
+	}
+	
+	ExperienceDatumSearchView.prototype.resizeVisibleSearch = function(duration)
 	{
+		if (this.reveal.isVisible())
+		{
+			this.showSearch(duration);
+			return true;
+		}
+		else
+			return false;
+	}
+
+	function ExperienceDatumSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
+	{
+		console.assert(containerNode);
+		
 		this.typeNames = [""];
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.initialTypeName;
 		this.sitePanel = sitePanel;
-		MultiTypeOptionView.call(this, containerNode, experience, 
-			function(buttons) { 
-				_this.appendDescriptions(buttons); 
-			});
+		MultiTypeOptionView.call(this, containerNode, experienceController);
 		
 		var _this = this;
 
-		if (containerNode)
-		{
-			this.inputBox = inputNode;
-			$(this.inputBox).on("input", function() { 
-					try { _this.textChanged(); }
-					catch(err) { cr.asyncFail(err); }
-				});
-			
-			this.helpNode = helpNode;
+		this.inputBox = inputNode;
+		$(this.inputBox).on("input", function() { 
+				try { _this.textChanged(); }
+				catch(err) { cr.asyncFail(err); }
+			});
+		
+		this.helpNode = helpNode;
 
-			this.reveal = new VerticalReveal(containerNode);
-			this.reveal.hide();
+		this.reveal = new VerticalReveal(containerNode);
+		this.reveal.hide();
 
-			this.getDataChunker._onDoneSearch = function()
+		this.getDataChunker._onDoneSearch = function()
+			{
+				var i = _this.typeNames.indexOf(_this.typeName);
+				if (i < _this.typeNames.length - 1)
 				{
-					var searchText = _this._foundCompareText;
-					var i = _this.typeNames.indexOf(_this.typeName);
-					if (i < _this.typeNames.length - 1)
+					_this.typeName = _this.typeNames[i+1];
+					_this.setupChunkerArguments(_this._foundCompareText);
+					this.checkStart(_this._foundCompareText);
+				}
+				else if (!_this.getDataChunker.hasButtons() && !_this.inputText())
+				{
+					if ("checkHelp" in _this)
 					{
-						_this.typeName = _this.typeNames[i+1];
-						this.path = _this.searchPath(searchText);
-						this.fields = _this.fields();
-						this.checkStart(searchText);
+						_this.checkHelp(true);
+						_this.showSearch();
 					}
-					else if (!_this.getDataChunker.hasButtons() && !_this.inputText())
-					{
-						if ("checkHelp" in _this)
-						{
-							_this.checkHelp(true);
-							_this.showSearch();
-						}
-					}
-				};
-		}
+				}
+			};
 	}
 	
 	return ExperienceDatumSearchView;
 })();
 
-/* Displays Services. Since the services are taken from the global Services list, this
-	search view should never need to interact with the server.
- */
-var TagSearchView = (function() {
-	TagSearchView.prototype = new TagPoolView();
-	
-	TagSearchView.prototype.reveal = null;
-	TagSearchView.prototype.focusNode = null;
-	TagSearchView.prototype.sitePanel = null;
-	TagSearchView.prototype.experience = null;
-	
-	TagSearchView.prototype.minRevealedHeight = 118;
-	
-	TagSearchView.prototype.onTagAdded = function()
-	{
-	}
-	
-	TagSearchView.prototype.hideSearch = function(done)
-	{
-		this.reveal.hide({duration: 200,
-						  before: done});
-	}
-	
-	/* Expand this object view so that it fills as much of the window as possible without
-		scrolling other elements off screen.
-	 */
-	TagSearchView.prototype.showSearch = function(duration, step, done)
-	{
-		duration = duration !== undefined ? duration : 400;
-		var parent = $(this.reveal.node).parent();
-		var oldHeight = $(this.reveal.node).height();
-		$(this.reveal.node).height(0);
-		var newHeight = parent.getFillHeight() - 
-						parent.outerHeight(true);
-
-		if (this.minRevealedHeight > newHeight)
-			newHeight = this.minRevealedHeight;
-			
-		$(this.reveal.node).height(oldHeight);
-		var _this = this;
-		if (oldHeight != newHeight)
-		{
-			this.reveal.show(
-				/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
-					and subtract the parent's height and add back the reveal node's height. */
-				{newHeight: newHeight,
-				 before: function()
-				 	{
-				 		_this.layoutFlags();
-				 	}},
-				duration, step, done);
-		}
-		else
-			this.layoutFlags();
-	}
-	
-	TagSearchView.prototype.firstTagInputNode = function()
-	{
-		return this.sitePanel.mainDiv.select('.tags-container>input.tag').node();
-	}
-	
-	/* Set the visible flags for each of the services associated with this flags. */
-	TagSearchView.prototype.setFlagVisibles = function()
-	{
-		if (this.focusNode.value)
-			TagPoolView.prototype.setFlagVisibles.call(this);
-		else if (this.focusNode != this.firstTagInputNode() ||
-				 (this.experience.offering &&
-			 	  this.experience.offering.getCell("Service").data.length > 0))
-		{
-			this.flags().each(function(fs)
-				{
-					fs.visible = (fs.service.getCell("Service").data.length > 1) ? false : undefined;
-				});
-		}
-		else
-		{
-			var types = ["Job", 
-						 "School",
-						 "Class", 
-						 "Interest", 
-						 "Skills", 
-						 "Internship", 
-						 "Volunteer", 
-						 "Exercise", 
-						 "Housing"];
-			this.flags().each(function(fs)
-				{
-					fs.visible = (types.indexOf(fs.getDescription()) < 0 ? false : undefined);
-				});
-		}
-	}
-
-	TagSearchView.prototype.filterFlags = function(filterText)
-	{
-		TagPoolView.prototype.filterFlags.call(this, filterText);
-		
-		if (filterText)
-		{
-			var flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
-			var flagData = flags.data();
-			var flagDescriptions = flagData.map(function(fs) { return fs.getDescription().toLocaleUpperCase(); });
-			
-			var flagIndexOf = function(s)
-			{
-				var min, mid, max;
-				min = 0; 
-				max = flagData.length - 1;
-				
-				var t = s;
-				while (max >= min)
-				{
-					mid = Math.floor((min + max) / 2);
-					var target = flagDescriptions[mid];
-					if (target < t)
-						min = mid + 1;
-					else if (target > t)
-						max = mid - 1;
-					else
-						return mid;
-				}
-				return -1;
-			}
-			
-			var flagIndex = flagIndexOf(filterText.toLocaleUpperCase());
-			if (flagIndex >= 0)
-			{
-				var rootService = flagData[flagIndex];
-				// Add to the visible list any item that contains the root service as a sub service.
-				this.flags().each(function(fs)
-					{
-						if (!fs.visible && fs.service.getCell("Service").data.find(function(subService)
-							{
-								return subService.getInstanceID() == rootService.service.getInstanceID();
-							}))
-							fs.visible = true;
-					});
-				flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
-				flagData = flags.data();
-				flagDescriptions = flagData.map(function(fs) { return fs.getDescription().toLocaleUpperCase(); });
-			}
-			
-			var levels = {};
-			var levelCount = 1;
-			var flagServices = {};
-			
-			// Fill flagServices with all of the subServices associated with each flag that are
-			// in the set of visible flags except for the service itself.
-			flags.each(function(fs)
-			{
-				flagServices[fs.service.getInstanceID()] = fs.service.getCell("Service").data.filter(
-					function(s) {
-						return flagIndexOf(s.getDescription().toLocaleUpperCase()) >= 0 && 
-										   s.getInstanceID() != fs.service.getInstanceID();
-					});
-			});
-			
-			for (levelCount = 1; 
-			     (Object.keys(levels).length < flagData.length &&
-				   levelCount <= 3);
-				 ++levelCount)
-			{
-				flags.each(function(fs)
-				{
-					var thisID = fs.service.getInstanceID();
-					
-					if (!(thisID in levels))
-					{
-						// Add a service into the levels list if all of its visible flags 
-						// are already in the levels except for itself.
-						var f = function(s)
-							{
-								return s.getInstanceID() in levels && levels[s.getInstanceID()] < levelCount;
-							};
-						
-						if (flagServices[thisID].filter(f).length == flagServices[thisID].length)
-							levels[thisID] = levelCount;
-					}
-				});
-			}
-			
-			flags.each(function(fs)
-				{
-					fs.visible = fs.service.getInstanceID() in levels;
-				});
-		}
-	}
-	
-	TagSearchView.prototype.constrainTagFlags = function()
-	{
-		this.filterFlags(this.focusNode.value);
-		this.layoutFlags();
-	}
-	
-	TagSearchView.prototype.hasSubService = function(service)
-	{
-		serviceID = service.getInstanceID();
-		
-		return this.sitePanel.allServices.find(function(s)
-			{
-				if (s.getInstanceID() == serviceID)
-					return false;
-				return s.getCell("Service").data.find(function(subS)
-					{
-						return subS.getInstanceID() == serviceID;
-					});
-			});
-	}
-	
-	TagSearchView.prototype.onClickButton = function(d) {
-		if (prepareClick('click', 'service: ' + d.getDescription()))
-		{
-			try
-			{
-				/* If the user clicks a flag that is the same as the flag already there, then move on. 
-					If the user clicks a flag that has no sub-flags other than itself, then move on.
-					Otherwise, stay there.
-				 */	
-				var d3Focus = this.focusNode && this.focusNode.parentNode && d3.select(this.focusNode);
-				var newDatum;
-				
-				var moveToNewInput = !this.hasSubService(d.service) ||
-					(this.focusNode && 
-					 this.focusNode.value.toLocaleUpperCase() == d.getDescription().toLocaleUpperCase());
-					
-				if (d3Focus && d3Focus.datum())
-				{
-					newDatum = d3Focus.datum();
-					newDatum.name = d.getDescription();
-					newDatum.pickedObject = d.service;
-					this.focusNode.value = d.getDescription();
-				}
-				else
-				{
-					newDatum = this.experience.addService({instance: d.service});
-				}
-				
-				this.sitePanel.updateInputs();
-				this.sitePanel.showTags();
-
-				var container = this.sitePanel.mainDiv.select('.tags-container');
-				if (moveToNewInput)
-				{
-					var newInput = this.sitePanel.appendTag(container, null);
-					newInput.node().focus();
-				}
-				else
-				{
-					container
-						.selectAll('input.tag')
-						.filter(function(d) { return d == newDatum; })
-						.node().focus();
-				}
-				unblockClick();
-			}
-			catch(err)
-			{
-				cr.syncFail(err);
-			}
-		}
-
-		d3.event.preventDefault();
-	}
-	
-	function TagSearchView(container, sitePanel, experience)
-	{
-		TagPoolView.call(this, container, 'pool-container');
-		
-		this.sitePanel = sitePanel;
-		this.experience = experience;
-		
-		this.reveal = new VerticalReveal(container.node());
-	}
-	
-	return TagSearchView;
-})();
-
 /* Displays site or organization */
-var OrganizationSearchView = (function() {
-	OrganizationSearchView.prototype = new ExperienceDatumSearchView();
-	
-	OrganizationSearchView.prototype.clearFromOrganization = function()
+var OrganizationLinkSearchView = (function() {
+	OrganizationLinkSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	OrganizationLinkSearchView.prototype.constructor = OrganizationLinkSearchView;
+
+	OrganizationLinkSearchView.prototype.clearFromOrganization = function()
 	{
-		if (this.experience.organization)
+		if (this.experienceController.organization())
 		{
-			if (this.experience.offering)
+			if (this.experienceController.offering())
 			{
-				this.experience.clearOffering();
-				this.experience.clearSite();
-				this.experience.clearOrganization();
+				this.experienceController.clearOffering();
+				this.experienceController.clearSite();
+				this.experienceController.clearOrganization();
 			}
-			else if (this.experience.site)
+			else if (this.experienceController.site())
 			{
-				this.experience.clearSite();
-				this.experience.clearOrganization();
+				this.experienceController.clearSite();
+				this.experienceController.clearOrganization();
 			}
 			else
 			{
-				this.experience.clearOrganization();
+				this.experienceController.clearOrganization();
 			}
 		}
 		else
 		{
-			this.experience.clearOrganization();
+			this.experienceController.clearOrganization();
 		}
 	}
 	
-	OrganizationSearchView.prototype.searchPath = function(val)
+	OrganizationLinkSearchView.prototype.searchPath = function(val)
 	{
 		var path;
 		if (val)
 		{
 			if (this.typeName === "Site")
 			{
-				path = 'Site[ancestor:name*="{1}"]';
+				path = 'site[name>text*="{0}"|organization>name>text*="{0}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[name*="{1}"]';
+				path = 'organization[name>text*="{0}"]';
 			}
-			var symbol = "*=";
 		
-			return path.format(symbol, encodeURIComponent(val));
+			return path.format(encodeURIComponent(val));
 		}
 		else
 			return '';
 	}
 	
-	OrganizationSearchView.prototype.setupSearchTypes = function(searchText)
+	OrganizationLinkSearchView.prototype.resultType = function(val)
+	{
+		var path;
+		if (val)
+		{
+			if (this.typeName === "Site")
+			{
+				return cr.Site;
+			}
+			else if (this.typeName === "Organization")
+			{
+				return cr.Organization;
+			}
+			else
+				throw new Error("unexpected typeName");
+		}
+		else
+			return null;
+	}
+	
+	OrganizationLinkSearchView.prototype.setupSearchTypes = function(searchText)
 	{
 		if (searchText)
 		{
@@ -1452,7 +474,7 @@ var OrganizationSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	OrganizationSearchView.prototype.checkHelp = function(showHelp)
+	OrganizationLinkSearchView.prototype.checkHelp = function(showHelp)
 	{
 		var helpDiv = d3.select(this.helpNode);
 
@@ -1479,114 +501,114 @@ var OrganizationSearchView = (function() {
 		return true;
 	}
 	
-	OrganizationSearchView.prototype.appendDescriptions = function(buttons)
+	OrganizationLinkSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
-				if (d.getTypeName() === "Site")
+				if (d instanceof cr.Site)
 				{
 					/* The organization name is either a value of d or, if d is a value
 					   of an Offering, then the organization name is the value of the offering.
 					 */
 					var orgValue;
-					if (d.cell && d.cell.parent && d.cell.parent.getTypeName() === "Offering")
-						orgValue = d.cell.parent.getValue("Organization");
+					if (d.parent() && d.parent() instanceof cr.Offering)
+						orgValue = d.parent.organization();
 					else
-						orgValue = d.getValue("Organization");
+						orgValue = d.organization();
 						
-					if (orgValue.getDescription() == d.getDescription())
+					if (orgValue.description() == d.description())
 					{
-						leftText.text(d.getDescription());
+						leftText.text(d.description());
 					}
 					else
 					{
 						orgDiv = leftText.append('div').classed("organization", true);		
-						orgDiv.append('div').text(orgValue.getDescription());
+						orgDiv.append('div').text(orgValue.description());
 						orgDiv.append('div')
 							.classed('address-line', true)
-							.text(d.getDescription());
+							.text(d.description());
 					}
 				}
 				else
 				{
-					leftText.text(d.getDescription());
+					leftText.text(d.description());
 				}
 			});
 	}
 	
-	OrganizationSearchView.prototype.isDirtyText = function()
+	OrganizationLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
-		return this.inputText() != (this.experience.organizationName || "");
+		return this.inputText() != (this.experienceController.organizationName() || "");
 	}
 	
-	function OrganizationSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
+	function OrganizationLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
-		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experience, inputNode, helpNode);
+		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
-	return OrganizationSearchView;
+	return OrganizationLinkSearchView;
 })();
 
 /* Displays organization, site, offering */
-var SiteSearchView = (function() {
-	SiteSearchView.prototype = new ExperienceDatumSearchView();
-	
-	SiteSearchView.prototype.clearFromSite = function()
+var SiteLinkSearchView = (function() {
+	SiteLinkSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	SiteLinkSearchView.prototype.constructor = SiteLinkSearchView;
+
+	SiteLinkSearchView.prototype.clearFromSite = function()
 	{
-		if (this.experience.site)
+		if (this.experienceController.site())
 		{
-			if (this.experience.offering)
+			if (this.experienceController.offering())
 			{
-				this.experience.clearOffering();
-				this.experience.clearSite();
+				this.experienceController.clearOffering();
+				this.experienceController.clearSite();
 			}
 			else
 			{
-				this.experience.clearSite();
+				this.experienceController.clearSite();
 			}
 		}
 		else
 		{
-			this.experience.clearSite();
+			this.experienceController.clearSite();
 		}
 	}
 	
-	SiteSearchView.prototype.searchPath = function(val)
+	SiteLinkSearchView.prototype.searchPath = function(val)
 	{
 		var path;
-		if (this.experience.organizationName)
+		if (this.experienceController.organizationName())
 		{
-			if (this.experience.organization == null)
+			if (this.experienceController.organization() == null)
 			{
 				return "";
 			}
 			else if (!val)
 			{
-				if (this.typeName === "Site")
-					return "{0}/Sites/Site".format(this.experience.organization.getInstanceID());
-				else if (this.typeName === "Offering from Site")
+				if (this.typeName === 'Site')
+					return this.experienceController.organization().urlPath() + '/site';
+				else if (this.typeName === 'Offering from Site')
 				{
-					path = "{0}/Sites/Site/Offerings/Offering".format(this.experience.organization.getInstanceID());
-					path += this.experience.getOfferingConstraint();
+					path = this.experienceController.organization().urlPath() + '/site/offering';
+					path += this.experienceController.getOfferingConstraint();
 					return path;
 				}
 			}
 			else
 			{
-				if (this.typeName === "Offering")
+				if (this.typeName === 'Offering')
 				{
-					path = 'Offering[ancestor:name*="{1}"]';
-					path = "{0}/Sites/Site/Offerings/".format(this.experience.organization.getInstanceID()) + path;
-					path += this.experience.getOfferingConstraint();
+					path = '[name>text*="{1}"]|[site>name>text*="{1}"]|[site>organization>name>text*="{1}"]';
+					path = this.experienceController.organization().urlPath() + '/site/offering' + path;
+					path += this.experienceController.getOfferingConstraint();
 				}
-				else if (this.typeName === "Site")
+				else if (this.typeName === 'Site')
 				{
-					path = 'Site[name*="{1}"]';
-					path = "{0}/Sites/".format(this.experience.organization.getInstanceID()) + path;
+					path = this.experienceController.organization().urlPath() + '/site[name>text*="{1}"]';
 				}
 			
 				var symbol = "*=";
@@ -1594,7 +616,7 @@ var SiteSearchView = (function() {
 				return path.format(symbol, encodeURIComponent(val));
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experienceController.experienceServices().length > 0)
 		{
 			if (!val)
 			{
@@ -1604,20 +626,20 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[ancestor:name*="{1}"]';
-					path += this.experience.getOfferingConstraint();
+					path = 'offering[name>text*="{1}"]|[site>name>text*="{1}"]|[site>organization>name>text*="{1}"]';
+					path += this.experienceController.getOfferingConstraint();
 				}
-				else if (this.typeName === "Site")
+				else if (this.typeName === 'Site')
 				{
-					path = 'Site[ancestor:name*="{1}"]';
-					if (this.experience.services[0].pickedObject)
+					path = 'site[name>text*="{1}"]|[organization>name>text*="{1}"]';
+					if (this.experienceController.experienceServices[0] instanceof cr.Service)
 					{
-						path += '[Offerings>Offering[Service*={0}]]'.format(this.experience.services[0].pickedObject.getInstanceID());
+						path += '[offering>service>service={0}]]'.format(this.experienceController.experienceServices[0].service().id());
 					}
 				}
 				else if (this.typeName === "Organization")
 				{
-					path = 'Organization[name*="{1}"]';
+					path = 'organization[name>text*="{1}"]';
 				}
 				else
 					throw "Unrecognized typeName: {0}".format(this.typeName);
@@ -1630,13 +652,13 @@ var SiteSearchView = (function() {
 		}
 		else if (val)
 		{
-			if (this.typeName === "Site")
+			if (this.typeName === 'Site')
 			{
-				path = 'Site[ancestor:name*="{1}"]';
+				path = 'site[name>text*="{1}"]|[organization>name>text*="{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[name*="{1}"]';
+				path = 'organization[name>text*="{1}"]';
 			}
 			var symbol = "*=";
 		
@@ -1646,38 +668,102 @@ var SiteSearchView = (function() {
 			return '';
 	}
 	
-	SiteSearchView.prototype.setupSearchTypes = function(searchText)
+	SiteLinkSearchView.prototype.resultType = function(val)
+	{
+		var path;
+		if (this.experienceController.organizationName())
+		{
+			if (this.experienceController.organization() == null)
+			{
+				return null;
+			}
+			else if (!val)
+			{
+				if (this.typeName === 'Site')
+					return cr.Site;
+				else if (this.typeName === "Offering from Site")
+				{
+					return cr.Offering;
+				}
+			}
+			else
+			{
+				if (this.typeName === "Offering")
+				{
+					return cr.Offering;
+				}
+				else if (this.typeName === 'Site')
+				{
+					return cr.Site;
+				}
+			}
+		}
+		else if (this.experienceController.experienceServices().length > 0)
+		{
+			if (!val)
+			{
+				return null;
+			}
+			else
+			{
+				if (this.typeName === "Offering")
+				{
+					return cr.Offering;
+				}
+				else if (this.typeName === 'Site')
+				{
+					return cr.Site;
+				}
+				else if (this.typeName === "Organization")
+				{
+					return cr.Organization;
+				}
+				else
+					throw "Unrecognized typeName: {0}".format(this.typeName);
+			}
+		}
+		else if (val)
+		{
+			if (this.typeName === 'Site')
+			{
+				return cr.Site;
+			}
+			else if (this.typeName === "Organization")
+			{
+				return cr.Organization;
+			}
+		}
+		else
+			return null;
+	}
+	
+	SiteLinkSearchView.prototype.setupSearchTypes = function(searchText)
 	{
 		/* For each state, set up typeName, and the list of typeNames. */
-		if (this.experience.organizationName)
+		if (this.experienceController.organizationName())
 		{
-			if (this.experience.organization)
+			if (this.experienceController.organization())
 			{
-				if (searchText && searchText.length > 0)
-					this.typeNames = ["Site", "Offering"];
+				if (searchText)
+					this.typeNames = ['Site', "Offering"];
 				else
-					this.typeNames = ["Site"];
+					this.typeNames = ['Site'];
 			}
 			else
 			{
 				this.typeNames = [""];
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experienceController.experienceServices().length > 0)
 		{
-			if (this.experience.services[0].pickedObject)
-			{
-				if (searchText && searchText.length > 0)
-					this.typeNames = ["Offering", "Site", "Organization"];
-				else
-					this.typeNames = [""];
-			}
+			if (searchText)
+				this.typeNames = ["Offering", 'Site', "Organization"];
 			else
-				this.typeNames = ["Site", "Organization"];
+				this.typeNames = [""];
 		}
 		else if (searchText)
 		{
-			this.typeNames = ["Site", "Organization"];
+			this.typeNames = ['Site', "Organization"];
 		}
 		else
 		{
@@ -1687,7 +773,7 @@ var SiteSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	SiteSearchView.prototype.checkHelp = function(showHelp)
+	SiteLinkSearchView.prototype.checkHelp = function(showHelp)
 	{
 		var helpDiv = d3.select(this.helpNode);
 
@@ -1719,88 +805,96 @@ var SiteSearchView = (function() {
 		return true;
 	}
 	
-	SiteSearchView.prototype.appendDescriptions = function(buttons)
+	SiteLinkSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
-				if (d.getTypeName() === "Offering")
+				if (d instanceof cr.Offering)
 				{
 					leftText.append('div')
-						.classed('title', true).text(d.getDescription());
+						.classed('title', true).text(d.description());
 
-					orgDiv = leftText.append('div').classed("organization", true);
-					if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+					var orgDiv = leftText.append('div')
+						.classed("organization", true);
+					orgDiv.append('div')
+						.classed('address-line', true)
+						.text(d.organization().description());
+						
+					if (d.site().description() != d.organization().description())
 					{
 						orgDiv.append('div')
 							.classed('address-line', true)
-							.text(d.getValue("Site").getDescription());
+							.text(d.site().description());
 					}
 				}
-				else if (d.getTypeName() === "Site")
+				else if (d instanceof cr.Site)
 				{
 					/* The organization name is either a value of d or, if d is a value
 					   of an Offering, then the organization name is the value of the offering.
 					 */
 					var orgValue;
-					if (d.cell && d.cell.parent && d.cell.parent.getTypeName() === "Offering")
-						orgValue = d.cell.parent.getValue("Organization");
+					if (d.parent() && d.parent() instanceof cr.Offering)
+						orgValue = d.parent().organization();
 					else
-						orgValue = d.getValue("Organization");
+						orgValue = d.organization();
 						
-					if (orgValue.getDescription() == d.getDescription() ||
-						orgValue.getInstanceID() == (_this.experience.organization && _this.experience.organization.getInstanceID()))
+					if (orgValue.description() == d.description() ||
+						orgValue.id() == (_this.experienceController.organization() && _this.experienceController.organization().id()))
 					{
-						leftText.text(d.getDescription());
+						leftText.text(d.description());
 					}
 					else
 					{
 						orgDiv = leftText.append('div').classed("organization", true);		
-						orgDiv.append('div').text(orgValue.getDescription());
+						orgDiv.append('div').text(orgValue.description());
 						orgDiv.append('div')
 							.classed('address-line', true)
-							.text(d.getDescription());
+							.text(d.description());
 					}
 				}
 				else
 				{
-					leftText.text(d.getDescription());
+					leftText.text(d.description());
 				}
 			});
 	}
 	
-	SiteSearchView.prototype.isDirtyText = function()
+	SiteLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
-		return this.inputText() != (this.experience.siteName || "");
+		return this.inputText() != (this.experienceController.siteName() || "");
 	}
 	
-	function SiteSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
+	function SiteLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
-		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experience, inputNode, helpNode);
+		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
-	return SiteSearchView;
+	return SiteLinkSearchView;
 })();
 
 /* Typenames can be "Offering" or "Offering from Site" or "Service". The return types can be Offerings. */
-var OfferingSearchView = (function() {
-	OfferingSearchView.prototype = new ExperienceDatumSearchView();
-	
-	OfferingSearchView.prototype.clearFromOffering = function()
+var OfferingLinkSearchView = (function() {
+	OfferingLinkSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
+	OfferingLinkSearchView.prototype.constructor = OfferingLinkSearchView;
+
+	OfferingLinkSearchView.prototype.clearFromOffering = function()
 	{
-		this.experience.clearOffering();
+		this.experienceController.clearOffering();
 	}
 	
-	OfferingSearchView.prototype.onClickButton = function(d, i) {
+	OfferingLinkSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.getTypeName() === 'Service')
+		if (d instanceof cr.Service)
 		{
-			if (prepareClick('click', 'service for offering: ' + d.getDescription()))
+			if (prepareClick('click', 'service for offering: ' + d.description()))
 			{
-				this.experience.setOffering({text: d.getDescription() });
+				this.experienceController.customOffering(d.description())
+							   .offering(null);
+				
 				this.sitePanel.onExperienceUpdated();
 				this.hideSearch(function()
 					{
@@ -1809,16 +903,11 @@ var OfferingSearchView = (function() {
 					});
 			}
 		}
-		else if (d.getTypeName() === 'Offering')
+		else if (d instanceof cr.Offering)
 		{
-			if (prepareClick('click', 'offering: ' + d.getDescription()))
+			if (prepareClick('click', 'offering: ' + d.description()))
 			{
-				this.experience.setOffering({instance: d});
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
+				this.experienceController.offeringPicked(d);
 				this.sitePanel.onExperienceUpdated();
 				_this.hideSearch(function()
 					{
@@ -1830,20 +919,19 @@ var OfferingSearchView = (function() {
 		d3.event.preventDefault();
 	}
 	
-	OfferingSearchView.prototype.searchPath = function(val)
+	OfferingLinkSearchView.prototype.searchPath = function(val)
 	{
 		var path;
 
-		if (this.experience.siteName)
+		if (this.experienceController.siteName())
 		{
-			if (this.experience.site)
+			if (this.experienceController.site())
 			{
 				if (!val)
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Offerings>Offering".format(this.experience.site.getInstanceID());
-						return path;
+						return this.experienceController.site().urlPath() + "/offering";
 					}
 					else
 						throw new Error('unrecognized typeName');
@@ -1852,7 +940,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[name*="{1}"]';
+						path = this.experienceController.site().urlPath() + '/offering[name>text*="{1}"]';
 					}
 					else
 						throw new Error('unrecognized typeName');
@@ -1869,16 +957,16 @@ var OfferingSearchView = (function() {
 			else
 				return '';
 		}
-		else if (this.experience.organizationName)
+		else if (this.experienceController.organizationName())
 		{
-			if (this.experience.organization)
+			if (this.experienceController.organization())
 			{
 				if (!val)
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getInstanceID());
-						path += this.experience.getOfferingConstraint();
+						path = this.experienceController.organization().urlPath() + '/site/offering';
+						path += this.experienceController.getOfferingConstraint();
 						return path;
 					}
 					else
@@ -1888,9 +976,9 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = 'Offering[ancestor:name*="{1}"]';
-						path = "{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
-						path += this.experience.getOfferingConstraint();
+						path = '[name>text*="{1}"]|[site>name>text*="{1}"]';
+						path = this.experienceController.organization().urlPath() + '/site/offering' + path;
+						path += this.experienceController.getOfferingConstraint();
 					}
 			
 					var symbol = "*=";
@@ -1900,17 +988,17 @@ var OfferingSearchView = (function() {
 			}
 			else
 			{
-				throw new Error("Unreachable code");
+				console.assert(false) /* Unreachable code */;
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experienceController.experienceServices().length > 0)
 		{
 			if (val)
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[ancestor:name*="{1}"]';
-					path += this.experience.getOfferingConstraint();
+					path = 'offering[name>text*="{1}"]|[site>name>text*="{1}"]|[site>organization>name>text*="{1}"]';
+					path += this.experienceController.getOfferingConstraint();
 				}
 				else
 					throw "Unrecognized typeName: {0}".format(this.typeName);
@@ -1922,8 +1010,8 @@ var OfferingSearchView = (function() {
 			}
 			else
 			{
-				path = "Offering";
-				path += this.experience.getOfferingConstraint();
+				path = "offering";
+				path += this.experienceController.getOfferingConstraint();
 				return path;
 			}
 		}
@@ -1931,8 +1019,8 @@ var OfferingSearchView = (function() {
 		{
 			if (this.typeName === "Offering")
 			{
-				path = 'Offering[name*="{1}"]' +
-						this.experience.getOfferingConstraint();
+				path = 'offering[name>text*="{1}"]' +
+						this.experienceController.getOfferingConstraint();
 			}
 			else
 				throw new Error("Unrecognized typeName: {0}".format(this.typeName));
@@ -1945,12 +1033,85 @@ var OfferingSearchView = (function() {
 			return '';
 	}
 	
-	OfferingSearchView.prototype.setupSearchTypes = function(searchText)
+	OfferingLinkSearchView.prototype.resultType = function(val)
+	{
+		var path;
+
+		if (this.experienceController.siteName())
+		{
+			if (this.experienceController.site())
+			{
+				if (this.typeName === "Offering")
+					return cr.Offering;
+				else
+					throw new Error('unrecognized typeName');
+			}
+			else if (val)
+			{
+				throw new Error("Unreachable code");
+			}
+			else
+				return '';
+		}
+		else if (this.experienceController.organizationName())
+		{
+			if (this.experienceController.organization())
+			{
+				if (!val)
+				{
+					if (this.typeName === "Offering")
+					{
+						return cr.Offering;
+					}
+					else
+						return cr.Service;
+				}
+				else
+				{
+					if (this.typeName === "Offering")
+					{
+						return cr.Offering;
+					}
+				}
+			}
+			else
+			{
+				throw new Error("Unreachable code");
+			}
+		}
+		else if (this.experienceController.experienceServices().length > 0)
+		{
+			if (val)
+			{
+				if (this.typeName === "Offering")
+				{
+					return cr.Offering;
+				}
+				else
+					throw "Unrecognized typeName: {0}".format(this.typeName);
+			}
+			else
+			{
+				return cr.Offering;
+			}
+		}
+ 		else if (val)
+		{
+			if (this.typeName === "Offering")
+				return cr.Offering;
+			else
+				throw new Error("Unrecognized typeName: {0}".format(this.typeName));
+		}
+		else
+			return '';
+	}
+	
+	OfferingLinkSearchView.prototype.setupSearchTypes = function(searchText)
 	{
 		/* For each state, set up typeName, and the list of typeNames. */
-		if (this.experience.siteName)
+		if (this.experienceController.siteName())
 		{
-			if (this.experience.site)
+			if (this.experienceController.site())
 			{
 				this.typeNames = ["Offering"];
 			}
@@ -1959,13 +1120,13 @@ var OfferingSearchView = (function() {
 				this.typeNames = [""];
 			}
 		}
-		else if (this.experience.organizationName)
+		else if (this.experienceController.organizationName())
 		{
-			if (this.experience.organization)
+			if (this.experienceController.organization())
 			{
 				if (searchText)
 					this.typeNames = ["Offering"];
-				else if (this.experience.getOfferingConstraint())
+				else if (this.experienceController.getOfferingConstraint())
 					this.typeNames = ["Offering"];
 				else
 					this.typeNames = ["Service"];
@@ -1975,17 +1136,9 @@ var OfferingSearchView = (function() {
 				this.typeNames = [""];
 			}
 		}
-		else if (this.experience.services.length > 0)
+		else if (this.experienceController.experienceServices().length > 0)
 		{
-			if (this.experience.services[0].pickedObject)
-			{
-				if (searchText)
-					this.typeNames = ["Offering"];
-				else
-					this.typeNames = ["Offering"];
-			}
-			else
-				this.typeNames = [""];
+			this.typeNames = ["Offering"];
 		}
 		else if (searchText)
 		{
@@ -1999,7 +1152,7 @@ var OfferingSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	OfferingSearchView.prototype.checkHelp = function(showHelp)
+	OfferingLinkSearchView.prototype.checkHelp = function(showHelp)
 	{
 		var helpDiv = d3.select(this.helpNode);
 
@@ -2026,157 +1179,57 @@ var OfferingSearchView = (function() {
 		return true;
 	}
 	
-	OfferingSearchView.prototype.appendDescriptions = function(buttons)
+	OfferingLinkSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
-				if (d.getTypeName() === "Offering")
+				if (d instanceof cr.Offering)
 				{
-					if (_this.experience.site && _this.experience.site.getInstanceID() == d.getValue("Site").getInstanceID())
-						leftText.text(d.getDescription());
+					if (_this.experienceController.site() && _this.experienceController.site().id() == d.site().id())
+						leftText.text(d.description());
 					else
 					{
 						leftText.append('div')
-							.classed('title', true).text(d.getDescription());
+							.classed('title', true).text(d.description());
 	
 						orgDiv = leftText.append('div').classed("organization", true);
-						if (d.getValue("Organization").getInstanceID() !=
-							(_this.experience.organization && _this.experience.organization.getInstanceID()))
-							orgDiv.append('div').text(d.getValue("Organization").getDescription());
-						if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+						if (d.organization().id() !=
+							(_this.experienceController.organization() && _this.experienceController.organization().id()))
+							orgDiv.append('div').text(d.organization().description());
+						if (d.site().description() != d.organization().description())
 						{
 							orgDiv.append('div')
 								.classed('address-line', true)
-								.text(d.getValue("Site").getDescription());
+								.text(d.site().description());
 						}
 					}
 				}
-				else if (d.getTypeName() === "Service")
+				else if (d instanceof cr.Service)
 				{
-					leftText.text(d.getDescription());
+					leftText.text(d.description());
 				}
 				else
 				{
-					leftText.text(d.getDescription());
+					leftText.text(d.description());
 				}
 			});
 	}
 	
-	OfferingSearchView.prototype.isDirtyText = function()
+	OfferingLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
-		return this.inputText() != (this.experience.offeringName || "");
+		return this.inputText() != (this.experienceController.offeringName() || "");
 	}
 	
-	function OfferingSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
+	function OfferingLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
-		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experience, inputNode, helpNode);
+		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
-	return OfferingSearchView;
-})();
-
-var VerticalReveal = (function() {
-	VerticalReveal.prototype.node = null;
-
-	VerticalReveal.prototype.isVisible = function()
-	{
-		return this._isVisible;
-	}
-	
-	VerticalReveal.prototype.show = function(args, duration, step, done)
-	{
-		var jNode = $(this.node);
-
-		if (!args)
-			args = {};
-		if (args.newHeight === undefined)
-			args.newHeight = 'auto';
-		if (args.children === undefined)
-			args.children = jNode.children();
-
-		args.children.css('display', '');
-		this._isVisible = true;
-		var oldHeight = jNode.height();
-		jNode.height(args.newHeight);
-		if (args.before)
-			args.before();
-			
-		if (!duration)
-		{
-			if (step) step();
-			if (done) done();
-			jNode.css('padding-top', "0px")
-				 .css('padding-bottom', "0px");
-		}
-		else if (args.newHeight == 'auto')
-		{
-			/* This hack smells bad, but it seems to work. The problem occurs in that the code
-				below doesn't do the right thing if this item has padding on the bottom. (and maybe the top,
-				but I didn't test that. */
-			var outerHeight = jNode.outerHeight(false);
-			jNode.height(oldHeight);
-			jNode.animate({height: outerHeight, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
-			
-		}
-		else
-		{
-			var height = jNode.height();
-			jNode.height(oldHeight);
-			jNode.animate({height: height, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
-		}
-	}
-	
-	VerticalReveal.prototype.hide = function(args)
-	{
-		var duration = (args && args.duration) ? args.duration : 0;
-		var step = (args && args.step) ? args.step : null;
-		var done = (args && args.done) ? args.done : null;
-		var before = (args && args.before) ? args.before : null;
-		
-		var jNode = $(this.node);
-
-		var oldHeight = jNode.height();
-		var oldPaddingTop = jNode.css('padding-top');
-		var oldPaddingBottom = jNode.css('padding-bottom');
-		jNode.css('padding-top', '0px')
-			 .css('padding-bottom', '0px')
-			 .height(0);
-		if (before)
-			before();
-			
-		if (!duration)
-		{
-			if (step) step();
-			if (done) done();
-			jNode.children().css('display', 'none');
-			this._isVisible = false;
-		}
-		else
-		{
-			var _this = this;
-			jNode.css('padding-top', oldPaddingTop)
-				 .css('padding-bottom', oldPaddingBottom)
-				 .height(oldHeight)
-				 .animate({height: '0px', 'padding-top': '0px', 'padding-bottom': '0px'}, {duration: duration, easing: 'swing', step: step, done: 
-				function() {
-					jNode.children().css('display', 'none');
-					_this._isVisible = false;
-					if (done) done();
-				}});
-		}
-	}
-			
-	function VerticalReveal(node)
-	{
-		this.node = node;
-		this._isVisible = true;
-	}
-	
-	return VerticalReveal;
+	return OfferingLinkSearchView;
 })();
 
 /* This is the entry panel for the workflow. The experience contains no data on entry. 
@@ -2218,7 +1271,7 @@ var ConfirmDeleteAlert = (function () {
 			}
 			
 		div.append('button')
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.on("click", onCancel);
 		
 		dimmer.show();
@@ -2273,7 +1326,7 @@ var ExperienceShareOptions = (function () {
 		
 		if (cr.signedinUser)
 		{
-			var duplicateText = (path == cr.signedinUser.subInstance("Path")) ? "Duplicate Experience" : "Add to My Pathway";
+			var duplicateText = (path == cr.signedinUser.path()) ? "Duplicate Experience" : "Add to My Pathway";
 		
 			var addToMyPathwayButton = div.append('button')
 				.text(duplicateText)
@@ -2282,8 +1335,8 @@ var ExperienceShareOptions = (function () {
 					{
 						if (prepareClick('click', duplicateText))
 						{
-							var tempExperience = new Experience(cr.signedinUser.getValue("Path"), experience);
-							var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
+							var experienceController = new ExperienceController(experience.path(), experience, false);
+							var newPanel = new NewExperiencePanel(experienceController);
 							newPanel.showUp()
 								.done(function()
 									{
@@ -2308,7 +1361,7 @@ var ExperienceShareOptions = (function () {
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
 							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}/.'
-										.format(window.location.origin, experience.getInstanceID());
+										.format(window.location.origin, experience.id());
 							unblockClick();
 						});
 						dimmer.hide();
@@ -2318,7 +1371,7 @@ var ExperienceShareOptions = (function () {
 		$(emailAddExperienceButton.node()).on('blur', onCancel);
 		
 		var cancelButton = div.append('button')
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.classed("site-active-text", true);
 		
 		$(cancelButton.node()).click(onCancel);
@@ -2341,9 +1394,9 @@ var ExperienceShareOptions = (function () {
 })();
 
 var NewExperiencePanel = (function () {
-	NewExperiencePanel.prototype = new SitePanel();
-	NewExperiencePanel.prototype.allServices = null;
-	
+	NewExperiencePanel.prototype = Object.create(crv.SitePanel.prototype);
+	NewExperiencePanel.prototype.constructor = NewExperiencePanel;
+
 	NewExperiencePanel.prototype.organizationSearchView = null;
 	NewExperiencePanel.prototype.siteSearchView = null;
 	NewExperiencePanel.prototype.offeringSearchView = null;
@@ -2373,7 +1426,7 @@ var NewExperiencePanel = (function () {
 	{
 		var _this = this;
 		var itemsDiv = crf.appendItemList(dateContainer)
-			.classed('overlined-items', true);
+			.classed('overlined', true);
 		var itemDiv = itemsDiv.append('li');
 		var dateSpan = itemDiv.append('span')
 			.classed('growable', true);
@@ -2465,171 +1518,25 @@ var NewExperiencePanel = (function () {
 		};
 	}
 	
-	NewExperiencePanel.prototype.getInputTextWidth = function(inputNode)
-	{
-		var div = document.createElement('span');
-		$(div).addClass('textWidth')
-			.text(inputNode.value || $(inputNode).attr('placeholder'));
-		$(inputNode).parent().append(div);
-		var width = $(div).outerWidth();
-		$(div).remove();
-		return width;
-	}
-	
 	NewExperiencePanel.prototype.setTagColor = function(node)
 	{
-		if (node == document.activeElement)
-		{
-			d3.select(node)
-				.style('background-color', null)
-				.style('border-color', null)
-				.style('color', null);
-		}
-		else
-		{
-			var pathGuide;
-			var d = d3.select(node).datum();
-			var service = null;
-			
-			if (d)
-			{
-				if (d.constructor == cr.ModelObject)
-					service = d;	/* This occurs for tags associated with offerings. */
-				else if (d.constructor == ReportedObject)
-					service = d.pickedObject;
-			}
-			
-			if (service)
-			{
-				var s = new Service(service);
-				pathGuide = PathGuides.data[s.getColumn()];
-		
-				d3.select(node)
-					.style('background-color', pathGuide.flagColor)
-					.style('border-color', pathGuide.poleColor)
-					.style('color', pathGuide.fontColor);
-			}
-			else if (d)
-			{
-				pathGuide = PathGuides.data[PathGuides.data.length - 1];
-		
-				d3.select(node)
-					.style('background-color', pathGuide.flagColor)
-					.style('border-color', pathGuide.poleColor)
-					.style('color', pathGuide.fontColor);
-			}
-			else
-			{
-				d3.select(node)
-					.style('background-color', null)
-					.style('border-color', null)
-					.style('color', null);
-			}
-		}
+		this.tagPoolSection.setTagColor(node);
 	}
 	
 	NewExperiencePanel.prototype.setTagInputWidth = function(inputNode)
 	{
-		var newWidth = this.getInputTextWidth(inputNode) + 18;
-		$(inputNode).outerWidth(newWidth);
-		
-		this.setTagColor(inputNode);
-		
+		this.tagPoolSection.setTagInputWidth(inputNode);
 	}
 	
 	NewExperiencePanel.prototype.appendTag = function(container, instance)
 	{
-		var input = container.insert('input', 'button')
-			.datum(instance)
-			.classed('tag', true)
-			.attr('placeholder', 'Tag')
-			.attr('value', instance && instance.getDescription());
-			
-		$(input.node()).on('click', function(e)
-			{
-				this.setSelectionRange(0, this.value.length);
-				e.preventDefault();
-			});
-		
-		var _this = this;	
-		
-		$(input.node()).on('input', function()
-			{
-				/* Check for text changes for all input boxes.  */
-				if (this == document.activeElement)
-				{
-					if (!document.activeElement.value)
-						_this.hideAddTagButton();
-					else
-						_this.showAddTagButton();
-					_this.tagSearchView.constrainTagFlags();
-				}
-				_this.setTagInputWidth(this);
-			})
-			.on('focusin', function()
-			{
-				_this.tagSearchView.focusNode = this;
-				_this.onFocusInTagInput(this);
-			})
-			.on('focusout', function()
-			{
-				_this.setTagInputWidth(this);
-				_this.setPlaceholders();
-				if (!_this.inMouseDown)
-				{
-					_this.checkTagInput();
-					_this.showAddTagButton();
-				}
-			})
-			.keypress(function(e) {
-				if (e.which == 13)
-				{
-					_this.checkTagInput();
-					_this.showAddTagButton();
-					e.preventDefault();
-				}
-			})
-			.keydown( function(event) {
-				if (event.keyCode == 9) {
-					/* If this is an empty node with no instance to remove, then don't handle here. */
-					if (!input.node().value && !instance)
-						return;
-					/* If this is a node whose value matches the previous value, then don't handle here. */
-					else if (instance && input.node().value == instance.getDescription())
-						return;
-					else if (instance && input.node().value != instance.getDescription())
-					{
-						_this.checkTagInput();
-						_this.showAddTagButton();
-						/* Do not prevent default. */
-					}
-					else
-					{
-						_this.checkTagInput();
-						_this.showAddTagButton();
-						_this.tagSearchView.constrainTagFlags();
-						event.preventDefault();
-					}
-				}
-			});
-
-		this.setTagInputWidth(input.node());
-		
-		return input;
+		return this.tagPoolSection.appendTag(container, instance);
 	}
 	
 	NewExperiencePanel.prototype.showTags = function()
 	{
-		var offeringTags = [];
-		var tags = [];
+		var offeringTags = this.experienceController.primaryServices() || [];
 		var _this = this;
-		
-		var offering = this.experience.offering;
-		if (offering && offering.getInstanceID())
-		{
-			offeringTags = offering.getCell("Service").data
-				.filter(function(v) { return !v.isEmpty(); });
-		}
 		
 		var container = this.mainDiv.select('span.offering-tags-container');
 		container.selectAll('span').remove();
@@ -2641,7 +1548,7 @@ var NewExperiencePanel = (function () {
 				.enter()
 				.append('span')
 				.classed('tag', true)
-				.text(function(d) { return d.getDescription(); })
+				.text(function(d) { return d.description(); })
 				.each(function()
 					{
 						_this.setTagColor(this);
@@ -2652,73 +1559,43 @@ var NewExperiencePanel = (function () {
 		{
 			parent.css('display', 'none');
 		}
-			
-		container = this.mainDiv.select('.tags-container');
-		var tagDivs = container.selectAll('input.tag');
-		tags = tags.concat(this.experience.services.filter(function(v) 
-			{ 
-				return !offeringTags.find(function(d)
-					{
-						return d.getDescription() === v.getDescription();
-					}) &&
-					!tags.find(function(d) 
-					{ 
-						return d.getDescription() === v.getDescription(); 
-					})
-			}));
-		
-		tagDivs.filter(function(d) { return d == null || tags.indexOf(d) < 0; } ).remove();
-		
-		var ds = tagDivs.data();
-		for (var i = 0; i < tags.length; ++i)
-		{
-			var input;
-			if (ds.indexOf(tags[i]) < 0)
-			{
-				input = this.appendTag(container, tags[i]);
-			}
-			else
-			{
-				input = tagDivs.filter(function(d) { return d == tags[i]; });
-				input.node().value = tags[i].getDescription();
-				this.setTagInputWidth(input.node());
-			}
-		}
 	}
 	
-	NewExperiencePanel.prototype._serviceLabel = function(service, cellName)
+	NewExperiencePanel.prototype._serviceLabel = function(service, namesFunction)
 	{
 		if (!service)
 			return "";
+		
+		var names = namesFunction(service);
+		if (names && names.length)
+			return names[0];	
 			
-		var label = service.getDatum(cellName);
-		if (label)
-			return label;
-			
-		var subObj = service.getCell("Service").data.find(function(s)
+		var subObj = service.serviceImplications().find(function(s)
 			{
-				return s.getDatum(cellName);
+				var names = namesFunction(s.service());
+				return names && names.length;
 			});
-		return subObj && subObj.getDatum(cellName);
+		return subObj && namesFunction(subObj.service())[0];
 	}
 	
 	NewExperiencePanel.prototype.setPlaceholders = function()
 	{
-		var service = this.experience.services.find(function(s)
+		var experienceService = this.experienceController.experienceServices().find(function(s)
 			{
-				return s.pickedObject &&
-					   new Service(s.pickedObject).getColumn() < PathGuides.data.length - 1;
+				return s.service().getColumn() < PathGuides.data.length - 1;
 			});
+		
+		var service = experienceService && experienceService.service();
 			
 		this.organizationInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Organization Label')) || this.organizationDefaultPlaceholder);
+				  (service && this._serviceLabel(service, function(s) { return s.organizationLabels(); })) || this.organizationDefaultPlaceholder);
 		this.siteInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Site Label')) || this.siteDefaultPlaceholder);
+				  (service && this._serviceLabel(service, function(s) { return s.siteLabels(); })) || this.siteDefaultPlaceholder);
 		this.offeringInput
 			.attr('placeholder', 
-				  (service && this._serviceLabel(service.pickedObject, 'Offering Label')) || this.offeringDefaultPlaceholder);
+				  (service && this._serviceLabel(service, function(s) { return s.offeringLabels(); })) || this.offeringDefaultPlaceholder);
 	}
 	
 	NewExperiencePanel.prototype.updateInputs = function()
@@ -2730,9 +1607,9 @@ var NewExperiencePanel = (function () {
 		this.siteInput.attr('placeholder', null);
 		this.offeringInput.attr('placeholder', null);
 		
-		this.organizationInput.node().value = this.experience.organizationName;
-		this.siteInput.node().value = this.experience.siteName;
-		this.offeringInput.node().value = this.experience.offeringName;
+		this.organizationInput.node().value = this.experienceController.organizationName();
+		this.siteInput.node().value = this.experienceController.siteName();
+		this.offeringInput.node().value = this.experienceController.offeringName();
 
 		this.setPlaceholders();
 	}
@@ -2744,16 +1621,6 @@ var NewExperiencePanel = (function () {
 		this.calculateHeight();
 	}
 	
-	NewExperiencePanel.prototype.getTagConstrainText = function()
-	{
-		var tagsContainer = this.mainDiv.select('.tags-container');
-		var inputs = tagsContainer.selectAll('input:focus');
-		if (inputs.size() > 0)
-			return inputs.node().value.trim();
-		else
-			return "";
-	}
-	
 	NewExperiencePanel.prototype.checkOrganizationInput = function()
 	{
 		var newText = this.organizationSearchView.inputText();
@@ -2762,14 +1629,31 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.organizationSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getInstanceID() != (this.experience.organization && this.experience.organization.getInstanceID()))
-				this.experience.setOrganization({instance: newInstance});
-			else if (newText != this.experience.organizationName)
-				this.experience.setOrganization({text: newText});
+				newInstance.id() != (this.experienceController.organization() && this.experienceController.organization().id()))
+				{
+					if (newInstance instanceof cr.Organization)
+						this.experienceController.organizationPicked(newInstance);
+					else if (newInstance instanceof cr.Site)
+						this.experienceController.sitePicked(newInstance);
+					else
+						console.assert(false);
+				}
+			else if (newText != this.experienceController.organizationName())
+			{
+				if (this.experienceController.organization())
+				{
+					this.organizationSearchView.clearFromOrganization();
+					this.experienceController.customOrganization(newText);
+				}
+				else
+				{
+					this.experienceController.customOrganization(newText)
+											 .organization(null);
+				}
+			}
 		}
 		else
 			this.organizationSearchView.clearFromOrganization();
-		this.updateInputs();
 	}
 		
 	NewExperiencePanel.prototype.checkSiteInput = function()
@@ -2780,14 +1664,29 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.siteSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getInstanceID() != (this.experience.site && this.experience.site.getInstanceID()))
-				this.experience.setSite({instance: newInstance});
-			else if (newText != this.experience.siteName)
-				this.experience.setSite({text: newText});
+				newInstance.id() != (this.experienceController.site() && this.experienceController.site().id()))
+			{
+				if (newInstance instanceof cr.Site)
+					this.experienceController.sitePicked(newInstance);
+				else if (newInstance instanceof cr.Offering)
+					this.experienceController.offeringPicked(newInstance);
+				else
+					console.assert(false);
+			}
+			else if (newText != this.experienceController.siteName())
+				if (this.experienceController.site())
+				{
+					this.siteSearchView.clearFromSite();
+					this.experienceController.customSite(newText);
+				}
+				else
+				{
+					this.experienceController.customSite(newText)
+											 .site(null);
+				}
 		}
 		else
 			this.siteSearchView.clearFromSite();
-		this.updateInputs();
 	}
 		
 	NewExperiencePanel.prototype.checkOfferingInput = function()
@@ -2798,80 +1697,26 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.offeringSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getInstanceID() != (this.experience.offering && this.experience.offering.getInstanceID()))
-				this.experience.setOffering({instance: newInstance});
-			else if (newText != this.experience.offeringName)
-				this.experience.setOffering({text: newText});
+				newInstance.id() != (this.experienceController.offering() && this.experienceController.offering().id()))
+			{
+				if (newInstance instanceof cr.Offering)
+					this.experienceController.offeringPicked(newInstance);
+				else
+					console.assert(false);
+			}
+			else if (newText != this.experienceController.offeringName())
+				this.experienceController.customOffering(newText)
+										 .offering(null);
 		}
 		else
 		{
 			this.offeringSearchView.clearFromOffering();
 		}
-		this.updateInputs();
 	}
 	
 	NewExperiencePanel.prototype.checkTagInput = function(exceptNode)
 	{
-		var tagsContainer = this.mainDiv.select('.tags-container');
-		var _this = this;
-		tagsContainer.selectAll('input.tag').each(function(d, i)
-			{
-				/* Skip the exceptNode */
-				if (this == exceptNode)
-					return;
-					
-				if (d && d.constructor == ReportedObject)
-				{
-					var newText = this.value.trim();
-					if (!newText)
-					{
-						_this.experience.removeService(d);
-						$(this).remove();
-					}
-					else
-					{
-						var newInstance = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
-						if (!newInstance)
-						{
-							if (newText != d.name)
-							{
-								d.pickedObject = null;
-								d.name = newText;
-								this.value = d.getDescription();	/* Reset the value in case there was trimming */
-								$(this).trigger('input');
-							}
-						}
-						else if (newInstance != d.pickedObject)
-						{
-							d.pickedObject = newInstance;
-							d.name = newInstance.getDescription();
-							this.value = d.getDescription();
-							$(this).trigger('input');
-						}
-					}
-				}
-				else
-				{
-					var newText = this.value.trim();
-					if (newText)
-					{
-						var d = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
-						if (d)
-							_this.experience.addService({instance: d});
-						else
-							_this.experience.addService({text: newText});
-						_this.showTags();
-						this.value = "";
-						$(this).attr('placeholder', $(this).attr('placeholder'));
-					}
-					else
-					{
-						$(this).remove();
-					}
-				}
-			});
-			
-		this.setPlaceholders();
+		this.tagPoolSection.checkTagInput(exceptNode);
 	}
 	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
@@ -2882,6 +1727,8 @@ var NewExperiencePanel = (function () {
 		{
 			this.checkOrganizationInput();
 			this.organizationSearchView.hideSearch(done);
+			this.updateInputs();
+			this.showTags();
 			return true;
 		}
 		else if (newReveal != this.siteSearchView.reveal &&
@@ -2889,6 +1736,8 @@ var NewExperiencePanel = (function () {
 		{
 			this.checkSiteInput();
 			this.siteSearchView.hideSearch(done);
+			this.updateInputs();
+			this.showTags();
 			return true;
 		}
 		else if (newReveal != this.offeringSearchView.reveal &&
@@ -2896,14 +1745,15 @@ var NewExperiencePanel = (function () {
 		{
 			this.checkOfferingInput();
 			this.offeringSearchView.hideSearch(done);
+			this.updateInputs();
+			this.showTags();
 			return true;
 		}
-		else if (newReveal != this.tagSearchView.reveal &&
-			this.tagSearchView.reveal.isVisible())
+		else if (newReveal != this.tagPoolSection.reveal() &&
+			this.tagPoolSection.reveal().isVisible())
 		{
-			this.checkTagInput();
-			this.showAddTagButton();
-			this.tagSearchView.hideSearch(done);
+			this.tagPoolSection.checkTagInput(null);
+			this.tagPoolSection.hideReveal(done);
 			return true;
 		}
 		else if (newReveal != this.startHidable.wheelReveal &&
@@ -2924,41 +1774,17 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.setTagHelp = function()
 	{
-		if (this.tagSearchView.focusNode == this.tagSearchView.firstTagInputNode() &&
-			(!this.experience.offering ||
-			  this.experience.offering.getCell("Service").data.length == 0))
-			this.tagHelp.text(this.firstTagHelp);
-		else
-			this.tagHelp.text(this.otherTagHelp);
+		this.tagPoolSection.setTagHelp();
 	}
 	
 	NewExperiencePanel.prototype.hideAddTagButton = function()
 	{
-		var button = this.mainDiv.select('.tags-container>button');
-		if (button.style('display') != 'none')
-		{
-			button.interrupt().transition()
-				.style('opacity', 0)
-				.each('end', function()
-					{
-						button.style('display', 'none');
-					});
-		}
+		this.tagPoolSection.hideAddTagButton();
 	}
 	
 	NewExperiencePanel.prototype.showAddTagButton = function()
 	{
-		var button = this.mainDiv.select('.tags-container>button');
-		if (button.style('display') == 'none')
-		{
-			button.style('display', null);
-			button.interrupt().transition()
-				.style('opacity', 1)
-				.each('end', function()
-					{
-						button.style('display', null);
-					});
-		}
+		this.tagPoolSection.showAddTagButton();
 	}
 	
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
@@ -2970,60 +1796,22 @@ var NewExperiencePanel = (function () {
 			.style('color', null);
 			
 		var done = function()
-				{
-					_this.setTagHelp();
-					_this.tagSearchView.constrainTagFlags();
-					if (!inputNode.value)
-						_this.hideAddTagButton();
-					else
-						_this.showAddTagButton();
-						
-					_this.tagSearchView.showSearch(200, undefined, function()
-						{
-							var oldTop = $(_this.tagsSection.node()).offset().top;
-							if (oldTop < $(window).scrollTop())
-							{
-								var body = $("html, body");
-								body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-							}
-						});
-				};
-		if (!this.onFocusInOtherInput(_this.tagSearchView.reveal, done))
-		{
-			this.checkTagInput(inputNode);
-			this.setTagHelp();
-			this.tagSearchView.constrainTagFlags();
-			if (!inputNode.value)
-				_this.hideAddTagButton();
-			else
-				_this.showAddTagButton();
-				
-			if (!this.tagSearchView.reveal.isVisible())
 			{
-				this.tagSearchView.showSearch();
-			}
+				_this.tagPoolSection.revealSearchView(inputNode, true);
+			};
+		if (!this.onFocusInOtherInput(_this.tagPoolSection.reveal(), done))
+		{
+			this.tagPoolSection.checkTagInput(inputNode);
+			this.tagPoolSection.revealSearchView(inputNode, false);
 		}
 	}
 	
 	NewExperiencePanel.prototype.resizeVisibleSearch = function(duration)
 	{
-		/* This may be called before tagSearchView is initialized. */
-		if (this.tagSearchView && this.tagSearchView.reveal.isVisible())
-		{
-			this.tagSearchView.showSearch(duration);
-		}
-		else if (this.organizationSearchView.reveal.isVisible())
-		{
-			this.organizationSearchView.showSearch(duration);
-		}
-		else if (this.siteSearchView.reveal.isVisible())
-		{
-			this.siteSearchView.showSearch(duration);
-		}
-		else if (this.offeringSearchView.reveal.isVisible())
-		{
-			this.offeringSearchView.showSearch(duration);
-		}
+		this.tagPoolSection.resizeVisibleSearch(duration) ||
+		this.organizationSearchView.resizeVisibleSearch(duration) ||
+		this.siteSearchView.resizeVisibleSearch(duration) ||
+		this.offeringSearchView.resizeVisibleSearch(duration);
 	}
 
 	NewExperiencePanel.prototype.handleDeleteButtonClick = function()
@@ -3034,27 +1822,25 @@ var NewExperiencePanel = (function () {
 			var _this = this;
 			new ConfirmDeleteAlert(this.node(), "Delete Experience", 
 				function() { 
-					_this.experience.instance.deleteValue()
+					_this.experienceController.oldInstance().deleteData()
 						.then(function() { _this.hideDown(unblockClick) },
 							  cr.syncFail);
 				}, 
-				function() { 
-					unblockClick();
-				});
+				unblockClick);
 		}
 	}
 	
-	function NewExperiencePanel(experience, phase, showFunction) {
-		if (experience.title)
-			this.title = experience.title;
-		else if (experience.instance)
+	function NewExperiencePanel(experienceController, showFunction) {
+		this.experienceController = experienceController;
+			
+		if (this.experienceController.title())
+			this.title = this.experienceController.title();
+		else if (this.experienceController.oldInstance())
 			this.title = this.editTitle;
-		else if (experience.domain)
-			this.title = this.newFromDomainTitle.format(experience.domain.getDescription());
-		else if (experience.stage)
-			this.title = this.newFromDomainTitle.format(experience.stage.getDescription());
-		else if (experience.serviceDomain)
-			this.title = this.newFromDomainTitle.format(experience.serviceDomain.getDescription());
+		else if (this.experienceController.domain())
+			this.title = this.newFromDomainTitle.format(this.experienceController.domain().description());
+		else if (this.experienceController.stage())
+			this.title = this.newFromDomainTitle.format(this.experienceController.stage());
 			
 		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
@@ -3068,7 +1854,6 @@ var NewExperiencePanel = (function () {
 					});
 			}
 		var _this = this;
-		this.experience = experience;
 		
 		var navContainer = this.appendNavContainer();
 
@@ -3081,9 +1866,9 @@ var NewExperiencePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append('span').text(crv.buttonTexts.cancel);
 		
-		if (experience.instance)
+		if (experienceController.oldInstance())
 		{
 			var shareButton = navContainer.appendRightButton()
 				.classed("share", true)
@@ -3091,7 +1876,7 @@ var NewExperiencePanel = (function () {
 					{
 						if (prepareClick('click', 'share'))
 						{
-							new ExperienceShareOptions(_this.node(), experience.instance, experience.instance.cell.parent);
+							new ExperienceShareOptions(_this.node(), experienceController.oldInstance(), experienceController.parent());
 						}
 					});
 			shareButton.append("img")
@@ -3114,39 +1899,28 @@ var NewExperiencePanel = (function () {
 					{
 						try
 						{
-							experience.startDate = startDateWheel.value() != '' ? startDateWheel.value() : null;
-							experience.endDate = endDateWheel.value() != '' ? endDateWheel.value() : null;
-							if (experience.startDate && experience.endDate)
+							experienceController.start(startDateWheel.value() != '' ? startDateWheel.value() : null);
+							experienceController.end(endDateWheel.value() != '' ? endDateWheel.value() : null);
+							if (experienceController.start() && experienceController.end())
 							{
-								experience.timeframe = undefined;
-								experience.add()
+								experienceController.timeframe(null);
+								experienceController.save()
 									.then(hidePanel, cr.syncFail);
 							}
 							else
 							{
-								$.when(crp.promise({path: "term[name=Timeframe]/enumerator"}))
-								 .then(function(enumerators)
-								     {
-								     	var timeframeName;
-								     	
-										if (previousExperienceButton.classed('pressed'))
-											timeframeName = "Previous";
-										else if (currentExperienceButton.classed('pressed'))
-											timeframeName = "Current";
-										else
-											timeframeName = "Goal";
-										experience.timeframe = enumerators.find(function(d)
-											{
-												return d.getDescription() == timeframeName;
-											});
+								var timeframeName;
+								
+								if (previousExperienceButton.classed('pressed'))
+									timeframeName = 'Previous';
+								else if (currentExperienceButton.classed('pressed'))
+									timeframeName = 'Current';
+								else
+									timeframeName = 'Goal';
+								experienceController.timeframe(timeframeName);
 
-										experience.add()
-											.then(hidePanel, cr.syncFail);
-								     },
-								     function(err)
-								     {
-								     	throw err;
-								     });
+								experienceController.save()
+									.then(hidePanel, cr.syncFail);
 							}
 						}
 						catch(err)
@@ -3168,21 +1942,22 @@ var NewExperiencePanel = (function () {
 				{
 					_this.checkOfferingInput();
 				}
-				
+				_this.updateInputs();
 				_this.checkTagInput();
 						
-				if (!experience.offeringName &&
-					experience.services.length == 0)
-					asyncFailFunction(_this.nameOrTagRequiredMessage);
+				if (!experienceController.offeringName() &&
+					experienceController.experienceServices().length == 0 &&
+					experienceController.customServices().length == 0)
+					cr.asyncFail(_this.nameOrTagRequiredMessage);
 				else
 				{
 					doAdd();
 				}
 				d3.event.preventDefault();
 			});
-		doneButton.append("span").text(experience.instance ? crv.buttonTexts.done : "Add");
+		doneButton.append("span").text(experienceController.oldInstance() ? crv.buttonTexts.done : crv.buttonTexts.add);
 		
-		if (experience.instance)
+		if (experienceController.oldInstance())
 		{
 			bottomNavContainer.appendLeftButton()
 				.on("click", 
@@ -3196,37 +1971,56 @@ var NewExperiencePanel = (function () {
 		var label;
 		var searchContainer;
 		
-		section = panel2Div.append('section');
-		
 		/* The tags section. */
-		this.tagsSection = panel2Div.append('section')
-			.classed('cell tags custom', true);
-		var tagsTopContainer = this.tagsSection.append('div');
-		label = tagsTopContainer.append('label')
-			.text('Tags:');
+		this.tagPoolSection = new TagPoolSection(this, experienceController, crv.buttonTexts.tags);
 		
-		var tagsContainer = tagsTopContainer.append('span')
-			.classed('tags-container', true);
-			
-		tagsContainer.append('button')
-			.classed('site-active-text', true)
-			.text('Add Tag')
-			.on('click', function()
+		var tagsChanged = function() { _this.setPlaceholders(); }
+		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);
+		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
+			function(eventObject)
 				{
-					_this.checkTagInput(null);
-					var tagInput = _this.appendTag(tagsContainer, null);
-					tagInput.node().focus();
+					$(_this.tagPoolSection).off('tagsChanged.cr', tagsChanged);
 				});
-		
-		searchContainer = this.tagsSection.append('div');
-		
-		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
-		this.tagHelp.text(this.firstTagHelp);
-			
-		this.tagSearchView = new TagSearchView(searchContainer, this, experience);
-												
+
+		var tagsFocused = function()
+			{
+				try
+				{
+					_this.onFocusInTagInput(_this.tagPoolSection.searchView.focusNode);
+				}
+				catch (err)
+				{
+					cr.asyncFail(err);
+				}
+			}
+		$(this.tagPoolSection).on('tagsFocused.cr', this.node(), tagsFocused);
+		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
+			function(eventObject)
+				{
+					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
+				});
+				
+		this.tagPoolSection.fillTags()
+			.then(function()
+				{
+					var tagPoolSection = _this.tagPoolSection;
+					
+					if (experienceController.serviceLinks().length == 0)
+					{
+						var tagsContainer = tagPoolSection.section.select('.tags-container');
+						var tagInput = tagPoolSection.appendTag(tagsContainer, null);
+						tagInput.node().focus();
+					}
+					else
+					{
+						var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
+						tagInput.node().focus();
+					}
+				},
+				cr.asyncFail);
+
 		/* Code starting for the date range. */
-		var birthday = experience.path.getDatum("Birthday") ||
+		var birthday = experienceController.parent().birthday() ||
 			(function()
 			 {
 				var todayDate = getUTCTodayDate();
@@ -3294,7 +2088,7 @@ var NewExperiencePanel = (function () {
 			.classed('cell unique date-container', true);
 
 		startDateContainer.append('label')
-			.classed('overlined-items', true)
+			.classed('overlined', true)
 			.text("Start");
 		this.startHidable = this.appendHidableDateInput(startDateContainer, new Date(birthday));
 		var startDateWheel = this.startHidable.dateWheel;
@@ -3340,20 +2134,20 @@ var NewExperiencePanel = (function () {
 		var endDateContainer = panel2Div.append('section')
 			.classed('cell unique date-container', true);
 		var endLabel = endDateContainer.append('label')
-			.classed('overlined-items', true)
+			.classed('overlined', true)
 			.text("End");
 			
 		this.endHidable = this.appendHidableDateInput(endDateContainer, new Date(birthday));
 		var endDateWheel = this.endHidable.dateWheel;
 		
-		if (experience.startDate)
-			startDateWheel.value(experience.startDate);
+		if (experienceController.start())
+			startDateWheel.value(experienceController.start());
 		else
 		{
-			if (experience.endDate)
+			if (experienceController.end())
 			{
 				/* Initialize the start date to a reasonable value, not the current date. */
-				var startGuessDate = new Date(experience.endDate);
+				var startGuessDate = new Date(experienceController.end());
 				startGuessDate.setUTCFullYear(startGuessDate.getUTCFullYear() - 1);
 				var startGuessDateString = startGuessDate.toISOString().substring(0, 7);
 				if (startGuessDateString < birthday)
@@ -3364,14 +2158,14 @@ var NewExperiencePanel = (function () {
 			startDateWheel.clear();
 		}
 			
-		if (experience.endDate)
-			endDateWheel.value(experience.endDate);
+		if (experienceController.end())
+			endDateWheel.value(experienceController.end());
 		else
 		{
-			if (experience.startDate)
+			if (experienceController.start())
 			{
 				/* Initialize the end date to a reasonable value. */
-				var guessDate = new Date(experience.startDate);
+				var guessDate = new Date(experienceController.start());
 				guessDate.setUTCFullYear(guessDate.getUTCFullYear() + 1);
 				var guessDateString = guessDate.toISOString().substring(0, 7);
 				endDateWheel.value(guessDateString);
@@ -3386,14 +2180,14 @@ var NewExperiencePanel = (function () {
 		this.organizationInput = section.append('input')
 			.classed('organization', true)
 			.attr('placeholder', this.organizationDefaultPlaceholder)
-			.attr('value', experience.organizationName);
+			.attr('value', experienceController.organizationName());
 		organizationHelp = section.append('div')
 			.classed('help', true);
 			
 		searchContainer = section.append('div');
 			
-		this.organizationSearchView = new OrganizationSearchView(searchContainer.node(), 
-																 this, experience, 
+		this.organizationSearchView = new OrganizationLinkSearchView(searchContainer.node(), 
+																 this, experienceController, 
 																 this.organizationInput.node(), 
 																 organizationHelp.node());
 		
@@ -3403,13 +2197,13 @@ var NewExperiencePanel = (function () {
 		this.siteInput = section.append('input')
 			.classed('site', true)
 			.attr('placeholder', this.siteDefaultPlaceholder)
-			.attr('value', experience.siteName);
+			.attr('value', experienceController.siteName());
 		siteHelp = section.append('div').classed('help', true);
 		
 		searchContainer = section.append('div');
 			
-		this.siteSearchView = new SiteSearchView(searchContainer.node(), 
-												 this, experience, 
+		this.siteSearchView = new SiteLinkSearchView(searchContainer.node(), 
+												 this, experienceController, 
 												 this.siteInput.node(), 
 												 siteHelp.node());
 		
@@ -3419,13 +2213,13 @@ var NewExperiencePanel = (function () {
 		this.offeringInput = section.append('input')
 			.classed('offering', true)
 			.attr('placeholder', this.offeringDefaultPlaceholder)
-			.attr('value', experience.offeringName);
+			.attr('value', experienceController.offeringName());
 		offeringHelp = section.append('div').classed('help', true);
 			
 		searchContainer = section.append('div');
 			
-		this.offeringSearchView = new OfferingSearchView(searchContainer.node(), 
-														 this, experience, 
+		this.offeringSearchView = new OfferingLinkSearchView(searchContainer.node(), 
+														 this, experienceController, 
 														 this.offeringInput.node(), 
 														 offeringHelp.node());
 		
@@ -3452,13 +2246,13 @@ var NewExperiencePanel = (function () {
 			{
 				_this.showTags();
 				
-				if (phase == 'Current')
+				if (experienceController.timeframe() == 'Current')
 				{
 					startDateWheel.onChange();
 					currentExperienceButton.classed('pressed', true);
 					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
 				}
-				else if (phase == 'Goal')
+				else if (experienceController.timeframe() == 'Goal')
 				{
 					goalButton.classed('pressed', true);
 					setGoalStartDateRange();
@@ -3474,47 +2268,6 @@ var NewExperiencePanel = (function () {
 				setDateRangeLabels();
 			});
 
-		crp.promise({path: "Service"})
-			.then(function(newInstances)
-				{
-					_this.allServices = newInstances;
-					var services = newInstances.map(function(s) { return new Service(s); });
-					_this.tagSearchView.appendFlags(services)
-						.on('mousedown', function()
-							{
-								/* Set this variable so that the focusout event of an active 
-									tag text box doesn't over-process.
-								 */
-								_this.inMouseDown = true;
-							})
-						.on('mouseup', function()
-							{
-								_this.inMouseDown = false;
-							})
-						.on('click', function(s)
-							{
-								if (s.visible === undefined || s.visible)
-									_this.tagSearchView.onClickButton(s);
-								else
-									d3.event.preventDefault();
-							});
-					
-					/* Have to hide after appending the flags or the metrics aren't calculated. */
-					_this.tagSearchView.reveal.hide();
-
-					if (_this.experience.services.length == 0)
-					{
-						var tagInput = _this.appendTag(tagsContainer, null);
-						tagInput.node().focus();
-					}
-					else
-					{
-						var tagInput = _this.mainDiv.select('.tags-container>input.tag');
-						tagInput.node().focus();
-					}
-				},
-				cr.syncFail);
-		
 		$(panel2Div.node()).on('resize.cr', function()
 		{
 			_this.resizeVisibleSearch(0);

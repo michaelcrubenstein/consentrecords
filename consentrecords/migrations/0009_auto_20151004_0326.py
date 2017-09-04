@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             name='DeletedValue',
             fields=[
                 ('id', models.UUIDField(serialize=False, editable=False, default=uuid.uuid4, primary_key=True)),
-                ('transaction', models.ForeignKey(editable=False, to='consentrecords.Transaction')),
+                ('transaction', models.ForeignKey(editable=False, to='consentrecords.Transaction', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(serialize=False, editable=False, default=uuid.uuid4, primary_key=True)),
                 ('typeID', models.UUIDField(editable=False, db_index=True)),
                 ('parentID', models.UUIDField(editable=False, db_index=True)),
-                ('transaction', models.ForeignKey(editable=False, to='consentrecords.Transaction')),
+                ('transaction', models.ForeignKey(editable=False, to='consentrecords.Transaction', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -41,8 +41,8 @@ class Migration(migrations.Migration):
                 ('fieldID', models.UUIDField(editable=False, default=uuid.uuid4, db_index=True)),
                 ('stringValue', models.CharField(editable=False, null=True, max_length=255, db_index=True)),
                 ('index', models.IntegerField(editable=False)),
-                ('instance', models.ForeignKey(editable=False, to='consentrecords.Instance')),
-                ('transaction', models.ForeignKey(editable=False, to='consentrecords.Transaction')),
+                ('instance', models.ForeignKey(editable=False, to='consentrecords.Instance', on_delete=models.CASCADE)),
+                ('transaction', models.ForeignKey(editable=False, to='consentrecords.Transaction', on_delete=models.CASCADE)),
             ],
         ),
         migrations.RemoveField(
@@ -66,11 +66,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='deletedinstance',
             name='instance',
-            field=models.ForeignKey(editable=False, to='consentrecords.Instance'),
+            field=models.ForeignKey(editable=False, to='consentrecords.Instance', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='deletedinstance',
             name='transaction',
-            field=models.ForeignKey(editable=False, to='consentrecords.Transaction'),
+            field=models.ForeignKey(editable=False, to='consentrecords.Transaction', on_delete=models.CASCADE),
         ),
     ]

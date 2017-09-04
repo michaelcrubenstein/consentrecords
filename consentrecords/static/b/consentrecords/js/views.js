@@ -29,7 +29,7 @@ $.fn.getFillHeight = function()
 	var n = this.get(0);
 	var newHeight = parent.children().toArray().reduce(function(h, childNode) {
 			var child = $(childNode);
-			if (child.css("display") != "none" && 
+			if (child.css('display') != 'none' && 
 				child.css("position") != "absolute" &&
 				childNode != n)
 				return h - child.outerHeight(true);
@@ -147,14 +147,103 @@ closealert = bootstrap_alert.close;
 
 var crv = {
 	/* Reference https://www.loc.gov/standards/iso639-2/php/code_list.php */
-	defaultLanguageCode: "en",
-	languages: [{code: "en", name: "English"}, 
-			    {code: "sp", name: "Spanish"},
-			    {code: "zh", name: "Chinese"}],
+	defaultLanguageCode: 'en',
+	languages: [{code: 'en', name: "English"}, 
+			    {code: 'sp', name: "Spanish"},
+			    {code: 'zh', name: "Chinese"}],
 			    
 	buttonTexts: {
+		add: "Add",
+		address: "Address",
+		birthday: "Birthday",
+		cancel: "Cancel",
+		canRegister: "Can Register",
+		city: "City",
+		currentTimeframe: "Something I'm Doing Now",
+		disqualifyingTags: "Disqualifying Tags",
+		domain: "Domain",
 		done: "Done",
-		edit: "Edit"
+		edit: "Edit",
+		email: "Email",
+		emailPublic: "By Request",
+		emails: "Emails",
+		end: "End",
+		endTime: "End Time",
+		enrollment: "Enrollment",
+		enrollments: "Enrollments",
+		engagement: "Engagement",
+		engagements: "Engagements",
+		experiencePrompt: "Experience Prompt",
+		experiencePrompts: "Experience Prompts",
+		firstName: "First Name",
+		goalTimeframe: "My Goal",
+		group: "Group",
+		groups: "Groups",
+		hidden: "Hidden",
+		implications: "Implications",
+		inquiry: "Inquiry",
+		inquiries: "Inquiries",
+		lastName: "Last Name",
+		maximumAge: "Maximum Age",
+		maximumGrade: "Maximum Grade",
+		members: "Members",
+		minimumAge: "Minimum Age",
+		minimumGrade: "Minimum Grade",
+		names: "Names",
+		name: "Name",
+		no: "No",
+		nonePlaceholder: "(None)",
+		noPublicAccess: "Hidden",
+		nullString: "(None)",
+		offering: "Offering", 
+		offeringLabel: "Offering Label",
+		offeringLabels: "Offering Labels",
+		offerings: "Offerings", 
+		organization: "Organization",
+		organizationLabel: "Organization Label",
+		organizationLabels: "Organization Labels",
+		organizations: "Organizations",
+		pathPublic: "Public Path Only",
+		period: "Period",
+		periods: "Periods",
+		pickOffering: "Pick Offering",
+		pickOrganization: "Pick Organization",
+		pickService: "Pick Tag",
+		pickSite: "Pick Site",
+		previousTimeframe: "Done",
+		primaryAdministrator: "Primary Administrator",
+		publicAccess: "Public Access",
+		readPublicAccess: "Public",
+		registerByDate: "register by {0}",
+		registrationDeadline: "Registration Deadline",
+		screenName: "Screen Name",
+		search: "Search",
+		service: "Service",
+		services: "Services",
+		session: "Session",
+		sessions: "Sessions",
+		settings: "Settings",
+		site: "Site",
+		siteLabel: "Site Label",
+		siteLabels: "Site Labels",
+		sites: "Sites",
+		stage: "Stage",
+		start: "Start",
+		startTime: "Start Time",
+		state: "State",
+		street: "Street",
+		streets: "Streets",
+		tags: "Tags",
+		text: "Text",
+		texts: "Texts",
+		timeframe: "Timeframe",
+		user: "User",
+		userPublic: "Public Profile and Path",
+		users: "Users",
+		webSite: "Web Site",
+		weekday: "Weekday",
+		yes: "Yes",
+		zipCode: "Zip Code",
 	},
 
 	appendLoadingMessage: function(node)
@@ -202,32 +291,6 @@ var crv = {
 	{
 		var spinner = div.datum();
 		spinner.stop();
-	},
-
-	appendAddButton: function(sectionObj, done)
-	{
-		var cell = sectionObj.datum();
-		
-		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div").classed('add-value', true)
-			.append("button").classed("btn row-button site-active-text", true)
-			.on("click", function(cell) {
-				if (prepareClick('click', 'add ' + cell.field.name))
-				{
-					try
-					{
-						if (done)
-							done();
-					}
-					catch(err)
-					{
-						cr.syncFail(err);
-					}
-				}
-				d3.event.preventDefault();
-			})
-			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").text("Add " + cell.field.name);
 	},
 };
 
@@ -314,22 +377,12 @@ function showClickFeedback(obj, done)
 		   	});
 }
 
-function _isPickCell(cell)
-{
-	if (("objectAddRule" in cell.field) &&
-			 (cell.field["objectAddRule"] == cr.objectAddRules.pickOne ||
-			  cell.field["objectAddRule"] == cr.objectAddRules.pickOrCreateOne))
-		return true;
-	else
-		return false;
-}
-
 function _pushTextChanged(d) {
 	var f = function(eventObject) {
-		d3.select(eventObject.data).text(this.getDescription());
+		d3.select(eventObject.data).text(this.description());
 	}
 	
-	setupOnViewEventHandler(d, "dataChanged.cr", this, f);
+	setupOnViewEventHandler(d, "changed.cr", this, f);
 	
 	if (d.cell && d.cell.isUnique())
 	{
@@ -337,17 +390,16 @@ function _pushTextChanged(d) {
 	}
 }
 
-function _getDataValue(d) { return d.text; }
-function _getDataDescription(d) { return d.getDescription() }
+function _getDataDescription(d) { return d.description() }
 
 function checkItemsDisplay(node)
 {
 	var classList = node.parentNode.classList;
-	var isUnique = classList.contains("unique");
-	var isEdit = classList.contains("edit");
+	var isUnique = classList.contains('unique');
+	var isEdit = classList.contains('edit');
 	
 	var itemsDiv = d3.select(node);
-	var items = itemsDiv.selectAll("li");
+	var items = itemsDiv.selectAll('li');
 	
 	var isVisible;
 	
@@ -358,13 +410,13 @@ function checkItemsDisplay(node)
 		isVisible = false;
 		items.each(function(d)
 		{
-			isVisible |= !d.isEmpty();
+			isVisible |= $(this).css('display') != 'none';
 		});
 	}
 		
-	itemsDiv.style("display", (isUnique || isVisible) ? null : "none");
+	itemsDiv.style('display', (isUnique || isVisible) ? null : 'none');
 	/* In addition to the itemsDiv, hide the section if we are in view mode. */
-	d3.select(node.parentNode).style("display", (isEdit || isVisible) ? null : "none");
+	d3.select(node.parentNode).style('display', (isEdit || isVisible) ? null : 'none');
 }
 
 function setupOnViewEventHandler(source, events, data, handler)
@@ -397,15 +449,17 @@ function setupOneViewEventHandler(source, events, data, handler)
 	});
 }
 
-function _setupItemsDivHandlers(itemsDiv, cell)
+function hideItem(itemNode, done)
 {
-	node = itemsDiv.node();
-	function checkVisible(eventObject)
+	$(itemNode).animate({height: "0px"}, 400, 'swing', function()
 	{
-		checkItemsDisplay(eventObject.data);
-	}
-	setupOnViewEventHandler(cell, "dataChanged.cr", node, checkVisible);
-	checkItemsDisplay(node);
+		var parentNode = this.parentNode;
+		$(this).css('display', 'none');
+		
+		/* Now that the item is removed, check whether its container should be visible. */
+		checkItemsDisplay(parentNode);
+		if (done) done();
+	});
 }
 
 function removeItem(itemNode, done)
@@ -422,228 +476,26 @@ function removeItem(itemNode, done)
 
 function _setupItemHandlers(d, done)
 {
-	/* This method may be called for a set of items that were gotten directly and are not
-		part of a cell. Therefore, we have to test whether d.cell is not null.
-	 */
 	if ($(this).parents(".multiple").length > 0)
 	{
 		var f = function(eventObject)
 		{
 			removeItem(eventObject.data, done);
 		}
-		setupOneViewEventHandler(d, "valueDeleted.cr", this, f);
+		setupOneViewEventHandler(d, "deleted.cr", this, f);
 	}
 }
 
-function _showViewStringCell(obj, cell)
+function editUniqueString(sectionObj, container, placeholder, value, inputType)
 {
-	var sectionObj = d3.select(obj);
-	
-	var itemsDiv = sectionObj.selectAll("ol");
-
-	var setupItems = function(items, cell) {
-		items.append("div")
-			.classed("description-text string-value-view growable", true)
-			.text(_getDataValue)
-			.each(_pushTextChanged);
-	}
-		
-	function addedValue(eventObject, newValue)
-	{
-		setupItems(appendItem(d3.select(eventObject.data), newValue), this);
-	}
-	setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), addedValue);
-	
-	var items = appendItems(itemsDiv, cell.data);
-	setupItems(items, cell);
-}
-
-function _showEditStringCell(obj, cell, inputType)
-{
-	var sectionObj = d3.select(obj).classed("string", true);
 	var itemsDiv = crf.appendItemList(sectionObj);
-	
-	if (cell.isUnique())
-	{
-		var items = appendUniqueItems(itemsDiv, cell.data);
-	
-		items.append("input")
-			.classed('growable', true)
-			.attr("type", inputType)
-			.attr("placeholder", cell.field.label || cell.field.name)
-			.property("value", _getDataValue);
-	}
-	else
-	{
-		itemsDiv.classed('deletable-items', true);
-		var items = appendItems(itemsDiv, cell.data);
-		
-		var appendControls = function(items, cell)
-		{				
-			crf.appendDeleteControls(items);
+	var items = itemsDiv.append('li');
 
-			items.append("input")
-				.classed('growable', true)
-				.attr("type", inputType)
-				.attr("placeholder", cell.field.label || cell.field.name)
-				.property("value", _getDataValue);
-				
-			crf.appendConfirmDeleteControls(items);
-			var dials = $(itemsDiv.node()).find('li>button:first-of-type');
-			crf.showDeleteControls(dials, 0);
-		}
-		
-		appendControls(items, cell);
-
-		function appendNewValue(eventObject, newValue)
-			{
-				var div = appendItem(d3.select(eventObject.data), newValue);
-				
-				appendControls(div, this);
-				$(eventObject.data).css("display", "");	
-			}
-		setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), appendNewValue);
-		_setupItemsDivHandlers(itemsDiv, cell);
-			
-		crv.appendAddButton(sectionObj, function()
-			{
-				var newValue = cell.addNewValue();
-				unblockClick();
-			});
-	}
-}
-
-function _showEditDateStampDayOptionalCell(obj)
-{
-	var sectionObj = d3.select(obj).classed("string", true);
-	var itemsDiv = crf.appendItemList(sectionObj);
-	
-	function appendInputs(items)
-	{
-	    items.each(function(d)
-	    {
-	    	var input = new DateInput(this);
-	    	d3.select(this).selectAll('.date-row')
-	    		.classed('growable', true);
-	    		
-	    	var newValue = d.text;
-	    	if (newValue && newValue.length > 0)
- 				input.value(newValue);
-	    });
-	}
-	
-	if (this.isUnique())
-	{
-		var items = appendUniqueItems(itemsDiv, this.data);
-		appendInputs(items);
-	}
-	else
-	{
-		itemsDiv.classed('deletable-items', true);
-		var divs = appendItems(itemsDiv, this.data);
-		
-		var appendControls = function(items, cell)
-		{	
-			
-			crf.appendDeleteControls(innerDivs);
-			inputContainers = innerDivs.append("div")
-				.classed("string-input-container growable", true);						
-			appendInputs(inputContainers);
-			crf.appendConfirmDeleteControls(items);
-			var dials = $(itemsDiv.node()).find('li>button:first-of-type');
-			crf.showDeleteControls(dials, 0);
-		}
-		
-		appendControls(divs, this);
-
-		function appendNewValue(eventObject, newValue)
-			{
-				var div = appendItem(d3.select(eventObject.data), newValue);
-				
-				appendControls(div, this);	
-				$(eventObject.data).css("display", "");	
-			}
-		setupOnViewEventHandler(this, "valueAdded.cr", itemsDiv.node(), appendNewValue);
-		_setupItemsDivHandlers(itemsDiv, this);
-		
-		var cell = this;	
-		crv.appendAddButton(sectionObj, function()
-			{
-				var newValue = cell.addNewValue();
-				unblockClick();
-			});
-	}
-}
-
-function _showEditTranslationCell(obj, cell, inputType)
-{
-	var sectionObj = d3.select(obj).classed("string translation", true);
-	var itemsDiv = crf.appendItemList(sectionObj);
-	
-	function appendInputControls(items)
-	{
-		var languageSelect = items.append("select");
-		languageSelect.selectAll('option')
-			.data(crv.languages)
-			.enter()
-			.append('option')
-			.text(function(d) { return d.name; });
-		languageSelect.each(function(d)
-		{
-			for (var i = 0; i < crv.languages.length; ++i)
-			{
-				if (crv.languages[i].code == d.languageCode)
-				{
-					this.selectedIndex = i;
-					break;
-				}
-			}
-		});
-		
-		items.append("input")
-			.classed("growable", true)
-			.attr("type", "text")
-			.attr("placeholder", cell.field.label || cell.field.name)
-			.property("value", _getDataValue);
-	}
-	
-	if (cell.isUnique())
-	{
-		var items = appendUniqueItems(itemsDiv, cell.data);
-		appendInputControls(items);
-	}
-	else
-	{
-		itemsDiv.classed('deletable-items', true);
-		var divs = appendItems(itemsDiv, cell.data);
-		
-		var appendControls = function(items, cell)
-		{	
-			crf.appendDeleteControls(items);
-			appendInputControls(items);
-			crf.appendConfirmDeleteControls(items);
-			var dials = $(itemsDiv.node()).find('li>button:first-of-type');
-			crf.showDeleteControls(dials, 0);
-		}
-		
-		appendControls(divs, cell);
-
-		function appendNewValue(eventObject, newValue)
-			{
-				var item = appendItem(d3.select(eventObject.data), newValue);
-				
-				appendControls(item, this);	
-				$(eventObject.data).css("display", "");	
-			}
-		setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), appendNewValue);
-		_setupItemsDivHandlers(itemsDiv, cell);
-			
-		crv.appendAddButton(sectionObj, function()
-			{
-				var newValue = cell.addNewValue();
-				unblockClick();
-			});
-	}
+	items.append("input")
+		.classed('growable', true)
+		.attr("type", inputType)
+		.attr("placeholder", placeholder)
+		.property("value", value);
 }
 
 /* Produces a function which adds new value view to a container view
@@ -660,22 +512,22 @@ function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 		var item = appendItem(itemsDiv, newValue);
 		checkItemsDisplay(eventObject.data);
 	
-		/* Hide the new button if it is blank, and then show it if the data changes. */
-		item.style("display", 
-				   (cell.isUnique() || !newValue.isEmpty()) ? null : "none");
+		/* Hide the new item if it is blank, and then show it if the data changes. */
+		item.style('display', 
+				   (cell.isUnique() || !newValue.isEmpty()) ? null : 'none');
 			   
 		if (!cell.isUnique())
 		{
 			function checkVisible(eventObject)
 			{
-				d3.select(eventObject.data).style("display", 
-					   !this.isEmpty() ? null : "none");
+				d3.select(eventObject.data).style('display', 
+					   !this.isEmpty() ? null : 'none');
 			}
-			setupOnViewEventHandler(newValue, "dataChanged.cr", item.node(), checkVisible);
+			setupOnViewEventHandler(newValue, "changed.cr", item.node(), checkVisible);
 		}
 
 		item.on("click", function(d) {
-			if (prepareClick('click', 'view added item: ' + d.getDescription()))
+			if (prepareClick('click', 'view added item: ' + d.description()))
 			{
 				try
 				{
@@ -789,10 +641,10 @@ var crf = {
 			function(d)
 			{
 				/* Test case: Delete an existing value in a cell that has multiple values. */
-				if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
+				if (prepareClick('click', 'confirm delete: ' + d.description()))
 				{
 					try {
-						d.deleteValue()
+						d.deleteData()
 							.then(unblockClick, cr.syncFail);
 					} catch(err) { cr.syncFail(err); }
 				}
@@ -831,7 +683,7 @@ var crf = {
 	{
 		return items
 			.append("img")
-			.classed("site-chevron-right right-vertical-chevron", true)
+			.classed("site-chevron-right", true)
 			.attr("src", rightChevronPath)
 			.attr("height", "18px");
 	},
@@ -879,21 +731,6 @@ var crf = {
 	}
 }
 
-/**
-	Appends a right-pointing chevron to the specified containers that floats to the right
-	edge of the buttons.
- */
-function appendRightChevrons(buttons, isFloat)
-{
-	var containers = buttons.append("div")
-		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron", true);
-	containers
-		.append("img")
-		.attr("src", rightChevronPath)
-		.attr("height", "18px");
-	return containers;
-}
-
 function appendLeftChevrons(buttons)
 {
 	return buttons.append("div")
@@ -931,444 +768,8 @@ function appendRightChevronSVG(container)
 function appendButtonDescriptions(buttons)
 {
 	return buttons.append("div")
-		.classed("description-text string-value-view growable", true)
+		.classed("description-text growable", true)
 		.text(_getDataDescription);
-}
-
-function _clickEditObjectValue(d, backText)
-{
-	if (_isPickCell(d.cell))
-	{
-		if (prepareClick('click', 'pick object: ' + d.getDescription()))
-		{
-			try {
-				showPickObjectPanel(d.cell, d);
-			} catch(err) { cr.syncFail(err); }
-		}
-	}
-	else
-	{
-		if (prepareClick('click', 'edit object: ' + d.getDescription()))
-		{
-			try {
-				var getSavePromise;
-				if (d.cell.parent)
-					getSavePromise = null;
-				else
-				{
-					/* Test case: Create an Organization, Site an Offering all in one operation. */
-					getSavePromise = promiseImportCells;
-				}
-				showEditObjectPanel(d.cell, d, backText, revealPanelLeft, getSavePromise);
-			} catch(err) { cr.syncFail(err); }
-		}
-	}
-}
-
-/* newValue is a string */
-function _updateTextValue(d, newValue)
-{
-	/* If both are null, then they are equal. */
-	if (!newValue && !d.text)
-		newValue = d.text;
-
-	if (newValue !== d.text)
-	{
-		d.text = newValue;
-	}
-}
-
-/* "this" is the control containing the string. */
-function _getDatestampValue()
-{
-	try
-	{
-		if (!this.value)
-			return undefined;
-		else
-			return (new Date(this.value.trim())).toISOString().substring(0, 10);
-	}
-	catch(err)
-	{
-		return undefined;
-	}
-}
-
-/* "this" is the control containing the string. */
-function _getDatestampDayOptionalValue()
-{
-	var obj = d3.select(this);
-	var dateObj = obj.selectAll(".date-row");
-	return dateObj.node().dateInput.value();
-}
-
-/* "this" is the control containing the string. */
-function _getTimeValue()
-{
-	try
-	{
-		if (!this.value)
-			return undefined;
-		else
-			return Date.parse(this.value).toString("HH:mm");
-	}
-	catch(err)
-	{
-		return undefined;
-	}
-}
-
-function _appendUpdateStringCommands(sectionObj, initialData, sourceObjects)
-{
-	d3.select(sectionObj).selectAll("input").each(function(d, i)
-		{
-			var newValue = this.value.trim();
-			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
-		}
-	);
-}
-
-function _appendUpdateDatestampCommands(sectionObj, initialData, sourceObjects)
-{
-	d3.select(sectionObj).selectAll("input").each(function(d, i)
-		{
-			var newValue = _getDatestampValue.call(this);			
-			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
-		}
-	);
-}
-
-function _appendUpdateDatestampDayOptionalCommands(sectionObj, initialData, sourceObjects)
-{
-	d3.select(sectionObj).selectAll("li").each(function(d, i)
-		{
-			var newValue = _getDatestampDayOptionalValue.call(this);
-			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
-		}
-	);
-}
-
-function _appendUpdateTimeCommands(sectionObj, initialData, sourceObjects)
-{
-	d3.select(sectionObj).selectAll("input").each(function(d, i)
-		{
-			var newValue = _getTimeValue.call(this);
-			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
-		}
-	);
-}
-
-function _getTranslationValue()
-{
-	var d3This = d3.select(this);
-	var textInput = d3This.selectAll("input");
-	var languageInput = d3This.selectAll("select");
-	var sel = languageInput.node();
-	var selectedOption = sel.options[sel.selectedIndex];
-	var languageCode = d3.select(selectedOption).datum().code;
-
-	return {text: textInput.property("value").trim(),
-				languageCode: languageCode};
-}
-
-function _appendUpdateTranslationCommands(sectionObj, initialData, sourceObjects)
-{
-	d3.select(sectionObj).selectAll("li").each(function(d, i)
-		{
-			var newValue = _getTranslationValue.call(this);
-			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
-		}
-	);
-}
-
-function _updateTranslationValue(d, newValue)
-{
-	/* If both are null or undefined, then they are equal. */
-	if (!newValue.text && !d.text)
-		newValue.text = d.text;
-		
-	d.text = newValue.text;
-	d.languageCode = newValue.languageCode;
-}
-
-function _updateStringCell(sectionObj)
-{
-	d3.select(sectionObj).selectAll("input").each(function(d)
-		{
-			_updateTextValue(d, this.value);
-		}
-	);
-}
-
-function _updateDatestampCell(sectionObj)
-{
-	d3.select(sectionObj).selectAll("input").each(function(d)
-		{
-			var newValue = _getDatestampValue.call(this);			
-			_updateTextValue(d, newValue);
-		}
-	);
-}
-
-function _updateDatestampDayOptionalCell(sectionObj)
-{
-	d3.select(sectionObj).selectAll("li").each(function(d)
-		{
-			var newValue = _getDatestampDayOptionalValue.call(this);
-			_updateTextValue(d, newValue);
-		}
-	);
-}
-
-function _updateTimeCell(sectionObj)
-{
-	d3.select(sectionObj).selectAll("input").each(function(d)
-		{
-			var newValue = _getTimeValue.call(this);
-			_updateTextValue(d, newValue);
-		}
-	);
-}
-
-function _updateTranslationCell(sectionObj)
-{
-	d3.select(sectionObj).selectAll("li").each(function(d)
-		{
-			var newValue = _getTranslationValue.call(this);
-			_updateTranslationValue(d, newValue);
-		}
-	);
-}
-
-cr.Cell.prototype.appendLabel = function(obj)
-{
-	return d3.select(obj).append('label')
-		.text(this.field.label || this.field.name);
-}
-
-cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
-cr.StringCell.prototype.updateCell = _updateStringCell;
-cr.StringCell.prototype.show = function(obj)
-{
-	_showViewStringCell(obj, this);
-}
-cr.StringCell.prototype.showEdit = function(obj)
-{
-	_showEditStringCell(obj, this, "text");
-}
-
-cr.NumberCell.prototype.showEdit = function(obj)
-{
-	_showEditStringCell(obj, this, "number");
-}
-
-cr.EmailCell.prototype.showEdit = function(obj)
-{
-	_showEditStringCell(obj, this, "email");
-}
-
-cr.UrlCell.prototype.showEdit = function(obj)
-{
-	_showEditStringCell(obj, this, "url");
-}
-
-cr.TelephoneCell.prototype.showEdit = function(obj)
-{
-	_showEditStringCell(obj, this, "tel");
-}
-
-cr.DatestampCell.prototype.appendUpdateCommands = _appendUpdateDatestampCommands;
-cr.DatestampCell.prototype.updateCell = _updateDatestampCell;
-cr.DatestampCell.prototype.showEdit = function(obj)
-{
-	_showEditStringCell(obj, this, "date");
-}
-
-cr.DatestampDayOptionalCell.prototype.appendUpdateCommands = _appendUpdateDatestampDayOptionalCommands;
-cr.DatestampDayOptionalCell.prototype.updateCell = _updateDatestampDayOptionalCell;
-cr.DatestampDayOptionalCell.prototype.showEdit = _showEditDateStampDayOptionalCell;
-
-cr.TimeCell.prototype.appendUpdateCommands = _appendUpdateTimeCommands;
-cr.TimeCell.prototype.updateCell = _updateTimeCell;
-cr.TimeCell.prototype.showEdit = function(obj)
-{
-	_showEditStringCell(obj, this, "time");
-}
-
-cr.TranslationCell.prototype.appendUpdateCommands = _appendUpdateTranslationCommands;
-cr.TranslationCell.prototype.updateCell = _updateTranslationCell;
-cr.TranslationCell.prototype.showEdit = function(obj)
-{
-	_showEditTranslationCell(obj, this, "text");
-}
-
-cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData, sourceObjects)
-{
-	d3.select(sectionObj).selectAll("ol>li").each(function(d, i)
-		{
-			if (d.id)
-			{
-				/* Do nothing. */ ;
-			}
-			else if (d.getCells())
-			{
-				/* This case is true if we are creating an object */
-				var subData = {}
-				$(d.getCells()).each(function()
-				{
-					this.appendData(subData);
-				});
-				{
-					var command;
-					command = {containerUUID: d.cell.parent.getInstanceID(), 
-							   fieldID: d.cell.field.nameID, 
-							   ofKindID: d.cell.field.ofKindID,
-							   value: subData,
-							   index: i};
-					initialData.push(command);
-					sourceObjects.push(d);
-				}
-			}
-		}
-	);
-}
-
-cr.ObjectCell.prototype.updateCell = function(sectionObj)
-{
-	/* Do nothing at the moment. */
-}
-
-cr.ObjectCell.prototype.show = function(obj, backText)
-{
-	var sectionObj = d3.select(obj);
-	var itemsDiv = sectionObj.selectAll("ol");
-
-	if (this.isUnique())
-	{
-		if (!_isPickCell(this))
-			sectionObj.classed("btn row-button", true)
-			          .on("click", function(cell) {
-				if (prepareClick('click', 'view unique ' + cell.field.name + ': ' + cell.data[0].getDescription()))
-				{
-					try {
-						showViewObjectPanel(cell, cell.data[0], backText, revealPanelLeft);
-					} catch(err) { cr.syncFail(err); }
-				}
-			});
-	}
-	else
-		itemsDiv.classed('hover-items', true);
-	
-	var addedFunction = getOnValueAddedFunction(false, !_isPickCell(this), showViewObjectPanel);
-
-	setupOnViewEventHandler(this, "valueAdded.cr", itemsDiv.node(), addedFunction);
-	
-	var clickFunction;
-	var _this = this;
-	if (_isPickCell(this) || this.isUnique())	/* Unique value handles the click above */
-		clickFunction = null;
-	else
-		clickFunction = function(d) {
-			if (prepareClick('click', 'view multiple ' + d.cell.field.name + ': ' + d.getDescription()))
-			{
-				try {
-					showViewObjectPanel(_this, d, backText, revealPanelLeft);
-				} catch(err) { cr.syncFail(err); }
-			}
-		}
-
-	var items = appendItems(itemsDiv, this.data);
-	
-	appendButtonDescriptions(items)
-		.each(_pushTextChanged);
-
-	if (!_isPickCell(this)) {
-		if (clickFunction)
-			items.on("click", clickFunction);
-		
-		crf.appendRightChevrons(items);
-	}
-}
-
-cr.ObjectCell.prototype.showEdit = function(obj, backText)
-{
-	var sectionObj = d3.select(obj).classed('instance', true);
-	
-	var itemsDiv = crf.appendItemList(sectionObj);
-
-	if (this.isUnique())
-	{
-		sectionObj.classed("hover-items", true);
-		sectionObj.on("click", function(cell) {
-			_clickEditObjectValue(cell.data[0], backText);
-		});
-	}
-	else
-		itemsDiv.classed('hover-items', true);
-
-	var items = appendItems(itemsDiv, this.data);
-	
-	if (!this.isUnique())
-	{
-		itemsDiv.classed('deletable-items', true);
-		items.on("click", function(d) {
-				_clickEditObjectValue(d, backText);
-			});
-		crf.appendDeleteControls(items);
-	}
-
-	appendButtonDescriptions(items)
-		.each(_pushTextChanged);
-	
-	crf.appendRightChevrons(items);	
-		
-	if (!this.isUnique())
-	{
-		crf.appendConfirmDeleteControls(items);
-		var dials = $(itemsDiv.node()).find('li>button:first-of-type');
-		crf.showDeleteControls(dials, 0);
-	}
-		
-	var promise, promise2;
-	if (!this.parent)
-	{
-		promise = promiseImportCells;
-		promise2 = promiseImportCells;
-	}
-	else if (this.isUnique())
-	{
-		promise = promiseSaveCells;
-		promise2 = null;	/* The added item will have an instance ID */
-	}
-	else
-	{
-		promise = promiseCreateObjectFromCells;
-		promise2 = null;	/* The added item will have an instance ID */
-	}
-		
-	var editFunction = _isPickCell(this) ? showPickObjectPanel : showEditObjectPanel;
-	var addedEditFunction = _isPickCell(this) ? showPickObjectPanel :
-		function(containerCell, objectData, backText, onShow)
-		{
-			showEditObjectPanel(containerCell, objectData, backText, onShow, promise2);
-		}
-		
-	var addedFunction = getOnValueAddedFunction(true, true, addedEditFunction);
-
-	setupOnViewEventHandler(this, "valueAdded.cr", itemsDiv.node(), addedFunction);
-	
-	if (!this.isUnique())
-	{
-		var _this = this;
-		function done()
-		{
-			editFunction(_this, null, backText, revealPanelUp,
-						promise);
-		}
-		
-		crv.appendAddButton(sectionObj, done);
-		_setupItemsDivHandlers(itemsDiv, this);
-	}
 }
 
 /**
@@ -1564,7 +965,7 @@ var SiteNavContainer = (function() {
 })();
 
 /* Creates a panel that sits atop the specified containerPanel in the same container. */
-var SitePanel = (function () {
+crv.SitePanel = (function () {
 	SitePanel.prototype.panelDiv = undefined;
 	SitePanel.prototype.navContainer = undefined;
 	SitePanel.prototype.panel2Div = undefined;
@@ -1631,13 +1032,30 @@ var SitePanel = (function () {
     	return n;
     }
 	
+	SitePanel.prototype.appendBackButton = function()
+	{
+		var _this = this;
+		var backButton = this.navContainer.appendLeftButton()
+			.on('click', function()
+			{
+				if (prepareClick('click', 'Cancel'))
+				{
+					try {
+						_this.hide();
+					} catch(err) { cr.syncFail(err); }
+				}
+				d3.event.preventDefault();
+			});
+		backButton.append('span').text(crv.buttonTexts.cancel);
+	}
+	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
 	{
 		var searchBar = this.panelDiv.append("div").classed("searchbar", true);
 	
 		var searchCancelButton = searchBar.append("span")
 			.classed("search-cancel-button site-active-text", true);
-		searchCancelButton.append("span").text("Cancel");
+		searchCancelButton.append('span').text(crv.buttonTexts.cancel);
 	
 		var searchCancelButtonWidth = 0;
 		var oldPaddingLeft = searchCancelButton.style("padding-left");
@@ -1664,7 +1082,7 @@ var SitePanel = (function () {
 			})
 			.on("focusin", function(e)
 			{
-				searchCancelButton.selectAll('span').text("Cancel");
+				searchCancelButton.selectAll('span').text(crv.buttonTexts.cancel);
 				$(searchCancelButton.node()).animate({width: searchCancelButtonWidth,
 													  "padding-left": oldPaddingLeft,
 													  "padding-right": oldPaddingRight}, 400, "swing");
@@ -1801,138 +1219,13 @@ var SitePanel = (function () {
 					.enter()
 					.append("section");
 		}
-		this.mainDiv.appendSection = function(datum)
-		{
-			return this.append("section").datum(datum);
-		}
-		
-		this.mainDiv.isEmptyItems = function(itemsDiv)
-		{
-			var isEmpty = true;
-			itemsDiv.selectAll("li")
-				.each(function(d) { if (isEmpty && !d.isEmpty()) isEmpty = false; });
-			return isEmpty;
-		}
-		
-		this.mainDiv.appendCellData = function(sectionNode, cell)
-		{
-			var _thisPanel2Div = this;
-			var section = d3.select(sectionNode);
-			var itemsDiv = section.select("ol");
-			cell.show(sectionNode, _this.headerText);
-			$(sectionNode).css("display", _thisPanel2Div.isEmptyItems(itemsDiv) ? "none" : "");
-			
-			/* Make sure the section gets shown if a value is added to it. */
-			var checkDisplay = function(eventObject, newValue)
-			{
-				$(eventObject.data).css("display", _thisPanel2Div.isEmptyItems(itemsDiv) ? "none" : "");
-			}
-			setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", sectionNode, checkDisplay);
-			_setupItemsDivHandlers(itemsDiv, cell);
-		}
-		
-		this.mainDiv.handleDoneEditingButton = function(done) {
-			if (prepareClick('click', 'done editing'))
-			{
-				showClickFeedback(this);
-		
-				try
-				{
-					var sections = _this.mainDiv.selectAll("section");
-					var initialData = [];
-					var sourceObjects = [];
-					sections.each(function(cell) {
-							/* cell may be null if this is a pseudo-section, such as for the Change Password
-								section in the Settings panel.
-							 */
-							if (cell)
-							{
-								if ("appendUpdateCommands" in cell)
-									cell.appendUpdateCommands(this, initialData, sourceObjects);
-							}
-						});
-						
-					var allDone = function() {
-						if (done)
-							done();
-						_this.hide();
-					}
-					if (initialData.length > 0) {
-						/* Test case: Change the text of an existing string or translation field and click Done */
-						cr.updateValues(initialData, sourceObjects)
-							.then(allDone, cr.syncFail);
-					}
-					else
-					{
-						allDone();
-					}
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-			d3.event.preventDefault();
-		}
-		
 		return this.mainDiv;
-	}
-	
-	/**
-	 *	Adds UI elements to display the contents of the specified cells.
-	 */
-	SitePanel.prototype.showViewCells = function(cells)
-	{
-		var _this = this;
-		var sections = this.mainDiv.appendSections(cells.filter(function(cell) 
-				{ 
-					return cell.field.descriptorType != cr.descriptorTypes.byText 
-				}))
-			.classed("cell view", true)
-			.classed("unique", function(cell) { return cell.isUnique(); })
-			.classed("multiple", function(cell) { return !cell.isUnique(); })
-			.each(function(cell) {
-					var section = d3.select(this);
-					cell.appendLabel(this);
-					var itemsDiv = crf.appendItemList(section);
-					_this.mainDiv.appendCellData(this, cell);
-				});
-		
-		return sections;
-	}
-	
-	/**
-	 *	Adds UI elements to edit the specified cells.
-	 *	labelTest is an optional function that takes a cell and determines
-	 *	if the cell should be labeled. If not specified, then cells that are
-	 *	not unique or are not descriptorTypes.byText are labeled.
-	 */
-	SitePanel.prototype.showEditCells = function(cells, labelTest)
-	{
-		labelTest = labelTest !== undefined ? labelTest :
-			function(cell) 
-			    { 
-			    	return !cell.isUnique() ||
-							cell.field.descriptorType != cr.descriptorTypes.byText; 
-				};
-						
-		var _this = this;
-		return this.mainDiv.appendSections(cells)
-			.classed("cell edit", true)
-			.classed("unique", function(cell) { return cell.isUnique(); })
-			.classed("multiple", function(cell) { return !cell.isUnique(); })
-			.each(function(cell) {
-					if (labelTest(cell))
-						cell.appendLabel(this);
-						
-					cell.showEdit(this, _this.headerText);
-				});
 	}
 	
 	SitePanel.prototype.appendActionButton = function(text, onClick)
 	{
 		var sectionDiv = this.mainDiv.append('section')
-			.classed('cell unique btn action', true)
+			.classed('cell unique action', true)
 			.on('click', onClick);
 		var itemsDiv = crf.appendItemList(sectionDiv)
 			.classed('hover-items', true);
@@ -1940,7 +1233,7 @@ var SitePanel = (function () {
 		var item = itemsDiv.append('li');
 			
 		item.append('div')
-			.classed("site-active-text string-value-view growable", true)
+			.classed("text-fill site-active-text growable unselectable", true)
 			.text(text);
 				
 		return sectionDiv;	
@@ -1975,15 +1268,10 @@ var SitePanel = (function () {
 
 		window.scrollTo(0, 0);
 		$panelNode.css({top: 0,
-						left: "{0}px".format(window.innerWidth),
-						position: 'fixed'});
+						left: "{0}px".format(window.innerWidth)});
 		$panelNode.trigger("revealing.cr");
 		return $panelNode.animate({left: 0})
-			.promise()
-			.done(function()
-				{
-					$panelNode.css('position', '');
-				});
+			.promise();
 	}
 
 	SitePanel.prototype.hideDown = function(done)
@@ -2063,7 +1351,6 @@ var SitePanel = (function () {
 var SearchOptionsView = (function () {
 	SearchOptionsView.prototype.listElement = null;
 	SearchOptionsView.prototype.getDataChunker = null;
-	SearchOptionsView.prototype._fill = null;
 	SearchOptionsView.prototype._foundCompareText = null;
 	SearchOptionsView.prototype._constrainCompareText = null;
 	SearchOptionsView.prototype._searchTimeout = null;
@@ -2071,9 +1358,8 @@ var SearchOptionsView = (function () {
 	/* containerNode is the node that contains the noResults Div and the list 
 		containing the results.
 	 */
-	function SearchOptionsView(containerNode, fill, chunkerType)
+	function SearchOptionsView(containerNode, chunkerType)
 	{
-		this._fill = fill;
 		if (containerNode)
 		{
 			var _this = this;
@@ -2142,7 +1428,7 @@ var SearchOptionsView = (function () {
 	{
 		function sortByDescription(a, b)
 		{
-			return a.getDescription().localeCompare(b.getDescription());
+			return a.description().localeCompare(b.description());
 		}
 		foundObjects.sort(sortByDescription);
 	}
@@ -2154,15 +1440,21 @@ var SearchOptionsView = (function () {
 	
 	SearchOptionsView.prototype.constrainFoundObjects = function()
 	{
-		var buttons = this.listElement.selectAll(".btn");
+		var buttons = this.listElement.selectAll("li");
 		var _this = this;
-		buttons.style("display", function(d) 
+		buttons.style('display', function(d) 
 			{ 
 				if (_this.isButtonVisible(this, d, _this._constrainCompareText))
 					return null;
 				else
-					return "none";
+					return 'none';
 			});
+	}
+	
+	SearchOptionsView.prototype.fillItems = function(items)
+	{
+		appendDescriptions(items)
+			.classed('unselectable', true);
 	}
 	
 	/* Show the objects that have been found. In this implementation, the objects appear as a list of buttons. */
@@ -2170,12 +1462,12 @@ var SearchOptionsView = (function () {
 	{
 		var _this = this;
 		var items = this.appendButtonContainers(foundObjects)
-			.on("click", function(d, i) {
+			.on('click', function(d, i) {
 				_this.onClickButton(d, i, this);
 			});
+			
+		this.fillItems(items);
 
-		appendViewButtons(items, this._fill);
-		
 		this.constrainFoundObjects();
 		return items;
 	}
@@ -2186,6 +1478,11 @@ var SearchOptionsView = (function () {
 	SearchOptionsView.prototype.fields = function()
 	{
 		return ["parents"];
+	}
+	
+	SearchOptionsView.prototype.increment = function()
+	{
+		return 20;
 	}
 	
 	SearchOptionsView.prototype.noResultString = function()
@@ -2202,6 +1499,17 @@ var SearchOptionsView = (function () {
 		this.getDataChunker.clearLoadingMessage();
 	}
 	
+	SearchOptionsView.prototype.setupChunkerArguments = function(compareText)
+	{
+		this.getDataChunker.path = this.searchPath(compareText);
+		if (this.getDataChunker.path)
+		{
+			this.getDataChunker.fields = this.fields(compareText);
+			this.getDataChunker.resultType = this.resultType(compareText);
+			this.getDataChunker.increment(this.increment());
+		}
+	}
+	
 	SearchOptionsView.prototype.search = function(val)
 	{
 		if (val !== undefined)
@@ -2209,18 +1517,12 @@ var SearchOptionsView = (function () {
 			this._foundCompareText = val;
 			this._constrainCompareText = val;
 		}
-			
-		var searchPath = this.searchPath(this._constrainCompareText);
-		if (searchPath)
-		{
-			this.getDataChunker.path = searchPath;
-			this.getDataChunker.fields = this.fields();
+		
+		this.setupChunkerArguments(this._constrainCompareText);
+		if (this.getDataChunker.path)
 			this.getDataChunker.start(this._constrainCompareText);			
-		}
 		else
-		{
 			this.cancelSearch();
-		}
 	}
 	
 	SearchOptionsView.prototype.inputText = function(val)
@@ -2337,37 +1639,32 @@ var SearchView = (function () {
 	SearchView.prototype = new SearchOptionsView;
 	SearchView.prototype.inputBox = null;
 	
-	function SearchView(containerNode, placeHolder, fill, chunkerType) {
-		if (containerNode)
+	function SearchView(containerNode, placeholder, chunkerType) {
+		console.assert(containerNode);
+
+		var _this = this;
+		if (placeholder)
 		{
-			var _this = this;
-			var inputBox = this.appendInput(containerNode, placeHolder);
-		
+			var inputBox = this.appendInput(containerNode, placeholder);
+	
 			this.inputBox = inputBox.node();
 			$(this.inputBox).on("input", function() { _this.textChanged() });
 		}
 		
-		SearchOptionsView.call(this, containerNode, fill, chunkerType);
-		if (containerNode)
-		{
-			/* Call setupInputBox at the end because it may trigger an input event. */
-			this.setupInputBox();
-		}
-	}
-	
-	SearchView.prototype.setupInputBox = function()
-	{
-		/* Do nothing by default */
+		SearchOptionsView.call(this, containerNode, chunkerType);
 	}
 	
 	SearchView.prototype.inputText = function(val)
 	{
 		if (val === undefined)
-			return this.inputBox.value.trim();
+			return this.inputBox ? this.inputBox.value.trim() : "";
 		else
 		{
-			this.inputBox.value = val;
-			$(this.inputBox).trigger("input");
+			if (this.inputBox)
+			{
+				this.inputBox.value = val;
+				$(this.inputBox).trigger("input");
+			}
 		}
 	}
 	
@@ -2389,15 +1686,17 @@ var SearchView = (function () {
 
 /* A PanelSearchView is a SearchView that appears in an entire sitePanel. */
 var PanelSearchView = (function() {
-	PanelSearchView.prototype = new SearchView();
+	PanelSearchView.prototype = Object.create(SearchView.prototype);
+	PanelSearchView.prototype.constructor = PanelSearchView;
+
 	PanelSearchView.prototype.sitePanel = undefined
 	
-	function PanelSearchView(sitePanel, placeholder, fill, chunkerType) {
+	function PanelSearchView(sitePanel, placeholder, chunkerType) {
 		if (sitePanel)
 		{
 			/* Set sitePanel first for call to appendSearchArea */
 			this.sitePanel = sitePanel;
-			SearchView.call(this, sitePanel.node(), placeholder, fill, chunkerType);
+			SearchView.call(this, sitePanel.node(), placeholder, chunkerType);
 			
 			var _this = this;
 			
@@ -2458,20 +1757,6 @@ var Dimmer = (function () {
 	return Dimmer;
 })();
 
-/* Gets the text for the header of a view panel based on the specified data. */
-function getViewPanelHeader(objectData)
-{
-	var headerText = objectData.getDescription();
-	if (!objectData.hasTextDescription())
-	{
-		if (headerText.length > 0)
-			headerText = objectData.cell.field.name + " (" + headerText + ")";
-		else
-			headerText = objectData.cell.field.name;
-	}
-	return headerText;
-}
-
 function revealPanelLeft(panelDiv)
 {
 	panelDiv.sitePanel.showLeft().always(unblockClick);
@@ -2483,866 +1768,662 @@ function revealPanelUp(panelDiv)
 		.always(unblockClick);
 }
 
-/* Displays a panel in which the specified object's contents appear without being able to edit.
- */
-function showViewOnlyObjectPanel(objectData, backText) {
-	objectData.promiseCells()
-		.then(function ()
-			{
-				var sitePanel = new SitePanel();
-				sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "view");
-
-				var navContainer = sitePanel.appendNavContainer();
-
-				var backButton = navContainer.appendLeftButton()
-					.on("click", function() { sitePanel.hideRightEvent(); });
-				appendLeftChevrons(backButton).classed("site-active-text", true);
-				backButton.append("div").text(" " + backText);
-	
-				var panel2Div = sitePanel.appendScrollArea();
-
-				var headerDiv = panel2Div.appendHeader();
-
-				sitePanel.showLeft().then(unblockClick);
-	
-				panel2Div.append("div").classed("cell-border-below", true);
-				sitePanel.showViewCells(objectData.getCells());
-			}, 
-			cr.syncFail)
-}
-
-/* Displays a panel in which the specified object's contents appear.
- */
-function showViewObjectPanel(cell, objectData, backText, showFunction) {
-	objectData.promiseCells()
-		.then(function ()
-			{
-				var sitePanel = new SitePanel();
-				var header = getViewPanelHeader(objectData);
-				sitePanel.createRoot(objectData, header, "view", showFunction);
-
-				var navContainer = sitePanel.appendNavContainer();
-
-				var backButton = navContainer.appendLeftButton()
-					.on("click", function() { sitePanel.hideRightEvent(); });
-				appendLeftChevrons(backButton).classed("site-active-text", true);
-				backButton.append("div").text(" " + backText);
-	
-				if (objectData.canWrite())
-				{
-					var editButton = navContainer.appendRightButton()
-						.on("click", function(d) {
-							if (prepareClick('click', 'view object panel: Edit'))
-							{
-								try
-								{
-									showClickFeedback(this);
-				
-									showEditObjectPanel(cell, objectData, header, revealPanelUp);
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
-							d3.event.preventDefault();
-						});
-					editButton.append("span").text(crv.buttonTexts.edit);
-				}
-	
-				var panel2Div = sitePanel.appendScrollArea();
-
-				var headerDiv = panel2Div.appendHeader();
-		
-				var updateHeader = function(eventObject)
-				{
-					var newText = getViewPanelHeader(this);
-					sitePanel.panelDiv.attr("headerText", newText);
-					d3.select(eventObject.data).text(newText);
-				}
-				objectData.on("dataChanged.cr", headerDiv.node(), updateHeader);
-				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
-				{
-					eventObject.data.off("dataChanged.cr", updateHeader);
-				});
-
-				panel2Div.append("div").classed("cell-border-below", true);
-				sitePanel.showViewCells(objectData.getCells());
-		
-				showFunction(sitePanel.node());
-			}, 
-			cr.syncFail)
-}
-
-function _b64_to_utf8( str ) {
-    str = str.replace(/\s/g, '');    
-    return decodeURIComponent(escape(window.atob( str )));
-}
-
-function promiseImportCells(containerCell, d, cells)
-{
-	if (d == null)
-	{
-		d = containerCell.addNewValue();
-		d.instance(new cr.Instance());
-	}
-	else if (!d.instance())
-		d.instance(new cr.Instance());
-		
-	d.importCells(cells);
-
-	d.calculateDescription();
-	d.triggerDataChanged();
-
-	var promise = $.Deferred();
-	promise.resolve(d);
-	return promise;
-}
-
-function promiseSaveCells(containerCell, d, cells)
-{
-	var initialData = {}
-	cells.forEach(
-		function(cell) {
-			cell.appendData(initialData);
-		});
-
-	return d.saveNew(initialData);
-}
-
-function promiseCreateObjectFromCells(containerCell, objectData, cells)
-{
-	var initialData = {}
-	cells.forEach(
-		function(cell) {
-			cell.appendData(initialData);
-		});
-
-	/* Test case: add a new service to the services panel. */
-	return $.when(cr.createInstance(containerCell.field, 
-						  containerCell.parent && containerCell.parent.getInstanceID(), 
-						  initialData))
-				   .then(function(newData)
-						  {
-							containerCell.addValue(newData);
-						  });
-}
-
 var EditPanel = (function() {
-	EditPanel.prototype = new SitePanel();
+	EditPanel.prototype = Object.create(crv.SitePanel.prototype);
+	EditPanel.prototype.constructor = EditPanel;
+
 	EditPanel.prototype.navContainer = null;
 	
-	EditPanel.prototype.appendBackButton = function()
+	EditPanel.prototype.createRoot = function(objectData, header, onShow)
 	{
-		var _this = this;
-		var backButton = this.navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'edit object panel: Cancel'))
-				{
-					try {
-						_this.hide();
-					} catch(err) { cr.syncFail(err); }
-				}
-				d3.event.preventDefault();
-			});
-		backButton.append("span").text("Cancel");
-	}
-	
-	EditPanel.prototype.appendAddButton = function(promise, containerCell, objectData, cells)
-	{
-		var doneButton;
-		var _this = this;
-		doneButton = this.navContainer.appendRightButton();
-		doneButton.on("click", function(d) {
-			if (prepareClick('click', 'EditPanel done'))
-			{
-				showClickFeedback(this);
-			
-				try
-				{
-					var sections = _this.mainDiv.selectAll("section");
-					sections.each(
-						function(cell) {
-							cell.updateCell(this);
-						});
-						
-					promise(containerCell, objectData, sections.data())
-					 .then(function() {
-							_this.hide();
-						}, 
-						cr.syncFail);
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-			d3.event.preventDefault();
-		});
-		doneButton.append("span").text("Add");
-		return doneButton;
-	}
-	
-	function EditPanel(objectData, cells, header, onShow)
-	{
-		this.createRoot(objectData, header, "edit", onShow);
+		crv.SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
 		this.navContainer = this.appendNavContainer();
+		this.appendScrollArea();
+	}
 
-		var panel2Div = this.appendScrollArea();
-		this.showEditCells(cells)
-			.classed('first', true);
-
-		$(this.node()).on('dragover',
-			function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-			}
-		)
-		$(this.node()).on('dragenter',
-			function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-			}
-		)
-		$(this.node()).on('drop', function(e)
-		{
-			if (e.originalEvent.dataTransfer) {
-				if (e.originalEvent.dataTransfer.files.length) {
-					e.preventDefault();
-					e.stopPropagation();
-					jQuery.each( e.originalEvent.dataTransfer.files, function(index, file){
-							var fileReader = new FileReader();
-								fileReader.onload = function(e) {
-									 if (e.target.result.startsWith("data:application/json") &&
-									 	 e.target.result.indexOf("base64,") > 0)
-									 {
-									 	var start = e.target.result.indexOf("base64,") + "base64,".length;
-									 	var s = e.target.result.substring(start);
-									 	try
-									 	{
-									 		var data = JSON.parse(_b64_to_utf8(s));
-									 		for (var j = 0; j < data.length; ++j)
-									 		{
-									 			var d = data[j];
-									 			for (var name in d)
-									 			{
-													for (var i = 0; i < cells.length; ++i)
-													{
-														var cell = cells[i];
-														if (cell.field.name === name)
-														{
-															if (objectData && objectData.getInstanceID())
-															{
-																$.when(cr.createInstance(cell.field, objectData.getInstanceID(), d[name]))
-																 .then(function(newData)
-																	{
-																		cell.addValue(newData);
-																	},
-																	cr.asyncFail);
-															}
-															else
-															{
-																/* In this case, we are dropping onto an item that hasn't been saved. */
-																throw new Error("drop not supported for new items");
-															}
-															break;
-														}
-													}
-												}
-											}
-									 	}
-									 	catch(err)
-									 	{
-									 		bootstrap_alert.warning(err.message, '.alert-container');
-									 	}
-									 }
-								};
-							fileReader.readAsDataURL(file);
-						  });
-				} 
-			}  
-		});
+	function EditPanel()
+	{
 	}
 	
 	return EditPanel;
 })();
 
-/* 
-	Displays a panel for editing the specified object. 
- */
-function showEditObjectPanel(containerCell, objectData, backText, onShow, getSavePromise) {
-	var successFunction = function(cells)
-	{
-		var header;
-		if (objectData && objectData.getInstanceID())
-			header = crv.buttonTexts.edit;
-		else
-			header = "New " + containerCell.field.name;
-		var sitePanel = new EditPanel(objectData, cells, header, onShow);
+var EditItemPanel = (function () {
+	EditItemPanel.prototype = Object.create(EditPanel.prototype);
+	EditItemPanel.prototype.constructor = EditItemPanel;
 
-		var doneButton;
-		if (objectData && objectData.getInstanceID())
-		{
-			if (onShow === revealPanelUp)
-				doneButton = sitePanel.navContainer.appendRightButton();
-			else
-				doneButton = sitePanel.navContainer.appendLeftButton();
-			doneButton.append("span").text(crv.buttonTexts.done);
-			doneButton.on("click", function()
-				{
-					sitePanel.mainDiv.handleDoneEditingButton.call(this);
-				});
-		}
-		else
-		{
-			var sections = sitePanel.mainDiv.selectAll('section');
-			var f = null;
-			
-			if (getSavePromise)
-				f = getSavePromise;
-			else if (objectData)
-			{
-				/* Test case: Set the address for a site where the site
-				   has been previously saved without an address. */
-				f = promiseSaveCells;
-			}
-			else
-			{
-				/* Test case: add a new service to the services panel. */
-				f = promiseCreateObjectFromCells;
-			}
-			
-			var doneButton = sitePanel.appendAddButton(f, containerCell, objectData, sections.data());
-			
-			sitePanel.appendBackButton();
-		}
-		sitePanel.navContainer.appendTitle(header);
-		
-		onShow(sitePanel.node());
+	EditItemPanel.prototype._controller = null;
+	
+	EditItemPanel.prototype.newInstance = function()
+	{
+		return this._controller.newInstance();
+	}
+
+	EditItemPanel.prototype.controller = function()
+	{
+		return this._controller;
 	}
 	
-	if (objectData && (objectData.getInstanceID() || objectData.getCells()))
-		objectData.promiseCells()
-			.then(function()
-				{
-					successFunction(objectData.getCells());
-				}, cr.syncFail);
-	else
-		/* Test case: Add a new site to an organization. */
-		containerCell.getConfiguration()
-			.then(successFunction, cr.syncFail);
-}
-
-/* 
-	Displays a panel for adding a root object. 
- */
-function showAddRootPanel(containerCell, onShow) {
-	var successFunction = function(cells)
+	EditItemPanel.prototype.promiseUpdateChanges = function()
 	{
-		var header = "New " + containerCell.field.name;
-			
-		var sitePanel = new EditPanel(null, cells, header, onShow);
-
-		var doneButton = sitePanel.appendAddButton(promiseCreateObjectFromCells, containerCell, null, cells);
-		
-		sitePanel.appendBackButton();
-
-		sitePanel.navContainer.appendTitle(header);
-		
-		onShow(sitePanel.node());
+		return this.controller().save();
 	}
 	
-	/* Test case: Display panel to add a new term. */
-	containerCell.getConfiguration()
-			.then(successFunction, cr.syncFail);
-}
-
-function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
-{
-	return function(rootObjects)
+	EditItemPanel.prototype.onConfirmDelete = function(data, d, deleteControl)
 	{
-		if (sortFunction)
-			rootObjects.sort(sortFunction);
-			
-		for (var i = 0; i < rootObjects.length; i++)
-			cell.pushValue(rootObjects[i]);
-		
-		var sitePanel = new SitePanel();
-		sitePanel.createRoot(cell, header, "list");
-
-		var navContainer = sitePanel.appendNavContainer();
-
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function() { sitePanel.hideRightEvent(); });
-		backButton.append("span").text(crv.buttonTexts.done);
-		
-		var checkEdit = function()
+		/* Test case: Delete an existing value in a cell that has multiple values. */
+		if (prepareClick('click', 'confirm delete: ' + d.description()))
 		{
-			if (cr.signedinUser.getValue(cr.fieldNames.systemAccess))
-			{
-				var editButton = navContainer.appendRightButton()
-					.on("click", function(d) {
-						if (prepareClick('click', 'view roots object panel: Edit'))
-						{
-							try
-							{
-								showClickFeedback(this);
-								showEditRootObjectsPanel(cell, "Edit " + header, sortFunction);
-							} catch(err) { cr.syncFail(err); }
-						}
-						d3.event.preventDefault();
-					});
-				editButton.append("span").text(crv.buttonTexts.edit);
-			}
-			navContainer.appendTitle(header);
+			try {
+				cr.removeElement(data, d);
+				removeItem($(deleteControl).parents('li')[0], unblockClick);
+			} catch(err) { cr.syncFail(err); }
 		}
-		
-		if (cr.signedinUser.getCells())
-			checkEdit();
-		else
-		{
-			cr.signedinUser.on("signin.cr", navContainer.nav.node(), checkEdit);
-			$(navContainer.nav.node()).on("remove", null, cr.signedinUser, function(eventObject)
-				{
-					eventObject.data.off("signin.cr", checkEdit);
-				});
-		}
-				
-		function textChanged(){
-			var val = this.value.toLocaleLowerCase();
-			if (val.length === 0)
-			{
-				/* Show all of the items. */
-				panel2Div.selectAll("li")
-					.style("display", null);
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				panel2Div.selectAll("li")
-					.style("display", function(d)
-						{
-							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
-							else
-								return "none";
-						});
-			}
-		}
+	}
 	
-		sitePanel.appendSearchBar(textChanged);
-
-		var panel2Div = sitePanel.appendScrollArea();
+	EditItemPanel.prototype.appendItemControls = function(itemsDiv, items, data, appendInputControls)
+	{
+		var _this = this;
 		
-		var section = panel2Div.append("section")
-			.classed("cell multiple", true);
-		var itemsDiv = crf.appendItemList(section)
-			.classed("hover-items border-above", true)
-			.datum(cell);
-		
-
-		var addedFunction = getOnValueAddedFunction(false, true, showViewObjectPanel);
-		var addedFunctionWithSort = function(eventObject, newValue)
-		{
-			addedFunction.call(this, eventObject, newValue);
-			if (sortFunction)
+		crf.appendDeleteControls(items);
+		appendInputControls(items);
+		crf.appendConfirmDeleteControls(items, function(d)
 			{
-				itemsDiv.selectAll("li").sort(sortFunction);
-				cell.data.sort(sortFunction);
-			}
-		}
-		
-		var dataChangedFunction = function(eventObject, newData)
-		{
-			if (sortFunction)
-			{
-				itemsDiv.selectAll("li").sort(sortFunction);
-				cell.data.sort(sortFunction);
-			}
-		}
-
-		setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), addedFunctionWithSort);
-		setupOnViewEventHandler(cell, "dataChanged.cr", itemsDiv.node(), dataChangedFunction);
-	
-		appendViewCellItems(itemsDiv, cell, 
-			function(d) {
-				if (prepareClick('click', 'view root object: ' + d.getDescription()))
-				{
-					try {
-						showViewObjectPanel(cell, d, sitePanel.node().getAttribute("headerText"), revealPanelLeft);
-					} catch(err) { cr.syncFail(err); }
-				}
+				_this.onConfirmDelete(data, d, this);
 			});
-
-		_setupItemsDivHandlers(itemsDiv, cell);
-		if (successFunction)
-			successFunction(sitePanel.node());
-	}
-}
-
-function showEditRootObjectsPanel(cell, header, sortFunction)
-{
-	var sitePanel = new SitePanel();
-	sitePanel.createRoot(cell, header, "list");
-
-	var navContainer = sitePanel.appendNavContainer();
-
-	var backButton = navContainer.appendLeftButton()
-		.on("click", function()
-		{
-			sitePanel.handleCloseDownEvent();
-		});
-	backButton.append("span").text(crv.buttonTexts.done);
-	
-	var addButton = navContainer.appendRightButton()
-		.classed("add-button", true)
-		.on("click", function(d) {
-			if (prepareClick('click', 'edit root objects: add'))
+		var dials = $(itemsDiv.node()).find('li>button:first-of-type');
+		crf.showDeleteControls(dials, 0);
+		items.each(function(d)
 			{
-				try
-				{
-					showClickFeedback(this);
-					showAddRootPanel(cell, revealPanelUp);
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-			d3.event.preventDefault();
-		});
-	addButton.append("span").text("+");
-	navContainer.appendTitle(header);	
-	
-	var textChanged = function(){
-		var val = this.value.toLocaleLowerCase();
-		if (val.length === 0)
-		{
-			/* Show all of the items. */
-			panel2Div.selectAll("li")
-				.style("display", null);
-		}
-		else
-		{
-			/* Show the items whose description is this.value */
-			panel2Div.selectAll("li")
-				.style("display", function(d)
+				setupOneViewEventHandler(d, 'deleted.cr', this, function(eventObject)
 					{
-						if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-							return null;
-						else
-							return "none";
+						var item = d3.select(eventObject.data);
+						item.remove();
 					});
-		}
+			});
 	}
 
-	sitePanel.appendSearchBar(textChanged);
-
-	var panel2Div = sitePanel.appendScrollArea();
 	
-	var section = panel2Div.append("section")
-		.classed("cell multiple", true);
-	var itemsDiv = crf.appendItemList(section)
-		.classed("hover-items deletable-items border-above", true)
-		.datum(cell);
-	
-	var addedFunction = getOnValueAddedFunction(true, true, showEditObjectPanel);
-	var addedFunctionWithSort = function(eventObject, newValue)
+	/** Adds a row to a multiple item within a panel to add another item of that type. */
+	EditItemPanel.prototype.appendAddButton = function(sectionObj, container, data, dataType, name, appendInputControls)
 	{
-		addedFunction.call(this, eventObject, newValue);
-		if (sortFunction)
-			itemsDiv.selectAll("li").sort(sortFunction);
-	}
-	
-	var dataChangedFunction = function(eventObject, newData)
-	{
-		if (sortFunction)
-			itemsDiv.selectAll("li").sort(sortFunction);
-	}
-
-	setupOnViewEventHandler(cell, "valueAdded.cr", itemsDiv.node(), addedFunctionWithSort);
-	setupOnViewEventHandler(cell, "dataChanged.cr", itemsDiv.node(), dataChangedFunction);
-
-	appendEditCellItems(itemsDiv, cell, 
-		function(d) {
-			if (prepareClick('click', 'edit cell item: ' + d.getDescription()))
-			{
-				try {
-					showEditObjectPanel(cell, d, header, revealPanelLeft);
-				} catch(err) { cr.syncFail(err); }
-			}
-		});
-	_setupItemsDivHandlers(itemsDiv, cell);
-	var dials = $(sitePanel.node()).find('ol.deletable-items>li>button:first-of-type');
-	crf.showDeleteControls(dials);
-
-	$(sitePanel.node()).on('dragover',
-		function(e) {
-			e.preventDefault();
-			e.stopPropagation();
-		}
-	)
-	$(sitePanel.node()).on('dragenter',
-		function(e) {
-			e.preventDefault();
-			e.stopPropagation();
-		}
-	)
-	$(sitePanel.node()).on('drop', function(e)
-	{
-		if (e.originalEvent.dataTransfer) {
-			if (e.originalEvent.dataTransfer.files.length) {
-				e.preventDefault();
-				e.stopPropagation();
-				jQuery.each( e.originalEvent.dataTransfer.files, function(index, file){
-						var fileReader = new FileReader();
-							fileReader.onload = function(e) {
-								 if (e.target.result.startsWith("data:application/json") &&
-									 e.target.result.indexOf("base64,") > 0)
-								 {
-									var start = e.target.result.indexOf("base64,") + "base64,".length;
-									var s = e.target.result.substring(start);
-									try
-									{
-										var data = JSON.parse(_b64_to_utf8(s));
-										for (var j = 0; j < data.length; ++j)
-										{
-											var d = data[j];
-											$.when(cr.createInstance(cell.field, null, d))
-											 .then(function(newData)
-												{
-													cell.addValue(newData);
-												},
-												cr.asyncFail);
-										}
-									}
-									catch(err)
-									{
-										bootstrap_alert.warning(err.message, '.alert-container');
-									}
-								 }
-							};
-						fileReader.readAsDataURL(file);
-					  });
-			} 
-		}  
-	});
-	
-	sitePanel.showUp().always(unblockClick);
-}
-
-/* Displays a panel from which a user can select an object of the kind required 
-	for objects in the specified cell.
- */
-function showPickObjectPanel(cell, oldData) {
-	var failFunction = syncFailFunction;
-	
-	function selectAllSuccessFunction(rootObjects) {
-		if (!("pickObjectPath" in cell.field && cell.field.pickObjectPath))
-		{
-			rootObjects.sort(function(a, b)
+		var _this = this;
+		/* Add one more button for the add Button item. */
+		var buttonDiv = sectionObj.append("div")
+			.classed('add-value site-active-text', true)
+			.on("click", function(cell) {
+				if (prepareClick('click', "add {0}".format(name)))
 				{
-					return a.getDescription().localeCompare(b.getDescription());
-				});
-		}
-	
-		var panelDatum;
-		if (oldData && oldData.id)
-			panelDatum = oldData;	/* Replacing an existing object. */
-		else
-			panelDatum = cell;		/* Adding a new object. */
-		var sitePanel = new SitePanel();
-		sitePanel.createRoot(panelDatum, cell.field.name, "list");
-
-		var navContainer = sitePanel.appendNavContainer();
-
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'pick object panel: Cancel'))
-				{
-					try {
-						sitePanel.hideRight(unblockClick);
-					} catch(err) { cr.syncFail(err); }
+					try
+					{
+						var newValue = new dataType();
+						newValue.setDefaultValues();
+						if ('position' in newValue)
+							newValue.position(data.length ? data[data.length - 1].position() + 1 : 0);
+							
+						data.push(newValue);
+						newValue.parent(container);
+					
+						var itemsDiv = sectionObj.selectAll('ol');
+						var item = itemsDiv.append('li')
+							.datum(newValue);
+						_this.appendItemControls(itemsDiv, item, data, appendInputControls);
+						itemsDiv.style('display', null);
+						var input = item.selectAll('input');
+						if (input.node())
+							input.node().focus();
+							
+						unblockClick();
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
-		
-		navContainer.appendTitle(cell.field.name);
-
-		var textChanged = function(){
-			var val = this.value.toLocaleLowerCase();
-			if (val.length === 0)
-			{
-				/* Show all of the items. */
-				panel2Div.selectAll("li")
-					.style("display", null);
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				panel2Div.selectAll("li")
-					.style("display", function(d)
-						{
-							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
-							else
-								return "none";
-						});
-			}
-		}
-	
-		sitePanel.appendSearchBar(textChanged);
-
-		var panel2Div = sitePanel.appendScrollArea();
-		
-		function buttonClicked(d) {
-			/* d is the ObjectValue that the user clicked. */
-			var successFunction = function()
-			{
-				sitePanel.hideRight(unblockClick);
-			}
-			
-			if (prepareClick('click', 'pick object panel: ' + d.getDescription()))
-			{
-				try
-				{
-					if (!oldData)
-					{
-						/* Test case: Add an item to a cell that can contain multiple items. 
-						 */
-						if (cell.parent && cell.parent.getInstanceID())	/* In this case, we are adding an object to an existing object. */
-						{
-							/* Test case: Add a service to an offering that has been saved. 
-						 	 */
-							cr.updateValues([cell.getAddCommand(d)], [cell])
-								.then(successFunction, cr.syncFail);
-						}
-						else 
-						{
-							oldData = cell.addNewValue();
-							
-							/* In this case, we are replacing an old value for
-							   an item that was added to the cell but not saved;
-							   a placeholder or a previously picked value.
-							 */
-							oldData.updateFromChangeData({instanceID: d.getInstanceID(), description: d.getDescription()});
-							oldData.triggerDataChanged();
-							successFunction();
-						}
-					}
-					else if (d.getInstanceID() === oldData.getInstanceID()) {
-						/* Test case: Choose the same item as was previously selected for this item. */
-						successFunction();
-					}
-					else if (oldData.id)
-					{
-						if (d.getInstanceID())
-						{
-							/* Test case: Choose a different item as was previously selected for this item. */
-							cr.updateObjectValue(oldData, d, -1, successFunction, cr.syncFail);
-						}
-						else
-						{
-							/* Test case: Choose none for a unique item that was previously specified. */
-							oldData.deleteValue()
-								.then(successFunction, cr.syncFail);
-						}
-					}
-					else if (d.getInstanceID())
-					{
-						/* Test case: Set the value of a unique item in a cell where the current value is None.
-						 */
-						if (cell.parent && cell.parent.getInstanceID())	/* In this case, we are adding an object to an existing object. */
-						{
-							/* Test case: Set the state of an address that was previously saved without a state. 
-						 	 */
-							cr.updateValues([cell.getAddCommand(d)], [oldData])
-								.then(successFunction, cr.syncFail);
-						}
-						else 
-						{
-							/* In this case, we are replacing an old value for
-							   an item that was added to the cell but not saved;
-							   a placeholder or a previously picked value.
-							 */
-							oldData.instance(d.instance());
-							oldData.triggerDataChanged();
-							successFunction();
-						}
-					}
-					else
-						successFunction();
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-			d3.event.preventDefault();
-		}
-		
-		if (cell.isUnique())
-		{
-			var nullObjectValue = new cr.ObjectValue();
-			rootObjects = [nullObjectValue].concat(rootObjects);
-		}
-		var buttons = appendButtons(panel2Div, rootObjects, buttonClicked);
-		
-		if (oldData)
-		{
-			buttons.insert("span", ":first-child")
-				.classed('glyphicon', true)
-				.classed("glyphicon-ok", 
-				function(d) { return d.getDescription() == oldData.getDescription(); });
-		}
-	
-		sitePanel.showLeft().then(unblockClick);
+		buttonDiv.append('div')
+			.classed('overlined', !sectionObj.classed('first'))
+			.text("Add {0}".format(name));
 	}
-	
-	if (cell.field.pickObjectPath)
+
+	/** Adds a section that contains a unique text block. 
+		instanceProperty is a function that can get or set its value.
+	 */
+	EditItemPanel.prototype.appendTextSection = function(instance, instanceProperty, labelText, inputType)
 	{
-		var pickObjectPath = cell.field.pickObjectPath;
-		if (pickObjectPath.indexOf("parent") === 0 &&
-			">:=</".indexOf(pickObjectPath.charAt(6)) >= 0)
-		{
-			var currentObject = cell.parent;
-			pickObjectPath = pickObjectPath.slice(6);
-			while (currentObject != null &&
-				   pickObjectPath.indexOf("::reference(") === 0 &&
-				   !currentObject.getInstanceID())
-			{
-				currentObject = currentObject.cell.parent;
-				pickObjectPath = pickObjectPath.slice("::reference(".length);
-				/* While the next string is quoted, skip it. */
-				while (pickObjectPath[0] === '"')
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit unique', true)
+			.on('focusout', function(d)
 				{
-					pickObjectPath = pickObjectPath.slice(1);
-					pickObjectPath = pickObjectPath.slice(pickObjectPath.indexOf('"')+1);
-				}
-				/* Skip over the next close parenthesis */
-				pickObjectPath = pickObjectPath.slice(pickObjectPath.indexOf(')')+1);
-			}
-			if (currentObject != null && currentObject.getInstanceID())
-			{
-				/* Test case: edit the inquiry access group of an organization */
-				pickObjectPath = currentObject.getInstanceID()+pickObjectPath;
-				cr.getData({path: pickObjectPath, fields: ['none']})
-					.then(selectAllSuccessFunction, cr.syncFail);
-			}
-			else
-				cr.syncFail("The container has not yet been saved.");
-		}
-		else
-			/* Test case: edit the public access of an organization. */
-			cr.getData({path: pickObjectPath, fields: ['none']})
-				.then(selectAllSuccessFunction, cr.syncFail);
+					instanceProperty.call(instance, d3.select(this).select('input').property('value'));
+				});
+		section.append('label')
+			.text(labelText);
+		this.appendTextEditor(section, 
+							  labelText,
+							  instanceProperty.call(instance),
+							  inputType);
+		return section;	 
 	}
-	else
-		/* Test case: edit the name of a field of a configuration of a term. */
-		cr.getData({path: cell.field.ofKind, fields: ['none']})
-			.then(selectAllSuccessFunction, cr.syncFail);
-}
+	
+	EditItemPanel.prototype.appendTextEditor = function(section, placeholder, value, inputType)
+	{
+		var itemsDiv = crf.appendItemList(section);
+		var items = itemsDiv.append('li');
+
+		var inputs = items.append('input')
+			.classed('growable', true)
+			.attr('type', inputType)
+			.attr('placeholder', placeholder)
+			.property('value', value);
+			
+		if (this.onFocusInOtherInput !== undefined)
+		{
+			var _this = this;
+			inputs.on('click', function()
+				{
+					try
+					{
+						var done = function() { };
+						if (!_this.onFocusInOtherInput(null, done))
+						{
+							done();
+						}
+					}
+					catch (err)
+					{
+						cr.asyncFail(err);
+					}
+				});
+		}
 		
+		return inputs;
+	}
+	
+	EditItemPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText, minDate, maxDate)
+	{
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit unique', true);
+		section.append('label')
+			.classed('overlined', true)
+			.text(labelText);
+		section.editor = this.appendDateEditor(section,
+												 crv.buttonTexts.nonePlaceholder,
+												 instanceProperty.call(instance),
+												 minDate, maxDate);
+		
+		var handler = function(eventObject)
+		{
+			var dateWheelValue = this.value() != '' ? this.value() : null;
+			instanceProperty.call(instance, dateWheelValue);
+		}
+		$(section.editor.dateWheel).on('change', null, handler);
+		$(section.node()).on("clearTriggers.cr remove", section.editor.dateWheel, function()
+			{
+				$(section.editor.dateWheel).off('change', handler);
+			});
+
+		return section;
+		
+	}
+	
+	EditItemPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)
+	{
+		/* If minDate is not defined, set it to January 1, 50 years ago. */
+		if (minDate === undefined)
+		{
+			minDate = new Date();
+			minDate.setUTCFullYear(minDate.getUTCFullYear() - 50);
+			minDate.setMonth(0);
+			minDate.setDate(1);
+		}
+		/* If maxDate is not defined, set it to December 31, 50 years hence. */
+		if (maxDate === undefined)
+		{
+			maxDate = new Date();
+			maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 50);
+			maxDate.setMonth(11);
+			maxDate.setDate(31);
+		}
+		
+		var _this = this;
+		var itemsDiv = crf.appendItemList(section)
+			.classed('overlined', true);
+		var itemDiv = itemsDiv.append('li');
+		var dateSpan = itemDiv.append('span')
+			.classed('growable', true);
+		var dateWheel = new DateWheel(section.node().parentNode, function(newDate)
+			{
+				if (newDate)
+					dateSpan.text(getLocaleDateString(newDate));
+				else
+					dateSpan.text(placeholder);
+			}, minDate, maxDate);
+
+		var reveal = new VerticalReveal(dateWheel.node());
+		reveal.hide();
+		
+		dateSpan.on('click', function()
+			{
+				if (!reveal.isVisible())
+				{
+					try
+					{
+						var done = function()
+						{
+							dateSpan.classed('site-active-text', true);
+							reveal.show({}, 200, undefined, function()
+								{
+									dateWheel.onShowing();
+								});
+							notSureReveal.show({duration: 200});
+						}
+						if (!_this.onFocusInOtherInput(reveal, done))
+						{
+							done();
+						}
+					}
+					catch (err)
+					{
+						cr.asyncFail(err);
+					}
+				}
+				else
+				{
+					hideWheel();
+				}
+			});
+		
+		var notSureButton = d3.select(section.node().parentNode).append('div')
+				.classed('not-sure-button site-active-text', true)
+				.on('click', function()
+					{
+						if (prepareClick('click', placeholder))
+						{
+							hideWheel();
+							dateWheel.clear();
+							dateSpan.text(placeholder);
+							unblockClick();
+						}
+					});
+		notSureButton.append('div').text(placeholder);
+		var notSureReveal = new VerticalReveal(notSureButton.node());
+		notSureReveal.hide();
+			
+		var hideWheel = function(done)
+		{
+			dateSpan.classed('site-active-text', false);
+			dateWheel.onHiding();
+			reveal.hide({duration: 200,
+						 before: function()
+						 	{
+						 		notSureReveal.hide({duration: 200,  before: done});
+						 	}});
+		}
+		
+		var showWheel = function(done)
+		{
+			dateSpan.classed('site-active-text', true);
+			reveal.show({}, 200, undefined,
+				function()
+				{
+					notSureReveal.show({done: done});
+				});
+			
+		}
+		
+		if (value)
+			dateWheel.value(value);
+		else
+			dateWheel.clear();
+
+		return {dateWheel: dateWheel, 
+		    wheelReveal: reveal,
+			notSureReveal: notSureReveal,
+			hideWheel: hideWheel,
+			showWheel: showWheel,
+		};
+	}
+	
+	EditItemPanel.prototype.appendTranslationsSection = function(instance, sectionLabel, placeholder, data, dataType)
+	{
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit multiple', true);
+		section.append('label')
+			.text(sectionLabel);
+		this.appendTranslationEditor(section, instance, sectionLabel, placeholder, data, dataType);
+		return section;
+	}
+
+	EditItemPanel.prototype.appendTranslationEditor = function(section, container, sectionLabel, placeholder, data, dataType)
+	{
+		var _this = this;
+		section.classed("string translation", true);
+		var itemsDiv = crf.appendItemList(section);
+	
+		function appendInputControls(items)
+		{
+			items.append('input')
+				.classed('growable', true)
+				.attr('type', 'text')
+				.attr('placeholder', placeholder)
+				.property('value', function(d) { return d.text(); })
+				.on('focusout', function(d)
+					{
+						d.text(this.value);
+					});
+
+			var languageSelect = items.append("select");
+			languageSelect.selectAll('option')
+				.data(crv.languages)
+				.enter()
+				.append('option')
+				.text(function(d) { return d.name; });
+				
+			languageSelect.each(function(d)
+			{
+				for (var i = 0; i < crv.languages.length; ++i)
+				{
+					if (crv.languages[i].code == d.language())
+					{
+						this.selectedIndex = i;
+						break;
+					}
+				}
+			});
+			
+			languageSelect.on('change', function(d)
+				{
+					d.language(crv.languages[this.selectedIndex].code);
+				});
+		}
+	
+		itemsDiv.classed('deletable-items', true);
+		var items = appendItems(itemsDiv, data);
+		
+		this.appendItemControls(itemsDiv, items, data, appendInputControls);
+
+		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
+	}
+	
+	EditItemPanel.prototype.appendOrderedTextEditor = function(section, container, sectionLabel, placeholder, data, dataType)
+	{
+		var _this = this;
+		section.classed("string translation", true);
+		
+		var itemsDiv = crf.appendItemList(section);
+	
+		function appendInputControls(items)
+		{
+			items.append('input')
+				.classed('growable', true)
+				.attr('type', 'text')
+				.attr('placeholder', placeholder)
+				.property('value', function(d) { return d.text(); })
+				.on('focusout', function(d)
+					{
+						d.text(this.value);
+					});
+		}
+	
+		itemsDiv.classed('deletable-items', true);
+		var items = appendItems(itemsDiv, data);
+		
+		this.appendItemControls(itemsDiv, items, data, appendInputControls);
+
+		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
+	}
+	
+	/** Appends an enumeration that is associated with a picker panel for picking new values. */
+	EditItemPanel.prototype.appendEnumerationPickerSection = function(instance, instanceProperty, labelText, pickPanelType)
+	{
+		var section = this.mainDiv.append('section')
+			.classed('cell edit unique', true)
+			.datum(instance)
+			.on('click', 
+				function(d) {
+					if (prepareClick('click', 'pick ' + labelText))
+					{
+						try
+						{
+							var panel = new pickPanelType();
+							var textContainer = d3.select(this).selectAll('div.description-text');
+							panel.createRoot(d, instanceProperty.call(instance))
+								 .showLeft().then(unblockClick);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newValue)
+								{
+									textContainer.text(panel.getDescription(newValue));
+									instanceProperty.call(instance, newValue);
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+	
+		section.append('label')
+			.text(labelText);
+			
+		var initialDescription = pickPanelType.prototype.getDescription(instanceProperty.call(instance));
+		var items = this.appendEnumerationEditor(section, initialDescription);
+		
+		crf.appendRightChevrons(items);	
+		return section;
+	}
+	
+	EditItemPanel.prototype.appendLinkSection = function(instanceProperty, sectionLabel, pickPanelType)
+	{
+		var instance = this.controller().newInstance();
+		var section = this.mainDiv.append('section')
+			.datum(instance)
+			.classed('cell edit unique', true)
+			.on('click', 
+				function() {
+					if (prepareClick('click', 'pick organization'))
+					{
+						try
+						{
+							var panel = new pickPanelType(instance.parent(), instance);
+							panel.createRoot(instance, instanceProperty.call(instance))
+								.showLeft().then(unblockClick);
+						
+							$(panel.node()).on('itemPicked.cr', function(eventObject, newLink)
+								{
+									/* newLink will be undefined if null was passed in. */
+									instanceProperty.call(instance, newLink || null);
+									section.selectAll('li>div').text(
+										newLink ? newLink.description() : crv.buttonTexts.nullString);
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+			});
+
+		section.append('label')
+			.text(sectionLabel);
+		var newLink = instanceProperty.call(instance);
+		var items = this.appendEnumerationEditor(section, 
+			newLink ? newLink.description() : crv.buttonTexts.nullString);
+		section.datum(newLink);
+		crf.appendRightChevrons(items);	
+		return section;
+	}
+	
+	EditItemPanel.prototype.appendEnumerationEditor = function(section, newValue)
+	{
+		var itemsDiv = crf.appendItemList(section);
+
+		var items = itemsDiv.append('li');
+
+		var divs = items.append('div')
+			.classed('description-text growable unselectable', true)
+			.text(newValue);
+			
+		return items;
+	}
+	
+	EditItemPanel.prototype.appendChildrenPanelButton = function(label, panelType)
+	{
+		var _this = this;
+		var childrenButton = this.appendActionButton(label, function() {
+				if (prepareClick('click', label))
+				{
+					showClickFeedback(this);
+					try
+					{
+						_this.controller().newInstance().calculateDescription();	/* In case a child needs to refer to this object */
+						var panel = new panelType(_this.controller().newInstance(), revealPanelLeft);
+						panel.showLeft().then(unblockClick);
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+		childrenButton.selectAll('li>div').classed('description-text', true);
+		crf.appendRightChevrons(childrenButton.selectAll('li'));	
+	}
+	
+	EditItemPanel.prototype.createRoot = function(header, onShow, canCancel)
+	{
+		canCancel = (canCancel !== undefined) ? canCancel : true;
+		var _this = this;
+		EditPanel.prototype.createRoot.call(this, null, header, onShow);
+
+		if (canCancel)
+		{
+			this.navContainer.appendLeftButton()
+				.on("click", function()
+					{
+						if (prepareClick('click', header + ' Cancel'))
+						{
+							_this.hide();
+						}
+						d3.event.preventDefault();
+					})
+				.append('span').text(crv.buttonTexts.cancel);
+		}
+		
+		var doneButton = this.navContainer.appendRightButton();
+			
+		this.navContainer.appendTitle(header);
+		
+		doneButton.on("click", function()
+			{
+				if (prepareClick('click', header + ' done'))
+				{
+					this.focus();	// To eliminate focus from a previously selected item.
+					showClickFeedback(this);
+		
+					try
+					{
+						// Build up an update for initialData.
+						_this.promiseUpdateChanges()
+							.then(function() { _this.hide(); },
+								  cr.syncFail)
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+		.append("span").text(this._controller.oldInstance() ? crv.buttonTexts.done : crv.buttonTexts.add);
+		
+	}
+	
+	function EditItemPanel(controller)
+	{
+		this._controller = controller;
+		EditPanel.call(this);
+	}
+	
+	return EditItemPanel;
+})();
+
+/* 
+	Displays a panel for editing the specified object. 
+ */
+var PickFromListPanel = (function () {
+	PickFromListPanel.prototype = Object.create(crv.SitePanel.prototype);
+	PickFromListPanel.prototype.constructor = PickFromListPanel;
+	PickFromListPanel.prototype.oldDescription = null;
+	
+	PickFromListPanel.prototype.isInitialValue = function(d)
+	{
+		return this.datumDescription(d) === this.oldDescription;
+	}
+
+	PickFromListPanel.prototype.pickedValue = function(d)
+	{
+		return this.datumDescription(d);
+	}
+
+	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
+	{
+		crv.SitePanel.prototype.createRoot.call(this, datum, headerText, 'list', revealPanelLeft);
+		var _this = this;
+		
+		this.navContainer = this.appendNavContainer();
+
+		this.appendBackButton();
+	
+		this.navContainer.appendTitle(this.title);
+
+		var section = this.appendScrollArea().append("section")
+			.classed("cell multiple", true);
+		var itemsDiv = crf.appendItemList(section)
+			.classed('hover-items', true);
+			
+		var items = itemsDiv.selectAll('li')
+			.data(this.data())
+			.enter()
+			.append('li');
+		
+		items.append("div")
+			.classed("description-text growable unselectable", true)
+			.text(function(d) { return _this.datumDescription(d); });
+		
+		this.oldDescription = oldDescription;		
+		items.filter(function(d, i)
+			{
+				return _this.isInitialValue(d);
+			})
+			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
+				
+		items.on('click', function(d, i)
+				{
+					if (_this.isInitialValue(d))
+						return;
+					
+					if (prepareClick('click', _this.datumDescription(d)))
+					{
+						try
+						{
+							$(_this.node()).trigger('itemPicked.cr', _this.pickedValue(d));
+							_this.hideRight(unblockClick);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+				});
+
+		return this;
+	}
+
+	function PickFromListPanel() {
+		crv.SitePanel.call(this);
+	}
+	
+	return PickFromListPanel;
+
+})();
+

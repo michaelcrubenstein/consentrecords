@@ -1,6 +1,7 @@
 var WelcomePanel = (function () {
-	WelcomePanel.prototype = new SitePanel();
-	
+	WelcomePanel.prototype = Object.create(crv.SitePanel.prototype);
+	WelcomePanel.prototype.constructor = WelcomePanel;
+
 	WelcomePanel.prototype.handleResize = function()
 	{
 		var ol = $(this.mainDiv.node()).children('ol');
@@ -271,7 +272,7 @@ var WelcomePanel = (function () {
 		this.createRoot(null, "Welcome", "welcome");
 		var navContainer = this.appendNavContainer();
 
-		if (!cr.signedinUser.getInstanceID())
+		if (!cr.signedinUser.id())
 		{
 			var signinSpan = navContainer.appendRightButton()
 				.on("click", function()
@@ -543,7 +544,7 @@ var WelcomePanel = (function () {
 					{
 						if (subOL.children('li.active').next().length == 0)
 						{
-							if (cr.signedinUser.getInstanceID())
+							if (cr.signedinUser.id())
 								return;
 								
 							if (prepareClick('click', 'Get Started'))
@@ -576,7 +577,7 @@ var WelcomePanel = (function () {
 		var getStartedSpan = div1
 			.append('span')
 			.classed('get-started', true)
-			.text(cr.signedinUser.getInstanceID() ? '' : 'Get Started')
+			.text(cr.signedinUser.id() ? '' : 'Get Started')
 			.style('display', 'none');
 		
 		var jNode = $(div1.node());
@@ -599,18 +600,23 @@ var WelcomePanel = (function () {
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
 			pathwayPanel.setupSearchPanel();
-			pathwayPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+			cr.signedinUser.promiseData(['path'])
+				.then(function()
+					{
+						var promise = pathwayPanel.pathtree.setUser(cr.signedinUser.path(), true);
+						pathwayPanel.showLeft().then(
+							function()
+							{
+								if (onPathwayCreated)
+									onPathwayCreated(pathwayPanel);
+								$(_this.node()).remove();
+							});
+						return promise;
+					})
 				.then(function()
 					{
 						pathwayPanel.checkShowIdeas();
 					});
-			pathwayPanel.showLeft().then(
-				function()
-				{
-					if (onPathwayCreated)
-						onPathwayCreated(pathwayPanel);
-					$(_this.node()).remove();
-				});
 			
 		};
 		

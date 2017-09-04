@@ -1,5 +1,7 @@
 var SearchPathsResultsView = (function () {
-	SearchPathsResultsView.prototype = new SearchOptionsView();
+	SearchPathsResultsView.prototype = Object.create(SearchOptionsView.prototype);
+	SearchPathsResultsView.prototype.constructor = SearchPathsResultsView;
+
 	SearchPathsResultsView.prototype.searchPathsPanel = null;
 	SearchPathsResultsView.prototype.inputBox = null;
 	
@@ -14,7 +16,7 @@ var SearchPathsResultsView = (function () {
 		}
 	}
 	
-	SearchPathsResultsView.prototype.appendDescriptions = function(buttons)
+	SearchPathsResultsView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
 		
@@ -23,11 +25,11 @@ var SearchPathsResultsView = (function () {
 				/* TODO: */
 				var leftText = d3.select(this);
 				
-				var screenName = d.getDatum(cr.fieldNames.name);
-				var user = d.getValue(cr.fieldNames.user);
-				var userName = user && (getUserName(user));
-				var userDescription = user && user.getDescription();
-				var ageCalculator = new AgeCalculator(d.getValue("Birthday").getDescription());
+				var screenName = d.name();
+				var user = d.user();
+				var userName = user && user.fullName();
+				var userDescription = user && user.description();
+				var ageCalculator = new AgeCalculator(d.birthday());
 				var ageDescription = ageCalculator.toString();			
 				
 				if (screenName) leftText.append('div').text(screenName);
@@ -39,39 +41,40 @@ var SearchPathsResultsView = (function () {
 	}
 	
 	SearchPathsResultsView.prototype.containsQuery = function(fc, queryFlags) {
-		var offering = fc.experience.getValue("Offering");
-		if (offering && offering.getInstanceID())
+		var offering = fc.experience.offering();
+		if (offering && offering.id())
 		{
-			if (!offering.areCellsLoaded())
-				throw ("Runtime error: offering data is not loaded");
-				
-			var services = offering.getCell("Service");
-			if (services.data.findIndex(function(s)
+			var services = offering.offeringServices();
+			console.assert(services);
+			if (services.findIndex(function(s)
 				{
 					return queryFlags.findIndex(function(qf)
 						{
-							return s.getCell("Service").data.findIndex(function(s2)
+							return s.service().serviceImplications().findIndex(function(s2)
 								{
-									return qf.service.getInstanceID() == s2.getInstanceID();
+									return qf.service.id() == s2.id();
 								}) >= 0;
 						}) >= 0;
 				}) >= 0)
 				return true;
 		}
 		
-		var serviceCell = fc.experience.getCell("Service");
-		if (serviceCell)
+		if (fc.experience instanceof cr.Experience)
 		{
-			if (serviceCell.data.findIndex(function(s) {
-					return queryFlags.findIndex(function(qf)
-					{
-						return s.getCell("Service").data.findIndex(function(s2)
-							{
-								return qf.service.getInstanceID() == s2.getInstanceID();
-							}) >= 0;
-					}) >= 0;
-				}) >= 0)
-				return true;
+			var services = fc.experience.experienceServices();
+			if (services)
+			{
+				if (services.findIndex(function(s) {
+						return queryFlags.findIndex(function(qf)
+						{
+							return s.service().serviceImplications().findIndex(function(s2)
+								{
+									return qf.service.id() == s2.service().id();
+								}) >= 0;
+						}) >= 0;
+					}) >= 0)
+					return true;
+			}
 		}
 		return false;
 	}
@@ -121,7 +124,7 @@ var SearchPathsResultsView = (function () {
 	{
 		var path;
 		{
-			path = 'Path';
+			path = 'path';
 			
 			var qf = this.searchPathsPanel.getQueryFlags();
 			if (!qf.length)
@@ -130,7 +133,7 @@ var SearchPathsResultsView = (function () {
 			qf.forEach(function(sf)
 				{
 					if (sf.service)
-						path += '["More Experience"[Service[Service={0}]|Offering>Service[Service={0}]]]'.format(sf.service.getInstanceID());
+						path += '[experience>implication>service={0}]'.format(sf.service.id());
 				});
 			return path;
 		}
@@ -148,7 +151,12 @@ var SearchPathsResultsView = (function () {
 	 */
 	SearchPathsResultsView.prototype.fields = function()
 	{
-		return ["parents", cr.fieldNames.user];
+		return ['parents', 'user'];
+	}
+	
+	SearchPathsResultsView.prototype.resultType = function()
+	{
+		return cr.Path;
 	}
 	
 	function SearchPathsResultsView(searchPathsPanel)
@@ -159,8 +167,7 @@ var SearchPathsResultsView = (function () {
 		var _this = this;
 
 		this.searchPathsPanel = searchPathsPanel;
-		SearchOptionsView.call(this, searchPathsPanel.resultContainerNode, 
-			function(buttons) { _this.appendDescriptions(buttons); });
+		SearchOptionsView.call(this, searchPathsPanel.resultContainerNode);
 
 		this.inputBox = searchPathsPanel.searchInput;
 	}
@@ -169,8 +176,9 @@ var SearchPathsResultsView = (function () {
 })();
 
 var SearchTagPoolView = (function () {
-	SearchTagPoolView.prototype = new TagPoolView();
-	
+	SearchTagPoolView.prototype = Object.create(TagPoolView.prototype);
+	SearchTagPoolView.prototype.constructor = SearchTagPoolView;
+
 	SearchTagPoolView.prototype.sitePanel = null;
 	
 	SearchTagPoolView.prototype.setFlagVisibles = function()
@@ -200,7 +208,9 @@ var SearchTagPoolView = (function () {
 })();
 
 var SearchPathsPanel = (function () {
-	SearchPathsPanel.prototype = new SitePanel();
+	SearchPathsPanel.prototype = Object.create(crv.SitePanel.prototype);
+	SearchPathsPanel.prototype.constructor = SearchPathsPanel;
+
 	SearchPathsPanel.prototype.selectedPool = null;
 	
 	SearchPathsPanel.prototype.topBox = null;
@@ -406,8 +416,8 @@ var SearchPathsPanel = (function () {
 			return -1;
 		else
 		{
-			aDesc = a.service.getDescription();
-			bDesc = b.service.getDescription();
+			aDesc = a.service.description();
+			bDesc = b.service.description();
 			return aDesc.localeCompare(bDesc);
 		}
 	}
@@ -536,14 +546,14 @@ var SearchPathsPanel = (function () {
  			.style('left', newPosition.left + flagPosition.left)
  			.each("end", function() {
 					/* Add a query flag that is the same as the svg flag in the same position. */
-					var newS = new Service(s.service);
+					var newS = new ServiceFlagController(s.service);
 					newS.x = flagPosition.left;
 					newS.y = flagPosition.top / _this.emToPX;
 					var queryFlag = _this.queryContainer.svg.append('g')
 						.datum(newS)
 						.on('click', function(fd) 
 							{ 
-								if (prepareClick('click', 'remove query flag: {0}'.format(fd.getDescription())))
+								if (prepareClick('click', 'remove query flag: {0}'.format(fd.description())))
 								{
 									_this.onQueryFlagClicked(this, fd)
 										.done(unblockClick);
@@ -619,7 +629,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleSchoolClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 1);
@@ -629,7 +639,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleInterestsClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 2);
@@ -639,7 +649,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleCareerClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 3);
@@ -649,7 +659,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.skillsClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 4);
@@ -659,7 +669,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.givingBackClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 5);
@@ -669,7 +679,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.housingClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 0);
@@ -679,7 +689,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.wellnessClick = function()
 	{
 		var _this = this;
-		crp.promise({path: "Service"})
+		cr.Service.servicesPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 6);
@@ -868,17 +878,17 @@ var SearchPathsPanel = (function () {
 
 				_this.searchPathsResultsView = new SearchPathsResultsView(_this);
 				
-				crp.promise({path: "Service"})
+				cr.Service.servicesPromise()
 					.done(function(services)
 						{
-							var s = services.map(function(e) { return new Service(e); });
+							var s = services.map(function(e) { return new ServiceFlagController(e); });
 			
 							_this.poolContainer.appendFlags(s)
 								 .on('click', function(s)
 									{
 										if (s.visible === undefined || s.visible)
 										{
-											if (prepareClick('click', 'add query flag: {0}'.format(s.getDescription())))
+											if (prepareClick('click', 'add query flag: {0}'.format(s.description())))
 											{
 												_this.addFlagToQuery(this, s);
 												unblockClick();

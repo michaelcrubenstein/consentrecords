@@ -16,8 +16,8 @@ class Migration(migrations.Migration):
             name='Containment',
             fields=[
                 ('id', models.UUIDField(editable=False, default=uuid.uuid4, primary_key=True, serialize=False)),
-                ('ancestor', models.ForeignKey(related_name='descendents', to='consentrecords.Instance', editable=False)),
-                ('descendent', models.ForeignKey(related_name='ancestors', to='consentrecords.Instance', editable=False)),
+                ('ancestor', models.ForeignKey(related_name='descendents', to='consentrecords.Instance', editable=False, on_delete=models.CASCADE)),
+                ('descendent', models.ForeignKey(related_name='ancestors', to='consentrecords.Instance', editable=False, on_delete=models.CASCADE)),
             ],
         ),
     ]

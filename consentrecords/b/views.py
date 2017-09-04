@@ -7,9 +7,6 @@ from django.template import RequestContext, loader
 from django.views.decorators.csrf import requires_csrf_token, ensure_csrf_cookie
 from django.core.exceptions import PermissionDenied
 
-from oauth2_provider.views.generic import ProtectedResourceView
-from oauth2_provider.models import AccessToken
-
 from pathlib import Path
 import os
 import json
@@ -25,7 +22,6 @@ from custom_user.emailer import Emailer
 from consentrecords.models import *
 from consentrecords import instancecreator
 from consentrecords import pathparser
-from consentrecords.userfactory import UserFactory
 
 templateDirectory = 'b/consentrecords/'
 logPrefix = 'b/'
@@ -48,13 +44,16 @@ def home(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
-        user = Instance.getUserInstance(request.user)
+    if request.user.is_authenticated:
+        languageCode = request.GET.get('language', 'en')
+        context = Context(languageCode, request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -63,9 +62,7 @@ def home(request):
     if state:
         args['state'] = state
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def showLines(request):
@@ -76,22 +73,21 @@ def showLines(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
     args['state'] = "me"
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def orgHome(request):
@@ -101,13 +97,16 @@ def orgHome(request):
     args = {
         'user': request.user,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
-        user = Instance.getUserInstance(request.user)
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    if request.user.is_authenticated:
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -116,9 +115,7 @@ def orgHome(request):
     if state:
         args['state'] = state
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def find(request):
@@ -129,10 +126,13 @@ def find(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
-        args['userID'] = Instance.getUserInstance(request.user).id
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    if request.user.is_authenticated:
+        args['userID'] = context.user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -142,51 +142,62 @@ def find(request):
     args['state'] = "findNewExperience"
     
     if settings.FACEBOOK_SHOW:
-        offering = Instance.objects.get(pk=offeringid)
+        offering = Offering.objects.get(pk=offeringid)
         args['fbURL'] = request.build_absolute_uri()
-        args['fbTitle'] = offering._description
-        args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent._description
+        args['fbTitle'] = offering.description(languageCode=language)
+        args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent.description(languageCode=language)
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
-def showInstances(request):
-    logPage(request, 'pathAdvisor/list')
+def showRootItems(request, language, rootItemPluralName, panelType):
     
     try:
-        # The type of the root object.
-        rootType = request.GET.get('type', "_term")
-        root = rootType and terms[rootType];
-        path=request.GET.get('path', "_term")
-        header=request.GET.get('header', "List")
-            
-        template = loader.get_template(templateDirectory + 'configuration.html')
+        logPage(request, 'pathAdvisor/' + request.path_info)
+        template = loader.get_template(templateDirectory + 'rootItems.html')
     
         argList = {
             'user': request.user,
             'jsversion': settings.JS_VERSION,
-            'canShowObjects': request.user.is_staff,
-            'canAddObject': request.user.is_staff,
-            'path': urllib.parse.unquote_plus(path),
-            'header': header,
+            'cdn_url': settings.CDN_URL,
+            'rootItemPluralName': rootItemPluralName,
+            'panelType': panelType,
             }
-        if root:
-            argList["rootID"] = root.id
-            argList["singularName"] = root._description
         
-        if request.user.is_authenticated():
-            user = Instance.getUserInstance(request.user)
+        if request.user.is_authenticated:
+            user = Context(language, request.user).user
             if not user:
                 return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-            argList['userID'] = user.id
+            argList['userID'] = user.id.hex
         
-        context = RequestContext(request, argList)
-        
-        return HttpResponse(template.render(context))
+        return HttpResponse(template.render(argList))
     except Exception as e:
         return HttpResponse(str(e))
+        
+@ensure_csrf_cookie
+def showCommentPrompts(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Comment Prompts', 'CommentPromptsPanel')
+
+@ensure_csrf_cookie
+def showExperiencePrompts(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Experience Prompts', 'ExperiencePromptsPanel')
+
+@ensure_csrf_cookie
+def showOrganizations(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Organizations', 'OrganizationsPanel')
+
+@ensure_csrf_cookie
+def showServices(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Services', 'ServicesPanel')
+
+@ensure_csrf_cookie
+def showUsers(request):
+    language = request.GET.get('language', 'en')
+    return showRootItems(request, language, 'Users', 'UsersPanel')
 
 @ensure_csrf_cookie
 def showPathway(request, email):
@@ -197,26 +208,27 @@ def showPathway(request, email):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
-        user = Instance.getUserInstance(request.user)
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    if request.user.is_authenticated:
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = 'user[email=%s]' % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-    if len(objs) > 0:
-        args['state'] = 'user/%s' % objs[0].id
+    containerPath = 'user[email>text=%s]' % email
+    tokens = cssparser.tokenizeHTML(containerPath)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    if len(qs) > 0:
+        args['state'] = 'user/%s' % qs[0].id.hex
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def showExperience(request, id):
@@ -227,13 +239,16 @@ def showExperience(request, id):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
-        user = Instance.getUserInstance(request.user)
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    if request.user.is_authenticated:
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -252,9 +267,7 @@ def showExperience(request, id):
                 args['state'] += path[:33]
                 path = path[33:]
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def accept(request, email):
@@ -265,29 +278,23 @@ def accept(request, email):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-    if len(objs) > 0:
-        args['state'] = 'accept'
-        args['follower'] = objs[0].id
-        args['cell'] = TermNames.user
-        args['privilege'] = terms.readPrivilegeEnum.id
+    args['state'] = 'accept'
+    args['follower'] = ('user/%s' if terms.isUUID(email) else 'user[email=%s]') % email
+    args['privilege'] = 'read'
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def ignore(request, email):
@@ -298,69 +305,66 @@ def ignore(request, email):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
-    userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-    if len(objs) > 0:
+    containerPath = ('user/%s' if terms.isUUID(email) else 'user[email>text=%s]') % email
+    tokens = cssparser.tokenizeHTML(containerPath)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    if len(qs) > 0:
         args['state'] = 'ignore'
-        args['follower'] = objs[0].id
-        args['follower_description'] = objs[0].getDescription()
+        args['follower'] = 'user/%s' % qs[0].id.hex
+        args['follower_description'] = qs[0].description()
         
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def userSettings(request):
     LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
     
-    print ('1')
     template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    print ('2')
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
-    print ('3')
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
     args['state'] = 'settings/'
         
-    print ('4')
-    context = RequestContext(request, args)
-        
-    print ('5')
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def signup(request, email=None):
-    LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
+    LogRecord.emit(request.user, 'pathAdvisor/signup', email)
     
     template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
     if settings.FACEBOOK_SHOW:
@@ -371,82 +375,83 @@ def signup(request, email=None):
     else:
         args['state'] = 'signup/'
         
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 def acceptFollower(request, userPath=None):
     if request.method != "POST":
         raise Http404("acceptFollower only responds to POST methods")
     
     try:    
-        language = None
-        followerID = request.POST["follower"]
-        privilegeID = request.POST["privilege"]
+        followerPath = request.POST["follower"]
+        privilege = request.POST["privilege"]
         
-        if terms.isUUID(followerID):
-            followerPath = '#%s' % followerID
-        else:
-            followerPath = followerID
-        
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return HttpResponseBadRequest(reason="user is not authenticated")
             
-        userInfo = UserInfo(request.user)
+        language = request.POST.get('language', 'en')
+        context = Context(language, request.user)
+        
         if userPath:
-            users = pathparser.getQuerySet(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
-            if len(users):
-                user = users[0]
-                if user.typeID != terms.user:
+            qs, tokens, qsType, accessType = \
+                    RootInstance.parse(cssparser.tokenizeHTML(userPath), context.user)
+            if qs.exists():
+                user = qs[0]
+                if qsType != User:
                     return HttpResponseBadRequest(reason="item to accept follower is not a user: %s" % userPath)
             else:
                 return HttpResponseBadRequest(reason="user is not recognized: %s" % userPath)
         else:
-            user = Instance.getUserInstance(request.user)
+            user = context.user
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-        if len(objs) > 0:
-            follower = objs[0]
-            if follower.typeID == terms.user:
-                followerField = terms.user
+        if not context.canAdminister(user):
+            return PermissionDenied("you do not have permission to accept this user")
+        
+        qs, tokens, qsType, accessType = \
+                    RootInstance.parse(cssparser.tokenizeHTML(followerPath), context.user)    
+        if qs.exists():
+            grantee = qs[0]
+            if qsType == User:
+                grants = user.userGrants
             else:
-                followerField = terms.group
-            ars = user.value_set.filter(field=terms.accessRecord,
-                                  deleteTransaction__isnull=True) \
-                          .filter(referenceValue__value__field=followerField,
-                                  referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__referenceValue_id=follower.id)
+                grants = user.groupGrants
+            ars = grants.filter(deleteTransaction__isnull=True,
+                                grantee_id=user.id)
             if ars.exists():
                 return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
             else:
                 with transaction.atomic():
-                    transactionState = TransactionState(request.user)
-                    nameLists = NameList()
-                    try:
-                        ar = user.value_set.filter(field=terms.accessRecord,
-                                                   deleteTransaction__isnull=True) \
-                                     .get(referenceValue__value__field=terms.privilege,
-                                          referenceValue__value__deleteTransaction__isnull=True,
-                                          referenceValue__value__referenceValue_id=privilegeID).referenceValue
-                        newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
-                    except Value.DoesNotExist:
-                        ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
-                            {TermNames.privilege: [{'instanceID': privilegeID}],
-                             followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, userInfo, transactionState)
+                    if qsType == User:
+                        grantClass = UserGrant
+                    else:
+                        grantClass = GroupGrant
+                    newValue = grantClass.objects.create(transaction=context.transaction,
+                        lastTransaction=context.transaction,
+                        parent=grantTarget, privilege=privilege, grantee=grantee)
     
                     # Remove any corresponding access requests.
-                    vs = user.value_set.filter(field=terms.accessRequest,
-                                           deleteTransaction__isnull=True,
-                                           referenceValue_id=follower.id)
+                    vs = user.userGrantRequests.filter(deleteTransaction__isnull=True,
+                                           grantee_id=grantee.id)
                     for v in vs:
-                        v.deepDelete(transactionState)
+                        v.markDeleted(context)
                 
-                    data = newValue.getReferenceData(userInfo, language)
+                    if qsType == User:
+                        n = Notification.objects.create(transaction=context.transaction,
+                            lastTransaction=context.transaction,
+                            parent=grantee,
+                            name='crn.FollowerAccept',
+                            isFresh='yes')
+                        na=NotificationArgument.objects.create(transaction=context.transaction,
+                            lastTransaction=context.transaction,
+                            parent=n,
+                            position=0,
+                            argument=user.id.hex)
+
+                    data = newValue.getData([], context)
                     results = {'object': data} 
         else:
-            raise RuntimeError('the user or group to accept is unrecognized')
+            raise RuntimeError('the user or group is unrecognized')
             
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -464,32 +469,35 @@ def addExperience(request, experienceID):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    args['state'] = 'addExperience%s' % experienceID
+    args['state'] = 'addExperience/%s' % experienceID
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 def _getOrganizationChildren(organization, siteName, offeringName):
     site = None
     offering = None
     if siteName:
-        sites = organization.getSubInstance(terms['Sites']).getChildrenByName(terms['Site'], terms.name, siteName)
-        site = sites[0].referenceValue if len(sites) else None
-        if site and offeringName:
-            offerings = site.getSubInstance(terms['Offerings']).getChildrenByName(terms['Offering'], terms.name, offeringName)
-            offering = offerings[0].referenceValue if len(offerings) else None
+        try:
+            site = organization.sites.get(names__text=siteName, names__deleteTransaction__isnull=True)
+            if offeringName:
+                try:
+                    offering = site.offerings.get(names__text=offeringName, names__deleteTransaction__isnull=True)
+                except Offering.DoesNotExist:
+                    pass
+        except Site.DoesNotExist:
+            pass
             
     return site, offering
 
@@ -500,36 +508,51 @@ def addToPathway(request):
     organizationName = request.GET.get('o', None)
     siteName = request.GET.get('s', None)
     offeringName = request.GET.get('f', None)
-    serviceName = request.GET.get('m', None)
-
-    userInfo = UserInfo(request.user)
+    serviceName = request.GET.get('t', None)
+    
+    languageCode = request.GET.get('language', 'en')
+    context = Context(languageCode, request.user)
 
     if offeringName and terms.isUUID(offeringName):
-        offering = terms[offeringName]
+        try:
+            offering = Offering.objects.get(pk=offeringName, deleteTransaction__isnull=True)
+            site = offering.parent
+            organization = site.parent
+        except Offering.DoesNotExist:
+            organization, site, offering = None, None, None
     elif siteName and terms.isUUID(siteName):
-        site = terms[siteName]
-        if offeringName:
-            offerings = site.getChildrenByName(terms['Offering'], terms.name, offeringName)
-            offering = offerings[0] if len(offerings) else None
+        try:
+            site = Site.objects.get(pk=siteName, deleteTransaction__isnull=True)
+            organization = site.parent
+            if offeringName:
+                try:
+                    offering = site.offerings.get(names__text=offeringName, names__deleteTransaction__isnull=True)
+                except Offering.DoesNotExist:
+                    offering = None
+        except Site.DoesNotExist:
+            organization, site, offering = None, None, None
     elif organizationName and terms.isUUID(organizationName):
-        organization = terms[organizationName]
-        site, offering = _getOrganizationChildren(organization, siteName, offeringName)
-    elif organizationName:
-        organization = terms['Organization'].getInstanceByName(terms.name, organizationName, userInfo)
-        if organization:
+        try:
+            organization = Organization.objects.get(pk=organizationName, deleteTransaction__isnull=True)
             site, offering = _getOrganizationChildren(organization, siteName, offeringName)
-        else:
-            site, offering = None, None
+        except Organization.DoesNotExist:
+            organization, site, offering = None, None, None
+    elif organizationName:
+        try:
+            organization = Organization.objects.get(names__text=organizationName, names__deleteTransaction__isnull=True)
+            site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+        except Organization.DoesNotExist:
+            organization, site, offering = None, None, None
     else:
         organization, site, offering = None, None, None
-
+    
     if serviceName and terms.isUUID(serviceName):
         try:
-            service = terms[serviceName]
-        except Instance.DoesNotExist:
+            service = Service.objects.get(pk=serviceName, deleteTransaction__isnull=True)
+        except Service.DoesNotExist:
             service = None
     elif serviceName:
-        service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
+        service = Service.objects.get(names__text=serviceName, deleteTransaction__isnull=True, names__deleteTransaction__isnull=True)
     else:
         service = None
     
@@ -538,6 +561,7 @@ def addToPathway(request):
         'user': request.user,
         'urlprefix': urlPrefix,
         'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
     }
 
     if settings.FACEBOOK_SHOW:
@@ -548,26 +572,24 @@ def addToPathway(request):
         args['fbDescription'] = atText
 
     if organizationName:
-        args['organization'] = organization.id if organization else organizationName
+        args['organization'] = organization.id.hex if organization else organizationName
     if siteName:
-        args['site'] = site.id if site else siteName
+        args['site'] = site.id.hex if site else siteName
     if offeringName:
-        args['offering'] = offering.id if offering else offeringName
+        args['offering'] = offering.id.hex if offering else offeringName
     if serviceName:
-        args['service'] = service.id if service else serviceName
+        args['service'] = service.id.hex if service else serviceName
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.id.hex
     
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
 
     args['state'] = 'addToPathway'
 
-    context = RequestContext(request, args)
-    
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 

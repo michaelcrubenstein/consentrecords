@@ -1,7 +1,9 @@
 /* experienceCommentsPanel.js */
 
 var ExperienceCommentsPanel = (function() {
-	ExperienceCommentsPanel.prototype = new SitePanel();
+	ExperienceCommentsPanel.prototype = Object.create(crv.SitePanel.prototype);
+	ExperienceCommentsPanel.prototype.constructor = ExperienceCommentsPanel;
+
 	ExperienceCommentsPanel.prototype.fd = null;
 	ExperienceCommentsPanel.prototype.inEditMode = false;
 	ExperienceCommentsPanel.prototype.detailGroup = null;
@@ -26,33 +28,27 @@ var ExperienceCommentsPanel = (function() {
 		var askers = divs.append('div')
 			.classed('asker', true)
 			.datum(function(d) { 
-				var cp = d.getValue("Comment Request"); 
-				return cp && cp.getInstanceID() && cp.getValue("Path"); })
-			.text(function(d) {
-					if (!d || !d.getInstanceID())
+				return d.asker(); })
+			.text(function(path) {
+					if (!path || !path.id())
 						return null;
-					if (d.getInstanceID() == cr.signedinUser.getValue('Path').getInstanceID())
+					if (path.id() == cr.signedinUser.path().id())
 						return _this.youAskedText;
 					else {
-						var s = getPathDescription(d.instance());
-						return _this.someoneAskedText.format(s);
+						return _this.someoneAskedText.format(path.caption());
 					}
 				});
 
 		var questions = divs.append('textarea')
 			.classed('question', true)
-			.datum(function(d) { 
-				var cp = d.getValue("Comment Request");
-				return cp && cp.getInstanceID() && cp.getValue(cr.fieldNames.text); })
 			.text(function(d) { 
-					return d && d.text; 
+					return d && d.question(); 
 				});
 				
 		var answers = divs.append('textarea')
 			.classed('answer', true)
-			.datum(function(d) { return d.getValue(cr.fieldNames.text); })
 			.text(function(d) { 
-					return (d && d.text); 
+					return (d && d.text()); 
 				})
 			.attr('placeholder', 'No Answer');
 				
@@ -90,6 +86,15 @@ var ExperienceCommentsPanel = (function() {
 				});
 	}
 	
+	ExperienceCommentsPanel.prototype.checkDeleteControlVisibility = function(items)
+	{
+		var deleteControls = $(items.node()).parent().find('button.delete');
+		if (!this.inEditMode)
+			crf.hideDeleteControls(deleteControls, 0);
+		else
+			crf.showDeleteControls(deleteControls, 0);
+	}
+	
 	ExperienceCommentsPanel.prototype.loadComments = function(data)
 	{
 		var commentList = this.mainDiv.select('section.comments>ol');
@@ -99,53 +104,23 @@ var ExperienceCommentsPanel = (function() {
 		this.appendDescriptions(items);
 		crf.appendConfirmDeleteControls(items);
 
-		if (!this.inEditMode)
-			crf.hideDeleteControls($(deleteControls[0]), 0);
-		else
-			crf.showDeleteControls($(deleteControls[0]), 0);
-			
 		checkItemsDisplay(commentList.node());
 		
 		/* Force each item to resize in case the commentList was previously empty and hidden. */
-		items.each(function(d) { $(this).trigger("resize.cr"); });
-	}
-	
-	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
-	{
-		var comments = this.fd.experience.getValue("Comments");
-		var initialData = {};
-		initialData[cr.fieldNames.text] = [{text: newText}];
+		items.each(function(d) 
+			{ 
+				$(this).trigger("resize.cr"); 
+				$(this).find('textarea').trigger('resize.cr');
+			});
 		
-		if (comments.getInstanceID())
-		{
-			/* Test case: add a comment to an experience that has had a comment */
-			var commentCell = comments.getCell("Comment");
-			$.when(cr.createInstance(commentCell.field, comments.getInstanceID(), initialData))
-		     .then(function(newValue)
-					{
-						newValue.promiseCellsFromCache()
-							.then( 
-							function() {
-								commentCell.addValue(newValue);
-								done(newValue);
-							},
-							fail);
-					},
-					fail);
-		}
-		else
-		{
-			/* Test case: add a comment to an experience that has not had a comment previously added. */
-			$.when(comments.saveNew({Comment: [{cells: initialData}]}))
-			 .then(done, fail);
-		}
+		this.checkDeleteControlVisibility(items);
 	}
 	
 	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
 	{
-		
 		/* Test case: add a comment to an experience that has had a comment */
-		return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.getValue("Path"), newText);
+		return this.fd.experience.postComment({asker: cr.signedinUser.path().urlPath(),
+											   question: newText});
 	}
 	
 	/**
@@ -155,18 +130,24 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.checkTextAreas = function(done, fail)
 	{
 		var commentsDiv = this.mainDiv.select('section.comments');
-		var cell = commentsDiv.datum();
-		var initialData = [];
-		var sourceObjects = [];
+		var changes = [];
 		
 		commentsDiv.selectAll('li textarea').each(function(d)
 			{
 				var newValue = this.value.trim();
 				if (d)
-					d.appendUpdateCommands(0, newValue, initialData, sourceObjects);
+				{
+					if (d.id())
+					{
+						if (d3.select(this).classed('question') && newValue != d.question())
+							changes.push({'id': d.id(), 'question': newValue});
+						else if (d3.select(this).classed('answer') && newValue != d.text())
+							changes.push({'id': d.id(), 'text': newValue});
+					}
+				}
 			});
-		if (initialData.length > 0)
-			return cr.updateValues(initialData, sourceObjects);
+		if (changes.length > 0)
+			return this.fd.experience.update({'comments': changes});
 		else
 		{
 			var r = $.Deferred();
@@ -232,7 +213,7 @@ var ExperienceCommentsPanel = (function() {
 		var commentList = this.mainDiv.select('section.comments>ol');
 		var textAreas = $(commentList.node()).children('li')
 			.filter(function() {
-					return d3.select(this).datum().id == id;
+					return d3.select(this).datum().id() == id;
 				});
 		if (textAreas.length == 0)
 			throw new Error('The specified comment is not recognized.');
@@ -261,7 +242,7 @@ var ExperienceCommentsPanel = (function() {
 	 */
 	ExperienceCommentsPanel.prototype.showDetailPanel = function(fd)
 	{
-		if (fd.experience.getTypeName() == "Experience") {
+		if (fd.experience instanceof cr.Engagement) {
 			;	/* Nothing to edit */
 		}
 		else
@@ -270,10 +251,9 @@ var ExperienceCommentsPanel = (function() {
 			{
 				try
 				{
-					var experience = new Experience(fd.experience.cell.parent, fd.experience);
-					experience.replaced(fd.experience);
-					
-					new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft)
+					var experienceController = new ExperienceController(fd.experience.parent(), fd.experience, true);
+					experienceController.oldInstance(fd.experience);
+					new NewExperiencePanel(experienceController, revealPanelLeft)
 						.showLeft()
 						.always(unblockClick);
 				}
@@ -295,29 +275,30 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.clearNotifications = function()
 	{
 		var _this = this;
-		var initialData = [];
-		var sourceObjects = [];
+		var changes = [];
 
-		cr.signedinUser.getCell(cr.fieldNames.notification).data.forEach(function(n)
-			{
-				if (n.getDatum(cr.fieldNames.name) == "crn.ExperienceCommentRequested")
+		if (cr.signedinUser.notifications())
+		{
+			cr.signedinUser.notifications().forEach(function(n)
 				{
-					var args = n.getCell(cr.fieldNames.argument).data;
-					if (args.length >= 3 && 
-						args[1].getInstanceID() == _this.fd.experience.getInstanceID())
+					if (n.name() == "crn.ExperienceCommentRequested")
 					{
-						var comment = crp.getInstance(args[2].getInstanceID());
-						if (comment.getDatum(cr.fieldNames.text))
+						var args = n.args();
+						if (args.length >= 3 && 
+							args[1].id() == _this.fd.experience.id())
 						{
-							n.appendDeleteCommand(initialData, sourceObjects);
+							var comment = crp.getInstance(args[2].id());
+							if (comment && comment.text())
+							{
+								changes.push({'delete': n.id()});
+							}
 						}
 					}
-				}
-			});
-			
-		if (initialData.length > 0)
+				});
+		}	
+		if (changes.length > 0)
 		{
-			return cr.updateValues(initialData, sourceObjects);
+			return cr.signedinUser.update({'notifications': changes});
 		}
 		else
 		{
@@ -327,16 +308,11 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
-	ExperienceCommentsPanel.prototype.setupAsk = function(terms)
+	ExperienceCommentsPanel.prototype.setupAsk = function()
 	{
 		var _this = this;
-		var canBeAsked = this.fd.experience.cell.parent.getValue(cr.fieldNames.canBeAskedAboutExperience);
-		termNo = terms[0].getCell(cr.fieldNames.enumerator).data.find(function(d)
-			{
-				return d.getDescription() == cr.booleans.no;
-			});
-		if (cr.signedinUser.getInstanceID() &&
-			canBeAsked == null || canBeAsked.getInstanceID() != termNo.getInstanceID())
+		var canBeAsked = this.fd.experience.path().canAnswerExperience();
+		if (cr.signedinUser.id() && canBeAsked != "no")
 		{
 			var newQuestionDiv = this.mainDiv.append('section')
 				.classed('new-comment', true);
@@ -392,7 +368,8 @@ var ExperienceCommentsPanel = (function() {
 						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
 				}
 			
-			crp.promise({path:  'Comment Prompt'})
+			crp.promise({path:  'comment prompt',
+			             resultType: cr.CommentPrompt})
 			.then(function(prompts)
 				{
 					commentPromptsDiv.selectAll('div')
@@ -402,11 +379,11 @@ var ExperienceCommentsPanel = (function() {
 						.append('span')
 						.classed('site-active-text', true)
 						.text(function(d) 
-							{ return d.getDatum(cr.fieldNames.text); })
+							{ return d.description(); })
 						.on('click', function(d)
 							{
 								newQuestionInput.node().value = '';
-								newQuestionInput.node().value = d.getDatum(cr.fieldNames.text);
+								newQuestionInput.node().value = d.description();
 								newQuestionInput.node().focus();
 								var textWidth = newQuestionInput.node().value.length;
 								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
@@ -440,7 +417,7 @@ var ExperienceCommentsPanel = (function() {
 							_this.checkTextAreas()
 								.then(function()
 									{
-										_this.clearNotifications();
+										return _this.clearNotifications();
 									})
 								.then(function()
 									{
@@ -467,7 +444,7 @@ var ExperienceCommentsPanel = (function() {
 				{
 					if (prepareClick('click', 'share'))
 					{
-						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.cell.parent);
+						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.path());
 					}
 				});
 		shareButton.append("img")
@@ -488,7 +465,7 @@ var ExperienceCommentsPanel = (function() {
 							var newButtonText = crv.buttonTexts.edit;
 							var fail = function(err)
 								{
-									newButtonText = crv.buttonsText.done;
+									newButtonText = crv.buttonTexts.done;
 									_this.editButton.selectAll('span').text(newButtonText);
 									cr.syncFail(err);
 								}
@@ -591,13 +568,15 @@ var ExperienceCommentsPanel = (function() {
 		}
 		setTimeout(resizeDetail);
 		
+		/* Update the contents of the top banner if the contents of the experience are changed. */
 		fd.setupChangeEventHandler(this.mainDiv.node(), function(eventObject, newValue)
 			{
 				fd.colorElement(_this.detailFrontRect.node());
 				resizeDetail();
 			});
 		
-		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", this.node(), function(eventObject)
+		/* Hide this panel if the experience is deleted */
+		setupOneViewEventHandler(fd.experience, "deleted.cr", this.node(), function(eventObject)
 			{
 				_this.hideNow();
 			});
@@ -625,39 +604,18 @@ var ExperienceCommentsPanel = (function() {
 				})
 		}
 		
-		var comments = fd.experience.getValue("Comments");
+		var comments = fd.experience.comments();
 		var commentsDiv = panel2Div.append('section')
 			.classed('multiple comments', true);
 		var commentList = crf.appendItemList(commentsDiv)
 			.classed('deletable-items', true);
 		commentList.classed('edit', this.inEditMode);
 		
-		function onCommentAdded(eventObject, newData)
-		{
-			_this.loadComments([newData]);
-		}
-		
-		/* commentsCells is an array of cells contained within a Comments instance. */
-		function onCommentsChecked(commentsCells)
-		{
-			var commentCell = commentsCells.find(function(cell)
+		setupOnViewEventHandler(fd.experience, 'commentAdded.cr', commentsDiv.node(), 
+			function (eventObject, newData)
 				{
-					return cell.field.name == "Comment";
+					_this.loadComments([newData]);
 				});
-			setupOnViewEventHandler(commentCell, 'valueAdded.cr', commentsDiv.node(), onCommentAdded);
-			_this.loadComments(commentCell.data);
-		}
-		
-		setupOnViewEventHandler(comments, 'dataChanged.cr', commentsDiv.node(), 
-			function (eventObject, changeTarget)
-			{
-				if (changeTarget.getTypeName() == "Comments")
-					changeTarget.promiseCellsFromCache(["Comment/Comment Request"])
-						.then(function()
-							{
-								onCommentsChecked(comments.getCells());
-							}, cr.asyncFail)
-			});
 		
 		if (fd.experience.canWrite())
 		{
@@ -680,12 +638,13 @@ var ExperienceCommentsPanel = (function() {
 								try
 								{
 									showClickFeedback(this);
-									_this.postComment(newComment, function()
-										{
-											newCommentInput.node().value = '';
-											unblockClick();
-										},
-										cr.syncFail);
+									_this.fd.experience.postComment({text: newText})
+										.then(function()
+											{
+												newCommentInput.node().value = '';
+												unblockClick();
+											},
+											cr.syncFail);
 								}
 								catch(err)
 								{
@@ -718,18 +677,19 @@ var ExperienceCommentsPanel = (function() {
 						});
 			});					
 		
-		if (comments.getInstanceID())
+		if (fd.experience.id())
 		{
-			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
-				comments are loaded. This won't happen if the comments are already loaded.
-			 */
-			this.promise = comments.promiseCellsFromCache(["Comment/Comment Request"])
-				.then(function(commentsCells)
+			this.promise = fd.experience.promiseData(['comments'])
+				.then(function(comments)
 					{
 						var r = $.Deferred();
 						setTimeout(function()
 							{
-								onCommentsChecked(commentsCells);
+			/* Put the call to loadComments in a setTimeout to ensure that the panel's css 
+				is set up before the comments are loaded. The panel's css won't be set up 
+				if the comments are already loaded.
+			 */
+								_this.loadComments(fd.experience.comments());
 								r.resolve();
 							});
 						return r;
@@ -744,11 +704,7 @@ var ExperienceCommentsPanel = (function() {
 		this.promise = this.promise
 			.then(function()
 				{
-					return crp.promise({path: "term[name=boolean]"})
-						.then(function(terms)
-						{
-							_this.setupAsk(terms);
-						});
+					_this.setupAsk();
 				});
 	}
 		

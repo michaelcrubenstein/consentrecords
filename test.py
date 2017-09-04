@@ -3,79 +3,62 @@ import json
 from django.contrib.auth.models import AnonymousUser
 
 from consentrecords.models import *
-from consentrecords import pathparser
 from consentrecords.views import api
 
 print ('##################################')
 print ('# Test 1 ')
 print ('# Tests getting information about a term')
 print ('##################################')
-a = ("term[name=term]")
-print (str(api.getData(AnonymousUser(), a, {}).content))
+print ('Test 1 obsolete')
 
 
 print ('##################################')
 print ('# Test 2 ')
 print ('##################################')
-us = terms['user']
-u = us.typeInstances.all()[0]
+u = User.objects.all()[0]
 
-me = terms['Path']
-v = u.getSubValue(me)
-print(v.referenceValue)
-print(v.referenceValue.getDescription())
-
-print ('##################################')
-print ('# Test 3 ')
-print ('##################################')
-nameLists=NameList()
-print(u.cacheDescription(nameLists))
-Instance.updateDescriptions([u], nameLists)
+v = u.path
+print(str(v))
 
 print ('##################################')
 print ('# Test 4 ')
 print ('##################################')
-a = ('Organization')
+a = ('organization')
 print(pathparser.getQuerySet(a))
 
 print ('##################################')
 print ('# Test 7 ')
 print ('##################################')
-a = (me.id)
+a = u.urlPath()
 print(pathparser.getQuerySet(a))
 
 print ('##################################')
 print ('# Test 8 ')
 print ('##################################')
-a = (me.id+"/configuration")
-print(pathparser.getQuerySet(a))
+print ('Test 8 obsolete')
 
 print ('##################################')
 print ('# Test 9 ')
 print ('##################################')
-a = (me.id+"/configuration[name=Boston]")
-print(pathparser.getQuerySet(a))
+print ('Test 9 obsolete')
 
 print ('##################################')
 print ('# Test 10 ')
 print ('##################################')
-a = (me.id+"/configuration[name=Boston]/field:not([name^=M])")
-print(pathparser.getQuerySet(a))
+print ('Test 10 obsolete')
 
 print ('##################################')
 print ('# Test 11 ')
 print ('# Tests getting data that contains a string and and object ')
 print ('##################################')
-a = ("Organization[name=BCYF]")
-dd = pathparser.getQuerySet(a)
-print(dd)
-print (str(api.getData(AnonymousUser(), dd[0].id, {} ).content))
+a = ('organization[name>text=BCYF]')
+print (str(api.getData(AnonymousUser(), a, {} ).content))
 
 print ('##################################')
-print ('# Test 11 ')
+print ('# Test 12 ')
 print ('# Tests selectAll on a type name. ')
 print ('##################################')
-print (json.loads(api.selectAll(AnonymousUser(), {'path': 'user'}).content.decode('utf-8')))
+print (json.loads(api.getData(AnonymousUser(), 'user', {'fields': '["none"]'}).content.decode('utf-8')))
 
 pathparser.getQuerySet('Site[name^=Jackson]')
 pathparser.getQuerySet('"Service Domain"')

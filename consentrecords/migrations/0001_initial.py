@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(editable=False, primary_key=True, serialize=False, default=uuid.uuid4)),
                 ('start_time', models.DateTimeField(db_column='start_time', db_index=True, auto_now_add=True)),
                 ('end_time', models.DateTimeField(db_column='end_time', db_index=True, null=True)),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -42,17 +42,17 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(editable=False, primary_key=True, serialize=False, default=uuid.uuid4)),
                 ('creation_time', models.DateTimeField(db_column='creation_time', db_index=True, auto_now_add=True)),
                 ('time_zone_offset', models.SmallIntegerField()),
-                ('session', models.ForeignKey(to='consentrecords.Session')),
+                ('session', models.ForeignKey(to='consentrecords.Session', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AddField(
             model_name='fact',
             name='subject',
-            field=models.ForeignKey(to='consentrecords.Object'),
+            field=models.ForeignKey(to='consentrecords.Object', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='fact',
             name='transaction',
-            field=models.ForeignKey(to='consentrecords.Transaction'),
+            field=models.ForeignKey(to='consentrecords.Transaction', on_delete=models.CASCADE),
         ),
     ]
