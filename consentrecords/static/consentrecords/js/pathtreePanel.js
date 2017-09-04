@@ -397,7 +397,7 @@ var FlagController = (function() {
 			if (this._selected != newValue)
 			{
 				this._selected = newValue;
-				$(this).trigger("changed.cr");
+				$(this).trigger("selectedChanged.cr");
 			}
 		}
 	}
