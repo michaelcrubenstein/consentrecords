@@ -251,7 +251,7 @@
 			usernameLabel.text("");
 			signinSpan.text("Sign In");
 			hide_organizations.call(orgSection[0]);
-		});
+		};
 		
 		/* Initialize all of the objects that are dependent on whether or not the user is
 			signed in.
@@ -414,7 +414,7 @@
 			{
 				var b;
 				
-				var sitePanel = new SitePanel();
+				var sitePanel = new crv.SitePanel();
 				sitePanel.createRoot(objectData, objectData.description(), "organization view");
 
 				var navContainer = sitePanel.appendNavContainer();
@@ -503,7 +503,7 @@
 					return a.description().localeCompare(b.description());
 				});
 
-			var sitePanel = new SitePanel();
+			var sitePanel = new crv.SitePanel();
 			sitePanel.createRoot(parent, header, "list");
 
 			var navContainer = sitePanel.appendNavContainer();
@@ -558,7 +558,7 @@
 		 */
 		function pick_offering(site, previousPanelNode, successFunction)
 		{
-			site.promiseData("offerings").then(function()
+			site.promiseData(["offerings"]).then(function()
 				{
 					pickChild(site, site.offerings(), previousPanelNode, "Pick Offering", successFunction);
 				},
@@ -586,7 +586,7 @@
 						{
 							var inquiries = session.inquiries();
 			
-							var sitePanel = new SitePanel();
+							var sitePanel = new crv.SitePanel();
 							sitePanel.createRoot(session, "Pick User", "list");
 
 							var navContainer = sitePanel.appendNavContainer();
@@ -654,12 +654,12 @@
 			inquiry.promiseData().then(checkSuccessFunction, syncFailFunction);
 		}
 		
-		function addExperienceByEnrollment(session, enrollment, previousPanelNode)
+		function addExperienceByEnrollment(session, enrollment)
 		{
 			checkUserByEnrollment(enrollment,
 				function(user)
 				{
-					getAddExperienceFunction(session, user, previousPanelNode)();
+					addEngagement(session, user);
 				},
 				syncFailFunction);
 		}
@@ -669,7 +669,7 @@
 		 */
 		function add_enrollment(organization, previousPanel)
 		{
-			var sitePanel = new SitePanel();
+			var sitePanel = new crv.SitePanel();
 			sitePanel.createRoot(organization, "Pick User", "list");
 
 			var navContainer = sitePanel.appendNavContainer();
@@ -788,32 +788,33 @@
 			}
 		}
 		
-		function getAddExperienceFunction(session, user, previousPanel)
+		function addEngagement(session, user)
 		{
-			return function()
-			{
-				cr.getData({path: session.urlPath() + "/engagement[user={0}]".format(user.id()),
-							resultType: cr.Engagement,
-							})
-				  .then(function(engagements)
-				  		{
-				  			try
-				  			{
-				  				var engagement;
-								if (engagements.length)
-									engagement = engagements[0];
-								else
-								{
-									engagement = new cr.Engagement();
-									engagement.user(user);
-								}
-								var panel = new EngagementPanel(session, engagement, revealPanelLeft);
-								revealPanelLeft(panel.node());
-				  			}
-				  			catch(err) { cr.syncFail(err); }
-				  		},
-				  		cr.syncFail);
-			}
+			cr.getData({path: session.urlPath() + "/engagement[user={0}]".format(user.id()),
+						resultType: cr.Engagement,
+						})
+			  .then(function(engagements)
+					{
+						try
+						{
+							var controller;
+							if (engagements.length)
+							{
+								controller = new EngagementController(session, engagements[0], true);
+								controller.oldInstance(engagements[0]);
+								engagements[0].parent(session);
+							}
+							else
+							{
+								controller = new EngagementController(session, null, false);
+								controller.newInstance().user(user);
+							}
+							var panel = new EngagementPanel(controller, revealPanelLeft);
+							revealPanelLeft(panel.node());
+						}
+						catch(err) { cr.syncFail(err); }
+					},
+					cr.syncFail);
 		}
 		
 		function show_matching_descriptions(){
@@ -900,7 +901,9 @@
 			pickSessionFromOrganization(organization, panelDiv, 
 				function(session, previousPanel)
 				{
-				    var panel = new SessionPanel(session, revealPanelLeft);
+					var controller = new SessionController(session.offering(), session, true);
+					controller.oldInstance(session);
+				    var panel = new SessionPanel(controller, revealPanelLeft);
 				    revealPanelLeft(panel.node());
 				});
 		}
@@ -913,7 +916,7 @@
 					session.promiseEnrollments().then(
 						function()
 						{
-							var sitePanel = new SitePanel();
+							var sitePanel = new crv.SitePanel();
 							sitePanel.createRoot(session, "Record Participation", "list");
 
 							var navContainer = sitePanel.appendNavContainer();
@@ -935,7 +938,7 @@
 											enrollment.promiseData()
 												.then(function()
 												{
-													addExperienceByEnrollment(session, enrollment, sitePanel.node());
+													addExperienceByEnrollment(session, enrollment);
 												}, 
 												syncFailFunction);
 										}
