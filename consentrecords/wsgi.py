@@ -11,6 +11,10 @@ import os,sys
 
 from django.core.wsgi import get_wsgi_application
 
+import time
+import traceback
+import signal
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "consentrecords.settings")
 
 cwd = os.getcwd()
@@ -18,4 +22,14 @@ sys.path.append(cwd)
 sys.path.insert(0,cwd + '/consentrecords')  #You must add your project here
 sys.path.insert(0,cwd + '/custom_user')  #You must add your project here
 
-application = get_wsgi_application()
+try:
+    application = get_wsgi_application()
+    print ('WSGI without exception')
+except Exception:
+    print ('handling WSGI exception')
+    traceback.print_exc()
+    # Error loading applications
+    if 'mod_wsgi' in sys.modules:
+        os.kill(os.getpid(), signal.SIGINT)
+        time.sleep(2.5)
+    raise
