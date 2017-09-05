@@ -156,8 +156,12 @@ var crv = {
 		add: "Add",
 		address: "Address",
 		birthday: "Birthday",
+		birthdayRequiredForPublicAccess:
+			"Before sharing your path or asking others to share theirs, please specify at least the year and month of your birthday.",
 		cancel: "Cancel",
 		canRegister: "Can Register",
+		changeEmail: "Change Email",
+		changePassword: "Change Password",
 		city: "City",
 		currentTimeframe: "Something I'm Doing Now",
 		disqualifyingTags: "Disqualifying Tags",
@@ -1970,6 +1974,37 @@ var EditItemPanel = (function () {
 		
 	}
 	
+	EditItemPanel.prototype.ensureDateEditorVisible = function(editor)
+	{
+		var dateSpan = editor.dateSpan;
+		var reveal = editor.wheelReveal;
+		
+		if (!reveal.isVisible())
+		{
+			try
+			{
+				var done = function()
+				{
+					dateSpan.classed('site-active-text', true);
+					reveal.show({}, 200, undefined, function()
+						{
+							editor.dateWheel.onShowing();
+						});
+					if (editor.canShowNotSureReveal)
+						editor.notSureReveal.show({duration: 200});
+				}
+				if (!this.onFocusInOtherInput(reveal, done))
+				{
+					done();
+				}
+			}
+			catch (err)
+			{
+				cr.asyncFail(err);
+			}
+		}
+	}
+	
 	EditItemPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)
 	{
 		/* If minDate is not defined, set it to January 1, 50 years ago. */
@@ -2006,30 +2041,12 @@ var EditItemPanel = (function () {
 		var reveal = new VerticalReveal(dateWheel.node());
 		reveal.hide();
 		
+		var editor = null;
 		dateSpan.on('click', function()
 			{
 				if (!reveal.isVisible())
 				{
-					try
-					{
-						var done = function()
-						{
-							dateSpan.classed('site-active-text', true);
-							reveal.show({}, 200, undefined, function()
-								{
-									dateWheel.onShowing();
-								});
-							notSureReveal.show({duration: 200});
-						}
-						if (!_this.onFocusInOtherInput(reveal, done))
-						{
-							done();
-						}
-					}
-					catch (err)
-					{
-						cr.asyncFail(err);
-					}
+					_this.ensureDateEditorVisible(editor);
 				}
 				else
 				{
@@ -2045,6 +2062,7 @@ var EditItemPanel = (function () {
 						{
 							hideWheel();
 							dateWheel.clear();
+							$(dateWheel).trigger('change');
 							dateSpan.text(placeholder);
 							unblockClick();
 						}
@@ -2070,7 +2088,8 @@ var EditItemPanel = (function () {
 			reveal.show({}, 200, undefined,
 				function()
 				{
-					notSureReveal.show({done: done});
+					if (editor.canShowNotSureReveal)
+						notSureReveal.show({done: done});
 				});
 			
 		}
@@ -2080,12 +2099,15 @@ var EditItemPanel = (function () {
 		else
 			dateWheel.clear();
 
-		return {dateWheel: dateWheel, 
+		editor = {dateSpan: dateSpan,
+		    dateWheel: dateWheel, 
 		    wheelReveal: reveal,
 			notSureReveal: notSureReveal,
 			hideWheel: hideWheel,
 			showWheel: showWheel,
+			canShowNotSureReveal: true
 		};
+		return editor;
 	}
 	
 	EditItemPanel.prototype.appendTranslationsSection = function(instance, sectionLabel, placeholder, data, dataType)

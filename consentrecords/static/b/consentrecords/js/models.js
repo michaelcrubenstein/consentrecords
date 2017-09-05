@@ -7385,7 +7385,7 @@ cr.User = (function() {
 		if ('birthday' in d)
 		{
 			this._birthday = d['birthday'];
-			this.path().birthday(this._birthday.substr(0, 7));
+			this.path().birthday(this._birthday && this._birthday.substr(0, 7));
 			changed = true;
 		}
 		if ('path' in d)
