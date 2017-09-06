@@ -2234,6 +2234,7 @@ cr.SiteLinkInstance = (function() {
 })();
 	
 cr.OfferingLinkInstance = (function() {
+	OfferingLinkInstance.prototype._offering = null;
 	OfferingLinkInstance.prototype.offering = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2249,7 +2250,7 @@ cr.OfferingLinkInstance = (function() {
 		}
 	}
 
-	OfferingLinkInstance.prototype.setData = function(d)
+	OfferingLinkInstance.prototype.setOfferingLink = function(d)
 	{
 		if ('offering' in d) {
 			this._offering = new cr.Offering();
@@ -2260,26 +2261,26 @@ cr.OfferingLinkInstance = (function() {
 			this._offering = null;
 	}
 
-	OfferingLinkInstance.prototype.mergeData = function(source)
+	OfferingLinkInstance.prototype.mergeOfferingLink = function(source)
 	{
 		if (!this._offering)
 			this._offering = source._offering;
 		return this;
 	}
 	
-	OfferingLinkInstance.prototype.appendData = function(initialData)
+	OfferingLinkInstance.prototype.appendOfferingLink = function(initialData)
 	{
 		if (this.offering())
 			initialData['offering'] = this.offering().urlPath();
 	}
 	
-	OfferingLinkInstance.prototype.appendChanges = function(revision, changes)
+	OfferingLinkInstance.prototype.appendOfferingLinkChanges = function(revision, changes)
 	{
 		if (cr.linkChanged(this.offering(), revision.offering()))
 			changes['offering'] = revision.offering() && revision.offering().urlPath();
 	}
 
-	OfferingLinkInstance.prototype.updateData = function(d, newIDs)
+	OfferingLinkInstance.prototype.updateOfferingLink = function(d, newIDs)
 	{
 		var changed = false;
 		
@@ -2990,6 +2991,7 @@ cr.DisqualifyingTag = (function() {
 	
 cr.Engagement = (function() {
 	Engagement.prototype = Object.create(cr.UserLinkInstance.prototype);
+	Object.assign(Engagement.prototype, cr.OfferingLinkInstance.prototype);
 	Engagement.prototype.constructor = Engagement;
 
 	Engagement.prototype._user = null;
@@ -2997,7 +2999,6 @@ cr.Engagement = (function() {
 	Engagement.prototype._end = null;
 	Engagement.prototype._organization = null;
 	Engagement.prototype._site = null;
-	Engagement.prototype._offering = null;
 	
 	Engagement.prototype.urlPath = function()
 	{
@@ -3035,7 +3036,6 @@ cr.Engagement = (function() {
 	
 	Engagement.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
 	Engagement.prototype.site = cr.SiteLinkInstance.prototype.site;
-	Engagement.prototype.offering = cr.OfferingLinkInstance.prototype.offering;
 
 	Engagement.prototype.setData = function(d)
 	{
@@ -3044,7 +3044,7 @@ cr.Engagement = (function() {
 		this._end = 'end' in d ? d['end'] : "";
 		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
-		cr.OfferingLinkInstance.prototype.setData.call(this, d);
+		this.setOfferingLink(d);
     }
     
     Engagement.prototype.mergeData = function(source)
@@ -3053,7 +3053,7 @@ cr.Engagement = (function() {
 		cr.DateRangeInstance.prototype.mergeData.call(this, source);
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
-		cr.OfferingLinkInstance.prototype.mergeData.call(this, source);
+		this.mergeOfferingLink(source);
 		return this;
     }
     
@@ -3162,6 +3162,7 @@ cr.Enrollment = (function() {
 	
 cr.Experience = (function() {
 	Experience.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(Experience.prototype, cr.OfferingLinkInstance.prototype);
 	Experience.prototype.constructor = Experience;
 
 	Experience.prototype._path = null;
@@ -3169,7 +3170,6 @@ cr.Experience = (function() {
 	Experience.prototype._customOrganization = null;
 	Experience.prototype._site = null;
 	Experience.prototype._customSite = null;
-	Experience.prototype._offering = null;
 	Experience.prototype._customOffering = null;
 	Experience.prototype._start = null;
 	Experience.prototype._end = null;
@@ -3200,7 +3200,6 @@ cr.Experience = (function() {
 	
 	Experience.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
 	Experience.prototype.site = cr.SiteLinkInstance.prototype.site;
-	Experience.prototype.offering = cr.OfferingLinkInstance.prototype.offering;
 	
 	Experience.prototype.customOrganization = function(newValue)
 	{
@@ -3355,7 +3354,7 @@ cr.Experience = (function() {
 		if (this.customSite())
 			initialData['custom site'] = this.customSite();
 			
-		cr.OfferingLinkInstance.prototype.appendData.call(this, initialData);
+		this.appendOfferingLink(initialData);
 		if (this.customOffering())
 			initialData['custom offering'] = this.customOffering();
 		
@@ -3377,7 +3376,7 @@ cr.Experience = (function() {
 		
 		cr.OrganizationLinkInstance.prototype.appendChanges.call(this, revision, changes);
 		cr.SiteLinkInstance.prototype.appendChanges.call(this, revision, changes);
-		cr.OfferingLinkInstance.prototype.appendChanges.call(this, revision, changes);
+		this.appendOfferingLinkChanges(revision, changes);
 		if (cr.stringChanged(this.customOrganization(), revision.customOrganization()))
 			changes['custom organization'] = revision.customOrganization();
 				
@@ -3402,7 +3401,7 @@ cr.Experience = (function() {
 		cr.IInstance.prototype.setData.call(this, d);
 		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
-		cr.OfferingLinkInstance.prototype.setData.call(this, d);
+		this.setOfferingLink(d);
 		cr.DateRangeInstance.prototype.setData.call(this, d);
 		this._customOrganization = 'custom organization' in d ? d['custom organization'] : "";
 		this._customSite = 'custom site' in d ? d['custom site'] : "";
@@ -3421,7 +3420,7 @@ cr.Experience = (function() {
 		cr.IInstance.prototype.mergeData.call(this, source);
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
-		cr.OfferingLinkInstance.prototype.mergeData.call(this, source);
+		this.mergeOfferingLink(source);
 		cr.DateRangeInstance.prototype.mergeData.call(this, source);
 		if (!this._customOrganization) this._customOrganization = source._customOrganization;
 		if (!this._customSite) this._customSite = source._customSite;
@@ -3449,7 +3448,7 @@ cr.Experience = (function() {
 			changed = true;
 		if (cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
-		if (cr.OfferingLinkInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateOfferingLink(d, newIDs))
 			changed = true;
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
@@ -3824,12 +3823,12 @@ cr.ExperienceService = (function() {
 	
 cr.ExperiencePrompt = (function() {
 	ExperiencePrompt.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(ExperiencePrompt.prototype, cr.OfferingLinkInstance.prototype);
 	ExperiencePrompt.prototype.constructor = ExperiencePrompt;
 
     ExperiencePrompt.prototype._name = null;
     ExperiencePrompt.prototype._organization = null;
     ExperiencePrompt.prototype._site = null;
-    ExperiencePrompt.prototype._offering = null;
     ExperiencePrompt.prototype._domain = null;
     ExperiencePrompt.prototype._stage = null;
     ExperiencePrompt.prototype._timeframe = null;
@@ -3859,7 +3858,6 @@ cr.ExperiencePrompt = (function() {
 	
 	ExperiencePrompt.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
 	ExperiencePrompt.prototype.site = cr.SiteLinkInstance.prototype.site;
-	ExperiencePrompt.prototype.offering = cr.OfferingLinkInstance.prototype.offering;
 	
 	ExperiencePrompt.prototype.domain = function(newValue)
 	{
@@ -3961,7 +3959,7 @@ cr.ExperiencePrompt = (function() {
 		cr.IInstance.prototype.setData.call(this, d);
 		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
-		cr.OfferingLinkInstance.prototype.setData.call(this, d);
+		this.setOfferingLink(d);
 		this._name = ('name' in d) ? d['name'] : "";
 		if ('domain' in d)
 		{
@@ -3987,7 +3985,7 @@ cr.ExperiencePrompt = (function() {
 		if (!this._name) this._name = source._name;
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
-		cr.OfferingLinkInstance.prototype.mergeData.call(this, source);
+		this.mergeOfferingLink(source);
 		if (!this._domainID) this._domainID = source._domainID;
 		if (!this._stage) this._stage = source._stage;
 		if (!this._timeframe) this._timeframe = source._timeframe;
@@ -4037,7 +4035,7 @@ cr.ExperiencePrompt = (function() {
 			initialData['name'] = this.name();
 		cr.OrganizationLinkInstance.prototype.appendData.call(this, initialData);
 		cr.SiteLinkInstance.prototype.appendData.call(this, initialData);
-		cr.OfferingLinkInstance.prototype.appendData.call(this, initialData);
+		this.appendOfferingLink(initialData);
 		if (this.domain())
 			initialData['domain'] = this.domain().urlPath();
 		if (this.stage())
@@ -4059,7 +4057,7 @@ cr.ExperiencePrompt = (function() {
 			
 		cr.OrganizationLinkInstance.prototype.appendChanges.call(this, revision, changes);
 		cr.SiteLinkInstance.prototype.appendChanges.call(this, revision, changes);
-		cr.OfferingLinkInstance.prototype.appendChanges.call(this, revision, changes);
+		this.appendOfferingLinkChanges(revision, changes);
 		
 		if (cr.linkChanged(this.domain(), revision.domain()))
 			changes.domain = revision.domain() && revision.domain().urlPath();
@@ -4104,7 +4102,7 @@ cr.ExperiencePrompt = (function() {
 			changed = true;
 		if (cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
-		if (cr.OfferingLinkInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateOfferingLink(d, newIDs))
 			changed = true;
 		if ('domain' in d)
 		{
