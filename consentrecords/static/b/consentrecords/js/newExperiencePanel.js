@@ -1915,6 +1915,7 @@ var NewExperiencePanel = (function () {
 					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
 					$(startDateWheel).trigger('change');
 					setDateRangeLabels();
+					_this.checkTimeframe();
 				})
 			.text(this.currentExperienceLabel);
 		
