@@ -4348,16 +4348,17 @@ class Experience(ChildInstance, dbmodels.Model):
     
     @property
     def dataString(self):
-        s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
-            (self.id, str(self.organization) if self.organization else nullString, 
-             self.customOrganization or nullString,
-             str(self.site) if self.site else nullString,
-             self.customSite or nullString,
-             str(self.offering) if self.offering else nullString,
-             self.customOffering or nullString,
-             self.start or nullString,
-             self.end or nullString,
-             self.timeframe or nullString,
+        s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
+            (self.id, str(self.organization) if self.organization else '-', 
+             self.customOrganization or '-',
+             str(self.site) if self.site else '-',
+             self.customSite or '-',
+             str(self.offering) if self.offering else '-',
+             self.customOffering or '-',
+             str(self.engagement) if self.engagement else '-',
+             self.start or '-',
+             self.end or '-',
+             self.timeframe or '-',
              )
         for j in self.experienceImplications.all():
             s += "\tImplied Service: %s" % str(j.service)
@@ -4455,15 +4456,16 @@ class ExperienceHistory(dbmodels.Model):
     @property
     def dataString(self):
         s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
-            (self.id, str(self.organization) if self.organization else nullString, 
-             self.customOrganization or nullString,
-             str(self.site) if self.site else nullString,
-             self.customSite or nullString,
-             str(self.offering) if self.offering else nullString,
-             self.customOffering or nullString,
-             self.start or nullString,
-             self.end or nullString,
-             self.timeframe or nullString,
+            (self.id, str(self.organization) if self.organization else '-', 
+             self.customOrganization or '-',
+             str(self.site) if self.site else '-',
+             self.customSite or '-',
+             str(self.offering) if self.offering else '-',
+             self.customOffering or '-',
+             str(self.engagement) if self.engagement else '-',
+             self.start or '-',
+             self.end or '-',
+             self.timeframe or '-',
              )
         for j in self.experienceImplications.all():
             s += "\tImplied Service: %s" % str(j.service)
