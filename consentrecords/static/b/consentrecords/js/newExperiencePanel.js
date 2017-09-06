@@ -1394,7 +1394,7 @@ var ExperienceShareOptions = (function () {
 })();
 
 var NewExperiencePanel = (function () {
-	NewExperiencePanel.prototype = Object.create(crv.SitePanel.prototype);
+	NewExperiencePanel.prototype = Object.create(EditItemPanel.prototype);
 	NewExperiencePanel.prototype.constructor = NewExperiencePanel;
 
 	NewExperiencePanel.prototype.organizationSearchView = null;
@@ -1422,102 +1422,6 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.siteDefaultPlaceholder = 'Location (Optional)';
 	NewExperiencePanel.prototype.offeringDefaultPlaceholder = 'Title';
 	
-	NewExperiencePanel.prototype.appendHidableDateInput = function(dateContainer, minDate, maxDate)
-	{
-		var _this = this;
-		var itemsDiv = crf.appendItemList(dateContainer)
-			.classed('overlined', true);
-		var itemDiv = itemsDiv.append('li');
-		var dateSpan = itemDiv.append('span')
-			.classed('growable', true);
-		var dateWheel = new DateWheel(dateContainer.node().parentNode, function(newDate)
-			{
-				if (newDate)
-					dateSpan.text(getLocaleDateString(newDate));
-				else
-					dateSpan.text("Not Sure");
-			}, minDate, maxDate);
-
-		var reveal = new VerticalReveal(dateWheel.node());
-		reveal.hide();
-		
-		dateSpan.on('click', function()
-			{
-				if (!reveal.isVisible())
-				{
-					try
-					{
-						var done = function()
-						{
-							dateSpan.classed('site-active-text', true);
-							reveal.show({}, 200, undefined, function()
-								{
-									dateWheel.onShowing();
-								});
-							notSureReveal.show({duration: 200});
-						}
-						if (!_this.onFocusInOtherInput(reveal, done))
-						{
-							done();
-						}
-					}
-					catch (err)
-					{
-						cr.asyncFail(err);
-					}
-				}
-				else
-				{
-					hideWheel();
-				}
-			});
-		
-		var notSureButton = d3.select(dateContainer.node().parentNode).append('div')
-				.classed('not-sure-button site-active-text', true)
-				.on('click', function()
-					{
-						if (prepareClick('click', "Not Sure"))
-						{
-							hideWheel();
-							dateWheel.clear();
-							dateSpan.text("Not Sure");
-							unblockClick();
-						}
-					});
-		notSureButton.append('div').text("Not Sure");
-		var notSureReveal = new VerticalReveal(notSureButton.node());
-		notSureReveal.hide();
-			
-		var hideWheel = function(done)
-		{
-			dateSpan.classed('site-active-text', false);
-			dateWheel.onHiding();
-			reveal.hide({duration: 200,
-						 before: function()
-						 	{
-						 		notSureReveal.hide({duration: 200,  before: done});
-						 	}});
-		}
-		
-		var showWheel = function(done)
-		{
-			dateSpan.classed('site-active-text', true);
-			reveal.show({}, 200, undefined,
-				function()
-				{
-					notSureReveal.show({done: done});
-				});
-			
-		}
-		
-		return {dateWheel: dateWheel, 
-		    wheelReveal: reveal,
-			notSureReveal: notSureReveal,
-			hideWheel: hideWheel,
-			showWheel: showWheel,
-		};
-	}
-	
 	NewExperiencePanel.prototype.setTagColor = function(node)
 	{
 		this.tagPoolSection.setTagColor(node);
@@ -1535,7 +1439,7 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.showTags = function()
 	{
-		var offeringTags = this.experienceController.primaryServices() || [];
+		var offeringTags = this.controller().primaryServices() || [];
 		var _this = this;
 		
 		var container = this.mainDiv.select('span.offering-tags-container');
@@ -1580,36 +1484,42 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.setPlaceholders = function()
 	{
-		var experienceService = this.experienceController.experienceServices().find(function(s)
+		var experienceService = this.controller().experienceServices().find(function(s)
 			{
 				return s.service().getColumn() < PathGuides.data.length - 1;
 			});
 		
 		var service = experienceService && experienceService.service();
-			
-		this.organizationInput
-			.attr('placeholder', 
-				  (service && this._serviceLabel(service, function(s) { return s.organizationLabels(); })) || this.organizationDefaultPlaceholder);
-		this.siteInput
-			.attr('placeholder', 
-				  (service && this._serviceLabel(service, function(s) { return s.siteLabels(); })) || this.siteDefaultPlaceholder);
-		this.offeringInput
-			.attr('placeholder', 
-				  (service && this._serviceLabel(service, function(s) { return s.offeringLabels(); })) || this.offeringDefaultPlaceholder);
+		
+		if (this.organizationInput)
+		{	
+			this.organizationInput
+				.attr('placeholder', 
+					  (service && this._serviceLabel(service, function(s) { return s.organizationLabels(); })) || this.organizationDefaultPlaceholder);
+			this.siteInput
+				.attr('placeholder', 
+					  (service && this._serviceLabel(service, function(s) { return s.siteLabels(); })) || this.siteDefaultPlaceholder);
+			this.offeringInput
+				.attr('placeholder', 
+					  (service && this._serviceLabel(service, function(s) { return s.offeringLabels(); })) || this.offeringDefaultPlaceholder);
+		}
 	}
 	
 	NewExperiencePanel.prototype.updateInputs = function()
 	{
-		/* Reset the placeholders to ensure that they are properly displayed or hidden given
-			the changes in the values. This fixes a bug on MacOS Safari.
-		 */
-		this.organizationInput.attr('placeholder', null);
-		this.siteInput.attr('placeholder', null);
-		this.offeringInput.attr('placeholder', null);
+		if (this.organizationInput)
+		{
+			/* Reset the placeholders to ensure that they are properly displayed or hidden given
+				the changes in the values. This fixes a bug on MacOS Safari.
+			 */
+			this.organizationInput.attr('placeholder', null);
+			this.siteInput.attr('placeholder', null);
+			this.offeringInput.attr('placeholder', null);
 		
-		this.organizationInput.node().value = this.experienceController.organizationName();
-		this.siteInput.node().value = this.experienceController.siteName();
-		this.offeringInput.node().value = this.experienceController.offeringName();
+			this.organizationInput.node().value = this.controller().organizationName();
+			this.siteInput.node().value = this.controller().siteName();
+			this.offeringInput.node().value = this.controller().offeringName();
+		}
 
 		this.setPlaceholders();
 	}
@@ -1629,25 +1539,25 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.organizationSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.id() != (this.experienceController.organization() && this.experienceController.organization().id()))
+				newInstance.id() != (this.controller().organization() && this.controller().organization().id()))
 				{
 					if (newInstance instanceof cr.Organization)
-						this.experienceController.organizationPicked(newInstance);
+						this.controller().organizationPicked(newInstance);
 					else if (newInstance instanceof cr.Site)
-						this.experienceController.sitePicked(newInstance);
+						this.controller().sitePicked(newInstance);
 					else
 						console.assert(false);
 				}
-			else if (newText != this.experienceController.organizationName())
+			else if (newText != this.controller().organizationName())
 			{
-				if (this.experienceController.organization())
+				if (this.controller().organization())
 				{
 					this.organizationSearchView.clearFromOrganization();
-					this.experienceController.customOrganization(newText);
+					this.controller().customOrganization(newText);
 				}
 				else
 				{
-					this.experienceController.customOrganization(newText)
+					this.controller().customOrganization(newText)
 											 .organization(null);
 				}
 			}
@@ -1664,25 +1574,25 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.siteSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.id() != (this.experienceController.site() && this.experienceController.site().id()))
+				newInstance.id() != (this.controller().site() && this.controller().site().id()))
 			{
 				if (newInstance instanceof cr.Site)
-					this.experienceController.sitePicked(newInstance);
+					this.controller().sitePicked(newInstance);
 				else if (newInstance instanceof cr.Offering)
-					this.experienceController.offeringPicked(newInstance);
+					this.controller().offeringPicked(newInstance);
 				else
 					console.assert(false);
 			}
-			else if (newText != this.experienceController.siteName())
-				if (this.experienceController.site())
+			else if (newText != this.controller().siteName())
+				if (this.controller().site())
 				{
 					this.siteSearchView.clearFromSite();
-					this.experienceController.customSite(newText);
+					this.controller().customSite(newText);
 				}
 				else
 				{
-					this.experienceController.customSite(newText)
-											 .site(null);
+					this.controller().customSite(newText)
+									 .site(null);
 				}
 		}
 		else
@@ -1697,15 +1607,15 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.offeringSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.id() != (this.experienceController.offering() && this.experienceController.offering().id()))
+				newInstance.id() != (this.controller().offering() && this.controller().offering().id()))
 			{
 				if (newInstance instanceof cr.Offering)
-					this.experienceController.offeringPicked(newInstance);
+					this.controller().offeringPicked(newInstance);
 				else
 					console.assert(false);
 			}
-			else if (newText != this.experienceController.offeringName())
-				this.experienceController.customOffering(newText)
+			else if (newText != this.controller().offeringName())
+				this.controller().customOffering(newText)
 										 .offering(null);
 		}
 		else
@@ -1722,7 +1632,8 @@ var NewExperiencePanel = (function () {
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	NewExperiencePanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
-		if (newReveal != this.organizationSearchView.reveal &&
+		if (this.organizationSearchView &&
+			newReveal != this.organizationSearchView.reveal &&
 			this.organizationSearchView.reveal.isVisible())
 		{
 			this.checkOrganizationInput();
@@ -1731,7 +1642,8 @@ var NewExperiencePanel = (function () {
 			this.showTags();
 			return true;
 		}
-		else if (newReveal != this.siteSearchView.reveal &&
+		else if (this.siteSearchView &&
+			newReveal != this.siteSearchView.reveal &&
 			this.siteSearchView.reveal.isVisible())
 		{
 			this.checkSiteInput();
@@ -1740,7 +1652,8 @@ var NewExperiencePanel = (function () {
 			this.showTags();
 			return true;
 		}
-		else if (newReveal != this.offeringSearchView.reveal &&
+		else if (this.offeringSearchView &&
+			newReveal != this.offeringSearchView.reveal &&
 			this.offeringSearchView.reveal.isVisible())
 		{
 			this.checkOfferingInput();
@@ -1756,13 +1669,15 @@ var NewExperiencePanel = (function () {
 			this.tagPoolSection.hideReveal(done);
 			return true;
 		}
-		else if (newReveal != this.startHidable.wheelReveal &&
+		else if (this.startHidable &&
+			newReveal != this.startHidable.wheelReveal &&
 			this.startHidable.wheelReveal.isVisible())
 		{
 			this.startHidable.hideWheel(done);
 			return true;
 		}
-		else if (newReveal != this.endHidable.wheelReveal &&
+		else if (this.endHidable &&
+			newReveal != this.endHidable.wheelReveal &&
 			this.endHidable.wheelReveal.isVisible())
 		{
 			this.endHidable.hideWheel(done);
@@ -1809,9 +1724,10 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.resizeVisibleSearch = function(duration)
 	{
 		this.tagPoolSection.resizeVisibleSearch(duration) ||
-		this.organizationSearchView.resizeVisibleSearch(duration) ||
-		this.siteSearchView.resizeVisibleSearch(duration) ||
-		this.offeringSearchView.resizeVisibleSearch(duration);
+		this.organizationSearchView &&
+			(this.organizationSearchView.resizeVisibleSearch(duration) ||
+			 this.siteSearchView.resizeVisibleSearch(duration) ||
+			 this.offeringSearchView.resizeVisibleSearch(duration));
 	}
 
 	NewExperiencePanel.prototype.handleDeleteButtonClick = function()
@@ -1822,7 +1738,7 @@ var NewExperiencePanel = (function () {
 			var _this = this;
 			new ConfirmDeleteAlert(this.node(), "Delete Experience", 
 				function() { 
-					_this.experienceController.oldInstance().deleteData()
+					_this.controller().oldInstance().deleteData()
 						.then(function() { _this.hideDown(unblockClick) },
 							  cr.syncFail);
 				}, 
@@ -1830,21 +1746,50 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	function NewExperiencePanel(experienceController, showFunction) {
-		this.experienceController = experienceController;
+	NewExperiencePanel.prototype.checkTimeframe = function()
+	{
+		if (this.controller().start() && this.controller().end())
+		{
+			this.controller().timeframe(null);
+		}
+		else
+		{
+			var timeframeName;
 			
-		if (this.experienceController.title())
-			this.title = this.experienceController.title();
-		else if (this.experienceController.oldInstance())
+			if (this.previousExperienceButton.classed('pressed'))
+				timeframeName = 'Previous';
+			else if (this.currentExperienceButton.classed('pressed'))
+				timeframeName = 'Current';
+			else
+				timeframeName = 'Goal';
+			this.controller().timeframe(timeframeName);
+		}
+	}
+	
+	NewExperiencePanel.prototype.setDateRangeLabels = function()
+	{
+		this.startDateContainer.select('label')
+					.text(this.goalButton.classed('pressed') ? crv.buttonTexts.starts : crv.buttonTexts.started);
+		this.endDateContainer.select('label')
+					.text(this.previousExperienceButton.classed('pressed') ? crv.buttonTexts.ended : crv.buttonTexts.ends);
+	}
+		
+	function NewExperiencePanel(experienceController, showFunction) {
+		EditItemPanel.call(this, experienceController);
+			
+		if (this.controller().title())
+			this.title = this.controller().title();
+		else if (this.controller().oldInstance())
 			this.title = this.editTitle;
-		else if (this.experienceController.domain())
-			this.title = this.newFromDomainTitle.format(this.experienceController.domain().description());
-		else if (this.experienceController.stage())
-			this.title = this.newFromDomainTitle.format(this.experienceController.stage());
+		else if (this.controller().domain())
+			this.title = this.newFromDomainTitle.format(this.controller().domain().description());
+		else if (this.controller().stage())
+			this.title = this.newFromDomainTitle.format(this.controller().stage());
 			
 		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
-		this.createRoot(null, this.title, "edit experience new-experience-panel", showFunction);
+		this.createRoot(this.title, showFunction);
+		this.panelDiv.classed("experience new-experience-panel", true);
 		
 		var hidePanel = function() { 
 				_this.hide()
@@ -1855,23 +1800,10 @@ var NewExperiencePanel = (function () {
 			}
 		var _this = this;
 		
-		var navContainer = this.appendNavContainer();
-
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'NewExperiencePanel: Cancel'))
-				{
-					_this.hide();
-				}
-				d3.event.preventDefault();
-			});
-		backButton.append('span').text(crv.buttonTexts.cancel);
-		
 		if (experienceController.oldInstance())
 		{
-			var shareButton = navContainer.appendRightButton()
-				.classed("share", true)
+			var shareButton = this.navContainer.appendRightButton()
+				.classed('share', true)
 				.on('click', function()
 					{
 						if (prepareClick('click', 'share'))
@@ -1879,83 +1811,13 @@ var NewExperiencePanel = (function () {
 							new ExperienceShareOptions(_this.node(), experienceController.oldInstance(), experienceController.parent());
 						}
 					});
-			shareButton.append("img")
-				.attr("src", shareImagePath);
+			shareButton.append('img')
+				.attr('src', shareImagePath);
 		}
 		
-		navContainer.appendTitle(this.title);
-		
-		var panel2Div = this.appendScrollArea();
+		var panel2Div = this.mainDiv;
 		
 		var bottomNavContainer = this.appendBottomNavContainer();
-		var doneButton = bottomNavContainer.appendRightButton()
-			.classed("site-active-text", true)
-			.classed("default-link", true)
-			.on("click", function()
-			{
-				function doAdd()
-				{
-					if (prepareClick('click', 'NewExperiencePanel: {0}'.format(doneButton.select("span").text())))
-					{
-						try
-						{
-							experienceController.start(startDateWheel.value() != '' ? startDateWheel.value() : null);
-							experienceController.end(endDateWheel.value() != '' ? endDateWheel.value() : null);
-							if (experienceController.start() && experienceController.end())
-							{
-								experienceController.timeframe(null);
-								experienceController.save()
-									.then(hidePanel, cr.syncFail);
-							}
-							else
-							{
-								var timeframeName;
-								
-								if (previousExperienceButton.classed('pressed'))
-									timeframeName = 'Previous';
-								else if (currentExperienceButton.classed('pressed'))
-									timeframeName = 'Current';
-								else
-									timeframeName = 'Goal';
-								experienceController.timeframe(timeframeName);
-
-								experienceController.save()
-									.then(hidePanel, cr.syncFail);
-							}
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
-				}
-				
-				if (_this.organizationSearchView.isDirtyText())
-				{
-					_this.checkOrganizationInput();
-				}
-				if (_this.siteSearchView.isDirtyText())
-				{
-					_this.checkSiteInput();
-				}
-				if (_this.offeringSearchView.isDirtyText())
-				{
-					_this.checkOfferingInput();
-				}
-				_this.updateInputs();
-				_this.checkTagInput();
-						
-				if (!experienceController.offeringName() &&
-					experienceController.experienceServices().length == 0 &&
-					experienceController.customServices().length == 0)
-					cr.asyncFail(_this.nameOrTagRequiredMessage);
-				else
-				{
-					doAdd();
-				}
-				d3.event.preventDefault();
-			});
-		doneButton.append("span").text(experienceController.oldInstance() ? crv.buttonTexts.done : crv.buttonTexts.add);
 		
 		if (experienceController.oldInstance())
 		{
@@ -2019,209 +1881,292 @@ var NewExperiencePanel = (function () {
 				},
 				cr.asyncFail);
 
-		/* Code starting for the date range. */
-		var birthday = experienceController.parent().birthday() ||
-			(function()
-			 {
-				var todayDate = getUTCTodayDate();
-				return "{0}-{1}".format(todayDate.getUTCFullYear() - 100, getMonthString(todayDate));
-			 })();
-		
-		var optionPanel = panel2Div.append('section')
-			.classed('date-range-options', true);
-		
-		optionPanel.append('div')
-			.text(this.timeframeLabel);
-
-		var buttonDiv = optionPanel.append('div');
-		var previousExperienceButton = buttonDiv.append('button')
-			.classed('previous', true)
-			.on('click', function()
-				{
-					currentExperienceButton.classed('pressed', false);
-					goalButton.classed('pressed', false);
-					previousExperienceButton.classed('pressed', true);
-					
-					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
-					$(startDateWheel).trigger('change');
-					setDateRangeLabels();
-				})
-			.text(this.previousExperienceLabel);
-		
-		var currentExperienceButton = buttonDiv.append('button')
-			.classed('present', true)
-			.on('click', function()
-				{
-					goalButton.classed('pressed', false);
-					previousExperienceButton.classed('pressed', false);
-					currentExperienceButton.classed('pressed', true);
-					
-					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
-					$(startDateWheel).trigger('change');
-					setDateRangeLabels();
-				})
-			.text(this.currentExperienceLabel);
-		
-		var goalButton = buttonDiv.append('button')
-			.classed('goal', true)
-			.on('click', function()
-				{
-					previousExperienceButton.classed('pressed', false);
-					currentExperienceButton.classed('pressed', false);
-					goalButton.classed('pressed', true);
-					
-					setGoalStartDateRange();
-					$(startDateWheel).trigger('change');
-					setDateRangeLabels();
-				})
-			.text(this.goalLabel);
-			
-		function setDateRangeLabels()
+		if (experienceController.newInstance().engagement())
 		{
-			startDateContainer.select('label')
-						.text(goalButton.classed('pressed') ? 'Starts' : 'Started');
-			endDateContainer.select('label')
-						.text(previousExperienceButton.classed('pressed') ? 'Ended' : 'Ends');
-		}
+			var experience = experienceController.newInstance();
 			
-		var startDateContainer = panel2Div.append('section')
-			.classed('cell unique date-container', true);
+			if (experience.start())
+				this.appendUniqueValue(crv.buttonTexts.started, getLocaleDateString(experience.start()))
+					.classed('first', true);
 
-		startDateContainer.append('label')
-			.classed('overlined', true)
-			.text("Start");
-		this.startHidable = this.appendHidableDateInput(startDateContainer, new Date(birthday));
-		var startDateWheel = this.startHidable.dateWheel;
-		
-		$(startDateWheel).on('change', function() {
-			var minEndDate, maxEndDate;
-			var dateWheelValue = this.value() != '' ? this.value() : null;
-			if (previousExperienceButton.classed('pressed'))
-			{
-				if (dateWheelValue && dateWheelValue.length > 0)
-					minEndDate = new Date(dateWheelValue);
-				else if (birthday)
-					minEndDate = new Date(birthday);
-				else
-					minEndDate = getUTCTodayDate();
-			}
-			else if (currentExperienceButton.classed('pressed'))
-			{
-				minEndDate = getUTCTodayDate();
-			}
-			else
-			{
-				if (dateWheelValue && dateWheelValue.length > 0)
-					minEndDate = new Date(dateWheelValue);
-				else
-					minEndDate = getUTCTodayDate();
-			}
-			
-			if (previousExperienceButton.classed('pressed'))
-			{
-				maxEndDate = getUTCTodayDate();
-			}
-			else
-			{
-				maxEndDate = getUTCTodayDate();
-				maxEndDate.setUTCFullYear(maxEndDate.getUTCFullYear() + 50);
-			}
-				
-			endDateWheel.checkMinDate(minEndDate, maxEndDate);
-			$(endDateWheel).trigger('change');
-		});
-		
-		var endDateContainer = panel2Div.append('section')
-			.classed('cell unique date-container', true);
-		var endLabel = endDateContainer.append('label')
-			.classed('overlined', true)
-			.text("End");
-			
-		this.endHidable = this.appendHidableDateInput(endDateContainer, new Date(birthday));
-		var endDateWheel = this.endHidable.dateWheel;
-		
-		if (experienceController.start())
-			startDateWheel.value(experienceController.start());
+			if (experience.end())
+				this.appendUniqueValue(crv.buttonTexts.ended, getLocaleDateString(experience.end()));
+
+			if (experience.organization())
+				this.appendUniqueValue(crv.buttonTexts.organization, experience.organization().description())
+					.classed('first', true);
+			if (experience.site())
+				this.appendUniqueValue(crv.buttonTexts.site, experience.site().description());
+			if (experience.offering())
+				this.appendUniqueValue(crv.buttonTexts.offering, experience.offering().description());
+		}
 		else
 		{
-			if (experienceController.end())
-			{
-				/* Initialize the start date to a reasonable value, not the current date. */
-				var startGuessDate = new Date(experienceController.end());
-				startGuessDate.setUTCFullYear(startGuessDate.getUTCFullYear() - 1);
-				var startGuessDateString = startGuessDate.toISOString().substring(0, 7);
-				if (startGuessDateString < birthday)
-					startDateWheel.value(birthday);
-				else
-					startDateWheel.value(startGuessDateString);
-			}
-			startDateWheel.clear();
-		}
+			/* Code starting for the date range. */
+			var birthday = experienceController.parent().birthday() ||
+				(function()
+				 {
+					var todayDate = getUTCTodayDate();
+					return "{0}-{1}".format(todayDate.getUTCFullYear() - 100, getMonthString(todayDate));
+				 })();
+		
+			var optionPanel = panel2Div.append('section')
+				.classed('date-range-options', true);
+		
+			optionPanel.append('div')
+				.text(this.timeframeLabel);
+
+			var buttonDiv = optionPanel.append('div');
+			this.previousExperienceButton = buttonDiv.append('button')
+				.classed('previous', true)
+				.on('click', function()
+					{
+						_this.currentExperienceButton.classed('pressed', false);
+						_this.goalButton.classed('pressed', false);
+						_this.previousExperienceButton.classed('pressed', true);
+					
+						startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
+						$(startDateWheel).trigger('change');
+						_this.setDateRangeLabels();
+						_this.checkTimeframe();
+					})
+				.text(this.previousExperienceLabel);
+		
+			this.currentExperienceButton = buttonDiv.append('button')
+				.classed('present', true)
+				.on('click', function()
+					{
+						_this.goalButton.classed('pressed', false);
+						_this.previousExperienceButton.classed('pressed', false);
+						_this.currentExperienceButton.classed('pressed', true);
+					
+						startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
+						$(startDateWheel).trigger('change');
+						_this.setDateRangeLabels();
+						_this.checkTimeframe();
+					})
+				.text(this.currentExperienceLabel);
+		
+			this.goalButton = buttonDiv.append('button')
+				.classed('goal', true)
+				.on('click', function()
+					{
+						_this.previousExperienceButton.classed('pressed', false);
+						_this.currentExperienceButton.classed('pressed', false);
+						_this.goalButton.classed('pressed', true);
+					
+						setGoalStartDateRange();
+						$(startDateWheel).trigger('change');
+						_this.setDateRangeLabels();
+						_this.checkTimeframe();
+					})
+				.text(this.goalLabel);
 			
-		if (experienceController.end())
-			endDateWheel.value(experienceController.end());
-		else
-		{
+			var startValue;	
 			if (experienceController.start())
+				startValue = experienceController.start();
+			else
 			{
-				/* Initialize the end date to a reasonable value. */
-				var guessDate = new Date(experienceController.start());
-				guessDate.setUTCFullYear(guessDate.getUTCFullYear() + 1);
-				var guessDateString = guessDate.toISOString().substring(0, 7);
-				endDateWheel.value(guessDateString);
+				if (experienceController.end())
+				{
+					/* Initialize the start date to a reasonable value, not the current date. */
+					var startGuessDate = new Date(experienceController.end());
+					startGuessDate.setUTCFullYear(startGuessDate.getUTCFullYear() - 1);
+					var startGuessDateString = startGuessDate.toISOString().substring(0, 7);
+					if (startGuessDateString < birthday)
+						startValue = birthday;
+					else
+						startValue = startGuessDateString;
+				}
 			}
-			endDateWheel.clear();
+		
+			var endValue;
+			if (experienceController.end())
+				endValue = experienceController.end();
+			else
+			{
+				if (experienceController.start())
+				{
+					/* Initialize the end date to a reasonable value. */
+					var guessDate = new Date(experienceController.start());
+					guessDate.setUTCFullYear(guessDate.getUTCFullYear() + 1);
+					endValue = guessDate.toISOString().substring(0, 7);
+				}
+				else
+					endValue = null;
+			}
+		
+			this.startDateContainer = this.appendDateSection(this.controller().newInstance(),
+				this.controller().newInstance().start,
+				"Start", new Date(birthday), getUTCTodayDate(), "Not Sure");
+			this.startHidable = this.startDateContainer.editor;
+			var startDateWheel = this.startHidable.dateWheel;
+			
+			$(startDateWheel).on('change', function() {
+				var minEndDate, maxEndDate;
+				var dateWheelValue = this.value() != '' ? this.value() : null;
+				if (_this.previousExperienceButton.classed('pressed'))
+				{
+					if (dateWheelValue && dateWheelValue.length > 0)
+						minEndDate = new Date(dateWheelValue);
+					else if (birthday)
+						minEndDate = new Date(birthday);
+					else
+						minEndDate = getUTCTodayDate();
+				}
+				else if (_this.currentExperienceButton.classed('pressed'))
+				{
+					minEndDate = getUTCTodayDate();
+				}
+				else
+				{
+					if (dateWheelValue && dateWheelValue.length > 0)
+						minEndDate = new Date(dateWheelValue);
+					else
+						minEndDate = getUTCTodayDate();
+				}
+			
+				if (_this.previousExperienceButton.classed('pressed'))
+				{
+					maxEndDate = getUTCTodayDate();
+				}
+				else
+				{
+					maxEndDate = getUTCTodayDate();
+					maxEndDate.setUTCFullYear(maxEndDate.getUTCFullYear() + 50);
+				}
+				
+				endDateWheel.checkMinDate(minEndDate, maxEndDate);
+				$(endDateWheel).trigger('change');
+			});
+		
+			this.endDateContainer = this.appendDateSection(this.controller().newInstance(),
+				this.controller().newInstance().end,
+				"End", new Date(birthday), getUTCTodayDate(), "Not Sure");
+			
+			this.endHidable = this.endDateContainer.editor;
+			var endDateWheel = this.endHidable.dateWheel;
+		
+			$(endDateWheel).on('change', function() {
+				_this.checkTimeframe();
+			});
+		
+			/* The organization section. */
+			section = panel2Div.append('section')
+				.classed('cell picker organization', true);
+				
+			this.organizationInput = section.append('input')
+				.classed('organization', true)
+				.attr('placeholder', this.organizationDefaultPlaceholder)
+				.attr('value', experienceController.organizationName());
+			organizationHelp = section.append('div')
+				.classed('help', true);
+			
+			searchContainer = section.append('div');
+			
+			this.organizationSearchView = new OrganizationLinkSearchView(searchContainer.node(), 
+																	 this, experienceController, 
+																	 this.organizationInput.node(), 
+																	 organizationHelp.node());
+		
+			section = panel2Div.append('section')
+				.classed('cell picker site', true);
+				
+			this.siteInput = section.append('input')
+				.classed('site', true)
+				.attr('placeholder', this.siteDefaultPlaceholder)
+				.attr('value', experienceController.siteName());
+			siteHelp = section.append('div').classed('help', true);
+		
+			searchContainer = section.append('div');
+			
+			this.siteSearchView = new SiteLinkSearchView(searchContainer.node(), 
+													 this, experienceController, 
+													 this.siteInput.node(), 
+													 siteHelp.node());
+		
+			section = panel2Div.append('section')
+				.classed('cell picker offering', true);
+				
+			this.offeringInput = section.append('input')
+				.classed('offering', true)
+				.attr('placeholder', this.offeringDefaultPlaceholder)
+				.attr('value', experienceController.offeringName());
+			offeringHelp = section.append('div').classed('help', true);
+			
+			searchContainer = section.append('div');
+			
+			this.offeringSearchView = new OfferingLinkSearchView(searchContainer.node(), 
+															 this, experienceController, 
+															 this.offeringInput.node(), 
+															 offeringHelp.node());
+															 
+			$(this.organizationInput.node()).on('focusin', function()
+				{
+					var done = function()
+							{
+								_this.organizationSearchView.restartSearchTimeout();
+								_this.organizationSearchView.showSearch(200, undefined, function()
+									{
+										var oldTop = $(_this.organizationInput.node()).offset().top;
+										if (oldTop < $(window).scrollTop())
+										{
+											var body = $("html, body");
+											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
+										}
+									});
+							};
+					if (!_this.onFocusInOtherInput(_this.organizationSearchView.reveal, done))
+					{
+						if (!_this.organizationSearchView.reveal.isVisible())
+							done();
+					}
+				});
+			
+			$(this.siteInput.node()).on('focusin', function()
+				{
+					var done = function()
+							{
+								_this.siteSearchView.restartSearchTimeout();
+								_this.siteSearchView.showSearch(200, undefined, function()
+									{
+										var oldTop = $(_this.siteInput.node()).offset().top;
+										if (oldTop < $(window).scrollTop())
+										{
+											var body = $("html, body");
+											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
+										}
+									});
+							}
+					if (!_this.onFocusInOtherInput(_this.siteSearchView.reveal, done))
+					{
+						if (!_this.siteSearchView.reveal.isVisible())
+							done();
+					}
+				});
+		
+			$(this.offeringInput.node()).on('focusin', function()
+				{
+					var done = function()
+							{
+								_this.offeringSearchView.restartSearchTimeout();
+								_this.offeringSearchView.showSearch(200, undefined, function()
+									{
+										var oldTop = $(_this.offeringInput.node()).offset().top;
+										if (oldTop < $(window).scrollTop())
+										{
+											var body = $("html, body");
+											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
+										}
+									});
+							};
+					if (!_this.onFocusInOtherInput(_this.offeringSearchView.reveal, done))
+					{
+						if (!_this.offeringSearchView.reveal.isVisible())
+							done();
+					}
+				});
 		}
-				
-		/* The organization section. */
-		section = panel2Div.append('section')
-			.classed('cell picker organization', true);
-				
-		this.organizationInput = section.append('input')
-			.classed('organization', true)
-			.attr('placeholder', this.organizationDefaultPlaceholder)
-			.attr('value', experienceController.organizationName());
-		organizationHelp = section.append('div')
-			.classed('help', true);
-			
-		searchContainer = section.append('div');
-			
-		this.organizationSearchView = new OrganizationLinkSearchView(searchContainer.node(), 
-																 this, experienceController, 
-																 this.organizationInput.node(), 
-																 organizationHelp.node());
-		
-		section = panel2Div.append('section')
-			.classed('cell picker site', true);
-				
-		this.siteInput = section.append('input')
-			.classed('site', true)
-			.attr('placeholder', this.siteDefaultPlaceholder)
-			.attr('value', experienceController.siteName());
-		siteHelp = section.append('div').classed('help', true);
-		
-		searchContainer = section.append('div');
-			
-		this.siteSearchView = new SiteLinkSearchView(searchContainer.node(), 
-												 this, experienceController, 
-												 this.siteInput.node(), 
-												 siteHelp.node());
-		
-		section = panel2Div.append('section')
-			.classed('cell picker offering', true);
-				
-		this.offeringInput = section.append('input')
-			.classed('offering', true)
-			.attr('placeholder', this.offeringDefaultPlaceholder)
-			.attr('value', experienceController.offeringName());
-		offeringHelp = section.append('div').classed('help', true);
-			
-		searchContainer = section.append('div');
-			
-		this.offeringSearchView = new OfferingLinkSearchView(searchContainer.node(), 
-														 this, experienceController, 
-														 this.offeringInput.node(), 
-														 offeringHelp.node());
 		
 		/* The offering tags section. */
 		tagsTopContainer = panel2Div.append('section')
@@ -2246,98 +2191,35 @@ var NewExperiencePanel = (function () {
 			{
 				_this.showTags();
 				
-				if (experienceController.timeframe() == 'Current')
+				if (!experienceController.newInstance().engagement())
 				{
-					startDateWheel.onChange();
-					currentExperienceButton.classed('pressed', true);
-					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
+					if (experienceController.timeframe() == 'Current')
+					{
+						startDateWheel.onChange();
+						_this.currentExperienceButton.classed('pressed', true);
+						startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
+					}
+					else if (experienceController.timeframe() == 'Goal')
+					{
+						_this.goalButton.classed('pressed', true);
+						setGoalStartDateRange();
+					}
+					else
+					{
+						startDateWheel.onChange();
+						endDateWheel.onChange();
+						_this.previousExperienceButton.classed('pressed', true);
+						startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
+					}
+					$(startDateWheel).trigger('change');
+					_this.setDateRangeLabels();
 				}
-				else if (experienceController.timeframe() == 'Goal')
-				{
-					goalButton.classed('pressed', true);
-					setGoalStartDateRange();
-				}
-				else
-				{
-					startDateWheel.onChange();
-					endDateWheel.onChange();
-					previousExperienceButton.classed('pressed', true);
-					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
-				}
-				$(startDateWheel).trigger('change');
-				setDateRangeLabels();
 			});
 
 		$(panel2Div.node()).on('resize.cr', function()
 		{
 			_this.resizeVisibleSearch(0);
 		});
-
-		$(this.organizationInput.node()).on('focusin', function()
-			{
-				var done = function()
-						{
-							_this.organizationSearchView.restartSearchTimeout();
-							_this.organizationSearchView.showSearch(200, undefined, function()
-								{
-									var oldTop = $(_this.organizationInput.node()).offset().top;
-									if (oldTop < $(window).scrollTop())
-									{
-										var body = $("html, body");
-										body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-									}
-								});
-						};
-				if (!_this.onFocusInOtherInput(_this.organizationSearchView.reveal, done))
-				{
-					if (!_this.organizationSearchView.reveal.isVisible())
-						done();
-				}
-			});
-			
-		$(this.siteInput.node()).on('focusin', function()
-			{
-				var done = function()
-						{
-							_this.siteSearchView.restartSearchTimeout();
-							_this.siteSearchView.showSearch(200, undefined, function()
-								{
-									var oldTop = $(_this.siteInput.node()).offset().top;
-									if (oldTop < $(window).scrollTop())
-									{
-										var body = $("html, body");
-										body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-									}
-								});
-						}
-				if (!_this.onFocusInOtherInput(_this.siteSearchView.reveal, done))
-				{
-					if (!_this.siteSearchView.reveal.isVisible())
-						done();
-				}
-			});
-		
-		$(this.offeringInput.node()).on('focusin', function()
-			{
-				var done = function()
-						{
-							_this.offeringSearchView.restartSearchTimeout();
-							_this.offeringSearchView.showSearch(200, undefined, function()
-								{
-									var oldTop = $(_this.offeringInput.node()).offset().top;
-									if (oldTop < $(window).scrollTop())
-									{
-										var body = $("html, body");
-										body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-									}
-								});
-						};
-				if (!_this.onFocusInOtherInput(_this.offeringSearchView.reveal, done))
-				{
-					if (!_this.offeringSearchView.reveal.isVisible())
-						done();
-				}
-			});
 	}
 	
 	return NewExperiencePanel;

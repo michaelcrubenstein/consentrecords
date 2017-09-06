@@ -20,10 +20,10 @@ var Settings = (function () {
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	Settings.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
-		if (newReveal != this.birthdayEditor.wheelReveal &&
-			this.birthdayEditor.wheelReveal.isVisible())
+		if (newReveal != this.birthdaySection.editor.wheelReveal &&
+			this.birthdaySection.editor.wheelReveal.isVisible())
 		{
-			this.birthdayEditor.hideWheel(done);
+			this.birthdaySection.editor.hideWheel(done);
 			return true;
 		}
 		else
@@ -53,9 +53,10 @@ var Settings = (function () {
 		minDate.setMonth(0);
 		minDate.setDate(1);
 
-		var birthdaySection = this.appendDateSection(controller.newInstance(), 
+		this.birthdaySection = this.appendDateSection(controller.newInstance(), 
 			controller.newInstance().birthday, crv.buttonTexts.birthday, minDate, new Date());
-		birthdaySection.classed('first', true);
+		this.birthdaySection.classed('first', true);
+		this.birthdaySection.editor.canShowNotSureReveal = false;
 		
 		var publicAccessSection = null;
 		var publicAccessSectionTextContainer = null;
@@ -63,11 +64,35 @@ var Settings = (function () {
 		var user = controller.newInstance();
 		var oldUser = controller.oldInstance();
 		var path = user.path();
+		
+		var checkBirthday = function(d, done)
+		{
+			if (!controller.newInstance().birthday())
+			{
+				cr.asyncFail(crv.buttonTexts.birthdayRequiredForPublicAccess);
+				_this.ensureDateEditorVisible(_this.birthdaySection.editor);
+			}
+			else if (controller.newInstance().birthday() != controller.oldInstance().birthday())
+			{
+				_this.promiseUpdateChanges()
+					.then(function()
+						{
+							bootstrap_alert.close();
+							done(d);
+						},
+						cr.asyncFail);
+			}
+			else
+			{
+				done(d);
+			}
+		}
+		
 		var appendUserActions = function()
 		{
 			if (oldUser == cr.signedinUser)
 			{
-				_this.appendActionButton('Change Email', function() {
+				_this.appendActionButton(crv.buttonTexts.changeEmail, function() {
 						if (prepareClick('click', 'Change Email'))
 						{
 							showClickFeedback(this);
@@ -77,7 +102,7 @@ var Settings = (function () {
 						}
 					});
 		
-				_this.appendActionButton('Change Password', function() {
+				_this.appendActionButton(crv.buttonTexts.changePassword, function() {
 						if (prepareClick('click', 'Change Password'))
 						{
 							showClickFeedback(this);
@@ -135,7 +160,15 @@ var Settings = (function () {
 						_this.appendEnumerationPickerSection(
 							controller.newInstance(), accessProperty, crv.buttonTexts.publicAccess, PickUserAccessPanel)
 					publicAccessSection.classed('first', true);
-								
+					
+					var clickFunction = publicAccessSection.on('click');
+					publicAccessSection.on('click', function(d)
+						{
+							checkBirthday(d, function(d)
+								{
+									clickFunction.call(publicAccessSection.node(), d)
+								});
+						});			
 					var docSection = _this.mainDiv.append('section')
 						.classed('cell documentation', true);
 			
@@ -182,19 +215,22 @@ var Settings = (function () {
 						.classed('growable unselectable', true)
 						.text("{0}/for/{1}"
 							.format(window.location.origin, email))
-						.on('click', function()
+						.on('click', function(d)
 							{
-								if (prepareClick('click', 'share'))
-								{
-									try
+								checkBirthday(d, function(d)
 									{
-										new ShareOptions(_this.node(), oldUser);
-									}
-									catch(err)
-									{
-										cr.syncFail(err);
-									}
-								}
+										if (prepareClick('click', 'share'))
+										{
+											try
+											{
+												new ShareOptions(_this.node(), oldUser);
+											}
+											catch(err)
+											{
+												cr.syncFail(err);
+											}
+										}
+									});
 							});
 					
 					setupOnViewEventHandler(oldUser, 'changed.cr', urlItem.node(), 
@@ -205,14 +241,18 @@ var Settings = (function () {
 								.format(window.location.origin, email));
 						});
 	
-					var sharingDiv = _this.appendActionButton('Sharing', function() {
-							if (prepareClick('click', 'Sharing'))
+					var sharingDiv = _this.appendActionButton('Sharing', function(d) {
+						showClickFeedback(this);
+						checkBirthday(d, function(d)
 							{
-								showClickFeedback(this);
-								new SharingPanel(controller.oldInstance(), Settings.prototype.panelTitle)
-									.showUp()
-									.always(unblockClick);
-							}
+								if (prepareClick('click', 'Sharing'))
+								{
+									new SharingPanel(controller.oldInstance(), Settings.prototype.panelTitle)
+										.showUp()
+										.always(unblockClick);
+								}
+							});
+
 						})
 						.classed('first', true);
 					var sharingButton = sharingDiv.select('ol>li>div');
@@ -223,14 +263,18 @@ var Settings = (function () {
 					setupOnViewEventHandler(controller.oldInstance(), "userGrantRequestDeleted.cr userGrantRequestAdded.cr", 
 						sharingButton.node(), checkSharingBadge);
 				
-					_this.appendActionButton('Following', function() {
-							if (prepareClick('click', 'Following'))
-							{
-								showClickFeedback(this);
-								new FollowingPanel(oldUser)
-									.showUp()
-									.always(unblockClick);
-							}
+					_this.appendActionButton('Following', function(d)
+						{
+							showClickFeedback(this);
+							checkBirthday(d, function(d)
+								{
+									if (prepareClick('click', 'Following'))
+									{
+										new FollowingPanel(oldUser)
+											.showUp()
+											.always(unblockClick);
+									}
+								});
 						});
 				
 					appendUserActions();
@@ -801,10 +845,10 @@ var NotificationsPanel = (function () {
 
 		var navContainer = this.appendNavContainer();
 
-		var doneButton = navContainer.appendRightButton();
-			
 		navContainer.appendTitle(this.panelTitle);
 		
+		var doneButton = navContainer.appendRightButton();
+			
 		var panel2Div = this.appendScrollArea();
 		
 		doneButton.on("click", function()

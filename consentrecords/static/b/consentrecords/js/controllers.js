@@ -55,7 +55,7 @@ var Controller = (function() {
 	
 		if (this.oldInstance())
 		{
-			var updateData = this.oldInstance().getUpdateData(this.newInstance());
+			var updateData = this.oldInstance().appendChanges(this.newInstance());
 			
 			if (Object.keys(updateData).length == 0)
 			{

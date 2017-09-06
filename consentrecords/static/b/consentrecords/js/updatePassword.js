@@ -19,6 +19,8 @@ var UpdatePasswordPanel = (function () {
 			});
 		backButton.append('span').text(crv.buttonTexts.cancel);
 	
+		navContainer.appendTitle('Password');
+	
 		var addButton = navContainer.appendRightButton()
 			.on("click", function()
 			{
@@ -49,8 +51,6 @@ var UpdatePasswordPanel = (function () {
 				d3.event.preventDefault();
 			});
 		addButton.append('span').text('Change');
-	
-		navContainer.appendTitle('Password');
 	
 		var panel2Div = this.appendFillArea();
 			
@@ -139,6 +139,8 @@ var UpdateUsernamePanel = (function () {
 				}
 			}
 			
+		navContainer.appendTitle('Email');
+	
 		var addButton = navContainer.appendRightButton()
 			.on("click", function()
 				{
@@ -146,8 +148,6 @@ var UpdateUsernamePanel = (function () {
 					d3.event.preventDefault();
 				});
 		addButton.append('span').text('Change');
-	
-		navContainer.appendTitle('Email');
 	
 		var panel2Div = this.appendFillArea();
 			

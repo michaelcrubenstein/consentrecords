@@ -24,9 +24,7 @@ sys.path.insert(0,cwd + '/custom_user')  #You must add your project here
 
 try:
     application = get_wsgi_application()
-    print ('WSGI without exception')
 except Exception:
-    print ('handling WSGI exception')
     traceback.print_exc()
     # Error loading applications
     if 'mod_wsgi' in sys.modules:

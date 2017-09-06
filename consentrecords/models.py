@@ -3703,6 +3703,7 @@ class Comment(ChildInstance, dbmodels.Model):
             raise PermissionDenied('you do not have permission to complete this update')
         
         history = None
+        textChanging = 'text' in changes and changes['text'] != self.text and not self.text
         if 'text' in changes and changes['text'] != self.text:
             history = history or self.buildHistory(context)
             self.text = changes['text'] or None
@@ -3718,7 +3719,41 @@ class Comment(ChildInstance, dbmodels.Model):
         if history:
             self.lastTransaction = context.transaction
             self.save()
-            
+        
+        if textChanging:    
+            follower = self.asker
+            recipient = follower.parent
+            recipientEMail = recipient.currentEmailsQuerySet[0].text
+            experience = self.parent
+            salutation = follower.name or recipient.firstName
+            following = self.parent.parent
+            isAdmin = context.is_administrator
+            Emailer.sendAnswerExperienceQuestionEmail(salutation, recipientEMail, 
+                experience, following, isAdmin, self, context.hostURL)
+
+            # Create a notification for the asker.    
+            n = Notification.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        name='crn.ExperienceQuestionAnswered',
+                                        isFresh='yes',
+                                        parent=follower.parent,
+                                        )
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=0,
+                                        argument=following.id.hex)
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=1,
+                                        argument=experience.id.hex)
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=2,
+                                        argument=self.id.hex)
+
 class CommentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentHistories')
@@ -3976,6 +4011,17 @@ class Engagement(ChildInstance, dbmodels.Model):
                                  end=_orNone(data, 'end'),
                                 )
         
+        offering = newItem.parent.parent
+        Experience.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent= newItem.user.path,
+                                 engagement=newItem,
+                                 offering=offering,
+                                 site=offering.parent,
+                                 organization=offering.parent.parent,
+                                 start=newItem.start,
+                                 end=newItem.end)
+                                 
         return newItem                          
         
     def buildHistory(self, context):
@@ -4017,6 +4063,24 @@ class Engagement(ChildInstance, dbmodels.Model):
             _validateDate(changes, 'end')
             history = history or self.buildHistory(context)
             self.end = changes['end'] or None
+        
+        experiences = self.user.path.experiences.filter(deleteTransaction__isnull=True, 
+            engagement=self)
+        if experiences.exists():
+            experiences[0].update({start: self.start, end: self.end}, context)
+        else:
+            offering = self.parent.parent
+            newExperience = Experience.objects.create(transaction=context.transaction,
+                lastTransaction=context.transaction,
+                 parent=self.user.path,
+                 organization = offering.parent.parent,
+                 site = offering.parent,
+                 offering = offering,
+                 engagement = self,
+                 start = self.start,
+                 end = self.end,
+                )
+            newExperience.checkImplications()
         
         if history:
             self.lastTransaction = context.transaction
@@ -4131,6 +4195,7 @@ class Experience(ChildInstance, dbmodels.Model):
     customSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
     offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     customOffering = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    engagement = dbmodels.ForeignKey('consentrecords.Engagement', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     start = dbmodels.CharField(max_length=10, db_index=True, null=True)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
@@ -4146,6 +4211,7 @@ class Experience(ChildInstance, dbmodels.Model):
     elementMap = {'organization': ('organization__', "Organization", 'experiences'),
                   'site': ('site__', "Site", 'experiences'),
                   'offering': ('offering__', "Offering", 'experiences'),
+                  'engagement': ('engagement__', "Engagement", 'experiences'),
                   'custom service': ('customServices__', "ExperienceCustomService", 'parent'),
                   'service': ('services__', "ExperienceService", 'parent'),
                   'comment': ('comments__', "Comment", 'parent'),
@@ -4170,6 +4236,7 @@ class Experience(ChildInstance, dbmodels.Model):
     def select_head_related(querySet):
         return querySet.select_related('parent')\
                        .select_related('offering')\
+                       .select_related('engagement')\
                        .prefetch_related(Prefetch('offering__names',
                                                   queryset=OfferingName.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentNames'))
@@ -4222,6 +4289,11 @@ class Experience(ChildInstance, dbmodels.Model):
                     data['offering'] = self.offering.getData(offeringFields, context)
                 else:
                     data['offering'] = self.offering.headData(context)
+            if self.engagement_id:
+                if 'engagement' in fields:
+                    data['engagement'] = self.engagement.getData([], context)
+                else:
+                    data['engagement'] = self.engagement.headData(context)
             if 'services' in fields:
                 data['services'] = [i.getData([], context) for i in self.currentServices]
             else:
@@ -4287,10 +4359,14 @@ class Experience(ChildInstance, dbmodels.Model):
                                  customSite = _orNone(data, 'custom site'),
                                  offering = _orNoneForeignKey(data, 'offering', context, Offering),
                                  customOffering = _orNone(data, 'custom offering'),
+                                 engagement = _orNoneForeignKey(data, 'engagement', context, Engagement),
                                  timeframe = _orNone(data, 'timeframe'),
                                  start = _orNone(data, 'start'),
                                  end = _orNone(data, 'end'),
                                 )
+        if newItem.engagement and newItem.engagement.parent.parent != newItem.offering:
+            newItem.offering = newItem.engagement.parent.parent
+            newItem.save()
         
         newItem.createChildren(data, 'services', context, ExperienceService, newIDs)
         newItem.createChildren(data, 'custom services', context, ExperienceCustomService, newIDs)
@@ -4305,10 +4381,10 @@ class Experience(ChildInstance, dbmodels.Model):
         for es in self.services.filter(deleteTransaction__isnull=True):
             for imp in es.service.serviceImplications.filter(deleteTransaction__isnull=True):
                 serviceSet.add(imp.impliedService)
-        if self.offering:
-            for os in self.offering.services.filter(deleteTransaction__isnull=True):
-                for imp in os.service.serviceImplications.filter(deleteTransaction__isnull=True):
-                    serviceSet.add(imp.impliedService)
+        if self.engagement:
+            self.engagement.parent.parent.addServices(serviceSet)
+        elif self.offering:
+            self.offering.addServices(serviceSet)
         
         # For each existing service implication, either remove it from the service
         # set if it is there, or delete it from the database.
@@ -4331,6 +4407,7 @@ class Experience(ChildInstance, dbmodels.Model):
                                              customSite=self.customSite,
                                              offering=self.offering,
                                              customOffering=self.customOffering,
+                                             engagement=self.engagement,
                                              start=self.start,
                                              end=self.end,
                                              timeframe=self.timeframe)
@@ -4342,22 +4419,24 @@ class Experience(ChildInstance, dbmodels.Model):
         self.customSite = h.customSite 
         self.offering = h.offering 
         self.customOffering = h.customOffering 
+        self.engagement = h.engagement 
         self.start = h.start 
         self.end = h.end 
         self.timeframe = h.timeframe 
     
     @property
     def dataString(self):
-        s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
-            (self.id, str(self.organization) if self.organization else nullString, 
-             self.customOrganization or nullString,
-             str(self.site) if self.site else nullString,
-             self.customSite or nullString,
-             str(self.offering) if self.offering else nullString,
-             self.customOffering or nullString,
-             self.start or nullString,
-             self.end or nullString,
-             self.timeframe or nullString,
+        s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
+            (self.id, str(self.organization) if self.organization else '-', 
+             self.customOrganization or '-',
+             str(self.site) if self.site else '-',
+             self.customSite or '-',
+             str(self.offering) if self.offering else '-',
+             self.customOffering or '-',
+             str(self.engagement) if self.engagement else '-',
+             self.start or '-',
+             self.end or '-',
+             self.timeframe or '-',
              )
         for j in self.experienceImplications.all():
             s += "\tImplied Service: %s" % str(j.service)
@@ -4401,6 +4480,16 @@ class Experience(ChildInstance, dbmodels.Model):
             if 'custom offering' in changes and changes['custom offering'] != self.customOffering:
                 history = history or self.buildHistory(context)
                 self.customOffering = changes['custom offering']
+            if 'engagement' in changes:
+                newValue = _orNoneForeignKey(changes, 'engagement', context, Engagement)
+                if newValue != self.engagement:
+                    history = history or self.buildHistory(context)
+                    self.engagement = newValue
+                    if newValue:
+                        self.offering = newValue.parent.parent
+                    
+                    # Check that all of the services associated with this experience are correct.
+                    self.checkImplications()
             if 'start' in changes and changes['start'] != self.start:
                 history = history or self.buildHistory(context)
                 self.start = changes['start']
@@ -4448,6 +4537,7 @@ class ExperienceHistory(dbmodels.Model):
     customSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experienceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
     customOffering = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    engagement = dbmodels.ForeignKey('consentrecords.Engagement', related_name='experienceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
     start = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
@@ -4455,15 +4545,16 @@ class ExperienceHistory(dbmodels.Model):
     @property
     def dataString(self):
         s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
-            (self.id, str(self.organization) if self.organization else nullString, 
-             self.customOrganization or nullString,
-             str(self.site) if self.site else nullString,
-             self.customSite or nullString,
-             str(self.offering) if self.offering else nullString,
-             self.customOffering or nullString,
-             self.start or nullString,
-             self.end or nullString,
-             self.timeframe or nullString,
+            (self.id, str(self.organization) if self.organization else '-', 
+             self.customOrganization or '-',
+             str(self.site) if self.site else '-',
+             self.customSite or '-',
+             str(self.offering) if self.offering else '-',
+             self.customOffering or '-',
+             str(self.engagement) if self.engagement else '-',
+             self.start or '-',
+             self.end or '-',
+             self.timeframe or '-',
              )
         for j in self.experienceImplications.all():
             s += "\tImplied Service: %s" % str(j.service)
@@ -5347,7 +5438,7 @@ class Notification(ChildInstance, dbmodels.Model):
         elif self.name == 'crn.ExperienceCommentRequested':
             return [Path, Experience, Comment]
         elif self.name == 'crn.ExperienceQuestionAnswered':
-            return [Path, Experience]
+            return [Path, Experience, Comment]
         elif self.name == 'crn.ExperienceSuggestion':
             return [Path, Service]
         else:
@@ -5639,6 +5730,11 @@ class Offering(ChildInstance, dbmodels.Model):
 
     def validateMaximumGrade(self, data, key):
         pass
+
+    def addServices(self, serviceSet):
+        for os in self.services.filter(deleteTransaction__isnull=True):
+            for imp in os.service.serviceImplications.filter(deleteTransaction__isnull=True):
+                serviceSet.add(imp.impliedService)
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):

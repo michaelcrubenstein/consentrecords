@@ -274,6 +274,7 @@ var WelcomePanel = (function () {
 
 		if (!cr.signedinUser.id())
 		{
+			navContainer.appendTitle("PathAdvisor");
 			var signinSpan = navContainer.appendRightButton()
 				.on("click", function()
 					{
@@ -300,10 +301,9 @@ var WelcomePanel = (function () {
 						_this.handleCloseDownEvent();
 					})
 				.append('span').text('Done');
+			navContainer.appendTitle("PathAdvisor");
 		}
 			
-		navContainer.appendTitle("PathAdvisor");
-		
 		var panel2Div = this.appendScrollArea();
 		
 		var panelData = 

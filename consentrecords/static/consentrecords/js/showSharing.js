@@ -262,6 +262,8 @@ var SharingPanel = (function() {
 		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("span").text(backButtonText);
 		
+		navContainer.appendTitle("Sharing");
+		
 		this.inEditMode = false;
 		var editButton = navContainer.appendRightButton()
 			.on("click", function()
@@ -295,8 +297,6 @@ var SharingPanel = (function() {
 				}
 			});
 		editButton.append('span').text(crv.buttonTexts.edit);
-		
-		navContainer.appendTitle('Sharing');
 		
 		var panel2Div = this.appendScrollArea();
 
@@ -343,6 +343,8 @@ var PickSharingUserPanel = (function() {
 				})
 			.append('span').text('Cancel');
 		
+		navContainer.appendTitle(this.title);
+
 		navContainer.appendRightButton()
 			.on("click", function()
 			{
@@ -374,8 +376,6 @@ var PickSharingUserPanel = (function() {
 			})
 		    .append("span").text(crv.buttonTexts.add);
 		
-		navContainer.appendTitle(this.title);
-
 		var panel2Div = this.appendScrollArea();
 
 		var sectionPanel = panel2Div.append('section')
