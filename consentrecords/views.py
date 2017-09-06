@@ -750,34 +750,6 @@ class api:
             else:
                 raise RuntimeError("%s is not recognized" % pathKey)
     
-    def valueAdded(v, nameLists, userInfo, transactionState, hostURL):
-        if v.instance.typeID_id == terms['Comment'].id and \
-           v.field_id == terms['text'].id:
-            request = v.instance.getSubInstance(terms['Comment Request'])
-            if request:
-                follower = request.getSubInstance(terms['Path'])
-                recipient = follower.parent
-                recipientEMail = recipient.getSubDatum(terms.email)
-                experienceValue = v.instance.parent.parent.parentValue
-                salutation = follower.getSubDatum(terms.name) or recipient.getSubDatum(terms.firstName)
-                following = experienceValue.instance
-                isAdmin = userInfo.is_administrator
-                comment = v.instance
-                Emailer.sendAnswerExperienceQuestionEmail(salutation, recipientEMail, 
-                    experienceValue, following, isAdmin, comment, hostURL)
-
-                # Create a notification for the user.    
-                notificationData = {\
-                    'name': 'crn.ExperienceQuestionAnswered',
-                    'argument': [{'instanceID': following.id.hex},
-                                 {'instanceID': experienceValue.referenceValue.id.hex},
-                                 {'instanceID': comment.id.hex}],
-                    'is fresh': 'yes',
-                }
-                notification, notificationValue = instancecreator.create(terms['notification'], 
-                    recipient, terms['notification'], -1, 
-                    notificationData, nameLists, userInfo, transactionState, instancecreator.checkCreateNotificationAccess)
-
     def updateValues(user, path, data, hostURL):
         try:
             commandString = data.get('commands', "[]")

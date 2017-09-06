@@ -3703,6 +3703,7 @@ class Comment(ChildInstance, dbmodels.Model):
             raise PermissionDenied('you do not have permission to complete this update')
         
         history = None
+        textChanging = 'text' in changes and changes['text'] != self.text and not self.text
         if 'text' in changes and changes['text'] != self.text:
             history = history or self.buildHistory(context)
             self.text = changes['text'] or None
@@ -3718,7 +3719,41 @@ class Comment(ChildInstance, dbmodels.Model):
         if history:
             self.lastTransaction = context.transaction
             self.save()
-            
+        
+        if textChanging:    
+            follower = self.asker
+            recipient = follower.parent
+            recipientEMail = recipient.currentEmailsQuerySet[0].text
+            experience = self.parent
+            salutation = follower.name or recipient.firstName
+            following = self.parent.parent
+            isAdmin = context.is_administrator
+            Emailer.sendAnswerExperienceQuestionEmail(salutation, recipientEMail, 
+                experience, following, isAdmin, self, context.hostURL)
+
+            # Create a notification for the asker.    
+            n = Notification.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        name='crn.ExperienceQuestionAnswered',
+                                        isFresh='yes',
+                                        parent=follower.parent,
+                                        )
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=0,
+                                        argument=following.id.hex)
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=1,
+                                        argument=experience.id.hex)
+            NotificationArgument.objects.create(transaction=context.transaction,
+                                        lastTransaction=context.transaction,
+                                        parent=n,
+                                        position=2,
+                                        argument=self.id.hex)
+
 class CommentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentHistories')
@@ -5403,7 +5438,7 @@ class Notification(ChildInstance, dbmodels.Model):
         elif self.name == 'crn.ExperienceCommentRequested':
             return [Path, Experience, Comment]
         elif self.name == 'crn.ExperienceQuestionAnswered':
-            return [Path, Experience]
+            return [Path, Experience, Comment]
         elif self.name == 'crn.ExperienceSuggestion':
             return [Path, Service]
         else:
