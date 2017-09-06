@@ -438,7 +438,7 @@ var ExperienceCommentsPanel = (function() {
 		appendLeftChevronSVG(backButton).classed("chevron-left", true);
 		backButton.append("span").text("Back");
 
-		navContainer.appendTitle("Experience");
+		navContainer.appendTitle(fd.experience.parent().caption());
 		
 		this.inEditMode = false;
 		if (fd.experience.canWrite())

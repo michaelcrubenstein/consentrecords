@@ -5373,6 +5373,66 @@ cr.OrganizationName = (function() {
 
 })();
 	
+var AgeCalculator = (function() {
+	AgeCalculator.prototype.birthdays = null;
+	
+	AgeCalculator.prototype.getBirthday = function()
+	{
+		return this.birthdays[0];
+	}
+	
+	AgeCalculator.prototype.getAge = function(dateString)
+	{
+		return new Date(dateString) - this.birthdays[0];
+	}
+	
+	AgeCalculator.prototype.getYears = function(dateString)
+	{
+		var d = new Date(dateString);
+		var min = 0;
+		var range = this.birthdays.length - 1;
+		var mid;
+		while (true)
+		{
+			if (min > range)
+			{
+				if (min < this.birthdays.length)
+					return min - 1;
+					
+				// Extend the birthday list until it overruns the searched for date.
+				while (d > this.birthdays[this.birthdays.length - 1])
+				{
+					var bd = new Date(this.birthdays[0].valueOf());
+					bd.setUTCFullYear(this.birthdays[0].getUTCFullYear() + this.birthdays.length)
+					this.birthdays.push(bd);
+				}
+				return this.birthdays.length - 2;
+			}
+
+			mid = Math.floor((min + range) / 2);
+			if (this.birthdays[mid] < d)
+				min = mid + 1;
+			else if (this.birthdays[mid] > d)
+				range = mid - 1;
+			else
+				return mid;
+		}
+	}
+	
+	AgeCalculator.prototype.toString = function()
+	{
+		return "{0}-year-old".format(this.getYears(new Date().toISOString().substr(0, 10)));
+	}
+	
+	function AgeCalculator(s)
+	{
+		var d = new Date(s);
+		this.birthdays = [d];
+	}
+	
+	return AgeCalculator;
+})();
+
 cr.Path = (function() {
 	Path.prototype = Object.create(cr.Grantable.prototype);
 	Path.prototype.constructor = Path;
@@ -5432,8 +5492,9 @@ cr.Path = (function() {
 	Path.prototype.caption = function()
 	{
 		return (this.user() && this.user().fullName()) ||
-				this.description() ||
+				this.name() ||
 			   (this.user() && this.user().description()) ||
+			   (this.birthday() && (new AgeCalculator(this.birthday())).toString()) ||
 				this.someoneString;
 	}
 	

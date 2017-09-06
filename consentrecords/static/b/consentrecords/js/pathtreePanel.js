@@ -2102,21 +2102,13 @@ var OtherPathPanel = (function () {
 			backButton.append("span").text(crv.buttonTexts.done);
 		}
 
-		var title;
-		var screenName = path.name();
 		var user = path.user();
 		
-		if (screenName)
-			title = screenName;
-		else if (user)
-			title = user.caption();
-		else
-			title = (new AgeCalculator(path.birthday())).toString();
 		
-		this.navContainer.appendTitle(title);
+		this.navContainer.appendTitle(path.caption());
 		
 		if (this.pathtree)
-			throw "pathtree already assigned to pathtree panel";
+			throw new Error("pathtree already assigned to pathtree panel");
 			
 		this.pathtree = new OtherPathlines(this, panel2Div.node());
 		
