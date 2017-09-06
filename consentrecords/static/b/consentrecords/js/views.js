@@ -1091,7 +1091,7 @@ crv.SitePanel = (function () {
 													  "padding-left": oldPaddingLeft,
 													  "padding-right": oldPaddingRight}, 400, "swing");
 			})
-			.on("focusout", function(e)
+			.on('focusout', function(e)
 			{
 				if (searchInput.node().value.length == 0)
 					$(searchCancelButton.node()).animate({width: 0,
@@ -1946,18 +1946,20 @@ var EditItemPanel = (function () {
 		return inputs;
 	}
 	
-	EditItemPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText, minDate, maxDate)
+	EditItemPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText, minDate, maxDate, placeholder)
 	{
+		placeholder = (placeholder !== undefined) 
+			? placeholder : crv.buttonTexts.nonePlaceholder;
+		
 		var section = this.mainDiv.append('section')
 			.datum(instance)
 			.classed('cell edit unique', true);
 		section.append('label')
 			.classed('overlined', true)
 			.text(labelText);
-		section.editor = this.appendDateEditor(section,
-												 crv.buttonTexts.nonePlaceholder,
-												 instanceProperty.call(instance),
-												 minDate, maxDate);
+		section.editor = this.appendDateEditor(section, placeholder,
+											   instanceProperty.call(instance),
+											   minDate, maxDate);
 		
 		var handler = function(eventObject)
 		{
