@@ -188,6 +188,8 @@ var ChildrenPanel = (function () {
 		appendLeftChevronSVG(backButton).classed('chevron-left', true);
 		backButton.append('span').text("Back");
 
+		this.navContainer.appendTitle(header);
+
 		var addButton = this.navContainer.appendRightButton()
 				.classed('add-button', true)
 				.on('click', function(d) {
@@ -207,8 +209,6 @@ var ChildrenPanel = (function () {
 				});
 		addButton.append('span').text("+");
 		
-		this.navContainer.appendTitle(header);
-
 		this.searchView = new (this.searchViewType)(this, this.parent);
 		$(this.node()).one('revealing.cr', function() {
 				if (_this.parent.id())
@@ -1296,6 +1296,8 @@ var RootItemsPanel = (function () {
 			});
 		appendLeftChevronSVG(backButton).classed('chevron-left', true);
 		backButton.append('span').text("Back");
+		
+		this.navContainer.appendTitle(header);
 
 		var addButton = this.navContainer.appendRightButton()
 				.classed('add-button', true)
@@ -1315,8 +1317,6 @@ var RootItemsPanel = (function () {
 					d3.event.preventDefault();
 				});
 		addButton.append('span').text("+");
-		
-		this.navContainer.appendTitle(header);
 	}
 	
 	function RootItemsPanel(header, onShow)
@@ -2181,6 +2181,8 @@ var PickPrimaryAdministratorPanel = (function() {
 				})
 			.append('span').text('Cancel');
 		
+		this.navContainer.appendTitle(title);
+		
 		this.navContainer.appendRightButton()
 			.on("click", function()
 			{
@@ -2238,8 +2240,6 @@ var PickPrimaryAdministratorPanel = (function() {
 				d3.event.preventDefault();
 			})
 		    .append("span").text(crv.buttonTexts.done);
-		
-		this.navContainer.appendTitle(title);
 		
 		var sectionPanel = this.mainDiv.append('section')
 			.classed('cell edit unique', true);

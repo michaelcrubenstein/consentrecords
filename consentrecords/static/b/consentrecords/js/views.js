@@ -922,44 +922,75 @@ var SiteNavContainer = (function() {
 	
 	SiteNavContainer.prototype.appendLeftButton = function()
 	{
-		return this.div.append("div").classed("left-link pull-left site-navbar-link site-active-text", true);
+		return this.div.append("div").classed("left-link site-navbar-link site-active-text", true);
 	}
 	
 	SiteNavContainer.prototype.appendRightButton = function()
 	{
-		var firstChild = this.div.selectAll('div');
+		var firstChild = this.div.selectAll('div.right-link');
 		var rightChild;
 		if (firstChild.empty())
-		{
-			rightChild = this.div.append("div");
-		}
+			rightChild = this.div.append('div');
 		else
-		{
-			rightChild = this.div.insert("div", ":first-child");
-			firstChild.classed("pull-left", !this.div.selectAll('div.site-navbar-commands').empty());
-		}
+			rightChild = this.div.insert('div', 'div.right-link');
 			
-		return rightChild.classed("right-link pull-right site-navbar-link site-active-text", true);
+		return rightChild.classed('right-link site-navbar-link site-active-text', true);
 	}
 	
 	SiteNavContainer.prototype.setTitle = function(title)
 	{
-		var h = this.div.selectAll('.site-navbar-commands > .site-title');
-		h.text(title)
-			.style("width", (getTextWidth(title, h.style("font"))+1).toString() + "px");
+		var h = this.div.selectAll('div.site-title');
+		h.text(title);
 	}
 	
 	SiteNavContainer.prototype.appendTitle = function(newTitle)
 	{
-		var h = this.div.append("div").classed("site-navbar-commands", true)
-				   .append("div").classed("site-title", true);
+		var h = this.div.append('div').classed('site-title', true);
 		this.setTitle(newTitle);
-		this.div.selectAll('.left-link').classed('pull-left', true);
+		
+		var _this = this;
+		var f = function()
+			{
+				var leftWidth = 0, rightWidth = 0;
+				_this.div.selectAll('.left-link').each(function(d)
+					{
+						leftWidth += $(this).outerWidth();
+					});
+				_this.div.selectAll('.right-link').each(function(d)
+					{
+						rightWidth += $(this).outerWidth();
+					});
+				var padding = $(h.node()).innerWidth() - (getTextWidth(newTitle, h.style("font"))+1);
+				if (padding < 0)
+				{
+					h.style('padding-right', '0px')
+					 .style('padding-left', '0px');
+				}
+				else if (leftWidth > rightWidth)
+				{
+					if (leftWidth - rightWidth < padding)
+						padding = leftWidth - rightWidth;
+					h.style('padding-right', '{0}px'.format(padding))
+					 .style('padding-left', '0px');
+				}
+				else
+				{
+					if (rightWidth - leftWidth < padding)
+						padding = rightWidth - leftWidth;
+					h.style('padding-left', '{0}px'.format(padding))
+					 .style('padding-right', '0px');
+				}
+			};
+			
+		$(this.sitePanel.node()).on('revealing.cr', f);
+		$(window).resize(f);
+		
 		return h;
 	}
 	
 	function SiteNavContainer(sitePanel)
 	{
+		this.sitePanel = sitePanel;
 		this.nav = sitePanel.panelDiv.append("nav")
 					.attr("role", "navigation")
 		this.div = this.nav.append('div');
@@ -2337,11 +2368,11 @@ var EditItemPanel = (function () {
 				.append('span').text(crv.buttonTexts.cancel);
 		}
 		
-		var doneButton = this.navContainer.appendRightButton();
-			
 		this.navContainer.appendTitle(header);
 		
-		doneButton.on("click", function()
+		var doneButton = this.navContainer.appendRightButton();
+			
+		doneButton.on('click', function()
 			{
 				if (prepareClick('click', header + ' done'))
 				{
@@ -2358,8 +2389,7 @@ var EditItemPanel = (function () {
 					catch(err) { cr.syncFail(err); }
 				}
 			})
-		.append("span").text(this._controller.oldInstance() ? crv.buttonTexts.done : crv.buttonTexts.add);
-		
+		.append('span').text(this._controller.oldInstance() ? crv.buttonTexts.done : crv.buttonTexts.add);
 	}
 	
 	function EditItemPanel(controller)

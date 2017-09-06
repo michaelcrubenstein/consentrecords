@@ -1780,19 +1780,6 @@ var NewExperiencePanel = (function () {
 			}
 		var _this = this;
 		
-		var navContainer = this.appendNavContainer();
-
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'NewExperiencePanel: Cancel'))
-				{
-					_this.hide();
-				}
-				d3.event.preventDefault();
-			});
-		backButton.append('span').text(crv.buttonTexts.cancel);
-		
 		if (experienceController.oldInstance())
 		{
 			var shareButton = this.navContainer.appendRightButton()

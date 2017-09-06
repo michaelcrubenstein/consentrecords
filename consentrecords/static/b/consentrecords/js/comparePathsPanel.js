@@ -605,9 +605,9 @@ var ComparePathsPanel = (function () {
 			.on("click", function() { _this.hideRightEvent(); });
 		backButton.append("span").text(crv.buttonTexts.done);
 
-		var addExperienceButton = this.navContainer.appendRightButton();
-		
 		this.navContainer.appendTitle("Compare Paths");
+		
+		var addExperienceButton = this.navContainer.appendRightButton();
 		
 		this.bottomNavContainer = this.appendBottomNavContainer();
 		this.bottomNavContainer.nav

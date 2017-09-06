@@ -845,10 +845,10 @@ var NotificationsPanel = (function () {
 
 		var navContainer = this.appendNavContainer();
 
-		var doneButton = navContainer.appendRightButton();
-			
 		navContainer.appendTitle(this.panelTitle);
 		
+		var doneButton = navContainer.appendRightButton();
+			
 		var panel2Div = this.appendScrollArea();
 		
 		doneButton.on("click", function()

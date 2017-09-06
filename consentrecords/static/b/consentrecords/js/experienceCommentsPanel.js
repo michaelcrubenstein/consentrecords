@@ -438,18 +438,8 @@ var ExperienceCommentsPanel = (function() {
 		appendLeftChevronSVG(backButton).classed("chevron-left", true);
 		backButton.append("span").text("Back");
 
-		var shareButton = navContainer.appendRightButton()
-			.classed("share", true)
-			.on('click', function()
-				{
-					if (prepareClick('click', 'share'))
-					{
-						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.path());
-					}
-				});
-		shareButton.append("img")
-			.attr("src", shareImagePath);
-
+		navContainer.appendTitle("Experience");
+		
 		this.inEditMode = false;
 		if (fd.experience.canWrite())
 		{		
@@ -530,8 +520,18 @@ var ExperienceCommentsPanel = (function() {
 				.append('span').text(crv.buttonTexts.edit);
 		}
 
-		navContainer.appendTitle("Experience");
-		
+		var shareButton = navContainer.appendRightButton()
+			.classed("share", true)
+			.on('click', function()
+				{
+					if (prepareClick('click', 'share'))
+					{
+						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.path());
+					}
+				});
+		shareButton.append("img")
+			.attr("src", shareImagePath);
+
 		var panel2Div = this.appendScrollArea();
 
 		this.svg = panel2Div.append('svg')

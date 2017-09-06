@@ -55,6 +55,12 @@ var Signup = (function () {
 		this.dots.datum = this;	
 		this.dots.finalText = "Create";	
 
+		this.dots.appendBackButton(navContainer, function() {
+			_thisSignup.hideDown(unblockClick);
+		});
+		
+		navContainer.appendTitle('New Account');
+
 		this.dots.appendForwardButton(navContainer, function()
 			{
 				var birthDay = _thisSignup.getBirthday();
@@ -77,11 +83,6 @@ var Signup = (function () {
 						},
 						cr.syncFail);				
 			});
-		this.dots.appendBackButton(navContainer, function() {
-			_thisSignup.hideDown(unblockClick);
-		});
-		
-		navContainer.appendTitle('New Account');
 
 		function getAlignmentFunction(done)
 		{
