@@ -6921,8 +6921,15 @@ cr.Site = (function() {
 		
 		newInstance._webSite = this._webSite;
 		if (newInstance._address == null)
+		{
 			newInstance._address = new cr.Address();
-		this._address.duplicateData(newInstance._address, duplicateForEdit);
+			newInstance._address.parent(newInstance);
+		}
+			
+		if (this._address)
+			this._address.duplicateData(newInstance._address, duplicateForEdit);
+		else
+			newInstance._address.setDefaultValues();
 		
 		if (duplicateForEdit)
 		{
@@ -6959,11 +6966,22 @@ cr.Site = (function() {
 		
 		if (cr.stringChanged(this.webSite(), revision.webSite()))
 			changes['web site'] = revision.webSite();
+		
+		var addressChanges = {};
+		if (this.address())	
+			this.address().appendChanges(revision.address(), addressChanges);
+		else if (revision.address())
+			revision.address().appendData(addressChanges);
 			
-		var addressChanges = this.address().appendChanges(revision.address());
 		if (Object.keys(addressChanges).length > 0)
 		{
-			addressChanges.id = this.address().id();
+			if (this.address())
+				addressChanges.id = this.address().id();
+			else
+			{
+				revision.address().clientID(uuid.v4());
+				addressChanges.add = revision.address().clientID();
+			}
 			changes['address'] = addressChanges;
 		}
 				
@@ -6975,6 +6993,12 @@ cr.Site = (function() {
 	/** For a newly updated item, add any new elements created to this. */
 	Site.prototype.pullElements = function(source)
 	{
+		if (!this.address() && source.address())
+		{
+			this.address(source.address());
+			source.address().parent(this);
+		}
+		
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
@@ -7019,7 +7043,8 @@ cr.Site = (function() {
     	return cr.IInstance.prototype.promiseData.call(this, fields)
         	.then(function()
         	{
-        		if (_this.address()._fieldsLoaded.indexOf('this') < 0)
+        		if (_this.address() && 
+        			_this.address()._fieldsLoaded.indexOf('this') < 0)
         			_this.address()._fieldsLoaded.push('this');
         		return _this;
         	});
