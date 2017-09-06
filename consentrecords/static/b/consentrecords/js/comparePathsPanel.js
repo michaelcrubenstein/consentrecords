@@ -421,9 +421,7 @@ var ComparePath = (function() {
 		setupOnViewEventHandler(this.leftPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
 		setupOnViewEventHandler(this.rightPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
 		
-		this.allExperiences = this.leftPath.engagements().splice()
-			.concat(this.rightPath.engagements())
-			.concat(this.leftPath.experiences())
+		this.allExperiences = this.leftPath.experiences().splice()
 			.concat(this.rightPath.experiences())
 			
 		var resizeFunction = function()

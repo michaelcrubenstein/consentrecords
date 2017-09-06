@@ -172,6 +172,8 @@ var crv = {
 		emailPublic: "By Request",
 		emails: "Emails",
 		end: "End",
+		ended: "Ended",
+		ends: "Ends",
 		endTime: "End Time",
 		enrollment: "Enrollment",
 		enrollments: "Enrollments",
@@ -233,6 +235,8 @@ var crv = {
 		sites: "Sites",
 		stage: "Stage",
 		start: "Start",
+		started: "Started",
+		starts: "Starts",
 		startTime: "Start Time",
 		state: "State",
 		street: "Street",
@@ -815,14 +819,6 @@ function appendViewButtons(items, fill)
 	fill(items);
 		
 	return items;
-}
-
-function appendUniqueItems(container, data)
-{
-	return container.selectAll('li')
-		.data(data)
-		.enter()
-		.append("li");
 }
 
 function appendItems(container, data, doneDelete)
@@ -2233,11 +2229,29 @@ var EditItemPanel = (function () {
 		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
 	}
 	
+	/** 
+		returns the d3 object that contains the value.
+	 */
+	EditItemPanel.prototype.uniqueValueItem = function(section)
+	{
+		return section.selectAll('li');
+	}
+	
+	EditItemPanel.prototype.appendUniqueValue = function(labelText, value)
+	{
+		var section = this.mainDiv.append('section')
+			.classed('cell edit unique', true);
+		section.append('label')
+			.text(labelText);
+		this.appendEnumerationEditor(section, value);
+		return section;
+	}
+	
 	/** Appends an enumeration that is associated with a picker panel for picking new values. */
 	EditItemPanel.prototype.appendEnumerationPickerSection = function(instance, instanceProperty, labelText, pickPanelType)
 	{
-		var section = this.mainDiv.append('section')
-			.classed('cell edit unique', true)
+		var initialDescription = pickPanelType.prototype.getDescription(instanceProperty.call(instance));
+		var section = this.appendUniqueValue(labelText, initialDescription)
 			.datum(instance)
 			.on('click', 
 				function(d) {
@@ -2262,23 +2276,18 @@ var EditItemPanel = (function () {
 						}
 					}
 			});
-	
-		section.append('label')
-			.text(labelText);
-			
-		var initialDescription = pickPanelType.prototype.getDescription(instanceProperty.call(instance));
-		var items = this.appendEnumerationEditor(section, initialDescription);
-		
-		crf.appendRightChevrons(items);	
+				
+		crf.appendRightChevrons(this.uniqueValueItem(section));	
 		return section;
 	}
 	
 	EditItemPanel.prototype.appendLinkSection = function(instanceProperty, sectionLabel, pickPanelType)
 	{
 		var instance = this.controller().newInstance();
-		var section = this.mainDiv.append('section')
-			.datum(instance)
-			.classed('cell edit unique', true)
+		var newLink = instanceProperty.call(instance);
+		var section = this.appendUniqueValue(sectionLabel, 
+			newLink ? newLink.description() : crv.buttonTexts.nullString)
+			.datum(newLink)
 			.on('click', 
 				function() {
 					if (prepareClick('click', 'pick organization'))
@@ -2304,13 +2313,7 @@ var EditItemPanel = (function () {
 					}
 			});
 
-		section.append('label')
-			.text(sectionLabel);
-		var newLink = instanceProperty.call(instance);
-		var items = this.appendEnumerationEditor(section, 
-			newLink ? newLink.description() : crv.buttonTexts.nullString);
-		section.datum(newLink);
-		crf.appendRightChevrons(items);	
+		crf.appendRightChevrons(this.uniqueValueItem(section));	
 		return section;
 	}
 	

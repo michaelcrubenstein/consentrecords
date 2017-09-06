@@ -3171,6 +3171,7 @@ cr.Experience = (function() {
 	Experience.prototype._site = null;
 	Experience.prototype._customSite = null;
 	Experience.prototype._customOffering = null;
+	Experience.prototype._engagement = null;
 	Experience.prototype._start = null;
 	Experience.prototype._end = null;
 	Experience.prototype._timeframe = null;
@@ -3238,6 +3239,20 @@ cr.Experience = (function() {
 		    if (newValue != this._customOffering)
 		    {
 				this._customOffering = newValue;
+			}
+			return this;
+		}
+	}
+	
+	Experience.prototype.engagement = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._engagement;
+		else
+		{
+		    if (newValue != this._engagement)
+		    {
+				this._engagement = newValue;
 			}
 			return this;
 		}
@@ -3334,6 +3349,7 @@ cr.Experience = (function() {
 		this._customSite = "";
 		this._offering = null;
 		this._customOffering = "";
+		this._engagement = null;
 		this._start = "";
 		this._end = "";
 		this._timeframe = "Previous";
@@ -3358,6 +3374,9 @@ cr.Experience = (function() {
 		if (this.customOffering())
 			initialData['custom offering'] = this.customOffering();
 		
+		if (this.engagement())
+			initialData['engagement'] = this.engagement().urlPath();
+			
 		if (this.timeframe())
 			initialData['timeframe'] = this.timeframe();
 		
@@ -3377,6 +3396,10 @@ cr.Experience = (function() {
 		cr.OrganizationLinkInstance.prototype.appendChanges.call(this, revision, changes);
 		cr.SiteLinkInstance.prototype.appendChanges.call(this, revision, changes);
 		this.appendOfferingLinkChanges(revision, changes);
+
+		if (cr.linkChanged(this.engagement(), revision.engagement()))
+			changes['engagement'] = revision.engagement() && revision.engagement().urlPath();
+
 		if (cr.stringChanged(this.customOrganization(), revision.customOrganization()))
 			changes['custom organization'] = revision.customOrganization();
 				
@@ -3403,6 +3426,15 @@ cr.Experience = (function() {
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
 		this.setOfferingLink(d);
 		cr.DateRangeInstance.prototype.setData.call(this, d);
+
+		if ('engagement' in d) {
+			this._engagement = new cr.Engagement();
+			this._engagement.setData(d['engagement']);
+			this._engagement = crp.pushInstance(this._engagement);
+		}
+		else
+			this._engagement = null;
+
 		this._customOrganization = 'custom organization' in d ? d['custom organization'] : "";
 		this._customSite = 'custom site' in d ? d['custom site'] : "";
 		this._customOffering = 'custom offering' in d ? d['custom offering'] : "";
@@ -3422,6 +3454,7 @@ cr.Experience = (function() {
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
 		this.mergeOfferingLink(source);
 		cr.DateRangeInstance.prototype.mergeData.call(this, source);
+		if (!this._engagement) this._engagement = source._engagement;
 		if (!this._customOrganization) this._customOrganization = source._customOrganization;
 		if (!this._customSite) this._customSite = source._customSite;
 		if (!this._customOffering) this._customOffering = source._customOffering;
@@ -3438,6 +3471,36 @@ cr.Experience = (function() {
 				   .pullNewElements(this.customServices(), source.customServices());
 	}
 	
+	Experience.prototype.updateEngagementLink = function(d, newIDs)
+	{
+		var changed = false;
+		
+		if ('engagement' in d) {
+			var data = d['engagement'];
+			var id;
+			if (typeof(data) == "string")
+			{
+				if (/^engagement\/[A-Za-z0-9]{32}$/.test(data))
+					id = data.substring('engagement/'.length);
+				else
+					console.assert(false);
+			}
+			else if ('id' in data)
+				id = data['id'];
+			else
+				console.assert(false);
+			
+			var newLink = crp.getInstance(id);
+			if (this._engagement != newLink)
+			{
+				this._engagement = newLink;
+				changed = true;
+			}
+		}
+		
+		return changed;
+	}
+
 	/** Called after the contents of the Experience have been updated on the server. */
 	Experience.prototype.updateData = function(d, newIDs)
 	{
@@ -3449,6 +3512,8 @@ cr.Experience = (function() {
 		if (cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		if (this.updateOfferingLink(d, newIDs))
+			changed = true;
+		if (this.updateEngagementLink(d, newIDs))
 			changed = true;
 		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
@@ -3508,6 +3573,7 @@ cr.Experience = (function() {
 		newInstance._customSite = this._customSite;
 		newInstance._offering = this._offering;
 		newInstance._customOffering = this._customOffering;
+		newInstance._engagement = this._engagement;
 		newInstance._timeframe = this._timeframe;
 		newInstance._services = this.duplicateList(this._services, duplicateForEdit);
 		newInstance._customServices = this.duplicateList(this._customServices, duplicateForEdit);
@@ -5616,28 +5682,17 @@ cr.Path = (function() {
         
         var _this = this;	
         this._experiencesPromise = 	
-        	cr.getData({path: _this.urlPath() + '/user/engagement/session/offering',
-			                    fields: ['services'],
-			                    resultType: cr.Offering})
-			.then(function() {
-				return cr.getData({path: _this.urlPath() + '/experience/offering',
+        	cr.getData({path: _this.urlPath() + '/experience/offering',
 			                        fields: ['services'],
-			                        resultType: cr.Offering});
-				})
+			                        resultType: cr.Offering})
 			.then(function() {
-				return $.when(cr.getData({path:  _this.urlPath() + '/user/engagement',
-							   resultType: cr.Engagement, 
-							   fields: ['organization', 'site', 'offering']}),
-							  cr.getData({
-											path: _this.urlPath() + '/experience',
-											fields: ['services', 'custom services'],
-											resultType: cr.Experience
-										})
-							);
+				return cr.getData({path: _this.urlPath() + '/experience',
+								   fields: ['services', 'custom services'],
+								   resultType: cr.Experience
+					});
 				})
-			.then(function(engagements, experiences)
+			.then(function(experiences)
         		{
-        			_this._engagements = engagements;
         			_this._experiences = experiences;
         			experiences.forEach(function(e)
         				{
@@ -5646,13 +5701,8 @@ cr.Path = (function() {
         					e.calculateDescription();
         				});
         			
-        			engagements.forEach(function(e)
-						{
-							e.description(e.offering().description());
-						});
-
         			result = $.Deferred();
-        			result.resolve(engagements, experiences);
+        			result.resolve(experiences);
         			return result;
         		});
         return this._experiencesPromise;

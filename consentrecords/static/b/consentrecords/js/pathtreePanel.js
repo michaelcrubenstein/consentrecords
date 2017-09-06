@@ -104,7 +104,7 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getTimeframe = function()
 	{
-		if (this.experience instanceof cr.Engagement)
+		if (this.experience.engagement())
 		{
 			var end = this.experience.end();
 			if (end && end < getUTCTodayDate().toISOString().substr(0, 10))
@@ -498,66 +498,54 @@ var PathView = (function() {
 	
 	PathView.prototype.showDetailPanel = function(fd)
 	{
-		if (fd.experience instanceof cr.Engagement) {
-			;	/* Nothing to edit */
-		}
-		else
+		if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
 		{
-			if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
+			try
 			{
-				try
-				{
-					var experienceController = new ExperienceController(fd.experience.path(), fd.experience, true);
-					experienceController.oldInstance(fd.experience);
-					
-					var editPanel = new NewExperiencePanel(experienceController, revealPanelLeft);
-					
-					editPanel.showLeft().then(unblockClick);
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-				d3.event.stopPropagation();
+				var experienceController = new ExperienceController(fd.experience.path(), fd.experience, true);
+				experienceController.oldInstance(fd.experience);
+				
+				var editPanel = new NewExperiencePanel(experienceController, revealPanelLeft);
+				
+				editPanel.showLeft().then(unblockClick);
 			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+			d3.event.stopPropagation();
 		}
 	}
 	
 	PathView.prototype.showCommentsPanel = function(flag, fd)
 	{
-		if (fd.experience instanceof cr.Engagement) {
-			;	/* Nothing to edit */
-		}
-		else
+		if (prepareClick('click', 'show experience comments: ' + fd.getDescription()))
 		{
-			if (prepareClick('click', 'show experience comments: ' + fd.getDescription()))
+			try
 			{
-				try
+				if (!fd.selected())
 				{
-					if (!fd.selected())
-					{
-						d3.select(flag).selectAll('rect.bg')
-							.transition()
-							.duration(200)
-							.style('fill-opacity', 0.4);
-					}
-					var newPanel = new ExperienceCommentsPanel(fd);
-					newPanel.showLeft()
-						.always(function()
+					d3.select(flag).selectAll('rect.bg')
+						.transition()
+						.duration(200)
+						.style('fill-opacity', 0.4);
+				}
+				var newPanel = new ExperienceCommentsPanel(fd);
+				newPanel.showLeft()
+					.always(function()
+						{
+							if (!fd.selected())
 							{
-								if (!fd.selected())
-								{
-									d3.select(flag).selectAll('rect.bg')
-										.style('fill-opacity', 0.2);
-								}
-							})
-						.always(unblockClick);
-					return newPanel;
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
+								d3.select(flag).selectAll('rect.bg')
+									.style('fill-opacity', 0.2);
+							}
+						})
+					.always(unblockClick);
+				return newPanel;
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
 			}
 		}
 	}
@@ -1264,7 +1252,7 @@ var PathLines = (function() {
 				_this.handleResize();
 			});
 
-		var successFunction2 = function(engagements, experiences)
+		var successFunction2 = function(experiences)
 		{
 			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
@@ -1281,7 +1269,7 @@ var PathLines = (function() {
 						_this.path.off("experienceAdded.cr", addedFunction);
 					});
 				
-				_this.allExperiences = engagements.slice().concat(experiences);
+				_this.allExperiences = experiences.slice();
 			
 				_this.showAllExperiences();
 			
@@ -1641,6 +1629,7 @@ var PathlinesPanel = (function () {
 
 		var settingsButton;
 		var notificationsButton;
+		var addExperienceButton;
 		
 		if (done)
 		{
@@ -1663,39 +1652,20 @@ var PathlinesPanel = (function () {
 					});
 			backButton.append("span").text(crv.buttonTexts.done);
 			
+			this.navContainer.appendTitle(user.caption());
+		
+			addExperienceButton = this.navContainer.appendRightButton();
 			settingsButton = this.navContainer.appendRightButton();
 		}
 		else
 		{
 			settingsButton = this.navContainer.appendLeftButton();
 			notificationsButton = this.navContainer.appendLeftButton();
+
+			this.navContainer.appendTitle(user.caption());
+			addExperienceButton = this.navContainer.appendRightButton();
 		}
 
-		var addExperienceButton = this.navContainer.appendRightButton();
-		
-		this.navContainer.appendTitle(user.caption());
-		
-// 		var findButton = this.bottomNavContainer.appendRightButton()
-// 				.on("click",
-// 					function() {
-// 						if (prepareClick('click', 'find experience'))
-// 						{
-// 							try
-// 							{
-// 								showClickFeedback(this);
-// 								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null);
-//								newPanel.showLeft().then(unblockClick);
-// 							}
-// 							catch(err)
-// 							{
-// 								cr.syncFail(err);
-// 							}
-// 						}
-// 						d3.event.preventDefault();
-// 					});
-// 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
-// 		findButton.style("display", "none");
-		
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
 			
