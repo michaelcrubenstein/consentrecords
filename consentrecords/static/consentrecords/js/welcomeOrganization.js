@@ -18,6 +18,8 @@ var WelcomeOrganizationPanel = (function () {
 				})
 			.append('span').text('Done');
 
+		navContainer.appendTitle("PathAdvisor");
+		
 		var signinSpan = navContainer.appendRightButton()
 			.on("click", function()
 				{
@@ -36,8 +38,6 @@ var WelcomeOrganizationPanel = (function () {
 				})
 			.append('span').text('Sign In');
 			
-		navContainer.appendTitle("PathAdvisor");
-		
 		var panel2Div = this.appendScrollArea();
 		
 		var d = panel2Div;

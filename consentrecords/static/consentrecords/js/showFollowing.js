@@ -27,6 +27,8 @@ var RequestFollowPanel = (function() {
 				})
 			.append('span').text('Cancel');
 		
+		navContainer.appendTitle(this.title);
+		
 		navContainer.appendRightButton()
 			.on("click", function()
 			{
@@ -74,8 +76,6 @@ var RequestFollowPanel = (function() {
 				d3.event.preventDefault();
 			})
 		    .append("span").text("Request");
-		
-		navContainer.appendTitle(this.title);
 		
 		var panel2Div = this.appendScrollArea();
 
@@ -259,6 +259,8 @@ var FollowingPanel = (function() {
 		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("span").text("Settings");
 		
+		navContainer.appendTitle(header);
+		
 		var _this = this;	
 		this.inEditMode = false;
 		var editButton = navContainer.appendRightButton()
@@ -293,8 +295,6 @@ var FollowingPanel = (function() {
 				}
 			});
 		editButton.append('span').text(crv.buttonTexts.edit);
-		
-		navContainer.appendTitle(header);
 		
 		var panel2Div = this.appendScrollArea();
 		

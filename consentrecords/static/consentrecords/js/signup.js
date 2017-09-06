@@ -51,18 +51,19 @@ var Signup = (function () {
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
-		this.dots = new DotsNavigator(panel2Div, 3);
+		this.dots = new DotsNavigator(panel2Div, 2);
 		this.dots.datum = this;	
 		this.dots.finalText = "Create";	
 
+		this.dots.appendBackButton(navContainer, function() {
+			_thisSignup.hideDown(unblockClick);
+		});
+		
+		navContainer.appendTitle('New Account');
+
 		this.dots.appendForwardButton(navContainer, function()
 			{
-				var birthDay = _thisSignup.getBirthday();
-				var birthMonth = birthDay.substr(0, 7);
-				var initialData = {'birthday': birthDay,
-				                   'path':{'birthday': birthMonth}
-				                  };
-				initialData['public access'] = 'find';
+				var initialData = {};
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
 					initialData)
 					.then(function(data)
@@ -77,11 +78,6 @@ var Signup = (function () {
 						},
 						cr.syncFail);				
 			});
-		this.dots.appendBackButton(navContainer, function() {
-			_thisSignup.hideDown(unblockClick);
-		});
-		
-		navContainer.appendTitle('New Account');
 
 		function getAlignmentFunction(done)
 		{
@@ -116,114 +112,6 @@ var Signup = (function () {
 			return Math.round($(listNode).scrollTop() / itemHeight);
 		}
 		
-		function setupPanel0(signup)
-		{
-			var p = d3.select(this);
-			
-			p.classed('birthday', true);
-
-			p.append('h1')
-				.text('Birthday');
-				
-			var row = p.append('table').classed('labeled', true)
-				.append('tr');
-			row.append('td').text('Birth Month');
-			var yearCell = row.append('td').classed('full-width', true);
-			var monthInput = yearCell.append('div')
-				.classed('site-active-text', true)
-				.text('month year')
-				.on('change', function(d)
-					{
-						console.log('monthInput change {0}'.format(monthInput.node().selectedIndex));
-						d3.select(this).selectAll(":first-child").attr('disabled', true);
-						signup.dots.checkForwardEnabled();
-					});
-			
-			var pickerRow = p.select('table').append('tr');
-			var pickerCell = pickerRow.append('td')
-				.attr('colspan', '2');		
-			var datePickerContainer = pickerCell.append('div')
-				.classed('wheel', true);
-			var monthPickerList = datePickerContainer.append('ol');
-			var yearPickerList = datePickerContainer.append('ol');
-			
-			function setPickedText()
-			{
-				var m = getPickedItem(monthPickerList.node());
-				var y = getPickedItem(yearPickerList.node());
-				monthInput.text("{0} {1}".format(m, y));
-			}
-					
-			$(monthPickerList.node()).scroll(getAlignmentFunction(setPickedText));
-			$(yearPickerList.node()).scroll(getAlignmentFunction(setPickedText));
-			
-			var topShade = datePickerContainer.append('div')
-				.classed('topShade', true);
-			var bottomShade = datePickerContainer.append('div')
-				.classed('bottomShade', true);
-					
-			p.append('p')
-				.text('Your birthday will be shared only with people you want. We collect your birth month and year to help match you to the right opportunities.');
-				
-			var minYear, maxYear;
-			maxYear = (new Date()).getUTCFullYear();
-	
-			minYear = maxYear-100;
-		
-			var years = [];
-			for (var i = maxYear; i >= minYear; --i)
-				years.push(i);
-			
-			yearPickerList.selectAll('li')
-				.data(years)
-				.enter()
-				.append('li')
-				.text(function(d) { return d; });
-					
-			var months = Date.CultureInfo.monthNames;
-			
-			monthPickerList.selectAll('li')
-				.data(months)
-				.enter()
-				.append('li')
-				.text(function(d) { return d; });
-				
-			var birthdayString = years[0] + "-" + "01";
-				
-			signup.getBirthday = function()
-			{
-				var m = getPickedIndex(monthPickerList.node());
-				var y = getPickedItem(yearPickerList.node());
-				m += 1;
-				if (m < 10)
-					m = "0{0}".format(m);
-				return "{0}-{1}".format(y, m);
-			}
-			
-			setPickedText();
-			p.node().onGoingForward = function(gotoNext)
-			{
-				gotoNext();
-			}
-			
-			p.append('div')
-				.append('a').attr('id', "id_termsOfUseLink")
-				.classed("btn btn-link btn-xs", true)
-				.text("Terms Of Use")
-				.on('click', function() {
-		var message = "<p>Information in this system will only be used according to your consent except " +
-			" as required by law. By signing up for this system, you consent to allow this system to store" +
-			" the information you have entered.</p>";
-		$(termsAlert.node()).html('<div class="alert alert-info alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+message+'</div>');
-
-				});
-			
-			var termsAlert = p.append('div')
-				.append('div').attr('id', "id_termsAlert");
-				
-			this.onReveal = null;
-		}
-	
 		function setupPanel2(signup)
 		{
 			var p = d3.select(this);
@@ -401,7 +289,6 @@ var Signup = (function () {
 	
 		this.dots.nthPanel(0).onReveal = setupPanel2;
 		this.dots.nthPanel(1).onReveal = setupPanel3;
-		this.dots.nthPanel(2).onReveal = setupPanel0;
 		
 		setTimeout(function()
 			{

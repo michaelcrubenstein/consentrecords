@@ -118,7 +118,7 @@
 
 		/* The global object used to identify the current user. */
 		{% if userID %}
-		cr.createSignedinUser("{{userID}}", [cr.fieldNames.systemAccess])
+		cr.createSignedinUser("{{userID}}", ['system access'])
 			.fail(cr.asyncFail);
 		{% endif %}
 		
