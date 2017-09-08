@@ -1866,18 +1866,15 @@ var NewExperiencePanel = (function () {
 			.then(function()
 				{
 					var tagPoolSection = _this.tagPoolSection;
+					var tagInput;
 					
-					if (experienceController.serviceLinks().length == 0)
+					tagInput = tagPoolSection.section.select('.tags-container>input.tag');
+					if (tagInput.size() == 0)
 					{
 						var tagsContainer = tagPoolSection.section.select('.tags-container');
-						var tagInput = tagPoolSection.appendTag(tagsContainer, null);
-						tagInput.node().focus();
+						tagInput = tagPoolSection.appendTag(tagsContainer, null);
 					}
-					else
-					{
-						var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
-						tagInput.node().focus();
-					}
+					tagInput.node().focus();
 				},
 				cr.asyncFail);
 
