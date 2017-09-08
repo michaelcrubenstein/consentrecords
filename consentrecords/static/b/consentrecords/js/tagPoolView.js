@@ -284,7 +284,7 @@ var TagPoolView = (function () {
 		/* Set the height of the svg to match the total height of all of the flags. */
 		this.svg
  			.interrupt().transition().duration(duration)
-			.attr('height', height)
+			.attr('height', height);
 			
 		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
 		/* If it was visible and it is still visible, animate its position. */
@@ -442,15 +442,13 @@ var TagPoolView = (function () {
 	
 	function TagPoolView(container, divClass)
 	{
+		console.assert(container);
 		this.container = container;
-		if (container)
-		{
-			this.div = container.append('div')
-				.classed(divClass, true);
-				
-			this.svg = this.div.append('svg')
-				.classed('flags', true);
-		}
+		this.div = container.append('div')
+			.classed(divClass, true);
+			
+		this.svg = this.div.append('svg')
+			.classed('flags', true);
 	}
 	
 	return TagPoolView;
@@ -488,14 +486,14 @@ var TagSearchView = (function() {
 		duration = duration !== undefined ? duration : 400;
 		var parent = $(this.reveal.node).parent();
 		var oldHeight = $(this.reveal.node).height();
-		$(this.reveal.node).height(0);
+		//$(this.reveal.node).height(0);
 		var newHeight = parent.getFillHeight() - 
-						parent.outerHeight(true);
+						parent.outerHeight(true) + oldHeight;
 
 		if (this.minRevealedHeight > newHeight)
 			newHeight = this.minRevealedHeight;
 			
-		$(this.reveal.node).height(oldHeight);
+		//$(this.reveal.node).height(oldHeight);
 		var _this = this;
 		if (oldHeight != newHeight)
 		{
