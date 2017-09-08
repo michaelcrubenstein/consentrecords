@@ -361,7 +361,7 @@ var ComparePath = (function() {
 		setupOnViewEventHandler(this.leftPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
 		setupOnViewEventHandler(this.rightPath, "experienceAdded.cr", this.pathwayContainer.node(), addedFunction);
 		
-		this.allExperiences = this.leftPath.experiences().splice()
+		this.allExperiences = this.leftPath.experiences().slice()
 			.concat(this.rightPath.experiences())
 			
 		var resizeFunction = function()
@@ -381,11 +381,7 @@ var ComparePath = (function() {
 		}
 	
 		var node = this.sitePanel.node();
-		this.allExperiences.filter(function(d)
-			{
-				return d instanceof cr.Experience;
-			})
-			.forEach(function(d)
+		this.allExperiences.forEach(function(d)
 			{
 				_this.setupExperienceTriggers(d);
 			});
