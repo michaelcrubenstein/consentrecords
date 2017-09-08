@@ -1208,14 +1208,11 @@ crv.SitePanel = (function () {
 				{
 					eventObject.stopPropagation();
 				});
-				
-			/* Trigger the resize in the next event to ensure that css widths and
-				heights have been applied.
-			 */
-			setTimeout(function()
-				{
-					mainNode.trigger("resize.cr");
-				});
+			
+			/* Since calculateHeight is first called within revealing.cr, 
+				resize handlers should be set up in subsequent revealing.cr handlers.
+			 */	
+			mainNode.trigger("resize.cr");
 		}
 	}
 	

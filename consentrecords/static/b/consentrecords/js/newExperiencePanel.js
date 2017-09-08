@@ -2211,12 +2211,16 @@ var NewExperiencePanel = (function () {
 					$(startDateWheel).trigger('change');
 					_this.setDateRangeLabels();
 				}
-			});
 
-		$(panel2Div.node()).on('resize.cr', function()
-		{
-			_this.resizeVisibleSearch(0);
-		});
+				/* Once everything is set up, subsequent resizing should update the visible
+					search VerticalReveal. Until that point, metrics aren't correct.
+				 */
+				$(panel2Div.node()).on('resize.cr', function()
+				{
+					_this.resizeVisibleSearch(0);
+				});
+				_this.resizeVisibleSearch(0);
+			});
 	}
 	
 	return NewExperiencePanel;

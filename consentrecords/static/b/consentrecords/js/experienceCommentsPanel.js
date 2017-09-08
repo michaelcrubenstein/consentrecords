@@ -667,17 +667,6 @@ var ExperienceCommentsPanel = (function() {
 		else
 			this.postButtonNode = null;
 		
-		$(panel2Div.node()).on('resize.cr', resizeDetail);	
-						
-		$(panel2Div.node()).on('resize.cr', function()
-			{
-				commentList.selectAll('textarea')
-					.each(function()
-						{
-							$(this).trigger('resize.cr');
-						});
-			});					
-		
 		if (fd.experience.id())
 		{
 			this.promise = fd.experience.promiseData(['comments'])
@@ -701,10 +690,20 @@ var ExperienceCommentsPanel = (function() {
 			this.promise = $.Deferred();
 			this.promise.resolve();
 		}
-		
+
 		this.promise = this.promise
 			.then(function()
 				{
+					$(panel2Div.node()).on('resize.cr', resizeDetail);	
+			
+					$(panel2Div.node()).on('resize.cr', function()
+						{
+							commentList.selectAll('textarea')
+								.each(function()
+									{
+										$(this).trigger('resize.cr');
+									});
+						});	
 					_this.setupAsk();
 				});
 	}

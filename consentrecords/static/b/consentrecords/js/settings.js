@@ -610,26 +610,29 @@ crn.ExperienceCommentRequested = (function() {
 					
 										var experienceInstance = crp.getInstance(args[1].id());
 										var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance));
-										newPanel.startEditing();
-										try 
+										$(newPanel.mainDiv).on('revealing.cr', function()
 										{
-											newPanel.promise = newPanel.promise.then(function()
-												{
-													try
+											newPanel.startEditing();
+											try 
+											{
+												newPanel.promise = newPanel.promise.then(function()
 													{
-														var comments = experienceInstance.comments();
-														var commentInstanceID = args[2].id();
-														var comment = comments.find(function(v) { return v.id() == commentInstanceID; });
+														try
+														{
+															var comments = experienceInstance.comments();
+															var commentInstanceID = args[2].id();
+															var comment = comments.find(function(v) { return v.id() == commentInstanceID; });
 	
-														newPanel.focusOnComment(comment.id());
-													}
-													catch (err) { cr.asyncFail(err); }
-												});
-										}
-										catch(err)
-										{
-											cr.asyncFail(err);
-										}
+															newPanel.focusOnComment(comment.id());
+														}
+														catch (err) { cr.asyncFail(err); }
+													});
+											}
+											catch(err)
+											{
+												cr.asyncFail(err);
+											}
+										});
 										newPanel.showLeft()
 											.always(unblockClick);
 									}
