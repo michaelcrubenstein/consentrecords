@@ -680,75 +680,6 @@ def addToPathway(request):
     return HttpResponse(template.render(args))
 
 class api:
-    # Handle a POST event to create a new instance of an object with a set of properties.
-    def createInstance(user, path, data):
-        try:
-            # The type of the new object.
-            instanceType = data.get('typeName', None)
-            instanceUUID = data.get('typeID', None)
-            if instanceUUID:
-                ofKindObject = Instance.objects.get(pk=instanceUUID)
-            elif not instanceType:
-                return HttpResponseBadRequest(reason="Type was not specified in createInstance")
-            else:
-                ofKindObject = terms[instanceType]
-         
-            # The element name for the type of element that the new object is to the container object
-            elementName = data.get('elementName', None)
-            elementUUID = data.get('elementUUID', None)
-            if elementUUID:
-                field = Instance.objects.get(pk=elementUUID)
-            elif elementName:
-                field = terms[elementName]
-            elif instanceUUID:
-                field = Instance.objects.get(pk=instanceUUID)
-            elif instanceName: 
-                field = terms[instanceName]
-            
-            # An optional set of properties associated with the object.
-            propertyString = data.get('properties', None)
-            propertyList = json.loads(propertyString)
-        
-            indexString = data.get('index', "-1")
-            index = int(indexString)
-        
-            language = data.get('language', 'en')
-            
-            with transaction.atomic():
-                context = Context(language, user)
-                newIDs = {}
-                if path:
-                    tokens = cssparser.tokenizeHTML(path)
-                    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-                    if not qs.exists():
-                        raise ValueError("path was not recognized: %s" % path)
-                    else:
-                        item = qs[0].createElement(elementName, propertyList, context, newIDs) 
-                else:
-                    item = RootInstance.createInstance(elementName, propertyList, context, newIDs)
-                if 'add' in propertyList:
-                    newIDs[propertyList['add']] = item.id()
-    
-                results = {'new IDs': newIDs}
-            
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-            
-        return JsonResponse(results)
-    
-    def checkForPath(c, user, pathKey, idKey):
-        if pathKey in c:
-            userInfo = UserInfo(user)
-            instances = pathparser.getObjectQuerySet(c[pathKey], userInfo=userInfo)\
-                                  .filterToInstances()\
-                                  .querySet
-            if len(instances) > 0:
-                c[idKey] = instances[0].id
-            else:
-                raise RuntimeError("%s is not recognized" % pathKey)
-    
     def updateValues(user, path, data, hostURL):
         try:
             commandString = data.get('commands', "[]")
@@ -902,7 +833,8 @@ def handleURL(request, urlPath=None):
     elif request.method == 'POST':
         if not request.user.is_authenticated:
             raise PermissionDenied
-        return api.createInstance(request.user, urlPath, request.POST)
+        hostURL = ("https://" if request.is_secure() else "http://") + request.get_host();
+        return api.updateValues(request.user, urlPath, request.POST, hostURL)
     else:
         raise Http404("api only responds to GET, DELETE and POST methods")
 
