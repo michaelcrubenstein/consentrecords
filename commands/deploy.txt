@@ -86,6 +86,7 @@ python3 manage.py migrate
 rm c.tar
 
 cd ../..
+date
 eb deploy
 date
 logout

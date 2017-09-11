@@ -894,7 +894,10 @@ class OrderedServiceLinkInstance(ServiceLinkInstance):
         return data
         
     def buildHistory(self, context):
-        return self.historyType.objects.create(transaction=self.lastTransaction,
+        if self.lastTransaction == context.transaction:
+            return True # history has already been built
+        else:
+            return self.historyType.objects.create(transaction=self.lastTransaction,
                                              instance=self,
                                              position=self.position,
                                              service=self.service)
@@ -910,6 +913,20 @@ class OrderedServiceLinkInstance(ServiceLinkInstance):
     def order_by(queryset, context):
         return queryset.order_by('position')
                 
+    def update(self, changes, context, newIDs={}):
+        super(OrderedServiceLinkInstance, self).update(changes, context, newIDs)
+        
+        history = None
+        if 'position' in changes:
+            newPosition = int(changes['position'])
+            if newPosition != self.position:
+                history = history or self.buildHistory(context)
+                self.position = newPosition
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class PublicInstance():
     def getSubClause(qs, user, accessType):
         return qs, accessType
@@ -4439,7 +4456,7 @@ class Experience(ChildInstance, dbmodels.Model):
              self.timeframe or '-',
              )
         for j in self.experienceImplications.all():
-            s += "\tImplied Service: %s" % str(j.service)
+            s += "\n\tImplied Service: %s" % str(j.service)
         return s
     
     def update(self, changes, context, newIDs={}):
@@ -4578,6 +4595,9 @@ class ExperienceImplication(dbmodels.Model):
              str(self.experience) if self.experience else '-',
              str(self.service) if self.service else '-',
              )
+    
+    def __str__(self):
+        return self.dataString
     
 class ExperienceCustomService(ChildInstance, dbmodels.Model):
     id = idField()
@@ -4750,6 +4770,10 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
         super(ExperienceService, self).markDeleted(context)
         if needToCheck:
             self.parent.checkImplications()
+    
+    def update(self, changes, context, newIDs={}):
+        super(ExperienceService, self).update(changes, context, newIDs)
+        self.parent.checkImplications()
 
     @property
     def historyType(self):
