@@ -95,6 +95,12 @@ rect.hole {
 	fill: #666;
 }
 
+span.hole {
+	background-color: #666;
+	border-right-color: #666;
+	color: #666;
+}
+
 div.query-container {
 	width: calc(100% - 20px);
 	height: 101px;
@@ -125,7 +131,7 @@ div.query-container>span {
 	cursor: default;
 }
 
-div.query-container>svg {
+div.query-container>div.query-tag-pool {
 	position: absolute;		/* So that it appears above the span. */
 	width: calc(100% - 20px);
 	height: calc(100% - 20px);

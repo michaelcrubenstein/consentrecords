@@ -89,7 +89,7 @@ var SearchPathsResultsView = (function () {
 					{
 						$(panel.pathtree).on("userSet.cr", function()
 							{
-								var queryFlags = _this.searchPathsPanel.queryContainer.flags().data();
+								var queryFlags = _this.searchPathsPanel.queryTagPoolView.flags().data();
 								panel.pathtree.flagControllers().forEach(function(fc)
 									{
 										fc.selected(_this.containsQuery(fc, queryFlags));
@@ -184,7 +184,7 @@ var SearchTagPoolView = (function () {
 	SearchTagPoolView.prototype.setFlagVisibles = function()
 	{
 		var _this = this;
-		var queryData = this.sitePanel.queryContainer.flags().data();
+		var queryData = this.sitePanel.queryTagPoolView.flags().data();
 		
 		function inQueryFlags(a)
 		{
@@ -218,7 +218,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.cancelButton = null;
 	SearchPathsPanel.prototype.topHandle = null;
 	SearchPathsPanel.prototype.poolContainer = null;
-	SearchPathsPanel.prototype.queryContainer = null;
+	SearchPathsPanel.prototype.queryTagPoolView = null;
 	
 	SearchPathsPanel.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
 	SearchPathsPanel.prototype.searchFlagHSpacing = 15;
@@ -256,7 +256,7 @@ var SearchPathsPanel = (function () {
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 
 		var queryBottom;
-		if (this.queryContainer.flags().selectAll('g').size() == 0)
+		if (this.queryTagPoolView.flags().selectAll('g').size() == 0)
 			queryBottom = 0;
 		else
 			queryBottom = 100;
@@ -301,8 +301,7 @@ var SearchPathsPanel = (function () {
 						 + inputMarginRight
 						 - $(this.cancelButton).outerWidth(true);
 						 
-		$(this.node()).animate({top: 0,
-								height: parentHeight},
+		$(this.node()).animate({top: 0},
 							   {duration: duration});
 		$(this.searchInput).animate({width: inputWidth,
 									 "margin-right": 0},
@@ -316,14 +315,17 @@ var SearchPathsPanel = (function () {
 		this.mainDiv.classed('vertical-scrolling', true)
 			.classed('no-scrolling', false);
 
-		var resultsTop;
 		var resultsHeight;
 		var queryBottom;
 		var poolHeight;
 		var poolWidth;
 		var _this = this;
 
-		if (this.queryContainer.flags().size() == 0)
+		/* queryBottom is the height of the space between the bottom of the query container and
+			the bottom of the window when scrollTop is 0. This space is used to display a little bit
+			of the results (two items).
+		 */
+		if (this.queryTagPoolView.flags().size() == 0)
 			queryBottom = 0;
 		else
 			queryBottom = 100;
@@ -333,42 +335,37 @@ var SearchPathsPanel = (function () {
 			
 		var poolVMargins = $poolContainer.outerHeight(true) - $poolContainer.outerHeight(false);
 		var poolHMargins = $poolContainer.outerWidth(true) - $poolContainer.innerWidth();
-		var queryVMargins = $queryContainer.outerHeight(true) - $queryContainer.outerHeight(false);
-		var queryVPadding = parseInt($queryContainer.css('padding-top')) + 
-							parseInt($queryContainer.css('padding-bottom'));
 		var queryContainerWidth;
-		var animatePromise;
 		
-		poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins -
-					 this.queryFlagsHeight - parseInt($queryContainer.css('margin-bottom'));
+		poolHeight = $(window).height() - poolTop - poolVMargins -
+					$queryContainer.outerHeight(true) - queryBottom;
 		poolWidth = parentWidth - poolHMargins;
 		queryContainerWidth = parentWidth - poolHMargins;
 		
-		resultsHeight = this.queryContainer.flags().size() && ($(window).height() - this.resultsTopMargin);
+		resultsHeight = this.queryTagPoolView.flags().size() && ($(window).height() - this.resultsTopMargin);
+		
+		if ($(this.resultContainerNode).height() < queryBottom &&
+			resultsHeight >= queryBottom)
+			$(this.resultContainerNode).height(queryBottom);
 		
 		return $.when($poolContainer.animate(
 					{width: poolWidth, 
 					 height: poolHeight},
 					{duration: duration}).promise(),
-/* 
-			   $(this.queryContainer.svg.node()).animate(
-			   		{
-			   			width: queryContainerWidth,
-			   			height: this.queryFlagsHeight - queryVPadding
-			   		},
-			   		{duration: duration}).promise(),
- */
-			   $(this.resultContainerNode)
-				.animate({height: resultsHeight},
-						 {duration: duration})
-				.promise(),
-			/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
-				This is important on iPhones where the soft keyboard appears and forces scrolling. */
-			$(this.node().parentNode)
-				.animate({scrollTop: 0},
-						 {duration: duration})
-				.promise())
-		 .then(function()
+					/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
+						This is important on iPhones where the soft keyboard appears and forces scrolling. */
+					$(this.node().parentNode)
+						.animate({scrollTop: 0},
+								 {duration: duration})
+						.promise())
+			.then(function()
+				{
+					return $(_this.resultContainerNode)
+						.animate({height: resultsHeight},
+								 {duration: duration})
+						.promise();
+				})
+		 	.then(function()
 			 	{
 					_this.poolContainer.layoutFlags(queryContainerWidth, duration);
 					_this.checkResultsScrolling();
@@ -377,15 +374,15 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.getNextQueryFlagPosition = function(sourceFlag)
 	{
-		var lastChild = this.queryContainer.svg.selectAll('g:last-child');
+		var lastChild = this.queryTagPoolView.div.selectAll('span:last-child');
 		if (lastChild.size() == 0)
 			return {top: 0, left:0};
 		else
 		{
 			var oldS = lastChild.datum();
-			var nextRight = oldS.x + lastChild.node().getBBox().width + this.searchFlagHSpacing;
-			if (nextRight + sourceFlag.getBBox().width 
-				> $(this.queryContainer.svg.node()).width())
+			var nextRight = oldS.x + lastChild.node().getBoundingClientRect().width + this.searchFlagHSpacing;
+			if (nextRight + sourceFlag.getBoundingClientRect().width 
+				> $(this.queryTagPoolView.node()).width())
 			{
 				return {top: (oldS.y + this.flagHeightEM + this.searchFlagVSpacing) * this.emToPX,
 						left: 0};
@@ -403,7 +400,7 @@ var SearchPathsPanel = (function () {
 		var _this = this;
 		function inQueryFlags(a)
 		{
-			return _this.queryContainer.flags().data()
+			return _this.queryTagPoolView.flags().data()
 				.some(function(fd) { return fd.service == a.service; });
 		}
 		
@@ -426,12 +423,11 @@ var SearchPathsPanel = (function () {
 	{
 		var _this = this;
 		
-		if (this.queryContainer.flags().size() == 1)
+		if (this.queryTagPoolView.flags().size() == 1)
 		{
-			this.queryContainer.div.selectAll('span')
+			this.queryHelp
  				.interrupt().transition().duration(400)
 				.style('opacity', 1.0);
-			this.revealPanel();
 		}
 
 		return $(queryFlag).animate({opacity: 0.0})
@@ -442,13 +438,11 @@ var SearchPathsPanel = (function () {
 					_this.poolContainer.flags().data().find(function(s) { return s.service == service.service; })
 						.visible = true;
 						
-					// _this.poolContainer.flags().sort(function(a, b) { return _this.comparePoolFlags(a, b); });
-					
 					_this.poolContainer.layoutFlags();
-					_this.queryContainer.layoutFlags();
+					_this.queryTagPoolView.layoutFlags();
 					
 					var promise = null;
-					if (_this.queryContainer.flags().size() == 0)
+					if (_this.queryTagPoolView.flags().size() == 0)
 						promise = _this.revealPanel();
 					else
 					{
@@ -472,13 +466,13 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype._clearQuery = function()
 	{
 		var _this = this;
-		$(this.queryContainer.svg.node()).children().remove();
+		$(this.queryTagPoolView.node()).children().remove();
 		this.poolContainer.flags().sort(function(a, b) { return _this.comparePoolFlags(a, b); });
 		
 		this.poolContainer.layoutFlags();
 		
 		/* Show the help message in the query container */ 
-		this.queryContainer.div.selectAll('span')
+		this.queryTagPoolView.div.selectAll('span')
  							.interrupt().transition().duration(400)
 							.style('opacity', 1.0);
 
@@ -515,27 +509,23 @@ var SearchPathsPanel = (function () {
 			.attr('version', "1.1");
 		
 		/* Set the svg dimensions to the same as the flag. */
-		var poolFlagRect = poolFlag.getBBox();
+		var poolFlagRect = poolFlag.getBoundingClientRect();
 		$(travelSVG.node()).width(poolFlagRect.width)
-			.height(poolFlagRect.height);
+			.height(poolFlagRect.height)
+			.css('left', poolFlagRect.left)
+			.css('top', poolFlagRect.top);
 		
-		var poolFlagsRect = this.poolContainer.svg.node().getBoundingClientRect();	
-		travelSVG.style('left', poolFlagsRect.left + s.x)
-			.style('top', poolFlagsRect.top + (s.y * this.emToPX));
- 		
  		/* Create a new flag in the svg. */
- 		var g = travelSVG.append('g')
+ 		var g = travelSVG.append('span')
  			.datum(s);
 			
 		this.poolContainer.appendFlag(g);
 		
 		/* Cover the old flag with a hole. */
-		var rectHole = d3.select(poolFlag).append('rect').classed('hole', true)
-			.attr('width', poolFlagRect.width)
-			.attr('height', poolFlagRect.height);
+		d3.select(poolFlag).classed('hole', true);
  		
- 		/* Figure out where travelSVG is going to end up relative to queryContainer.svg. */
- 		var newPosition = this.queryContainer.svg.node().getBoundingClientRect();
+ 		/* Figure out where travelSVG is going to end up relative to queryTagPoolView.div. */
+ 		var newPosition = this.queryTagPoolView.div.node().getBoundingClientRect();
  		var flagPosition = this.getNextQueryFlagPosition(poolFlag);
  		
  		var _this = this;
@@ -549,7 +539,7 @@ var SearchPathsPanel = (function () {
 					var newS = new ServiceFlagController(s.service);
 					newS.x = flagPosition.left;
 					newS.y = flagPosition.top / _this.emToPX;
-					var queryFlag = _this.queryContainer.svg.append('g')
+					var queryFlag = _this.queryTagPoolView.div.append('span')
 						.datum(newS)
 						.on('click', function(fd) 
 							{ 
@@ -558,18 +548,17 @@ var SearchPathsPanel = (function () {
 									_this.onQueryFlagClicked(this, fd)
 										.done(unblockClick);
 								} 
-							})
-						.attr('transform', 
-						      function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
+							});
 	
-					_this.queryContainer.appendFlag(queryFlag);
+					_this.queryTagPoolView.appendFlag(queryFlag);
+					$(queryFlag.node()).css(flagPosition);	/* Set the top and the left simultaneously. */
 					queryFlag.transition()
 						.style('opacity', 1);
 					
 					var promise = null;
-					if (_this.queryContainer.flags().size() == 1)
+					if (_this.queryTagPoolView.flags().size() == 1)
 					{
-						_this.queryContainer.div.selectAll('span')
+						_this.queryHelp
  							.interrupt().transition().duration(400)
 							.style('opacity', 0.0);
 						promise = _this.revealPanel();
@@ -579,16 +568,13 @@ var SearchPathsPanel = (function () {
 					travelSVG.remove();
 					
 					/* Dispose of the hole. */
-					rectHole.interrupt().transition()
-						.duration(400)
-						.style('opacity', 0.0)
-						.remove();
+					d3.select(poolFlag).classed('hole', false);
 		
 					/* Run a new search based on the query. */
+					_this.enableResultsScrolling();
+					_this.searchPathsResultsView.startSearchTimeout(_this.searchPathsResultsView.inputCompareText(), 0);
 					var f = function()
 					{
-						_this.enableResultsScrolling();
-						_this.searchPathsResultsView.startSearchTimeout(_this.searchPathsResultsView.inputCompareText(), 0);
 						_this.checkResultsScrolling();
 					}
 					if (promise)
@@ -606,7 +592,7 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.getQueryFlags = function()
 	{
-		return this.queryContainer.flags().data();
+		return this.queryTagPoolView.flags().data();
 	}
 	
 	SearchPathsPanel.prototype.filterPool = function()
@@ -827,11 +813,16 @@ var SearchPathsPanel = (function () {
 			.style('fill', function(d) { return d.color; });
 		this.selectedPool = svgData[0];
 		
+		/* poolContainer is the tag pool that users can click to fill the queryTagPoolView. */
 		this.poolContainer = new SearchTagPoolView(this);
+		
+		this.queryContainer = this.mainDiv.append('div')
+			.classed('query-container', true);
+
+		/* queryTagPoolView is the tag pool that is used as search criteria. */
+		this.queryTagPoolView = new TagPoolView(this.queryContainer, 'query-tag-pool');
 			
-		this.queryContainer = new TagPoolView(this.mainDiv, 'query-container');
-			
-		this.queryHelp = this.queryContainer.div.append('span')
+		this.queryHelp = this.queryContainer.append('span')
 			.text('Tap tags to find paths containing those tags.');
 		
 		$(this.topBox).click(function(event)

@@ -211,6 +211,18 @@ var FlagController = (function() {
 		return PathGuides.data[column].fontColor;
 	}
 	
+	FlagController.prototype.flagColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].flagColor;
+	}
+	
+	FlagController.prototype.poleColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].poleColor;
+	}
+	
 	FlagController.prototype.checkOfferingCells = function(done)
 	{
 		// Is this needed any longer?
