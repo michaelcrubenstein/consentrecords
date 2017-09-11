@@ -54,19 +54,19 @@ urlpatterns = [
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
     url(r'^user/updateusername/', views.updateUsername, name='updateUsername'),
-    url(r'^user/acceptFollower/([^?]*)/', views.acceptFollower),
+    url(r'^user/acceptFollower/(.*)/', views.acceptFollower),
     url(r'^user/acceptFollower/', views.acceptFollower),
     url(r'^user/requestAccess/', views.requestAccess, name='requestAccess'),
 
-    url(r'^local/updatevalues/([^?]*)/', views.updateValues, name='updateValues'),
+    url(r'^local/updatevalues/(.*)/', views.updateValues, name='updateValues'),
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
     
-    url(r'^api/updatevalues/([^?]*)/', views.updateValues),
+    url(r'^api/updatevalues/(.*)/', views.updateValues),
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),
     url(r'^api/deleteinstances/', views.ApiEndpoint.as_view()),
     url(r'^api/deletevalue/', views.ApiEndpoint.as_view()),
     
-    url(r'^api/([^?]*)/', views.handleURL),
+    url(r'^api/(.*)/', views.handleURL),
     url(r'^api/$', views.handleURL),
     
     url(r'^doc/features/', views.features),

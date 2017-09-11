@@ -221,7 +221,6 @@ var VerticalReveal = (function() {
 var TagPoolView = (function () {
 	TagPoolView.prototype.container = null;
 	TagPoolView.prototype.div = null;
-	TagPoolView.prototype.svg = null;
 	
 	TagPoolView.prototype.flagHSpacing = 15;
 	TagPoolView.prototype.flagVSpacing = 1.0;
@@ -235,7 +234,7 @@ var TagPoolView = (function () {
 	
 	TagPoolView.prototype.flags = function()
 	{
-		return this.svg.selectAll('g.flag');
+		return this.div.selectAll('span.flag');
 	}
 	
 	/* Sets the x, y and y2 coordinates of each flag. */
@@ -252,7 +251,7 @@ var TagPoolView = (function () {
 				fd.x = nextX;
 				if (fd.visible === undefined || fd.visible)
 				{
-					var thisSpacing = this.getElementsByTagName('rect')[0].getBBox().width;
+					var thisSpacing = $(this).outerWidth();
 					nextX += thisSpacing;
 					if (nextX >= maxX && fd.x > startX)
 					{
@@ -271,21 +270,16 @@ var TagPoolView = (function () {
 		return (nextY + this.flagHeightEM) * this.emToPX;
 	}
 	
-	/* Lay out all of the contents within the svg object. */
+	/* Lay out all of the contents within the div object. */
 	TagPoolView.prototype.layoutFlags = function(maxX, duration)
 	{
-		maxX = maxX !== undefined ? maxX : $(this.svg.node()).width();
+		maxX = maxX !== undefined ? maxX : $(this.div.node()).width();
 		duration = duration !== undefined ? duration : 700;
 		
 		var g = this.flags();
 		
 		var height = this._setFlagCoordinates(g, maxX);
 		
-		/* Set the height of the svg to match the total height of all of the flags. */
-		this.svg
- 			.interrupt().transition().duration(duration)
-			.attr('height', height)
-			
 		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
 		/* If it was visible and it is still visible, animate its position. */
 		/* If it was visible and is not visible, animate opacity to 0 */
@@ -296,24 +290,36 @@ var TagPoolView = (function () {
 									   (fd.visible === undefined || fd.visible); });
 		var hidingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
 									   !(fd.visible === undefined || fd.visible); });
-		hiddenG
-			.interrupt().attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); })
-			.transition().duration(duration)
-			.style('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
-			
-		movingG
-			.interrupt().transition().duration(duration)
-			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); })
-			.attr('opacity', 1.0);
-		 
-		hidingG
-			.interrupt().transition().duration(duration)
-			.style('opacity', 0.0)
-			.each('end', function()
+		hiddenG.each(function(fd)
+			{
+				if (!(fd.visible === undefined || fd.visible) &&
+					parseFloat($(this).css('opacity')) == 0)
 				{
-					d3.select(this).attr('transform',
-						function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); });
-				});
+					$(this).stop().css('left', fd.x)
+						.css('top', fd.y * fd.emToPX);
+				}
+				else
+					$(this).stop().animate({left: fd.x, top: fd.y * fd.emToPX, opacity: (fd.visible === undefined || fd.visible) ? 1.0 : 0.0},
+						{duration: duration});
+			});
+			
+		movingG.each(function(fd)
+			{
+				$(this).stop().animate({left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0},
+					{duration: duration});
+			});
+		 
+		hidingG.each(function(fd)
+			{
+				var _this = this;
+				$(this).stop().animate({opacity: 0.0},
+					{duration: duration,
+					 complete: function()
+					 	{
+					 		$(this).css('left', fd.x)
+					 			   .css('top', fd.y * fd.emToPX);
+					 	}});
+			});
 	}
 	
 	TagPoolView.prototype.setFlagVisibles = function()
@@ -358,55 +364,25 @@ var TagPoolView = (function () {
 		g.classed('flag', true)
 		 .style('opacity', '0');
 		
-		g.append('line').classed('flag-pole', true)
-			.attr('x1', 1.5)
-			.attr('x2', 1.5)
-			.attr('stroke-opacity', '1.0')
-			.attr('fill', 'white')
-			.attr('stroke', 'white');
-		g.append('line').classed('flag-pole', true)
-			.attr('x1', 1.5)
-			.attr('x2', 1.5)
-			.each(function(d)
+		g.style('border-left-color',
+			function(d)
 				{
-					var colorText = d.getColor();
-					this.setAttribute("fill", colorText);
-					this.setAttribute("stroke", colorText);
+					return d.poleColor();
+				})
+			.style('background-color',
+			function(d)
+				{
+					return d.flagColor();
+				})
+			.style('color',
+			function(d)
+				{
+					return d.fontColor();
+				})
+			.text(function(d)
+				{
+					return d.description();
 				});
-		g.append('rect').classed('opaque', true)
-			.attr('x', 3);
-		g.append('rect').classed('bg', true)
-			.attr('x', 3)
-			.each(function(d)
-				{
-					var colorText = d.getColor();
-					this.setAttribute("fill", colorText);
-					this.setAttribute("stroke", colorText);
-				});
-		var text = g.append('text').classed('flag-label', true)
-			.attr('x', ServiceFlagController.prototype.textDetailLeftMargin);
-		text.append('tspan')
-			.attr('dy', '1.1em')
-			.attr('fill', function(d) {
-				return d.fontColor();
-			});
-		
-		g.each(function(d) {
-			var g = d3.select(this);
-			g.selectAll('text>tspan:nth-child(1)')
-			 .text(d.description())
-		});
-
-		g.selectAll('rect')
-			.attr('height', "{0}em".format(TagPoolView.prototype.flagHeightEM))
-			.attr('width', function(fd)
-				{
-					return $(this.parentNode).children('text')[0].getBBox().width + 5;
-				});	
-		
-		g.selectAll('line.flag-pole')
-			.attr('y2', function(fd) { return "{0}em".format(TagPoolView.prototype.flagHeightEM); });
-
 	}
 	
 	/* Remove all of the existing flags displayed and add all of the specified flags
@@ -417,10 +393,10 @@ var TagPoolView = (function () {
 		var _this = this;
 		this.flags().remove();
 		
-		var g = this.svg.selectAll('g')
+		var g = this.div.selectAll('span')
 			.data(data)
 			.enter()
-			.append('g');
+			.append('span');
 			
 		this.appendFlag(g);
 		return g;
@@ -442,15 +418,10 @@ var TagPoolView = (function () {
 	
 	function TagPoolView(container, divClass)
 	{
+		console.assert(container);
 		this.container = container;
-		if (container)
-		{
-			this.div = container.append('div')
-				.classed(divClass, true);
-				
-			this.svg = this.div.append('svg')
-				.classed('flags', true);
-		}
+		this.div = container.append('div')
+			.classed(divClass, true);
 	}
 	
 	return TagPoolView;
@@ -488,14 +459,14 @@ var TagSearchView = (function() {
 		duration = duration !== undefined ? duration : 400;
 		var parent = $(this.reveal.node).parent();
 		var oldHeight = $(this.reveal.node).height();
-		$(this.reveal.node).height(0);
+		//$(this.reveal.node).height(0);
 		var newHeight = parent.getFillHeight() - 
-						parent.outerHeight(true);
+						parent.outerHeight(true) + oldHeight;
 
 		if (this.minRevealedHeight > newHeight)
 			newHeight = this.minRevealedHeight;
 			
-		$(this.reveal.node).height(oldHeight);
+		//$(this.reveal.node).height(oldHeight);
 		var _this = this;
 		if (oldHeight != newHeight)
 		{

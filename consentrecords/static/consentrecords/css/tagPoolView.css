@@ -103,6 +103,7 @@ section.tags button {
 }
 
 div.pool-container {
+	position: relative;	/* So the containing items are properly positioned. */
 	width: calc(100% - 20px);
 	margin: 10px;
 	overflow-y: scroll;
@@ -150,3 +151,23 @@ g.flag .flag-label>tspan:nth-child(2) {	/* For flags */
 	font-weight: 400;
 }
 
+span.flag {
+	position: absolute;
+	border-left-style: solid;
+	border-left-width: 3px;
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+	font-size: 11px;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+	cursor: default;
+	font-weight: 600;
+	padding-left: 0.3em;
+	padding-right: 0.6em;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	margin-right: 1em;
+	line-height: 15px;
+	white-space: nowrap;
+}

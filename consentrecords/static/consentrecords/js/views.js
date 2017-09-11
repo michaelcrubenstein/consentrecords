@@ -1208,14 +1208,11 @@ crv.SitePanel = (function () {
 				{
 					eventObject.stopPropagation();
 				});
-				
-			/* Trigger the resize in the next event to ensure that css widths and
-				heights have been applied.
-			 */
-			setTimeout(function()
-				{
-					mainNode.trigger("resize.cr");
-				});
+			
+			/* Since calculateHeight is first called within revealing.cr, 
+				resize handlers should be set up in subsequent revealing.cr handlers.
+			 */	
+			mainNode.trigger("resize.cr");
 		}
 	}
 	
@@ -2379,9 +2376,13 @@ var EditItemPanel = (function () {
 			{
 				if (prepareClick('click', header + ' done'))
 				{
-					this.focus();	// To eliminate focus from a previously selected item.
 					showClickFeedback(this);
 		
+					if (_this.onFocusInOtherInput !== undefined)
+					{
+						_this.onFocusInOtherInput(null, function() {});
+					}
+
 					try
 					{
 						// Build up an update for initialData.
