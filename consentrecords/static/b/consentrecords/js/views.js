@@ -2376,9 +2376,13 @@ var EditItemPanel = (function () {
 			{
 				if (prepareClick('click', header + ' done'))
 				{
-					this.focus();	// To eliminate focus from a previously selected item.
 					showClickFeedback(this);
 		
+					if (_this.onFocusInOtherInput !== undefined)
+					{
+						_this.onFocusInOtherInput(null, function() {});
+					}
+
 					try
 					{
 						// Build up an update for initialData.
