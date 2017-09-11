@@ -253,7 +253,7 @@ var ServiceLinkController = (function() {
 			 .service(args);
 			if ('position' in i)
 				i.position(this.serviceLinks().length
-			           ? this.serviceLinks()[this.serviceLinks().length - 1].position() + 1
+			           ? parseInt(this.serviceLinks()[this.serviceLinks().length - 1].position()) + 1
 			           : 0);
 			this.serviceLinks().push(i);
 			return i;
@@ -569,7 +569,7 @@ var ExperienceController = (function() {
 			 .parent(this.newInstance())
 			 .service(args)
 			 .position(this.experienceServices().length
-			           ? this.experienceServices()[this.experienceServices().length - 1].position() + 1
+			           ? parseInt(this.experienceServices()[this.experienceServices().length - 1].position()) + 1
 			           : 0);
 			this.experienceServices().push(i);
 			return i;
@@ -581,7 +581,7 @@ var ExperienceController = (function() {
 			 .parent(this.newInstance())
 			 .name(args)
 			 .position(this.customServices().length
-			           ? this.customServices()[this.customServices().length - 1].position() + 1
+			           ? parseInt(this.customServices()[this.customServices().length - 1].position()) + 1
 			           : 0);
 			this.customServices().push(i);
 			return i;
