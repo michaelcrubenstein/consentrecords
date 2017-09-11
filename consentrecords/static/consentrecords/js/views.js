@@ -1887,7 +1887,7 @@ var EditItemPanel = (function () {
 						var newValue = new dataType();
 						newValue.setDefaultValues();
 						if ('position' in newValue)
-							newValue.position(data.length ? data[data.length - 1].position() + 1 : 0);
+							newValue.position(data.length ? parseInt(data[data.length - 1].position()) + 1 : 0);
 							
 						data.push(newValue);
 						newValue.parent(container);
