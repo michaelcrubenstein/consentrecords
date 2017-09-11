@@ -1726,6 +1726,16 @@ cr.Grantable = (function() {
 		return changes;
 	}
 	
+	Grantable.prototype.clear = function()
+	{
+		cr.IInstance.prototype.clear.call(this);
+		this._publicAccess = null;
+		this._primaryAdministrator = null;
+		this._userGrants = null;
+		this._groupGrants = null;
+		this._grantsPromise = null;
+	}
+	
 	Grantable.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
@@ -7383,7 +7393,7 @@ cr.User = (function() {
 	
 	User.prototype.clear = function()
 	{
-		cr.IInstance.prototype.clear.call(this);
+		cr.Grantable.prototype.clear.call(this);
 		this._firstName = null;
 		this._lastName = null;
 		this._birthday = null;
