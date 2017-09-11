@@ -3598,7 +3598,11 @@ class Comment(ChildInstance, dbmodels.Model):
         return querySet
         
     def select_related(querySet, fields=[]):
-        return querySet.select_related('asker')
+        return querySet.select_related('asker')\
+           .prefetch_related(Prefetch('asker__parent',
+                                      queryset=\
+                                         User.select_related(User.objects.filter(deleteTransaction__isnull=True)),
+                                      to_attr='currentUser'))
         
     def getData(self, fields, context):
         data = self.headData(context)
@@ -3606,7 +3610,7 @@ class Comment(ChildInstance, dbmodels.Model):
             if self.text:
                 data['text'] = self.text
             if self.asker:
-                data['asker'] = self.asker.headData(context)
+                data['asker'] = self.asker.getData(['parents', 'user'], context)
             if self.question:
                 data['question'] = self.question
         
@@ -6247,28 +6251,31 @@ class Path(IInstance, dbmodels.Model):
     def getData(self, fields, context):
         data = self.headData(context)
         
-        data['birthday'] = self.birthday
-        if self.name:
-            data['name'] = self.name
-        if self.specialAccess:
-            data['special access'] = self.specialAccess
-        if self.publicAccess:
-            data['public access'] = self.publicAccess
-        if self.canAnswerExperience:
-            data['can answer experience'] = self.canAnswerExperience
+        # Check to see if the context can read this to cover the case when 
+        # getting the data of the asker of a comment.
+        if context.canRead(self):
+            data['birthday'] = self.birthday
+            if self.name:
+                data['name'] = self.name
+            if self.specialAccess:
+                data['special access'] = self.specialAccess
+            if self.publicAccess:
+                data['public access'] = self.publicAccess
+            if self.canAnswerExperience:
+                data['can answer experience'] = self.canAnswerExperience
 
-        if 'parents' in fields:
-            if context.canRead(self.parent):
-                if 'user' in fields:
-                    data['user'] = self.currentUser.getData([], context)
-                else:
-                    data['user'] = self.parent.headData(context)
+            if 'parents' in fields:
+                if context.canRead(self.parent):
+                    if 'user' in fields:
+                        data['user'] = self.currentUser.getData([], context)
+                    else:
+                        data['user'] = self.parent.headData(context)
         
-        if 'experiences' in fields:
-            experienceFields = list(map(lambda s: s[len('experiences/'):], 
-                filter(lambda s: s.startswith('experiences/'), fields)))
-            data['experiences'] = [i.getData(experienceFields, context) for i in \
-                Experience.select_related(self.experiences.filter(deleteTransaction__isnull=True), experienceFields)]
+            if 'experiences' in fields:
+                experienceFields = list(map(lambda s: s[len('experiences/'):], 
+                    filter(lambda s: s.startswith('experiences/'), fields)))
+                data['experiences'] = [i.getData(experienceFields, context) for i in \
+                    Experience.select_related(self.experiences.filter(deleteTransaction__isnull=True), experienceFields)]
 
         return data
     
