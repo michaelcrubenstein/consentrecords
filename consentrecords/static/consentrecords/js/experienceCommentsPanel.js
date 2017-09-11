@@ -62,7 +62,7 @@ var ExperienceCommentsPanel = (function() {
 		divs.selectAll('textarea.question')
 			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
-			.classed('fixed', !this.inEditMode)
+			.classed('fixed-immediate', !this.inEditMode)
 			.each(function()
 				{
 					this.setAttribute('style', 'height:0px;overflow-y:hidden;display:inline-block;');
@@ -75,7 +75,7 @@ var ExperienceCommentsPanel = (function() {
 		divs.selectAll('textarea.answer')
 			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
-			.classed('fixed', !this.inEditMode)
+			.classed('fixed-immediate', !this.inEditMode)
 			.each(function()
 				{
 					this.setAttribute('style', 'height:0px;overflow-y:hidden;display:inline-block;');
@@ -175,7 +175,7 @@ var ExperienceCommentsPanel = (function() {
 			commentList.classed('edit', true);
 			commentList.selectAll('textarea')
 				.attr('readonly', null)
-				.classed('fixed', false)
+				.classed('fixed fixed-immediate', false)
 				.classed('editable', true);
 			
 			/* position the edit chevron as appropriate. 
@@ -487,6 +487,7 @@ var ExperienceCommentsPanel = (function() {
 										commentList.selectAll('textarea')
 											.attr('readonly', 'readonly')
 											.classed('editable', false)
+											.classed('fixed-immediate', false)
 											.classed('fixed', true);
 
 										unblockClick();
@@ -666,17 +667,6 @@ var ExperienceCommentsPanel = (function() {
 		else
 			this.postButtonNode = null;
 		
-		$(panel2Div.node()).on('resize.cr', resizeDetail);	
-						
-		$(panel2Div.node()).on('resize.cr', function()
-			{
-				commentList.selectAll('textarea')
-					.each(function()
-						{
-							$(this).trigger('resize.cr');
-						});
-			});					
-		
 		if (fd.experience.id())
 		{
 			this.promise = fd.experience.promiseData(['comments'])
@@ -700,10 +690,20 @@ var ExperienceCommentsPanel = (function() {
 			this.promise = $.Deferred();
 			this.promise.resolve();
 		}
-		
+
 		this.promise = this.promise
 			.then(function()
 				{
+					$(panel2Div.node()).on('resize.cr', resizeDetail);	
+			
+					$(panel2Div.node()).on('resize.cr', function()
+						{
+							commentList.selectAll('textarea')
+								.each(function()
+									{
+										$(this).trigger('resize.cr');
+									});
+						});	
 					_this.setupAsk();
 				});
 	}

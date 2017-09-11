@@ -95,6 +95,10 @@ section.comments textarea.fixed {
 	animation-iteration-count: 1;
 }
 
+section.comments textarea.fixed-immediate {
+	border-color: transparent;
+}
+
 section.comments div.asker {
 	color: #777;
 	font-size: 0.9em;
