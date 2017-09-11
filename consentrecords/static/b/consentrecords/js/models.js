@@ -5606,9 +5606,12 @@ cr.Path = (function() {
 		}
 		if ('user' in d)
 		{
+			/* Create a user and push its info. The pushInstance (instead of
+				getInstance) is needed if this path is the asker of a comment.
+			 */
 			this._user = new cr.User();
 			this._user.setData(d['user']);
-			this._user = crp.getInstance(this._user.id());
+			this._user = crp.pushInstance(this._user);
 		}
     }
     
