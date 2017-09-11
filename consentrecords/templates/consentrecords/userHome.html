@@ -433,15 +433,15 @@
 					}
 					stateString = "";	/* So it only happens once. */
 				}
-				else if (stateString.startsWith("user/"))
+				else if (stateString.startsWith('user/'))
 				{
-					stateString = stateString.substring("user/".length);
+					stateString = stateString.substring('user/'.length);
 					if (stateString.length > 0)
 					{
 						var pathwayID = stateString;
 						handleState = function()
 						{
-							crp.promise({path: "user/" + pathwayID,
+							crp.promise({path: 'user/' + pathwayID,
 										 fields: ['path'], 
 										 resultType: cr.User})
 								.done(function(users)
@@ -481,10 +481,10 @@
 					}
 					stateString = "";
 				}
-				else if (stateString.startsWith("addExperience/"))
+				else if (stateString.startsWith('addExperience/'))
 				{
 					// Test case: respond to an sent email to add experience.
-					stateString = stateString.substring("addExperience/".length);
+					stateString = stateString.substring('addExperience/'.length);
 					if (stateString.length > 0)
 					{
 						var experienceID = stateString;
@@ -628,9 +628,13 @@
 					
 					handleState = function(pathwayPanel)
 					{
-						var f = function()
+						var f = function(pathwayPanel)
 							{
-								/* Show the specified experience. */
+								/* Show the specified experience. 
+									Typically, this pathwayPanel will be the same as the
+									pathwayPanel passed into handleState, but it won't
+									be the same if the incorrect user is signed in.
+								 */
 								
 								try
 								{
@@ -660,6 +664,7 @@
 									cr.asyncFail(err);
 								}
 							}
+							
 						if (pathwayPanel.pathtree.isUserSet)
 						{
 							if (pathwayPanel.pathtree.path.experiences().find(function(e)
@@ -667,7 +672,7 @@
 									return e.id() == experienceID;
 								}))
 							{
-								f();
+								f(pathwayPanel);
 							}
 							else
 							{
@@ -680,7 +685,10 @@
 							}
 						}
 						else
-							$(pathwayPanel.pathtree).on('userSet.cr', f);
+							$(pathwayPanel.pathtree).on('userSet.cr', function()
+								{
+									f(pathwayPanel);
+								});
 					}
 					needsSignin = true;
 				}
