@@ -45,8 +45,11 @@ var SearchPathsResultsView = (function () {
 		if (offering && offering.id())
 		{
 			var services = offering.offeringServices();
-			console.assert(services);
-			if (services.findIndex(function(s)
+			/* services may be null if the experience references an offering in an
+				organization that isn't public. This typically occurs in testing
+				when the organization wasn't made public.
+			 */
+			if (services && services.findIndex(function(s)
 				{
 					return queryFlags.findIndex(function(qf)
 						{
