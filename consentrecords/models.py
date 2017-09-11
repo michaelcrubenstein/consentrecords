@@ -3737,7 +3737,7 @@ class Comment(ChildInstance, dbmodels.Model):
             self.lastTransaction = context.transaction
             self.save()
         
-        if textChanging:    
+        if textChanging and self.asker and self.asker.id() != context.user.path.id():
             follower = self.asker
             recipient = follower.parent
             recipientEMail = recipient.currentEmailsQuerySet[0].text
