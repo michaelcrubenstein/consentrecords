@@ -2047,8 +2047,8 @@ var OtherPathlines = (function() {
 		{
 			try
 			{
-				var tempExperience = new ExperienceController(cr.signedinUser.path(), fd.experience, false);
-				new NewExperiencePanel(tempExperience)
+				var controller = new ExperienceController(cr.signedinUser.path(), fd.experience, false);
+				new NewExperiencePanel(controller)
 					.showUp()
 					.always(unblockClick);
 			}
