@@ -20,7 +20,6 @@ import itertools
 from monitor.models import LogRecord
 from custom_user.emailer import Emailer
 from consentrecords.models import *
-from consentrecords import pathparser
 
 templateDirectory = 'b/consentrecords/'
 logPrefix = 'b/'

@@ -22,7 +22,6 @@ from monitor.models import LogRecord
 from custom_user import views as userviews
 from custom_user.emailer import Emailer
 from consentrecords.models import *
-from consentrecords import pathparser
 
 templateDirectory = 'consentrecords/'
 logPrefix = ''
