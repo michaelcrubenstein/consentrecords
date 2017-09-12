@@ -3724,7 +3724,7 @@ class Comment(ChildInstance, dbmodels.Model):
             raise PermissionDenied('you do not have permission to complete this update')
         
         history = None
-        textChanging = 'text' in changes and changes['text'] != self.text and not self.text
+        textChanging = 'text' in changes and changes['text'] and not self.text and changes['text'] != self.text
         if 'text' in changes and changes['text'] != self.text:
             history = history or self.buildHistory(context)
             self.text = changes['text'] or None
@@ -3741,7 +3741,7 @@ class Comment(ChildInstance, dbmodels.Model):
             self.lastTransaction = context.transaction
             self.save()
         
-        if textChanging and self.asker and self.asker.id() != context.user.path.id():
+        if textChanging and self.asker and self.asker.id != context.user.path.id:
             follower = self.asker
             recipient = follower.parent
             recipientEMail = recipient.currentEmailsQuerySet[0].text
