@@ -558,12 +558,12 @@
 					}
 					needsSignin = true;
 				}
-				else if (stateString.startsWith("ignore"))
+				else if (stateString.startsWith('ignore'))
 				{
 					/* Ignore the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						var path = "{{follower}}"
+						var path = '{{follower}}'
 						cr.getData({path: path, resultType: cr.User, fields: ['none']})
 							.then(function(users)
 							{
@@ -584,7 +584,11 @@
 									else
 										bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
 								}
-								});
+								else
+								{
+									bootstrap_alert.warning("The user requesting access is not available.", '.alert-container');
+								}
+							});
 					}
 					needsSignin = true;
 				}

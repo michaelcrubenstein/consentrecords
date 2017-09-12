@@ -931,6 +931,9 @@ class PublicInstance():
     def getSubClause(qs, user, accessType):
         return qs, accessType
         
+    def filterForHeadData(qs, user, accessType):
+        return qs
+
     def filterForGetData(qs, user, accessType):
         return qs
 
@@ -3254,6 +3257,9 @@ class UserGrant(AccessInstance, dbmodels.Model):
         else:
             return AccessInstance.administrableQuerySet(qs, user, ''), UserGrant
 
+    def filterForHeadData(qs, user, accessType):
+        return UserGrant.getSubClause(qs, user, accessType)[0]
+            
     def filterForGetData(qs, user, accessType):
         return UserGrant.getSubClause(qs, user, accessType)[0]
             
@@ -3322,15 +3328,15 @@ class UserGrantHistory(dbmodels.Model):
 
     @property
     def dataString(self):
-        if User.objects.filter(pk=i.grantor_id).exists():
-            grantor = User.objects.get(pk=i.grantor_id)
-        elif Organization.objects.filter(pk=i.grantor_id).exists():
-            grantor = Organization.objects.get(pk=i.grantor_id)
+        if User.objects.filter(pk=self.grantor_id).exists():
+            grantor = User.objects.get(pk=self.grantor_id)
+        elif Organization.objects.filter(pk=self.grantor_id).exists():
+            grantor = Organization.objects.get(pk=self.grantor_id)
         else:
-            grantor = i.grantor_id
+            grantor = self.grantor_id
         return"%s\t%s\t%s\t%s" % \
               (
-                i.id, str(grantor), str(i.grantee), i.privilege or '-'
+                self.id, str(grantor), str(self.grantee), self.privilege or '-'
               )
          
 ### A Multiple Picked Value
@@ -3362,6 +3368,9 @@ class GroupGrant(AccessInstance, dbmodels.Model):
         else:
             return AccessInstance.administrableQuerySet(qs, user, ''), GroupGrant
 
+    def filterForHeadData(qs, user, accessType):
+        return GroupGrant.getSubClause(qs, user, accessType)[0]
+            
     def filterForGetData(qs, user, accessType):
         return GroupGrant.getSubClause(qs, user, accessType)[0]
             
@@ -3410,15 +3419,15 @@ class GroupGrantHistory(dbmodels.Model):
     
     @property
     def dataString(self):
-        if User.objects.filter(pk=i.grantor_id).exists():
-            grantor = User.objects.get(pk=i.grantor_id)
-        elif Organization.objects.filter(pk=i.grantor_id).exists():
-            grantor = Organization.objects.get(pk=i.grantor_id)
+        if User.objects.filter(pk=self.grantor_id).exists():
+            grantor = User.objects.get(pk=self.grantor_id)
+        elif Organization.objects.filter(pk=self.grantor_id).exists():
+            grantor = Organization.objects.get(pk=self.grantor_id)
         else:
-            grantor = i.grantor_id
+            grantor = self.grantor_id
         return"%s\t%s\t%s\t%s" % \
               (
-                i.id, str(grantor), str(i.grantee), i.privilege or '-'
+                self.id, str(grantor), str(self.grantee), self.privilege or '-'
               )
          
 class Address(ChildInstance, dbmodels.Model):
@@ -3478,6 +3487,9 @@ class Address(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent')
+            
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, prefix='parent__parent')
             
@@ -3622,6 +3634,9 @@ class Comment(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
+    def filterForHeadData(qs, user, accessType):
+        return Path.findableQuerySet(qs, user, prefix='parent__parent')
+            
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, prefix='parent__parent')
             
@@ -4015,6 +4030,9 @@ class Engagement(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent')
+            
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, prefix='parent__parent__parent__parent')
             
@@ -4156,6 +4174,9 @@ class Enrollment(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent')
+            
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, prefix='parent__parent__parent__parent')
             
@@ -4340,6 +4361,9 @@ class Experience(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent'), Path
 
+    def filterForHeadData(qs, user, accessType):
+        return Path.findableQuerySet(qs, user, prefix='parent')
+            
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, prefix='parent')
             
@@ -4643,6 +4667,9 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
+    def filterForHeadData(qs, user, accessType):
+        return Path.findableQuerySet(qs, user, prefix='parent__parent')
+    
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, prefix='parent__parent')
     
@@ -4730,6 +4757,9 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
     
+    def filterForHeadData(qs, user, accessType):
+        return Path.findableQuerySet(qs, user, prefix='parent__parent')
+            
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, prefix='parent__parent')
             
@@ -5136,6 +5166,9 @@ class Group(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
     
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
@@ -5200,6 +5233,9 @@ class GroupName(TranslationInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
 
@@ -5262,6 +5298,9 @@ class GroupMember(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
@@ -5360,6 +5399,9 @@ class Inquiry(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent__parent__parent')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent__parent')
@@ -5499,6 +5541,9 @@ class Notification(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
@@ -5625,6 +5670,9 @@ class NotificationArgument(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), User
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
 
@@ -5721,6 +5769,9 @@ class Offering(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
@@ -5884,6 +5935,9 @@ class OfferingName(TranslationInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent__parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
@@ -5931,6 +5985,9 @@ class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent__parent')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
@@ -6026,6 +6083,9 @@ class Organization(SecureRootInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, '')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, '')
@@ -6170,6 +6230,9 @@ class OrganizationName(TranslationInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
@@ -6339,6 +6402,9 @@ class Path(IInstance, dbmodels.Model):
             return qs, Path
         else:
             return Path.findableQuerySet(qs, user), Path
+
+    def filterForHeadData(qs, user, accessType):
+        return Path.findableQuerySet(qs, user, '')
 
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, '')
@@ -6512,6 +6578,9 @@ class Period(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent__parent__parent')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent__parent')
@@ -7137,6 +7206,9 @@ class Session(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent__parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
@@ -7286,6 +7358,9 @@ class SessionName(TranslationInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent__parent__parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent__parent')
 
@@ -7373,6 +7448,9 @@ class Site(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
@@ -7473,6 +7551,9 @@ class SiteName(TranslationInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent')
 
@@ -7537,6 +7618,9 @@ class Street(ChildInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent__parent')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
@@ -7722,6 +7806,9 @@ class User(SecureRootInstance, dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user), User
+
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, '')
 
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, '')
@@ -7917,6 +8004,9 @@ class UserEmail(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
@@ -8006,6 +8096,9 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
+    def filterForHeadData(qs, user, accessType):
+        return SecureRootInstance.findableQuerySet(qs, user, 'parent')
+
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent')
 
@@ -8035,7 +8128,7 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
     def dataString(self):
         return"%s\t%s\t%s" % \
           (
-            i.id, str(i.parent), str(i.grantee)
+            self.id, str(self.parent), str(self.grantee)
           )
          
     def update(self, changes, context, newIDs={}):
@@ -8064,7 +8157,7 @@ class UserUserGrantRequestHistory(dbmodels.Model):
     def dataString(self):
         return"%s\t%s\t%s" % \
           (
-            i.id, str(i.parent), str(i.grantee)
+            self.id, str(self.parent), str(self.grantee)
           )
          
 class Context:

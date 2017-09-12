@@ -764,8 +764,12 @@ class api:
             if qs.count() == 0:
                 p = []
             else:
-                qs2 = qsType.filterForGetData(qs, context.user, accessType)
-                qs2 = qsType.select_related(qs2.distinct(), fields)
+                if 'none' in fields:
+                    qs2 = qsType.filterForHeadData(qs, context.user, accessType)
+                    qs2 = qsType.select_head_related(qs2.distinct())
+                else:
+                    qs2 = qsType.filterForGetData(qs, context.user, accessType)
+                    qs2 = qsType.select_related(qs2.distinct(), fields)
                 qs2 = qsType.order_by(qs2, context)
                 if end > 0:
                     qs2 = qs2[start:end]

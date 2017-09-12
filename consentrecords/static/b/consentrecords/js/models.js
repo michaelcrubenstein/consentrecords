@@ -8119,7 +8119,7 @@ cr.UserUserGrantRequest = (function() {
 		cr.IInstance.prototype.triggerDeleted.call(this);
 		
 		/* Delete from the container first, so that other objects know the container may be empty. */
-		var user = this.user();
+		var user = this.parent();
 		cr.removeElement(user.userGrantRequests(), this);
 		$(user).trigger("userGrantRequestDeleted.cr", this);
 	}
