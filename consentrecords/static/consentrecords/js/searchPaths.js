@@ -506,26 +506,28 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.addFlagToQuery = function(poolFlag, s)
 	{
 		/* Make an svg whose position is identical to poolFlag relative to mainDiv. */
-		var travelSVG = this.mainDiv.append('svg')
-			.classed('travel flags', true)
-			.attr('xmlns', "http://www.w3.org/2000/svg")
-			.attr('version', "1.1");
+		var travelContainer = this.mainDiv.append('div')
+			.classed('travel flags', true);
 		
 		/* Set the svg dimensions to the same as the flag. */
 		var poolFlagRect = poolFlag.getBoundingClientRect();
-		$(travelSVG.node()).width(poolFlagRect.width)
+		$(travelContainer.node()).width(poolFlagRect.width)
 			.height(poolFlagRect.height)
 			.css('left', poolFlagRect.left)
 			.css('top', poolFlagRect.top);
 		
  		/* Create a new flag in the svg. */
- 		var g = travelSVG.append('span')
+ 		var g = travelContainer.append('span')
  			.datum(s);
 			
 		this.poolContainer.appendFlag(g);
+		g.style('opacity', 1);
 		
 		/* Cover the old flag with a hole. */
-		d3.select(poolFlag).classed('hole', true);
+		d3.select(poolFlag).classed('hole', true)
+			.style('border-left-color', null)
+			.style('background-color', null)
+			.style('color', null);
  		
  		/* Figure out where travelSVG is going to end up relative to queryTagPoolView.div. */
  		var newPosition = this.queryTagPoolView.div.node().getBoundingClientRect();
@@ -533,11 +535,33 @@ var SearchPathsPanel = (function () {
  		
  		var _this = this;
  		/* Animate the movement of the svg to its new location. */
- 		travelSVG.interrupt().transition()
- 			.duration(400)
- 			.style('top', newPosition.top + flagPosition.top)
- 			.style('left', newPosition.left + flagPosition.left)
- 			.each("end", function() {
+ 		$(travelContainer.node()).animate({top: newPosition.top + flagPosition.top,
+ 			left: newPosition.left + flagPosition.left},
+ 			{duration: 400, complete: function()
+ 				{
+					/* Reset the positions of all of the pool flags. */
+					_this.poolContainer.layoutFlags()
+						.then(function()
+							{
+								/* Dispose of the hole. */
+								d3.select(poolFlag).classed('hole', false)
+									.style('border-left-color',
+										function(d)
+											{
+												return d.poleColor();
+											})
+									.style('background-color',
+										function(d)
+											{
+												return d.flagColor();
+											})
+									.style('color',
+										function(d)
+											{
+												return d.fontColor();
+											});
+							});
+					
 					/* Add a query flag that is the same as the svg flag in the same position. */
 					var newS = new ServiceFlagController(s.service);
 					newS.x = flagPosition.left;
@@ -568,11 +592,8 @@ var SearchPathsPanel = (function () {
 					}
 					
 					/* Dispose of the travelSVG. */
-					travelSVG.remove();
-					
-					/* Dispose of the hole. */
-					d3.select(poolFlag).classed('hole', false);
-		
+					travelContainer.remove();
+							
 					/* Run a new search based on the query. */
 					_this.enableResultsScrolling();
 					_this.searchPathsResultsView.startSearchTimeout(_this.searchPathsResultsView.inputCompareText(), 0);
@@ -584,13 +605,10 @@ var SearchPathsPanel = (function () {
 						promise.then(f);
 					else
 						f();
-				 });
+ 				}});
  		
  		/* Hide the poolFlag. */
  		d3.select(poolFlag).datum().visible = false;
- 		
- 		/* Reset the positions of all of the pool flags. */
- 		this.poolContainer.layoutFlags();
 	}
 	
 	SearchPathsPanel.prototype.getQueryFlags = function()
