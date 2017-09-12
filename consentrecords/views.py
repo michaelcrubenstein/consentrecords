@@ -589,12 +589,16 @@ def _getOrganizationChildren(organization, siteName, offeringName):
     site = None
     offering = None
     if siteName:
-        sites = organization.getSubInstance(terms['Sites']).getChildrenByName(terms['Site'], terms.name, siteName)
-        site = sites[0].referenceValue if len(sites) else None
-        if site and offeringName:
-            offerings = site.getSubInstance(terms['Offerings']).getChildrenByName(terms['Offering'], terms.name, offeringName)
-            offering = offerings[0].referenceValue if len(offerings) else None
-            
+        try:
+            site = organization.sites.get(names__text=siteName, names__deleteTransaction__isnull=True)
+            if offeringName:
+                try:
+                    offering = site.offerings.get(names__text=offeringName, names__deleteTransaction__isnull=True)
+                except Offering.DoesNotExist:
+                    pass
+        except Site.DoesNotExist:
+            pass
+        
     return site, offering
 
 @ensure_csrf_cookie
