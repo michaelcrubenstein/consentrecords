@@ -254,7 +254,7 @@ def showExperience(request, id):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    if terms.isUUID(id):
+    if isUUID(id):
         args['state'] = 'experience/%s/' % id
         pathend = re.search(r'experience/%s/' % id, request.path).end()
         path = request.path[pathend:]
@@ -295,7 +295,7 @@ def accept(request, email):
         args['facebookIntegration'] = True
     
     args['state'] = 'accept'
-    args['follower'] = ('user/%s' if terms.isUUID(email) else 'user[email=%s]') % email
+    args['follower'] = ('user/%s' if isUUID(email) else 'user[email=%s]') % email
     args['privilege'] = 'read'
 
     return HttpResponse(template.render(args))
@@ -324,7 +324,7 @@ def ignore(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('user/%s' if terms.isUUID(email) else 'user[email>text=%s]') % email
+    containerPath = ('user/%s' if isUUID(email) else 'user[email>text=%s]') % email
     tokens = cssparser.tokenizeHTML(containerPath)
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     if len(qs) > 0:
@@ -523,14 +523,14 @@ def addToPathway(request):
     languageCode = request.GET.get('language', 'en')
     context = Context(languageCode, request.user)
 
-    if offeringName and terms.isUUID(offeringName):
+    if offeringName and isUUID(offeringName):
         try:
             offering = Offering.objects.get(pk=offeringName, deleteTransaction__isnull=True)
             site = offering.parent
             organization = site.parent
         except Offering.DoesNotExist:
             organization, site, offering = None, None, None
-    elif siteName and terms.isUUID(siteName):
+    elif siteName and isUUID(siteName):
         try:
             site = Site.objects.get(pk=siteName, deleteTransaction__isnull=True)
             organization = site.parent
@@ -541,7 +541,7 @@ def addToPathway(request):
                     offering = None
         except Site.DoesNotExist:
             organization, site, offering = None, None, None
-    elif organizationName and terms.isUUID(organizationName):
+    elif organizationName and isUUID(organizationName):
         try:
             organization = Organization.objects.get(pk=organizationName, deleteTransaction__isnull=True)
             site, offering = _getOrganizationChildren(organization, siteName, offeringName)
@@ -556,7 +556,7 @@ def addToPathway(request):
     else:
         organization, site, offering = None, None, None
     
-    if serviceName and terms.isUUID(serviceName):
+    if serviceName and isUUID(serviceName):
         try:
             service = Service.objects.get(pk=serviceName, deleteTransaction__isnull=True)
         except Service.DoesNotExist:
