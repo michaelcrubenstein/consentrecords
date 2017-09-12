@@ -525,25 +525,23 @@
 					}
 					needsSignin = true;
 				}
-				else if (stateString.startsWith("accept"))
+				else if (stateString.startsWith('accept'))
 				{
 					/* Accept the specified follower */
 					handleState = function(pathwayPanel)
 					{
 						function clearAccessRequests(user)
 						{
-							var data = cr.signedinUser.userGrantRequests();
-							if (data)
-								for (var i = 0; i < data.length; ++i)
+							var d = cr.signedinUser.userGrantRequests().find(function(d) 
 								{
-									var d = data[i];
-									if (d.grantee().id() == user.id())
-										$(d).trigger("deleted.cr");
-								}
+									return d.grantee().id() == user.id();
+								});
+							if (d)
+								d.triggerDeleted();
 						}
 						
-						var path = "{{follower}}"
-						cr.signedinUser.postUserGrant("{{privilege}}", path)
+						var path = '{{follower}}'
+						cr.signedinUser.postUserGrant('{{privilege}}', path)
 							.then(function(changes, newIDs)
 								{
 									return cr.getData({path: 'user grant/' + newIDs['1'], resultType: cr.UserGrant, fields: ['none']})
