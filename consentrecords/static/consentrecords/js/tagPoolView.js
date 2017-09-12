@@ -237,6 +237,11 @@ var TagPoolView = (function () {
 		return this.div.selectAll('span.flag');
 	}
 	
+	TagPoolView.prototype.$flags = function()
+	{
+		return $(this.div.node()).children('span.flag');
+	}
+	
 	/* Sets the x, y and y2 coordinates of each flag. */
 	TagPoolView.prototype._setFlagCoordinates = function(g, maxX)
 	{
@@ -290,36 +295,45 @@ var TagPoolView = (function () {
 									   (fd.visible === undefined || fd.visible); });
 		var hidingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
 									   !(fd.visible === undefined || fd.visible); });
+		var $g = this.$flags();
+		$g.stop();
+		
+		var promises = [];
 		hiddenG.each(function(fd)
 			{
 				if (!(fd.visible === undefined || fd.visible) &&
 					parseFloat($(this).css('opacity')) == 0)
 				{
-					$(this).stop().css('left', fd.x)
+					$(this).css('left', fd.x)
 						.css('top', fd.y * fd.emToPX);
 				}
 				else
-					$(this).stop().animate({left: fd.x, top: fd.y * fd.emToPX, opacity: (fd.visible === undefined || fd.visible) ? 1.0 : 0.0},
-						{duration: duration});
+					promises.push($(this).animate({left: fd.x, top: fd.y * fd.emToPX, 
+						opacity: (fd.visible === undefined || fd.visible) ? 1.0 : 0.0},
+						{duration: duration})
+						.promise());
 			});
 			
 		movingG.each(function(fd)
 			{
-				$(this).stop().animate({left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0},
-					{duration: duration});
+				promises.push($(this).animate({left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0},
+					{duration: duration})
+						.promise());
 			});
 		 
 		hidingG.each(function(fd)
 			{
-				var _this = this;
-				$(this).stop().animate({opacity: 0.0},
+				promises.push($(this).animate({opacity: 0.0},
 					{duration: duration,
 					 complete: function()
 					 	{
 					 		$(this).css('left', fd.x)
 					 			   .css('top', fd.y * fd.emToPX);
-					 	}});
+					 	}})
+					.promise());
 			});
+			
+		return $.when.apply(null, promises);
 	}
 	
 	TagPoolView.prototype.setFlagVisibles = function()

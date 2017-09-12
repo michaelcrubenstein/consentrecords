@@ -86,7 +86,8 @@ text.icon-label {
 	cursor: default;
 }
 
-svg.travel.flags {
+/* Override the position for the travel div. */
+panel.search-paths>div.panel-fill>div.travel.flags {
 	position: absolute;
 }
 
