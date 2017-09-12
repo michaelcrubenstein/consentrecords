@@ -89,8 +89,11 @@ def showLines(request):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        context = Context(language, request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -294,8 +297,10 @@ def accept(request, email):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+    	
+        user = Context(language, request.user).user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -325,7 +330,7 @@ def ignore(request, email):
     context = Context(language, request.user)
     
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -355,8 +360,11 @@ def userSettings(request):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -561,8 +569,11 @@ def addExperience(request, experienceID):
         'cdn_url': settings.CDN_URL,
     }
     
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
@@ -665,8 +676,11 @@ def addToPathway(request):
     if serviceName:
         args['service'] = service.id.hex if service else serviceName
 
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    
     if request.user.is_authenticated:
-        user = Instance.getUserInstance(request.user)
+        user = context.user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id.hex
