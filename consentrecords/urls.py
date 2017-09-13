@@ -29,7 +29,7 @@ urlpatterns = [
 
     url(r'^b/', include('b.urls')),
     
-    url(r'^$', views.home),
+    url(r'^$', views.home, name='home'),
     url(r'^org/$', views.orgHome),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^find/', views.find),
