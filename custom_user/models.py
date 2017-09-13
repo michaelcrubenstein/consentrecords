@@ -2,7 +2,6 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.contrib.auth.models import Group, Permission
-from django.utils import timezone
 
 import datetime
 import uuid
@@ -75,7 +74,7 @@ class AuthUser(AbstractBaseUser, PermissionsMixin):
 class PasswordReset(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(verbose_name='email address', max_length=255, db_index=True)
-    creation_time = models.DateTimeField(db_column='creation_time', db_index=True, auto_now_add=True)
+    expiration = models.DateTimeField(db_column='expiration', db_index=True)
     
     class ResetKeyValidError(ValueError):
         def __str__(self):
@@ -92,8 +91,9 @@ class PasswordReset(models.Model):
         def __str__(self):
             return "This email address is no longer valid."
 
-    def createPasswordReset(email):
-        pr = PasswordReset.objects.create(email=email)
+    def createPasswordReset(email, target=30):
+        expiration = target if (type(target) == datetime.datetime) else (datetime.datetime.now() + datetime.timedelta(minutes=target))
+        pr = PasswordReset.objects.create(email=email, expiration=expiration)
         return pr.id.hex
         
     def updatePassword(self, email, password):
@@ -101,7 +101,7 @@ class PasswordReset(models.Model):
             PasswordReset.objects.filter(id=self.id).delete()
             raise PasswordReset.ResetKeyValidError();
             
-        if timezone.now() - datetime.timedelta(minutes=30) > self.creation_time:
+        if datetime.datetime.now() > self.expiration:
             PasswordReset.objects.filter(id=self.id).delete()
             raise PasswordReset.ResetKeyExpiredError()
             
@@ -118,8 +118,8 @@ class PasswordReset(models.Model):
         self.delete()
 
     def __unicode__(self):
-        return self.email + ":" + str(self.creation_time)
+        return self.email + ":" + str(self.expiration)
 
     def __str__(self):
-        return self.email + ":" + str(self.creation_time)
+        return self.email + ":" + str(self.expiration)
 
