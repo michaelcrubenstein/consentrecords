@@ -1773,6 +1773,39 @@ var NewExperiencePanel = (function () {
 		this.endDateContainer.select('label')
 					.text(this.previousExperienceButton.classed('pressed') ? crv.buttonTexts.ended : crv.buttonTexts.ends);
 	}
+	
+	NewExperiencePanel.prototype.completeShow = function()
+	{
+		var tagPoolSection = this.tagPoolSection;
+		$.when(this._fillTagsPromise)
+			.then(function()
+				{
+					var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
+					tagInput.node().focus();
+				});
+	}
+	
+	NewExperiencePanel.prototype.showUp = function()
+	{
+		var _this = this;
+		return EditItemPanel.prototype.showUp.call(this)
+			.then(function()
+				{
+					_this.completeShow();
+				},
+				cr.chainFail);
+	}
+		
+	NewExperiencePanel.prototype.showLeft = function()
+	{
+		var _this = this;
+		return EditItemPanel.prototype.showLeft.call(this)
+			.then(function()
+				{
+					_this.completeShow();
+				},
+				cr.chainFail);
+	}
 		
 	function NewExperiencePanel(experienceController, showFunction) {
 		EditItemPanel.call(this, experienceController);
@@ -1861,22 +1894,19 @@ var NewExperiencePanel = (function () {
 				{
 					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
 				});
-				
-		this.tagPoolSection.fillTags()
+		
+		this._fillTagsPromise = this.tagPoolSection.fillTags()
 			.then(function()
 				{
 					var tagPoolSection = _this.tagPoolSection;
-					var tagInput;
-					
-					tagInput = tagPoolSection.section.select('.tags-container>input.tag');
+					var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
 					if (tagInput.size() == 0)
 					{
 						var tagsContainer = tagPoolSection.section.select('.tags-container');
 						tagInput = tagPoolSection.appendTag(tagsContainer, null);
+						tagPoolSection.hideAddTagButton(0);
 					}
-					tagInput.node().focus();
-				},
-				cr.asyncFail);
+				}, cr.chainFail);
 
 		if (experienceController.newInstance().engagement())
 		{
@@ -2184,7 +2214,7 @@ var NewExperiencePanel = (function () {
 			startDateWheel.checkMinDate(startMinDate, startMaxDate);
 		}
 		
-		$(this.node()).one("revealing.cr", function()
+		$(this.node()).one('revealing.cr', function()
 			{
 				_this.showTags();
 				
@@ -2219,7 +2249,7 @@ var NewExperiencePanel = (function () {
 				{
 					_this.resizeVisibleSearch(0);
 				});
-				_this.resizeVisibleSearch(0);
+				_this.tagPoolSection.searchView.showSearch(0);
 			});
 	}
 	

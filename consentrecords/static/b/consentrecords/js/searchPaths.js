@@ -910,7 +910,7 @@ var SearchPathsPanel = (function () {
 
 							_this.filterColumn = undefined;
 							_this.filterPool();
-							_this.poolContainer.layoutFlags();
+							_this.poolContainer.layoutFlags(undefined, 0);
 						});
 				$(mainDiv.node()).scroll(function() {
 					_this.checkResultsScrolling();

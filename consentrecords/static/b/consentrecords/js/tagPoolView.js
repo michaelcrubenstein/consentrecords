@@ -121,9 +121,15 @@ var VerticalReveal = (function() {
 	VerticalReveal.prototype.node = null;
 	VerticalReveal.prototype._isVisible = true;
 
-	VerticalReveal.prototype.isVisible = function()
+	VerticalReveal.prototype.isVisible = function(newValue)
 	{
-		return this._isVisible;
+		if (newValue === undefined)
+			return this._isVisible;
+		else
+		{
+			this._isVisible = newValue;
+			return this;
+		}
 	}
 	
 	VerticalReveal.prototype.show = function(args, duration, step, done)
@@ -308,29 +314,49 @@ var TagPoolView = (function () {
 						.css('top', fd.y * fd.emToPX);
 				}
 				else
-					promises.push($(this).animate({left: fd.x, top: fd.y * fd.emToPX, 
-						opacity: (fd.visible === undefined || fd.visible) ? 1.0 : 0.0},
-						{duration: duration})
-						.promise());
+				{
+				    var styles = {left: fd.x, top: fd.y * fd.emToPX, 
+						opacity: (fd.visible === undefined || fd.visible) ? 1.0 : 0.0};
+					if (duration == 0)
+						$(this).css(styles);
+					else
+					{
+						promises.push($(this).animate(styles,
+							{duration: duration})
+							.promise());
+					}
+				}
 			});
 			
 		movingG.each(function(fd)
 			{
-				promises.push($(this).animate({left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0},
-					{duration: duration})
-						.promise());
+				var styles = {left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0};
+				if (duration == 0)
+					$(this).css(styles);
+				else
+					promises.push($(this).animate(styles,
+						{duration: duration})
+							.promise());
 			});
 		 
 		hidingG.each(function(fd)
 			{
-				promises.push($(this).animate({opacity: 0.0},
-					{duration: duration,
-					 complete: function()
-					 	{
-					 		$(this).css('left', fd.x)
-					 			   .css('top', fd.y * fd.emToPX);
-					 	}})
-					.promise());
+				var styles = {left: fd.x, top: fd.y * fd.emToPX};
+				if (duration == 0)
+				{
+					styles.opacity = 0.0;
+					$(this).css(styles);
+				}
+				else
+				{
+					promises.push($(this).animate({opacity: 0.0},
+						{duration: duration,
+						 complete: function()
+							{
+								$(this).css(styles);
+							}})
+						.promise());
+				}
 			});
 			
 		return $.when.apply(null, promises);
@@ -490,12 +516,12 @@ var TagSearchView = (function() {
 				{newHeight: newHeight,
 				 before: function()
 				 	{
-				 		_this.layoutFlags();
+				 		_this.layoutFlags(undefined, 0);
 				 	}},
 				duration, step, done);
 		}
 		else
-			this.layoutFlags();
+			this.layoutFlags(undefined, duration);
 	}
 	
 	TagSearchView.prototype.firstTagInputNode = function()
@@ -630,10 +656,10 @@ var TagSearchView = (function() {
 		}
 	}
 	
-	TagSearchView.prototype.constrainTagFlags = function()
+	TagSearchView.prototype.constrainTagFlags = function(duration)
 	{
 		this.filterFlags(this.focusNode.value);
-		this.layoutFlags();
+		this.layoutFlags(undefined, duration);
 	}
 	
 	TagSearchView.prototype.hasSubService = function(service)
@@ -1076,17 +1102,23 @@ var TagPoolSection = (function () {
 			this.tagHelp.text(this.otherTagHelp);
 	}
 	
-	TagPoolSection.prototype.hideAddTagButton = function()
+	TagPoolSection.prototype.hideAddTagButton = function(duration)
 	{
 		var button = this.section.select('.tags-container>button');
-		if (button.style('display') != 'none')
+		if (duration === 0)
+			button.style('opacity', 0)
+				  .style('display', 'none');
+		else
 		{
-			button.interrupt().transition()
-				.style('opacity', 0)
-				.each('end', function()
-					{
-						button.style('display', 'none');
-					});
+			if (button.style('display') != 'none')
+			{
+				button.interrupt().transition()
+					.style('opacity', 0)
+					.each('end', function()
+						{
+							button.style('display', 'none');
+						});
+			}
 		}
 	}
 	
@@ -1120,9 +1152,10 @@ var TagPoolSection = (function () {
 	TagPoolSection.prototype.revealSearchView = function(inputNode, ensureVisible)
 	{
 		this.setTagHelp();
-		this.searchView.constrainTagFlags();
+		var duration = this.searchView.reveal.isVisible() ? undefined : 0;
+		this.searchView.constrainTagFlags(duration);
 		if (!inputNode.value)
-			this.hideAddTagButton();
+			this.hideAddTagButton(duration);
 		else
 			this.showAddTagButton();
 		
@@ -1173,8 +1206,6 @@ var TagPoolSection = (function () {
 									d3.event.preventDefault();
 							});
 							
-					/* Have to hide after appending the flags or the metrics aren't calculated. */
-					_this.searchView.reveal.hide();
 					_this.showTags();
 				},
 				cr.chainFail);
@@ -1218,6 +1249,8 @@ var TagPoolSection = (function () {
 		this.tagHelp.text(this.firstTagHelp);
 			
 		this.searchView = new TagSearchView(searchContainer, this, controller);
+		/* Mark the reveal as not visible or the metrics aren't calculated. */
+		this.searchView.reveal.isVisible(false);
 	}
 	
 	return TagPoolSection;
