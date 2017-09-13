@@ -17,6 +17,9 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		.on("click", function() { sitePanel.hideRightEvent(); });
 	backButton.append("span").text(crv.buttonTexts.done);
 	
+	var header = "Find a New Experience";
+	navContainer.appendTitle(header);
+	
 	var buttonDiv = navContainer.appendRightButton();
 	
 	var shareDiv = null;
