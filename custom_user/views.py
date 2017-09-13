@@ -63,11 +63,10 @@ def password(request):
 
 # Displays a web page in which a user can specify a new password based on a key.
 @ensure_csrf_cookie
-def passwordReset(request):
+def passwordReset(request, resetKey):
     # Don't rely on authentication.
     
     template = loader.get_template('custom_user/passwordreset.html')
-    resetKey = request.GET.get('key', "")
         
     args = {
         'resetkey': resetKey
@@ -77,7 +76,7 @@ def passwordReset(request):
 # Creates a record so that a user can reset their password via email.
 def resetPassword(request):
     try:
-        if request.method != "POST":
+        if request.method != 'POST':
             raise Exception("resetPassword only responds to POST requests")
 
         POST = request.POST
@@ -87,10 +86,10 @@ def resetPassword(request):
             raise Exception("This email address is not recognized.");
             
         newKey = PasswordReset.createPasswordReset(email)
-        protocol = "https://" if request.is_secure() else "http://"
+        protocol = 'https://' if request.is_secure() else 'http://'
         
         Emailer.sendResetPasswordEmail(email, 
-            protocol + request.get_host() + settings.PASSWORD_RESET_PATH + "?key=" + newKey,
+            protocol + request.get_host() + settings.PASSWORD_RESET_PATH + newKey + '/',
             protocol + request.get_host())
         
         results = {}
