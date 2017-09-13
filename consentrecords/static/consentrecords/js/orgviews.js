@@ -1758,6 +1758,12 @@ var OfferingPanel = (function () {
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	OfferingPanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
+		if (newReveal != this.tagPoolSection.reveal() &&
+			this.tagPoolSection.reveal().isVisible())
+		{
+			this.tagPoolSection.checkTagInput(null);
+			return true;
+		}
 		return false;
 	}
 	
@@ -2382,6 +2388,12 @@ var ServicePanel = (function () {
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	ServicePanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
+		if (newReveal != this.tagPoolSection.reveal() &&
+			this.tagPoolSection.reveal().isVisible())
+		{
+			this.tagPoolSection.checkTagInput(null);
+			return true;
+		}
 		return false;
 	}
 	
@@ -3310,12 +3322,14 @@ var ExperiencePromptPanel = (function () {
 		if (newReveal != this.tagsSection.reveal() &&
 			this.tagsSection.reveal().isVisible())
 		{
+			this.tagsSection.checkTagInput(null);
 			this.tagsSection.hideReveal(done);
 			return true;
 		}
 		else if (newReveal != this.disqualifyingTagsSection.reveal() &&
 			this.disqualifyingTagsSection.reveal().isVisible())
 		{
+			this.disqualifyingTagsSection.checkTagInput(null);
 			this.disqualifyingTagsSection.hideReveal(done);
 			return true;
 		}
