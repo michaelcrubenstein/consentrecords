@@ -7,7 +7,7 @@ urlpatterns = [
     url(r'^forgotpassword/', views.forgotPassword, name='forgotPassword'),
     url(r'^newuser/', views.newUser, name='newUser'),
     url(r'^password/', views.password, name='password'),
-    url(r'^passwordreset/', views.passwordReset, name='passwordReset'),
+    url(r'^passwordreset/([A-Fa-f0-9]{32})/', views.passwordReset),
     url(r'^resetpassword/', views.resetPassword, name='resetPassword'),
     url(r'^setresetpassword/', views.setResetPassword, name='setResetPassword'),
     url(r'^signin/', views.signin, name='signin'),
