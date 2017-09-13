@@ -314,6 +314,12 @@ def _parse(qs, tokens, user, qsType, accessType):
     else:
         raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))
 
+def _subFields(fields, parentField):
+    prefix = parentField + '/'
+    start = len(prefix)
+    return list(map(lambda s: s[start:], 
+        filter(lambda s: s.startswith(prefix), fields)))
+
 class Transaction(dbmodels.Model):
     id = idField()
     user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
@@ -2036,7 +2042,7 @@ class Experience(ChildInstance, dbmodels.Model):
         elif self.customOffering:
             return self.customOffering
         else:
-            return 'Unnamed Offering'
+            return 'Unnamed Experience'
     
     def __str__(self):
         return self.description(None)
@@ -2092,9 +2098,12 @@ class Experience(ChildInstance, dbmodels.Model):
                     data['site'] = self.site.headData(context)
             if self.offering_id:
                 if 'offering' in fields:
-                    offeringFields = list(map(lambda s: s[len('offering/'):], 
-                        filter(lambda s: s.startswith('offering/'), fields)))
-                    data['offering'] = self.offering.getData(offeringFields, context)
+                    subFields = _subFields(fields, 'offering')
+                    if len(subFields):
+                        offering = Offering.select_related(Offering.objects.filter(pk=self.offering_id), subFields)[0]
+                    else:
+                        offering = self.offering
+                    data['offering'] = offering.getData(subFields, context)
                 else:
                     data['offering'] = self.offering.headData(context)
             if self.engagement_id:
@@ -4052,12 +4061,16 @@ class Path(IInstance, dbmodels.Model):
         return querySet
         
     def select_related(querySet, fields=[]):
+        qs = Path.select_head_related(querySet)
         if 'user' in fields:
-            return querySet.prefetch_related(Prefetch('parent',
-                                                 queryset=\
-                                                     User.select_related(User.objects.filter(deleteTransaction__isnull=True)),
-                                                 to_attr='currentUser'))
-        return querySet
+            qs = qs.prefetch_related(Prefetch('parent',
+                queryset=User.select_related(User.objects.filter(deleteTransaction__isnull=True)),
+                to_attr='currentUser'))
+        if 'experiences' in fields:
+            qs = qs.prefetch_related(Prefetch('experiences',
+                queryset=Experience.select_related(Experience.objects.filter(deleteTransaction__isnull=True), _subFields(fields, 'experiences')),
+                to_attr='currentExperiences'))
+        return qs
         
     @property    
     def privilegeSource(self):
@@ -4101,10 +4114,8 @@ class Path(IInstance, dbmodels.Model):
                         data['user'] = self.parent.headData(context)
         
             if 'experiences' in fields:
-                experienceFields = list(map(lambda s: s[len('experiences/'):], 
-                    filter(lambda s: s.startswith('experiences/'), fields)))
-                data['experiences'] = [i.getData(experienceFields, context) for i in \
-                    Experience.select_related(self.experiences.filter(deleteTransaction__isnull=True), experienceFields)]
+                subFields = _subFields(fields, 'experiences')
+                data['experiences'] = [i.getData(subFields, context) for i in self.currentExperiences]
 
         return data
     
@@ -5689,7 +5700,6 @@ class User(SecureRootInstance, dbmodels.Model):
         
         self.updateChildren(changes, 'emails', context, UserEmail, self.emails, newIDs)
         if 'path' in changes:
-            print('updating path', changes['path'])
             self.path.update(changes['path'], context, newIDs)
         self.updateChildren(changes, 'user grant requests', context, UserUserGrantRequest, self.userGrantRequests, newIDs)
         if 'public access' in changes and changes['public access'] != self.publicAccess:
