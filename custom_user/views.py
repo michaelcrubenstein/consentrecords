@@ -73,7 +73,8 @@ def passwordReset(request, resetKey):
     }
     return HttpResponse(template.render(args))
 
-# Creates a record so that a user can reset their password via email.
+# Creates a PasswordReset record and sends an email with its key so that a user 
+# can reset their password via email.
 def resetPassword(request):
     try:
         if request.method != 'POST':
@@ -82,6 +83,8 @@ def resetPassword(request):
         POST = request.POST
         email = request.POST['email']
         
+        LogRecord.emit(request.user, 'create PasswordReset', email)
+
         if get_user_model().objects.filter(email=email).count() == 0:
             raise Exception("This email address is not recognized.");
             
@@ -103,9 +106,6 @@ def resetPassword(request):
 # Resets the password for the specified email address based on the key.
 def setResetPassword(request):
     try:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % "Start setResetPassword")
-
         if request.method != "POST":
             raise Exception("setResetPassword only responds to POST requests")
 
@@ -114,6 +114,8 @@ def setResetPassword(request):
         email = request.POST['email']
         password = request.POST['password']
         
+        LogRecord.emit(request.user, 'setResetPassword', email)
+
         if get_user_model().objects.filter(email=email).count() == 0:
             raise Exception("This email address is not recognized.");
         
