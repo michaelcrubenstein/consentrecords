@@ -16,6 +16,7 @@ import dateutil.parser
 from django.db import transaction
 from django.db.models import Count
 from django.contrib.auth import authenticate
+from django.core.mail import send_mail
 
 from consentrecords.models import *
 from monitor.models import LogRecord
@@ -41,15 +42,10 @@ if __name__ == "__main__":
         except ValueError:
             end = datetime.datetime.now().date() + datetime.timedelta(days=1)
         
-        sys.stdout.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
-            ("Date", "User Creates", "Password Resets", "Experiences", 
-             "Share Requests", "Shares", "Share Accepts", "Share Rejects", 
-             "User Total", "Experienced User Total", "User Experiences Total",
-             "Experiences/User"))
-        
         userTotal = 0
         experiencedUserTotal = 0
         firstStart = start
+        text = ""
         while start < end:
             next = start + datetime.timedelta(days=1)
 
@@ -71,12 +67,16 @@ if __name__ == "__main__":
             userTotal += users.count()
             experiencedUserTotal += users.annotate(experience_count=Count('paths__experiences')).filter(experience_count__gte=1).count()
             
-            sys.stdout.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
+            text += ("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
                 (start, users.count(), passwordResets.count(), experiences.count(), 
                  requests.count(), shares.count(), accepts.count(), rejects.count(), 
                  userTotal, experiencedUserTotal, userExperiences.count(), 
                  0 if experiencedUserTotal == 0 else userExperiences.count() / experiencedUserTotal))
             start = next
+        
+        send_mail('User Data from %s to %s' % (str(firstStart), str(end)),
+            text, settings.PASSWORD_RESET_SENDER,
+            ['info@pathadvisor.com'], fail_silently=False)
         
     except Exception as e:
         print("%s" % traceback.format_exc())
