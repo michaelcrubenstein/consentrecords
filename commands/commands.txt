@@ -218,9 +218,9 @@ python3 consentrecords/bootstrap.py
 ##################################################################
 
 export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
+cd $VIRTUAL_ENV/consentrecords
 sftp -b - -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
 cd eb_django_app/prod/consentrecords
-lcd ~/GitHub/consentrecords
 cd data
 lcd data
 
