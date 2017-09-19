@@ -2325,6 +2325,9 @@ cr.OfferingLinkInstance = (function() {
 })();
 	
 cr.DateRangeInstance = (function() {
+	DateRangeInstance.prototype._start = null;
+	DateRangeInstance.prototype._end = null;
+
 	DateRangeInstance.prototype.start = function(newValue)
 	{
 		if (newValue === undefined)
@@ -2367,20 +2370,20 @@ cr.DateRangeInstance = (function() {
 			return "";
 	}
 
-	DateRangeInstance.prototype.setData = function(d)
+	DateRangeInstance.prototype.setDateRange = function(d)
 	{
 		this._start = 'start' in d ? d['start'] : "";
 		this._end = 'end' in d ? d['end'] : "";
 	}
 
-	DateRangeInstance.prototype.mergeData = function(source)
+	DateRangeInstance.prototype.mergeDateRange = function(source)
 	{
 		if (!this._start) this._start = source._start;
 		if (!this._end) this._end = source._end;
 	}
 	
 	/** For a newly created DateRangeInstance, set its contents to valid values. */
-	DateRangeInstance.prototype.setDefaultValues = function()
+	DateRangeInstance.prototype.setDefaultDateRange = function()
 	{
 		this._start = "";
 		this._end = "";
@@ -2389,14 +2392,14 @@ cr.DateRangeInstance = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	DateRangeInstance.prototype.duplicateData = function(newInstance)
+	DateRangeInstance.prototype.duplicateDateRange = function(newInstance)
 	{
 		newInstance._start = this._start;
 		newInstance._end = this._end;
 		return this;
 	}
 	
-    DateRangeInstance.prototype.appendData = function(initialData)
+    DateRangeInstance.prototype.appendDateRange = function(initialData)
     {
 		if (this.start())
 			initialData['start'] = this.start();
@@ -2404,7 +2407,7 @@ cr.DateRangeInstance = (function() {
 			initialData['end'] = this.end();
     }
 	
-	DateRangeInstance.prototype.appendChanges = function(revision, changes)
+	DateRangeInstance.prototype.appendDateRangeChanges = function(revision, changes)
 	{	
 		if (cr.stringChanged(this.start(), revision.start()))
 			changes['start'] = revision.start();
@@ -2412,7 +2415,7 @@ cr.DateRangeInstance = (function() {
 			changes['end'] = revision.end();
 	}
 	
-	DateRangeInstance.prototype.updateData = function(d, newIDs)
+	DateRangeInstance.prototype.updateDateRange = function(d, newIDs)
 	{
 		var changed = false;
 		
@@ -3002,11 +3005,10 @@ cr.DisqualifyingTag = (function() {
 cr.Engagement = (function() {
 	Engagement.prototype = Object.create(cr.UserLinkInstance.prototype);
 	Object.assign(Engagement.prototype, cr.OfferingLinkInstance.prototype);
+	Object.assign(Engagement.prototype, cr.DateRangeInstance.prototype);
 	Engagement.prototype.constructor = Engagement;
 
 	Engagement.prototype._user = null;
-	Engagement.prototype._start = null;
-	Engagement.prototype._end = null;
 	Engagement.prototype._organization = null;
 	Engagement.prototype._site = null;
 	
@@ -3016,42 +3018,13 @@ cr.Engagement = (function() {
 		return 'engagement/{0}'.format(this.id());
 	}
 	
-	Engagement.prototype.start = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._start;
-		else
-		{
-		    if (newValue != this._start)
-		    {
-				this._start = newValue;
-			}
-			return this;
-		}
-	}
-
-	Engagement.prototype.end = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._end;
-		else
-		{
-		    if (newValue != this._end)
-		    {
-				this._end = newValue;
-			}
-			return this;
-		}
-	}
-	
 	Engagement.prototype.organization = cr.OrganizationLinkInstance.prototype.organization;
 	Engagement.prototype.site = cr.SiteLinkInstance.prototype.site;
 
 	Engagement.prototype.setData = function(d)
 	{
 		cr.UserLinkInstance.prototype.setData.call(this, d);
-		this._start = 'start' in d ? d['start'] : "";
-		this._end = 'end' in d ? d['end'] : "";
+		this.setDateRange(d);
 		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
 		this.setOfferingLink(d);
@@ -3060,7 +3033,7 @@ cr.Engagement = (function() {
     Engagement.prototype.mergeData = function(source)
     {
 		cr.UserLinkInstance.prototype.mergeData.call(this, source);
-		cr.DateRangeInstance.prototype.mergeData.call(this, source);
+		this.mergeDateRange(source);
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
 		this.mergeOfferingLink(source);
@@ -3070,13 +3043,13 @@ cr.Engagement = (function() {
 	Engagement.prototype.setDefaultValues = function()
 	{
     	cr.UserLinkInstance.prototype.setDefaultValues.call(this);
-    	cr.DateRangeInstance.prototype.setDefaultValues.call(this);
+    	this.setDefaultDateRange();
 	}
 	
 	Engagement.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.UserLinkInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-    	cr.DateRangeInstance.prototype.duplicateData.call(this, newInstance);
+    	this.duplicateDateRange(newInstance);
 		
 		return this;
 	}
@@ -3084,7 +3057,7 @@ cr.Engagement = (function() {
 	Engagement.prototype.appendData = function(initialData)
     {
     	cr.UserLinkInstance.prototype.appendData.call(this, initialData);
-    	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
+    	this.appendDateRange(initialData);
     }
     
 	/* Returns a dictionary that describes all of the operations needed to change
@@ -3093,7 +3066,7 @@ cr.Engagement = (function() {
 	Engagement.prototype.appendChanges = function(revision, changes)
 	{
 		changes = cr.UserLinkInstance.prototype.appendChanges.call(this, revision, changes);
-		cr.DateRangeInstance.prototype.appendChanges.call(this, revision, changes);
+		this.appendDateRangeChanges(revision, changes);
 			
 		return changes;
 	}
@@ -3105,7 +3078,7 @@ cr.Engagement = (function() {
 		if (cr.UserLinkInstance.prototype.updateData.call(this, d, newIDs, false))
 			changed = true;
 			
-		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateDateRange(d, newIDs))
 			changed = true;
 		
 		if (changed)
@@ -3173,6 +3146,7 @@ cr.Enrollment = (function() {
 cr.Experience = (function() {
 	Experience.prototype = Object.create(cr.IInstance.prototype);
 	Object.assign(Experience.prototype, cr.OfferingLinkInstance.prototype);
+	Object.assign(Experience.prototype, cr.DateRangeInstance.prototype);
 	Experience.prototype.constructor = Experience;
 
 	Experience.prototype._path = null;
@@ -3182,8 +3156,6 @@ cr.Experience = (function() {
 	Experience.prototype._customSite = null;
 	Experience.prototype._customOffering = null;
 	Experience.prototype._engagement = null;
-	Experience.prototype._start = null;
-	Experience.prototype._end = null;
 	Experience.prototype._timeframe = null;
 	Experience.prototype._services = null;
 	Experience.prototype._customServices = null;
@@ -3268,10 +3240,6 @@ cr.Experience = (function() {
 		}
 	}
 	
-	Experience.prototype.start = cr.DateRangeInstance.prototype.start;
-	Experience.prototype.end = cr.DateRangeInstance.prototype.end;
-	Experience.prototype.dateRange = cr.DateRangeInstance.prototype.dateRange;
-	
 	Experience.prototype.timeframe = function(newValue)
 	{
 		if (newValue === undefined)
@@ -3353,6 +3321,7 @@ cr.Experience = (function() {
 	Experience.prototype.setDefaultValues = function()
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
+		this.setDefaultDateRange();
 		this._organization = null;
 		this._customOrganization = "";
 		this._site = null;
@@ -3360,8 +3329,6 @@ cr.Experience = (function() {
 		this._offering = null;
 		this._customOffering = "";
 		this._engagement = null;
-		this._start = "";
-		this._end = "";
 		this._timeframe = "Previous";
 		this._services = [];
 		this._customServices = [];
@@ -3370,7 +3337,7 @@ cr.Experience = (function() {
 	
 	Experience.prototype.appendData = function(initialData)
 	{
-    	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
+    	this.appendDateRange(initialData);
     
 		cr.OrganizationLinkInstance.prototype.appendData.call(this, initialData);
 		if (this.customOrganization())
@@ -3419,7 +3386,7 @@ cr.Experience = (function() {
 		if (cr.stringChanged(this.customOffering(), revision.customOffering()))
 			changes['custom offering'] = revision.customOffering();
 				
-		cr.DateRangeInstance.prototype.appendChanges.call(this, revision, changes);
+		this.appendDateRangeChanges(revision, changes);
 		if (cr.stringChanged(this.timeframe(), revision.timeframe()))
 			changes['timeframe'] = revision.timeframe();
 		
@@ -3435,7 +3402,7 @@ cr.Experience = (function() {
 		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
 		this.setOfferingLink(d);
-		cr.DateRangeInstance.prototype.setData.call(this, d);
+		this.setDateRange(d);
 
 		if ('engagement' in d) {
 			this._engagement = new cr.Engagement();
@@ -3463,7 +3430,7 @@ cr.Experience = (function() {
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
 		this.mergeOfferingLink(source);
-		cr.DateRangeInstance.prototype.mergeData.call(this, source);
+		this.mergeDateRange(source);
 		if (!this._engagement) this._engagement = source._engagement;
 		if (!this._customOrganization) this._customOrganization = source._customOrganization;
 		if (!this._customSite) this._customSite = source._customSite;
@@ -3525,7 +3492,7 @@ cr.Experience = (function() {
 			changed = true;
 		if (this.updateEngagementLink(d, newIDs))
 			changed = true;
-		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateDateRange(d, newIDs))
 			changed = true;
 		if ('custom organization' in d)
 		{
@@ -3575,7 +3542,7 @@ cr.Experience = (function() {
 	Experience.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-    	cr.DateRangeInstance.prototype.duplicateData.call(this, newInstance);
+    	this.duplicateDateRange(newInstance);
 		newInstance._path = this._path;
 		newInstance._organization = this._organization;
 		newInstance._customOrganization = this._customOrganization
@@ -6454,12 +6421,11 @@ cr.ServiceImplication = (function() {
 	
 cr.Session = (function() {
 	Session.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(Session.prototype, cr.DateRangeInstance.prototype);
 	Session.prototype.constructor = Session;
 	
 	Session.prototype._names = null;
 	Session.prototype._registrationDeadline = null;
-	Session.prototype._start = null;
-	Session.prototype._end = null;
 	Session.prototype._canRegister = null;
 	Session.prototype._inquires = null;
 	Session.prototype._enrollments = null;
@@ -6480,9 +6446,6 @@ cr.Session = (function() {
 	}
 	
 	Session.prototype.names = cr.NamedInstance.prototype.names;
-	Session.prototype.start = cr.DateRangeInstance.prototype.start;
-	Session.prototype.end = cr.DateRangeInstance.prototype.end;
-	Session.prototype.dateRange = cr.DateRangeInstance.prototype.dateRange;
 
 	Session.prototype.registrationDeadline = function(newValue)
 	{
@@ -6706,7 +6669,7 @@ cr.Session = (function() {
 	Session.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		cr.DateRangeInstance.prototype.setData.call(this, d);
+		this.setDateRange(d);
 		cr.NamedInstance.prototype.setData.call(this, d, cr.SessionName);
 
 		this._registrationDeadline = 'registration deadline' in d ? d['registration deadline'] : "";
@@ -6740,7 +6703,7 @@ cr.Session = (function() {
 	Session.prototype.mergeData = function(source)
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
-		cr.DateRangeInstance.prototype.mergeData.call(this, source);
+		this.mergeDateRange(source);
 		if (!this._names && source._names)
 			this._names = source._names;
 		if (!this._registrationDeadline) this._registrationDeadline = source._registrationDeadline;
@@ -6760,7 +6723,7 @@ cr.Session = (function() {
 	Session.prototype.setDefaultValues = function()
 	{
 		cr.IInstance.prototype.setDefaultValues.call(this);
-		cr.DateRangeInstance.prototype.setDefaultValues.call(this);
+		this.setDefaultDateRange();
 		this._registrationDeadline = "";
 		this._canRegister = 'no';
 		this._names = [];
@@ -6777,6 +6740,7 @@ cr.Session = (function() {
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+    	this.duplicateDateRange(newInstance);
 		
 		newInstance._registrationDeadline = this._registrationDeadline;
 		newInstance._canRegister = this._canRegister;
@@ -6798,7 +6762,7 @@ cr.Session = (function() {
 	
 	Session.prototype.appendData = function(initialData)
 	{
-    	cr.DateRangeInstance.prototype.appendData.call(this, initialData);
+    	this.appendDateRange(initialData);
 		
 		if (this.registrationDeadline())
 			initialData['registration deadline'] = this.registrationDeadline();
@@ -6819,7 +6783,7 @@ cr.Session = (function() {
 	{
 		changes = changes !== undefined ? changes : {};
 		
-		cr.DateRangeInstance.prototype.appendChanges.call(this, revision, changes);
+		this.appendDateRangeChanges(revision, changes);
 
 		if (cr.stringChanged(this.registrationDeadline(), revision.registrationDeadline()))
 			changes['registration deadline'] = revision.registrationDeadline();
@@ -6844,7 +6808,7 @@ cr.Session = (function() {
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
-		if (cr.DateRangeInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateDateRange(d, newIDs))
 			changed = true;
 		
 		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
