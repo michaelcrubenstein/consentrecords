@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                 ('parent', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='groupAccesses', to='consentrecords.AccessSource')),
                 ('transaction', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='createdGroupAccesses', to='consentrecords.Transaction')),
             ],
-            bases=(models.Model, consentrecords.models.AccessInstance),
+            bases=(models.Model, consentrecords.models.Grant),
         ),
         migrations.CreateModel(
             name='GroupAccessHistory',
@@ -70,7 +70,7 @@ class Migration(migrations.Migration):
                 ('parent', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='userAccesses', to='consentrecords.AccessSource')),
                 ('transaction', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='createdUserAccesses', to='consentrecords.Transaction')),
             ],
-            bases=(models.Model, consentrecords.models.AccessInstance),
+            bases=(models.Model, consentrecords.models.Grant),
         ),
         migrations.CreateModel(
             name='UserAccessHistory',

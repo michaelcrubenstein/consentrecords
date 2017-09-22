@@ -750,7 +750,7 @@ class TranslationInstance(ChildInstance):
         return newItem                         
 
 ### An instance that contains access information.
-class AccessInstance(IInstance):
+class Grant(IInstance):
     def description(self, languageCode=None):
         return self.grantee.description(languageCode)
         
@@ -758,7 +758,7 @@ class AccessInstance(IInstance):
         return querySet.select_related('grantee')
 
     def select_related(querySet, fields=[]):
-        return AccessInstance.select_head_related(querySet)
+        return Grant.select_head_related(querySet)
 
     def headData(self, context):
         data = {'id': self.id.hex, 
@@ -1001,7 +1001,7 @@ class TagSource(dbmodels.Model):
         ]
 
 ### A Multiple Picked Value
-class UserGrant(AccessInstance, dbmodels.Model):
+class UserGrant(Grant, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdUserGrants')
     lastTransaction = lastTransactionField('changedUserGrants')
@@ -1027,7 +1027,7 @@ class UserGrant(AccessInstance, dbmodels.Model):
         elif user.is_administrator:
             return qs, UserGrant
         else:
-            return AccessInstance.administrableQuerySet(qs, user, ''), UserGrant
+            return Grant.administrableQuerySet(qs, user, ''), UserGrant
 
     def filterForHeadData(qs, user, accessType):
         return UserGrant.getSubClause(qs, user, accessType)[0]
@@ -1112,7 +1112,7 @@ class UserGrantHistory(dbmodels.Model):
               )
          
 ### A Multiple Picked Value
-class GroupGrant(AccessInstance, dbmodels.Model):
+class GroupGrant(Grant, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdGroupGrants')
     lastTransaction = lastTransactionField('changedGroupGrants')
@@ -1138,7 +1138,7 @@ class GroupGrant(AccessInstance, dbmodels.Model):
         elif user.is_administrator:
             return qs, GroupGrant
         else:
-            return AccessInstance.administrableQuerySet(qs, user, ''), GroupGrant
+            return Grant.administrableQuerySet(qs, user, ''), GroupGrant
 
     def filterForHeadData(qs, user, accessType):
         return GroupGrant.getSubClause(qs, user, accessType)[0]
