@@ -624,15 +624,6 @@ class SecureRootInstance(RootInstance):
             return SecureRootInstance.privilegedQuerySet(qs, user, prefix, 
                         ['read', 'write', 'administer'])
 
-    def administrableQuerySet(qs, user, prefix=''):
-        if not user:
-            return qs.none()
-        elif user.is_administrator:
-            return qs
-        else:
-            return SecureRootInstance.privilegedQuerySet(qs, user, prefix, 
-                        ['administer'])
-
     def fetchPrivilege(self, user):
         if not user:
             return self.publicAccess
@@ -769,8 +760,7 @@ class Grant(IInstance):
     def getData(self, fields, context):
         data = self.headData(context)
         data['grantee'] = self.grantee.headData(context)
-        if 'privilege' in self.__dict__:
-            data['privilege'] = self.privilege
+        data['privilege'] = self.privilege
         
         if 'parents' in fields:
             if context.canRead(self.parent) and 'user' in fields:
@@ -830,6 +820,11 @@ class Grant(IInstance):
                             ).values('id'))
             qClause = Q((inClause, grantClause))
             return qs.filter(qClause)
+    
+    def order_by(queryset, context):
+        return queryset.filter(Q(grantee__emails__deleteTransaction__isnull=True)& 
+                               Q(grantee__emails__position=0))\
+                       .order_by('grantee__emails__text')
     
 class ServiceLinkInstance(ChildInstance):
     @property
@@ -4030,7 +4025,200 @@ class OrganizationNameHistory(dbmodels.Model):
     @property    
     def dataString(self):
         return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
+
+class OrganizationGrant():
+    def administrableQuerySet(qs, user, prefix=''):
+            qClause = Q(grantor__primaryAdministrator==user) |\
+                      Q(grantor__userGrants__grantee=user, 
+                        grantor__userGrants__privilege='administer', 
+                        grantor__userGrants__deleteTransaction__isnull=True) |\
+                      Q(grantor__groupGrants__privilege='administer', 
+                        grantor__groupGrants__deleteTransaction__isnull=True,
+                        grantor__groupGrants__grantee__deleteTransaction__isnull=True,
+                        grantor__groupGrants__grantee__members__user=user,
+                        grantor__groupGrants__grantee__members__deleteTransaction__isnull=True)
+            return qs.filter(qClause)
            
+### A Multiple Picked Value
+class OrganizationUserGrant(Grant, OrganizationGrant, dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('createdOrganizationUserGrants')
+    lastTransaction = lastTransactionField('changedOrganizationUserGrants')
+    deleteTransaction = deleteTransactionField('deletedOrganizationUserGrants')
+
+    grantor = dbmodels.ForeignKey('consentrecords.Organization', related_name='userGrants', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='organizationGrantees', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    fieldMap = {'privilege': 'privilege'}
+    
+    elementMap = {'grantee': ('grantee__', 'User', 'organizationGrantees'),
+    			  'grantor': ('grantor__', 'Organization', 'userGrants'),
+                 }
+                 
+    def __str__(self):
+        return self.description()
+    
+    def getSubClause(qs, user, accessType):
+        if accessType == OrganizationUserGrant:
+            return qs, accessType
+        elif not user:
+            return qs.none(), OrganizationUserGrant
+        elif user.is_administrator:
+            return qs, OrganizationUserGrant
+        else:
+            return OrganizationGrant.administrableQuerySet(qs, user, ''), OrganizationUserGrant
+
+    def filterForHeadData(qs, user, accessType):
+        return OrganizationUserGrant.getSubClause(qs, user, accessType)[0]
+            
+    def filterForGetData(qs, user, accessType):
+        return OrganizationUserGrant.getSubClause(qs, user, accessType)[0]
+            
+    def create(parent, data, context, newIDs={}):
+        if not context.canAdminister(parent):
+           raise PermissionDenied('you do not have permission to administer this user')
+        
+        grantee = _orNoneForeignKey(data, 'grantee', context, User)
+        if not grantee:
+            raise ValueError("the grantee for a new user grant is not specified")
+        elif type(grantee) != User:
+            raise ValueError("the grantee for a new user grant is not a user: %s(%s)" % (str(type(grantee)), str(grantee)))
+            
+        if 'privilege' not in data:
+            raise ValueError("the privilege for a new user grant is not specified")
+        elif data['privilege'] not in ['find', 'read', 'register', 'write', 'administer']:
+            raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
+            
+        oldItem = parent.userGrants.filter(deleteTransaction__isnull=True,
+                                           grantor_id=parent.id,
+                                           grantee=grantee)
+        if oldItem.exists():
+            if parent == context.user:
+                raise ValueError('%s is already following you' % str(grantee))
+            else:
+                raise ValueError('%s is already following %s' % (str(grantee), str(parent)))
+
+        newItem = OrganizationUserGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 grantor_id=parent.id,
+                                 grantee=grantee,
+                                 privilege=data['privilege'])
+        
+        return newItem                          
+        
+class OrganizationUserGrantHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('organizationUserGrantHistories')
+    instance = historyInstanceField(OrganizationUserGrant)
+
+    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='organizationGranteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+    @property
+    def dataString(self):
+        if User.objects.filter(pk=self.grantor_id).exists():
+            grantor = User.objects.get(pk=self.grantor_id)
+        elif Organization.objects.filter(pk=self.grantor_id).exists():
+            grantor = Organization.objects.get(pk=self.grantor_id)
+        else:
+            grantor = self.grantor_id
+        return"%s\t%s\t%s\t%s" % \
+              (
+                self.id, str(grantor), str(self.grantee), self.privilege or '-'
+              )
+         
+### A Multiple Picked Value
+class OrganizationGroupGrant(Grant, OrganizationGrant, dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('createdOrganizationGroupGrants')
+    lastTransaction = lastTransactionField('changedOrganizationGroupGrants')
+    deleteTransaction = deleteTransactionField('deletedOrganizationGroupGrants')
+
+    grantor = dbmodels.ForeignKey('consentrecords.Organization', related_name='groupGrants', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationGrantees', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    fieldMap = {'privilege': 'privilege'}
+    
+    elementMap = {'grantee': ('grantee__', 'Group', 'grantees'),
+                 }
+                 
+    def __str__(self):
+        return self.description()
+    
+    def getSubClause(qs, user, accessType):
+        if accessType == OrganizationGroupGrant:
+            return qs, accessType
+        elif not user:
+            return qs.none(), OrganizationGroupGrant
+        elif user.is_administrator:
+            return qs, OrganizationGroupGrant
+        else:
+            return OrganizationGrant.administrableQuerySet(qs, user, ''), OrganizationGroupGrant
+
+    def filterForHeadData(qs, user, accessType):
+        return OrganizationGroupGrant.getSubClause(qs, user, accessType)[0]
+            
+    def filterForGetData(qs, user, accessType):
+        return OrganizationGroupGrant.getSubClause(qs, user, accessType)[0]
+            
+    def order_by(queryset, context):
+        return queryset.filter(Q(grantee__names__deleteTransaction__isnull=True)& 
+                               (Q(grantee__names__languageCode=context.languageCode)|(Q(grantee__names__languageCode='en')&~Q(grantee__names__parent__names__languageCode=context.languageCode))))\
+                       .order_by('grantee__names__text')
+    
+    def create(parent, data, context, newIDs={}):
+        if not context.canAdminister(parent):
+           raise PermissionDenied('you do not have permission to administer this user')
+        
+        grantee = _orNoneForeignKey(data, 'grantee', context, Group)
+        if not grantee:
+            raise ValueError("the grantee for a new group grant is not specified")
+            
+        if 'privilege' not in data:
+            raise ValueError("the privilege for a new group grant is not specified")
+        elif data['privilege'] not in ['find', 'read', 'register', 'write', 'administer']:
+            raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
+            
+        oldItem = parent.groupGrants.filter(deleteTransaction__isnull=True,
+                                           grantor=parent,
+                                           grantee=grantee)
+        if oldItem.exists():
+            if parent == context.user:
+                raise ValueError('%s is already following you' % str(grantee))
+            else:
+                raise ValueError('%s is already following %s' % (str(grantee), str(parent)))
+
+        newItem = GroupGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 grantor_id=parent.id,
+                                 grantee=_orNoneForeignKey(data, 'grantee', context, Group),
+                                 privilege=_orNone(data, 'privilege'))
+        
+        return newItem                          
+        
+class OrganizationGroupGrantHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('organizationGroupGrantHistories')
+    instance = historyInstanceField(OrganizationGroupGrant)
+
+    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationGranteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    
+    @property
+    def dataString(self):
+        if User.objects.filter(pk=self.grantor_id).exists():
+            grantor = User.objects.get(pk=self.grantor_id)
+        elif Organization.objects.filter(pk=self.grantor_id).exists():
+            grantor = Organization.objects.get(pk=self.grantor_id)
+        else:
+            grantor = self.grantor_id
+        return"%s\t%s\t%s\t%s" % \
+              (
+                self.id, str(grantor), str(self.grantee), self.privilege or '-'
+              )
+         
 class Path(IInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdPaths')
