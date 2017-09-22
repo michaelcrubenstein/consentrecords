@@ -5848,7 +5848,7 @@ class UserEmailHistory(dbmodels.Model):
         return "%s\t%s\t%s" % (self.id, self.position, self.text or '-')
            
 ### A Multiple Picked Value
-class UserUserGrantRequest(AccessInstance, dbmodels.Model):
+class UserUserGrantRequest(IInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdUserUserGrantRequests')
     lastTransaction = lastTransactionField('changedUserUserGrantRequests')
@@ -5857,15 +5857,42 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
     parent = parentField(User, 'userGrantRequests')
     grantee = dbmodels.ForeignKey(User, related_name='userUserGrantRequests', db_index=True, on_delete=dbmodels.CASCADE)
 
-    def __str__(self):
-        return self.description()
-    
     fieldMap = {}
                
     elementMap = {'grantee': ('grantee__', 'User', 'userUserGrantRequests'),
                   'parent': ('parent__', "User", 'userGrantRequests'),
                  }
 
+    def description(self, languageCode=None):
+        return self.grantee.description(languageCode)
+        
+    def __str__(self):
+        return self.description()
+    
+    def select_head_related(querySet):
+        return querySet.select_related('grantee')
+
+    def select_related(querySet, fields=[]):
+        return UserUserGrantRequest.select_head_related(querySet)
+
+    def headData(self, context):
+        data = {'id': self.id.hex, 
+                'description': self.description(context.languageCode), 
+               }
+        return data
+        
+    def getData(self, fields, context):
+        data = self.headData(context)
+        data['grantee'] = self.grantee.headData(context)
+        
+        if 'parents' in fields:
+            if context.canRead(self.parent) and 'user' in fields:
+                data['user'] = self.parent.getData([], context)
+            else:
+                data['user'] = self.parent.headData(context)
+                
+        return data
+        
     def getSubClause(qs, user, accessType):
         if accessType == User:
             return qs, accessType
@@ -5890,7 +5917,7 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
                                  grantee=_orNoneForeignKey(data, 'grantee', context, User),
                                  )
         
-        return newItem                          
+        return newItem
         
     def buildHistory(self, context):
         return UserUserGrantRequestHistory.objects.create(transaction=self.lastTransaction,
@@ -5922,6 +5949,15 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
             self.lastTransaction = context.transaction
             self.save()
             
+    @property    
+    def privilegeSource(self):
+        return self
+        
+    def fetchPrivilege(self, user):
+        return "administer" if self.parent.fetchPrivilege(user) == "administer" else \
+        "write" if self.grantee.id == user.id \
+        else None
+
 class UserUserGrantRequestHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userUserGrantRequestHistories')
