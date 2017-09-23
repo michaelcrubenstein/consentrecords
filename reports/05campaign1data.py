@@ -54,7 +54,7 @@ if __name__ == "__main__":
                 creation_time__range=[start, next])
             experiences = Experience.objects.filter((Q(deleteTransaction__isnull=True)|Q(deleteTransaction__creation_time__gte=next)), transaction__creation_time__range=[start, next])
             requests = UserUserGrantRequest.objects.filter(transaction__creation_time__range=[start, next])
-            shares = UserGrant.objects.filter(grantor_id__in=User.objects.all(), transaction__creation_time__range=[start, next])
+            shares = UserUserGrant.objects.filter(grantor_id__in=User.objects.all(), transaction__creation_time__range=[start, next])
             accepts = UserUserGrantRequest.objects.filter(deleteTransaction__creation_time__range=[start, next],
                 deleteTransaction__createdUserGrants__grantee=F('grantee'))
             rejects = UserUserGrantRequest.objects.filter(deleteTransaction__creation_time__range=[start, next],
