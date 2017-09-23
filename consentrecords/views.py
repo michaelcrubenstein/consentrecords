@@ -444,9 +444,9 @@ def acceptFollower(request, userPath=None):
             else:
                 with transaction.atomic():
                     if qsType == User:
-                        grantClass = UserGrant
+                        grantClass = UserUserGrant
                     else:
-                        grantClass = GroupGrant
+                        grantClass = UserGroupGrant
                     newValue = grantClass.objects.create(transaction=context.transaction,
                         lastTransaction=context.transaction,
                         parent=grantTarget, privilege=privilege, grantee=grantee)
