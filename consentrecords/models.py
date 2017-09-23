@@ -234,24 +234,6 @@ def _filterClause(tokens, user, qsType, accessType, prefix=''):
                 return Q((prefix+'pk', tokens[2]))
             else:
                 raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
-    elif fieldName == 'user grant':
-        # This special case handles grant targets for items.
-        subType = UserGrant
-        if tokens[1] == '>':
-            return Q((prefix + 'id__in', 
-                      UserGrant.objects.filter(\
-                         _filterClause(tokens[2:], user, subType, accessType, prefix='')).values('grantor_id')))
-        else:
-            raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
-    elif fieldName == 'group grant':
-        # This special case handles grant targets for items.
-        subType = GroupGrant
-        if tokens[1] == '>':
-            return Q((prefix + 'id__in', 
-                      GroupGrant.objects.filter(\
-                         _filterClause(tokens[2:], user, subType, accessType, prefix='')).values('grantor_id')))
-        else:
-            raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
     else:
         raise ValueError("unrecognized path contents within [] for %s (expecting one of (%s))" % ("".join(tokens), ", ".join(qsType.elementMap.keys())))
 
@@ -268,18 +250,6 @@ def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
         return _parse(subType.objects.filter(Q((inClause, elementClause)),
                                              deleteTransaction__isnull=True), 
                       tokens[2:], user, subType, newAccessType)
-    elif tokens[1] == 'user grant':
-        subType = UserGrant
-        inClause = 'grantor_id__in'
-        elementClause, newAccessType = qsType.getSubClause(qs, user, accessType)
-        return _parse(subType.objects.filter(Q((inClause, elementClause))), 
-                      tokens[2:], user, subType, None)
-    elif tokens[1] == 'group grant':
-        subType = GroupGrant
-        inClause = 'grantor_id__in'
-        elementClause, newAccessType = qsType.getSubClause(qs, user, accessType)
-        return _parse(subType.objects.filter(Q((inClause, elementClause))), 
-                      tokens[2:], user, subType, None)
     else:
         raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))    
 
@@ -477,7 +447,6 @@ class RootInstance(IInstance):
              'experience prompt service': ExperiencePromptService,
              'experience prompt translation': ExperiencePromptText,
              'group': Group,
-             'group grant': GroupGrant,
              'group name': GroupName,
              'group member': GroupMember,
              'inquiry': Inquiry,
@@ -487,7 +456,9 @@ class RootInstance(IInstance):
              'offering name': OfferingName,
              'offering service': OfferingService,
              'organization': Organization,
+             'organization group grant': OrganizationGroupGrant,
              'organization name': OrganizationName,
+             'organization user grant': OrganizationUserGrant,
              'path': Path,
              'period': Period,
              'service': Service,
@@ -503,7 +474,8 @@ class RootInstance(IInstance):
              'street': Street,
              'user': User,
              'user email': UserEmail,
-             'user grant': UserGrant,
+             'user group grant': UserGroupGrant,
+             'user user grant': UserUserGrant,
              'user user grant request': UserUserGrantRequest,
             }
         if tokens[0] in d:
@@ -528,14 +500,6 @@ class RootInstance(IInstance):
 # An instance that is a secure root: User and Organization
 class SecureRootInstance(RootInstance):
 
-    @property
-    def userGrants(self):
-        return UserGrant.objects.filter(deleteTransaction__isnull=True, grantor_id=self.id)
-        
-    @property
-    def groupGrants(self):
-        return GroupGrant.objects.filter(deleteTransaction__isnull=True, grantor_id=self.id)
-        
     def getData(self, fields, context):
         data = super(SecureRootInstance, self).getData(fields, context)
 
@@ -546,17 +510,17 @@ class SecureRootInstance(RootInstance):
                 data['primary administrator'] = self.primaryAdministrator.headData(context)
             if 'user grants' in fields:
                 data['user grants'] = [i.getData([], context) for i in \
-                                       UserGrant.order_by(self.userGrants, context)]
+                                       UserUserGrant.order_by(self.userGrants.filter(deleteTransaction__isnull=True), context)]
             if 'group grants' in fields:
                 data['group grants'] = [i.getData([], context) for i in \
-                                        GroupGrant.order_by(self.groupGrants, context)]
+                                        UserGroupGrant.order_by(self.groupGrants.filter(deleteTransaction__isnull=True), context)]
 
         return data
     
     def markDeleted(self, context):
-        for i in self.userGrants:
+        for i in self.userGrants.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
-        for i in self.groupGrants:
+        for i in self.groupGrants.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
         super(SecureRootInstance, self).markDeleted(context)
 
@@ -582,12 +546,12 @@ class SecureRootInstance(RootInstance):
     # returns a querySet that enumerates the grantor_ids for grants
     # for the specified user to have one of the specified privileges.
     def grantorIDs(user, privileges):
-        return UserGrant.objects.filter(\
+        return UserUserGrant.objects.filter(\
                 privilege__in=privileges,
                 deleteTransaction__isnull=True,
                 grantee=user,
             ).values('grantor_id').union(\
-            GroupGrant.objects.filter(\
+            UserGroupGrant.objects.filter(\
                 privilege__in=privileges,
                 deleteTransaction__isnull=True,
                 grantee__deleteTransaction__isnull=True,
@@ -776,15 +740,9 @@ class Grant(IInstance):
     
     @property
     def dataString(self):
-        if User.objects.filter(pk=self.grantor_id).exists():
-            grantor = User.objects.get(pk=self.grantor_id)
-        elif Organization.objects.filter(pk=self.grantor_id).exists():
-            grantor = Organization.objects.get(pk=self.grantor_id)
-        else:
-            grantor = self.grantor_id
         return "%s\t%s\t%s\t%s" % \
               (
-                self.id, str(grantor), str(self.grantee), self.privilege or '-'
+                self.id, str(self.grantor), str(self.grantee), self.privilege or '-'
               )
      
     @property    
@@ -792,33 +750,20 @@ class Grant(IInstance):
         return self
         
     def fetchPrivilege(self, user):
-        return "administer" if self.parent.fetchPrivilege(user) == "administer" else \
-        "write" if self.grantee.id == user.id \
+        return 'administer' if self.parent.fetchPrivilege(user) == 'administer' else \
+        'write' if self.grantee.id == user.id \
         else None
     
-    def administrableQuerySet(qs, user, prefix=''):   
-            inClause = (prefix + '__grantor_id__in') if prefix else 'grantor_id__in'
-            grantClause = UserGrant.objects.filter(\
-                                privilege="administer",
-                                deleteTransaction__isnull=True,
-                                grantee=user,
-                            ).values('grantor_id').union(\
-                            GroupGrant.objects.filter(\
-                                privilege="administer",
-                                deleteTransaction__isnull=True,
-                                grantee__deleteTransaction__isnull=True,
-                                grantee__members__user=user,
-                                grantee__members__deleteTransaction__isnull=True,
-                            ).values('grantor_id')).union(\
-                            User.objects.filter(\
-                                primaryAdministrator=user,\
-                                deleteTransaction__isnull=True,\
-                            ).values('id')).union(\
-                            Organization.objects.filter(\
-                                primaryAdministrator=user,\
-                                deleteTransaction__isnull=True,\
-                            ).values('id'))
-            qClause = Q((inClause, grantClause))
+    def administrableQuerySet(qs, user):
+            qClause = Q(grantor__primaryAdministrator==user) |\
+                      Q(grantor__userGrants__grantee=user, 
+                        grantor__userGrants__privilege='administer', 
+                        grantor__userGrants__deleteTransaction__isnull=True) |\
+                      Q(grantor__groupGrants__privilege='administer', 
+                        grantor__groupGrants__deleteTransaction__isnull=True,
+                        grantor__groupGrants__grantee__deleteTransaction__isnull=True,
+                        grantor__groupGrants__grantee__members__user=user,
+                        grantor__groupGrants__grantee__members__deleteTransaction__isnull=True)
             return qs.filter(qClause)
     
     def order_by(queryset, context):
@@ -996,39 +941,40 @@ class TagSource(dbmodels.Model):
         ]
 
 ### A Multiple Picked Value
-class UserGrant(Grant, dbmodels.Model):
+class UserUserGrant(Grant, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdUserGrants')
     lastTransaction = lastTransactionField('changedUserGrants')
     deleteTransaction = deleteTransactionField('deletedUserGrants')
 
-    grantor_id = dbmodels.UUIDField(editable=False, db_index=True)
-    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
+    grantor = dbmodels.ForeignKey('consentrecords.User', related_name='userGrants', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='userUserGrantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
     fieldMap = {'privilege': 'privilege'}
     
-    elementMap = {'grantee': ('grantee__', 'User', 'grantees'),
+    elementMap = {'grantor': ('grantor__', 'User', 'userGrants'),
+                  'grantee': ('grantee__', 'User', 'userUserGrantees'),
                  }
                  
     def __str__(self):
         return self.description()
     
     def getSubClause(qs, user, accessType):
-        if accessType == UserGrant:
+        if accessType == UserUserGrant:
             return qs, accessType
         elif not user:
-            return qs.none(), UserGrant
+            return qs.none(), UserUserGrant
         elif user.is_administrator:
-            return qs, UserGrant
+            return qs, UserUserGrant
         else:
-            return Grant.administrableQuerySet(qs, user, ''), UserGrant
+            return Grant.administrableQuerySet(qs, user), UserUserGrant
 
     def filterForHeadData(qs, user, accessType):
-        return UserGrant.getSubClause(qs, user, accessType)[0]
+        return UserUserGrant.getSubClause(qs, user, accessType)[0]
             
     def filterForGetData(qs, user, accessType):
-        return UserGrant.getSubClause(qs, user, accessType)[0]
+        return UserUserGrant.getSubClause(qs, user, accessType)[0]
             
     def order_by(queryset, context):
         return queryset.filter(Q(grantee__emails__deleteTransaction__isnull=True)& 
@@ -1051,7 +997,6 @@ class UserGrant(Grant, dbmodels.Model):
             raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
             
         oldItem = parent.userGrants.filter(deleteTransaction__isnull=True,
-                                           grantor_id=parent.id,
                                            grantee=grantee)
         if oldItem.exists():
             if parent == context.user:
@@ -1059,7 +1004,7 @@ class UserGrant(Grant, dbmodels.Model):
             else:
                 raise ValueError('%s is already following %s' % (str(grantee), str(parent)))
 
-        newItem = UserGrant.objects.create(transaction=context.transaction,
+        newItem = UserUserGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  grantor_id=parent.id,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, User),
@@ -1085,61 +1030,56 @@ class UserGrant(Grant, dbmodels.Model):
 
         return newItem                          
         
-class UserGrantHistory(dbmodels.Model):
+class UserUserGrantHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userGrantHistories')
-    instance = historyInstanceField(UserGrant)
+    instance = historyInstanceField(UserUserGrant)
 
     grantee = dbmodels.ForeignKey('consentrecords.User', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
     @property
     def dataString(self):
-        if User.objects.filter(pk=self.grantor_id).exists():
-            grantor = User.objects.get(pk=self.grantor_id)
-        elif Organization.objects.filter(pk=self.grantor_id).exists():
-            grantor = Organization.objects.get(pk=self.grantor_id)
-        else:
-            grantor = self.grantor_id
         return"%s\t%s\t%s\t%s" % \
               (
-                self.id, str(grantor), str(self.grantee), self.privilege or '-'
+                self.id, str(self.instance.grantor), str(self.grantee), self.privilege or '-'
               )
          
 ### A Multiple Picked Value
-class GroupGrant(Grant, dbmodels.Model):
+class UserGroupGrant(Grant, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdGroupGrants')
     lastTransaction = lastTransactionField('changedGroupGrants')
     deleteTransaction = deleteTransactionField('deletedGroupGrants')
 
-    grantor_id = dbmodels.UUIDField(editable=False, db_index=True)
-    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
+    grantor = dbmodels.ForeignKey('consentrecords.User', related_name='groupGrants', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='userGroupGrantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
     fieldMap = {'privilege': 'privilege'}
     
-    elementMap = {'grantee': ('grantee__', 'Group', 'grantees'),
+    elementMap = {'grantor': ('grantor__', 'Group', 'groupGrants'),
+                  'grantee': ('grantee__', 'Group', 'userGroupGrants'),
                  }
                  
     def __str__(self):
         return self.description()
     
     def getSubClause(qs, user, accessType):
-        if accessType == GroupGrant:
+        if accessType == UserGroupGrant:
             return qs, accessType
         elif not user:
-            return qs.none(), GroupGrant
+            return qs.none(), UserGroupGrant
         elif user.is_administrator:
-            return qs, GroupGrant
+            return qs, UserGroupGrant
         else:
-            return Grant.administrableQuerySet(qs, user, ''), GroupGrant
+            return Grant.administrableQuerySet(qs, user), UserGroupGrant
 
     def filterForHeadData(qs, user, accessType):
-        return GroupGrant.getSubClause(qs, user, accessType)[0]
+        return UserGroupGrant.getSubClause(qs, user, accessType)[0]
             
     def filterForGetData(qs, user, accessType):
-        return GroupGrant.getSubClause(qs, user, accessType)[0]
+        return UserGroupGrant.getSubClause(qs, user, accessType)[0]
             
     def order_by(queryset, context):
         return queryset.filter(Q(grantee__names__deleteTransaction__isnull=True)& 
@@ -1160,7 +1100,6 @@ class GroupGrant(Grant, dbmodels.Model):
             raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
             
         oldItem = parent.groupGrants.filter(deleteTransaction__isnull=True,
-                                           grantor=parent,
                                            grantee=grantee)
         if oldItem.exists():
             if parent == context.user:
@@ -1168,7 +1107,7 @@ class GroupGrant(Grant, dbmodels.Model):
             else:
                 raise ValueError('%s is already following %s' % (str(grantee), str(parent)))
 
-        newItem = GroupGrant.objects.create(transaction=context.transaction,
+        newItem = UserGroupGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  grantor_id=parent.id,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, Group),
@@ -1176,25 +1115,19 @@ class GroupGrant(Grant, dbmodels.Model):
         
         return newItem                          
         
-class GroupGrantHistory(dbmodels.Model):
+class UserGroupGrantHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('groupAccessHistories')
-    instance = historyInstanceField(GroupGrant)
+    instance = historyInstanceField(UserGroupGrant)
 
     grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     
     @property
     def dataString(self):
-        if User.objects.filter(pk=self.grantor_id).exists():
-            grantor = User.objects.get(pk=self.grantor_id)
-        elif Organization.objects.filter(pk=self.grantor_id).exists():
-            grantor = Organization.objects.get(pk=self.grantor_id)
-        else:
-            grantor = self.grantor_id
         return"%s\t%s\t%s\t%s" % \
               (
-                self.id, str(grantor), str(self.grantee), self.privilege or '-'
+                self.id, str(self.instance.grantor), str(self.grantee), self.privilege or '-'
               )
          
 class Address(ChildInstance, dbmodels.Model):
@@ -3204,7 +3137,7 @@ class Inquiry(ChildInstance, dbmodels.Model):
            not user.groupGrants.filter(deleteTransaction__isnull=True,
                                        grantee=organization.inquiryAccessGroup,
                                        privilege__in=['read', 'write', 'administer']).exists():
-            newGrant = GroupGrant.objects.create(transaction=context.transaction,
+            newGrant = UserGroupGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  grantor_id=user.id,
                                  grantee=organization.inquiryAccessGroup,
@@ -3809,6 +3742,8 @@ class Organization(SecureRootInstance, dbmodels.Model):
                   'group': ('groups__', 'Group', 'parent'),
                   'name': ('names__', 'OrganizationName', 'parent'),
                   'site': ('sites__', 'Site', 'parent'),
+                  'user grant': ('userGrants', 'OrganizationUserGrant', 'grantor'),
+                  'group grant': ('groupGrants', 'OrganizationGroupGrant', 'grantor'),
                  }
 
     def __str__(self):
@@ -3896,8 +3831,8 @@ class Organization(SecureRootInstance, dbmodels.Model):
         newItem.createChildren(data, 'groups', context, Group, newIDs)
         newItem.createChildren(data, 'sites', context, Site, newIDs)
         
-        newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
-        newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
+        newItem.createChildren(data, 'user grants', context, UserUserGrant, newIDs)
+        newItem.createChildren(data, 'group grants', context, UserGroupGrant, newIDs)
         
         if 'inquiry access group' in data:
             newItem.inquiryAccessGroup = _orNoneForeignKey(data, 'inquiry access group', context, Group, Organization.objects.filter(pk=newItem.id),
@@ -3960,8 +3895,8 @@ class Organization(SecureRootInstance, dbmodels.Model):
                  self.primaryAdministrator = newValue or None
         
         if context.canAdminister(self):
-            self.updateChildren(changes, 'user grants', context, UserGrant, self.userGrants, newIDs)
-            self.updateChildren(changes, 'group grants', context, GroupGrant, self.groupGrants, newIDs)
+            self.updateChildren(changes, 'user grants', context, UserUserGrant, self.userGrants, newIDs)
+            self.updateChildren(changes, 'group grants', context, UserGroupGrant, self.groupGrants, newIDs)
         
         if history:
             self.lastTransaction = context.transaction
@@ -4025,34 +3960,21 @@ class OrganizationNameHistory(dbmodels.Model):
     @property    
     def dataString(self):
         return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
-
-class OrganizationGrant():
-    def administrableQuerySet(qs, user, prefix=''):
-            qClause = Q(grantor__primaryAdministrator==user) |\
-                      Q(grantor__userGrants__grantee=user, 
-                        grantor__userGrants__privilege='administer', 
-                        grantor__userGrants__deleteTransaction__isnull=True) |\
-                      Q(grantor__groupGrants__privilege='administer', 
-                        grantor__groupGrants__deleteTransaction__isnull=True,
-                        grantor__groupGrants__grantee__deleteTransaction__isnull=True,
-                        grantor__groupGrants__grantee__members__user=user,
-                        grantor__groupGrants__grantee__members__deleteTransaction__isnull=True)
-            return qs.filter(qClause)
            
 ### A Multiple Picked Value
-class OrganizationUserGrant(Grant, OrganizationGrant, dbmodels.Model):
+class OrganizationUserGrant(Grant, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdOrganizationUserGrants')
     lastTransaction = lastTransactionField('changedOrganizationUserGrants')
     deleteTransaction = deleteTransactionField('deletedOrganizationUserGrants')
 
     grantor = dbmodels.ForeignKey('consentrecords.Organization', related_name='userGrants', db_index=True, on_delete=dbmodels.CASCADE)
-    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='organizationGrantees', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='organizationUserGrantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
     fieldMap = {'privilege': 'privilege'}
     
-    elementMap = {'grantee': ('grantee__', 'User', 'organizationGrantees'),
+    elementMap = {'grantee': ('grantee__', 'User', 'organizationUserGrantees'),
     			  'grantor': ('grantor__', 'Organization', 'userGrants'),
                  }
                  
@@ -4067,7 +3989,7 @@ class OrganizationUserGrant(Grant, OrganizationGrant, dbmodels.Model):
         elif user.is_administrator:
             return qs, OrganizationUserGrant
         else:
-            return OrganizationGrant.administrableQuerySet(qs, user, ''), OrganizationUserGrant
+            return Grant.administrableQuerySet(qs, user), OrganizationUserGrant
 
     def filterForHeadData(qs, user, accessType):
         return OrganizationUserGrant.getSubClause(qs, user, accessType)[0]
@@ -4091,7 +4013,6 @@ class OrganizationUserGrant(Grant, OrganizationGrant, dbmodels.Model):
             raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
             
         oldItem = parent.userGrants.filter(deleteTransaction__isnull=True,
-                                           grantor_id=parent.id,
                                            grantee=grantee)
         if oldItem.exists():
             if parent == context.user:
@@ -4117,32 +4038,27 @@ class OrganizationUserGrantHistory(dbmodels.Model):
 
     @property
     def dataString(self):
-        if User.objects.filter(pk=self.grantor_id).exists():
-            grantor = User.objects.get(pk=self.grantor_id)
-        elif Organization.objects.filter(pk=self.grantor_id).exists():
-            grantor = Organization.objects.get(pk=self.grantor_id)
-        else:
-            grantor = self.grantor_id
         return"%s\t%s\t%s\t%s" % \
               (
-                self.id, str(grantor), str(self.grantee), self.privilege or '-'
+                self.id, str(self.instance.grantor), str(self.grantee), self.privilege or '-'
               )
          
 ### A Multiple Picked Value
-class OrganizationGroupGrant(Grant, OrganizationGrant, dbmodels.Model):
+class OrganizationGroupGrant(Grant, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdOrganizationGroupGrants')
     lastTransaction = lastTransactionField('changedOrganizationGroupGrants')
     deleteTransaction = deleteTransactionField('deletedOrganizationGroupGrants')
 
     grantor = dbmodels.ForeignKey('consentrecords.Organization', related_name='groupGrants', db_index=True, on_delete=dbmodels.CASCADE)
-    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationGrantees', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationGroupGrantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
     fieldMap = {'privilege': 'privilege'}
     
-    elementMap = {'grantee': ('grantee__', 'Group', 'grantees'),
-                 }
+    elementMap = {'grantor': ('grantor__', 'Group', 'groupGrants'),
+                  'grantee': ('grantee__', 'Group', 'organizationGroupGrantees'),
+                  }
                  
     def __str__(self):
         return self.description()
@@ -4155,7 +4071,7 @@ class OrganizationGroupGrant(Grant, OrganizationGrant, dbmodels.Model):
         elif user.is_administrator:
             return qs, OrganizationGroupGrant
         else:
-            return OrganizationGrant.administrableQuerySet(qs, user, ''), OrganizationGroupGrant
+            return Grant.administrableQuerySet(qs, user), OrganizationGroupGrant
 
     def filterForHeadData(qs, user, accessType):
         return OrganizationGroupGrant.getSubClause(qs, user, accessType)[0]
@@ -4182,7 +4098,6 @@ class OrganizationGroupGrant(Grant, OrganizationGrant, dbmodels.Model):
             raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
             
         oldItem = parent.groupGrants.filter(deleteTransaction__isnull=True,
-                                           grantor=parent,
                                            grantee=grantee)
         if oldItem.exists():
             if parent == context.user:
@@ -4190,7 +4105,7 @@ class OrganizationGroupGrant(Grant, OrganizationGrant, dbmodels.Model):
             else:
                 raise ValueError('%s is already following %s' % (str(grantee), str(parent)))
 
-        newItem = GroupGrant.objects.create(transaction=context.transaction,
+        newItem = OrganizationGroupGrant.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  grantor_id=parent.id,
                                  grantee=_orNoneForeignKey(data, 'grantee', context, Group),
@@ -4208,15 +4123,9 @@ class OrganizationGroupGrantHistory(dbmodels.Model):
     
     @property
     def dataString(self):
-        if User.objects.filter(pk=self.grantor_id).exists():
-            grantor = User.objects.get(pk=self.grantor_id)
-        elif Organization.objects.filter(pk=self.grantor_id).exists():
-            grantor = Organization.objects.get(pk=self.grantor_id)
-        else:
-            grantor = self.grantor_id
         return"%s\t%s\t%s\t%s" % \
               (
-                self.id, str(grantor), str(self.grantee), self.privilege or '-'
+                self.id, str(self.instance.grantor), str(self.grantee), self.privilege or '-'
               )
          
 class Path(IInstance, dbmodels.Model):
@@ -5662,6 +5571,8 @@ class User(SecureRootInstance, dbmodels.Model):
     elementMap = {'email': ('emails__', 'UserEmail', 'parent'),
                   'notification': ('notifications__', "Notification", 'parent'),
                   'path': ('paths__', "Path", 'parent'),
+                  'user grant': ('userGrants', 'UserUserGrant', 'grantor'),
+                  'group grant': ('groupGrants', 'UserGroupGrant', 'grantor'),
                   'user grant request': ('userGrantRequests__', "UserUserGrantRequest", 'parent'),
                   'engagement': ('userEngagements__', "Engagement", 'user'),
                   'group':('groupMembers__parent__', 'Group', 'members__user'),
@@ -5825,8 +5736,8 @@ class User(SecureRootInstance, dbmodels.Model):
             newItem.primaryAdministrator = newItem
             newItem.save()
         
-        newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
-        newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
+        newItem.createChildren(data, 'user grants', context, UserUserGrant, newIDs)
+        newItem.createChildren(data, 'group grants', context, UserGroupGrant, newIDs)
         
         newItem.createChildren(data, 'emails', context, UserEmail, newIDs)
         if not context.user:
@@ -5901,8 +5812,8 @@ class User(SecureRootInstance, dbmodels.Model):
                  history = history or self.buildHistory(context)
                  self.primaryAdministrator = newValue or None
         if context.canAdminister(self):
-            self.updateChildren(changes, 'user grants', context, UserGrant, self.userGrants, newIDs)
-            self.updateChildren(changes, 'group grants', context, GroupGrant, self.groupGrants, newIDs)
+            self.updateChildren(changes, 'user grants', context, UserUserGrant, self.userGrants, newIDs)
+            self.updateChildren(changes, 'group grants', context, UserGroupGrant, self.groupGrants, newIDs)
             self.updateChildren(changes, 'notifications', context, Notification, self.notifications, newIDs)
         
         

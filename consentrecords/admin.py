@@ -1236,7 +1236,7 @@ class StreetAdmin(ModelAdmin):
 admin.site.register(Street, StreetAdmin)
 
 class UserGrantInline(TabularInline):
-    model = UserGrant
+    model = UserUserGrant
     list_display = ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')
     fieldsets = (
         (None, {'fields': ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')}),
@@ -1245,7 +1245,7 @@ class UserGrantInline(TabularInline):
     search_fields = ('id', 'grantee', 'privilege', 'transaction__id', 'deleteTransaction__id')
 
 class GroupGrantInline(TabularInline):
-    model = GroupGrant
+    model = UserGroupGrant
     list_display = ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')
     fieldsets = (
         (None, {'fields': ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')}),
@@ -1254,7 +1254,7 @@ class GroupGrantInline(TabularInline):
     search_fields = ('id', 'grantee', 'privilege', 'transaction__id', 'deleteTransaction__id')
 
 class UserGrantHistoryInline(TabularInline):
-    model = UserGrantHistory
+    model = UserUserGrantHistory
     list_display = ('id', 'grantee', 'privilege', 't_creationTime')
     fieldsets = (
         (None, {'fields': ('id', 'grantee', 'privilege', 't_creationTime')}),
@@ -1263,7 +1263,7 @@ class UserGrantHistoryInline(TabularInline):
     search_fields = ('id', 'grantee', 'privilege', 'transaction__id')
 
 class GroupGrantHistoryInline(TabularInline):
-    model = GroupGrantHistory
+    model = UserGroupGrantHistory
     list_display = ('id', 'grantee', 'privilege', 't_creationTime')
     fieldsets = (
         (None, {'fields': ('id', 'grantee', 'privilege', 't_creationTime')}),

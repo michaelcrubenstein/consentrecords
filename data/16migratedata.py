@@ -328,7 +328,7 @@ def buildGrants(instances):
             for j in i.value_set.filter(field__in=[terms['group'], terms.user]):
                 gs = Group.objects.filter(pk=j.referenceValue.id)
                 if gs.exists():
-                    GroupGrant.objects.get_or_create(id=j.id,
+                    UserGroupGrant.objects.get_or_create(id=j.id,
                         defaults={'transaction': j.transaction,
                                   'lastTransaction': j.transaction,
                                   'deleteTransaction': j.deleteTransaction,
@@ -338,7 +338,7 @@ def buildGrants(instances):
                 else:
                     us = User.objects.filter(pk=j.referenceValue.id)
                     if us.exists():
-                        UserGrant.objects.get_or_create(id=j.id,
+                        UserUserGrant.objects.get_or_create(id=j.id,
                             defaults={'transaction': j.transaction,
                                       'lastTransaction': j.transaction,
                                       'deleteTransaction': j.deleteTransaction,

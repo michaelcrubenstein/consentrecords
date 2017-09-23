@@ -250,8 +250,8 @@ print(data)
 data = showData('user/%s' % userID, context, User)
 userAccessID = data[0]['user grants'][0]['id']
 groupAccessID = data[0]['group grants'][0]['id']
-data = showData('user grant/%s' % userAccessID, context, UserGrant)
-data = showData('group grant/%s' % groupAccessID, context, GroupGrant)
+data = showData('user grant/%s' % userAccessID, context, UserUserGrant)
+data = showData('group grant/%s' % groupAccessID, context, UserGroupGrant)
 
 data = getData('service', anoncontext, Service)
 data.sort(key=lambda i: i['description'])

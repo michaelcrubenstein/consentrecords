@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('lastTransaction', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='changedOrganizationGroupGrants', to='consentrecords.Transaction')),
                 ('transaction', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='createdOrganizationGroupGrants', to='consentrecords.Transaction')),
             ],
-            bases=(consentrecords.models.Grant, consentrecords.models.OrganizationGrant, models.Model),
+            bases=(consentrecords.models.Grant, models.Model),
         ),
         migrations.CreateModel(
             name='OrganizationGroupGrantHistory',
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                 ('lastTransaction', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='changedOrganizationUserGrants', to='consentrecords.Transaction')),
                 ('transaction', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='createdOrganizationUserGrants', to='consentrecords.Transaction')),
             ],
-            bases=(consentrecords.models.Grant, consentrecords.models.OrganizationGrant, models.Model),
+            bases=(consentrecords.models.Grant, models.Model),
         ),
         migrations.CreateModel(
             name='OrganizationUserGrantHistory',
