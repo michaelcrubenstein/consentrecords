@@ -1027,7 +1027,7 @@ var ServiceController = (function() {
 	ServiceController.prototype.constructor = ServiceController;
 	
 	ServiceController.prototype.addingMessage = "Adding Service...";
-	ServiceController.prototype.savingMessage = "Saving Savice...";
+	ServiceController.prototype.savingMessage = "Saving Service...";
 	ServiceController.prototype.groupKey = 'services';
 	
 	ServiceController.prototype.serviceLinks = function()
