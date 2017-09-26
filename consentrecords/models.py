@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.db import models as dbmodels
@@ -3975,7 +3976,7 @@ class OrganizationUserGrant(Grant, dbmodels.Model):
     fieldMap = {'privilege': 'privilege'}
     
     elementMap = {'grantee': ('grantee__', 'User', 'organizationUserGrantees'),
-    			  'grantor': ('grantor__', 'Organization', 'userGrants'),
+                  'grantor': ('grantor__', 'Organization', 'userGrants'),
                  }
                  
     def __str__(self):
@@ -5709,12 +5710,32 @@ class User(SecureRootInstance, dbmodels.Model):
         if key not in data:
             return
         if not data[key]:
-            raise ValuError('birthday can not be empty if specified')
+            raise ValueError('birthday can not be empty if specified')
         _validateDate(data, key)
     
     def create(data, context, newIDs={}):
+        if 'emails' not in data:
+            raise ValueError('user data contains no emails')
+        elif len(data['emails']) == 0:
+            raise ValueError('user email list is empty')
+        elif 'text' not in data['emails'][0]:
+            raise ValueError('first email for user contains no text')
+        elif not _isEmail(data['emails'][0]['text']):
+            raise ValueError('text of first email for user is not a valid email address')
+        
         User.validateBirthday(data, 'birthday')
         
+        email = data['emails'][0]['text']
+        firstName = _orNone(data, 'first name')
+        lastName = _orNone(data, 'last name')
+        if not AuthUser.objects.filter(email=email).exists():
+            if not context.is_administrator:
+                raise ValueError('non-administrators cannot create users')
+            
+            manager = get_user_model().objects
+            constituent = manager.create_user(email=email, password='', 
+                                              firstName = firstName, lastName = lastName)    
+            
         # Handle special case for primary administrator when creating a new SecureRootInstance subclass.
         if 'primary administrator' in data and data['primary administrator'] == 'user/%s' % id.hex:
             primaryAdministrator = User.objects.get(pk=id)
@@ -5723,8 +5744,8 @@ class User(SecureRootInstance, dbmodels.Model):
             
         newItem = User.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
-                                 firstName = _orNone(data, 'first name'),
-                                 lastName = _orNone(data, 'last name'),
+                                 firstName = firstName,
+                                 lastName = lastName,
                                  birthday = _orNone(data, 'birthday'),
                                  publicAccess=_orNone(data, 'public access'),
                                  primaryAdministrator=primaryAdministrator,
