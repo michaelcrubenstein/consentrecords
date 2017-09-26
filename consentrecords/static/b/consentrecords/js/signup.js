@@ -321,10 +321,31 @@ var SigninPanel = (function()
 				.classed("site-active-text", true);
 		}
 	},
-
+	
 	SigninPanel.prototype.submit = function() {
-		if (!this.canSubmit())
-			return;
+		if (!$(this.emailInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.emailInput.focus();
+			this.emailMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+		{
+			this.emailMessageReveal.hide({duration: 400});
+		}
+		
+		if (!$(this.passwordInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.passwordInput.focus();
+			this.passwordMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+			this.passwordMessageReveal.hide({duration: 400});
 		
 		bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 		
@@ -372,9 +393,6 @@ var SigninPanel = (function()
 			.classed('site-title', true)
 			.text("Sign In to PathAdvisor");
 		
-		form.append('div')
-			.classed('alert-container', true);
-			
 		this.emailInput = form.append('input')
 				.attr('type', 'email')
 				.attr('maxlength', '254')
@@ -384,6 +402,12 @@ var SigninPanel = (function()
 				.attr('autofocus', '')
 				.on('input', function() { _this.checkenabled(); })
 				.node();
+		this.emailMessage = form.append('div')
+			.classed('message', true);
+		this.emailMessage.append('div')
+			.text('The email address is required.');
+		this.emailMessageReveal = new VerticalReveal(this.emailMessage.node());
+		this.emailMessageReveal.hide();
 		
 		this.passwordInput = form.append('input')
 				.attr('type', 'password')
@@ -410,7 +434,16 @@ var SigninPanel = (function()
 														_this.hideRight(unblockClick);
 													},
 													cr.syncFail);
-											}, cr.syncFail);
+											}, 
+											function(err)
+											{
+												/* Error may be handled in submit, in which
+													case err will be undefined. */
+												if (err) 
+													cr.syncFail(err);
+												else
+													unblockClick();
+											});
 									}
 								}
 								catch(err)
@@ -422,6 +455,12 @@ var SigninPanel = (function()
 						}
 					})
 				.node();
+		this.passwordMessage = form.append('div')
+			.classed('message', true);
+		this.passwordMessage.append('div')
+			.text('The password is required.');
+		this.passwordMessageReveal = new VerticalReveal(this.passwordMessage.node());
+		this.passwordMessageReveal.hide();
 				
 		var rememberMeCheckboxLabel = form.append('div')
 			.classed('checkbox', true)
@@ -481,8 +520,14 @@ var SigninPanel = (function()
 												_this.hideRight(unblockClick);
 											},
 											cr.syncFail)
-									},
-									cr.syncFail);
+									}, 
+									function(err)
+									{
+										if (err) 
+											cr.syncFail(err);
+										else
+											unblockClick();
+									});
 						}
 						catch(err)
 						{
