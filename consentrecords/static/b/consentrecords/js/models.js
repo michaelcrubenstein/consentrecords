@@ -7448,6 +7448,31 @@ cr.User = (function() {
 	/* Returns a dictionary that describes all of the operations needed to change
 		the data in this object to the data in the revision.
 	 */
+	User.prototype.appendData = function(initialData)
+	{
+		cr.Grantable.prototype.appendData.call(this, initialData);
+		if (this.firstName())
+			initialData['first name'] = this.firstName();
+		if (this.lastName())
+			initialData['last name'] = this.lastName();
+		if (this.lastName())
+			initialData['birthday'] = this.birthday();
+		
+		if (this.path())
+		{
+			var pathData = {};
+			this.path().appendData(pathData);
+			if (Object.keys(pathData).length > 0)
+				initialData['path'] = pathData;
+		}
+		else
+		{
+			this.path(new Path());
+			this.path().setDefaultValues();
+		}
+		this.appendList(this.emails(), initialData, 'emails');
+	}
+	
 	User.prototype.appendChanges = function(revision, changes)
 	{
 		changes = cr.Grantable.prototype.appendChanges.call(this, revision, changes);

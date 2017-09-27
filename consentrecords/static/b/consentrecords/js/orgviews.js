@@ -2797,6 +2797,11 @@ var UserPanel = (function () {
 									 controller.newInstance().emails(),
 									 cr.UserEmail);
 
+		this.firstNameSection = this.appendTextSection(controller.newInstance(), controller.newInstance().firstName, crv.buttonTexts.firstName, 'text')
+			.classed('first', true);
+			
+		this.lastNameSection = this.appendTextSection(controller.newInstance(), controller.newInstance().lastName, crv.buttonTexts.lastName, 'text');
+		
 		var publicAccessTextContainer = null;
 		
 		this.publicAccessSection = this.mainDiv.append('section')
