@@ -751,12 +751,12 @@ class Grant(IInstance):
         return self
         
     def fetchPrivilege(self, user):
-        return 'administer' if self.parent.fetchPrivilege(user) == 'administer' else \
+        return 'administer' if self.grantor.fetchPrivilege(user) == 'administer' else \
         'write' if self.grantee.id == user.id \
         else None
     
     def administrableQuerySet(qs, user):
-            qClause = Q(grantor__primaryAdministrator==user) |\
+            qClause = Q(grantor__primaryAdministrator=user) |\
                       Q(grantor__userGrants__grantee=user, 
                         grantor__userGrants__privilege='administer', 
                         grantor__userGrants__deleteTransaction__isnull=True) |\
