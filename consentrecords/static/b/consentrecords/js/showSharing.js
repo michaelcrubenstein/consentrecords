@@ -208,7 +208,7 @@ var SharingPanel = (function() {
 		return this.user.postUserGrant(accessorLevel.name, path)
 			.then(function(changes, newIDs)
 				{
-					return cr.getData({path: 'user grant/' + newIDs['1'], resultType: cr.UserGrant, fields: ['none']})
+					return cr.getData({path: 'user user grant/' + newIDs['1'], resultType: cr.UserUserGrant, fields: ['none']})
 				})
 			.then(function(userGrants)
 				{
