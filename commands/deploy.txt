@@ -80,6 +80,10 @@ echo "from consentrecords.default_settings import *" >> consentrecords/settings.
 rm -r static/*
 django-admin collectstatic --noinput
 python3 manage.py migrate
+
+# Make the cron script executable.
+chmod a+x reports/06campaign1build.sh
+
 # python3 maintenance/initializefacts.py michaelcrubenstein@gmail.com
 # python3 maintenance/updatenulldescriptions.py michaelcrubenstein@gmail.com
 
