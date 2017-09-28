@@ -3743,8 +3743,8 @@ class Organization(SecureRootInstance, dbmodels.Model):
                   'group': ('groups__', 'Group', 'parent'),
                   'name': ('names__', 'OrganizationName', 'parent'),
                   'site': ('sites__', 'Site', 'parent'),
-                  'user grant': ('userGrants', 'OrganizationUserGrant', 'grantor'),
-                  'group grant': ('groupGrants', 'OrganizationGroupGrant', 'grantor'),
+                  'user grant': ('userGrants__', 'OrganizationUserGrant', 'grantor'),
+                  'group grant': ('groupGrants__', 'OrganizationGroupGrant', 'grantor'),
                  }
 
     def __str__(self):
@@ -5572,8 +5572,8 @@ class User(SecureRootInstance, dbmodels.Model):
     elementMap = {'email': ('emails__', 'UserEmail', 'parent'),
                   'notification': ('notifications__', "Notification", 'parent'),
                   'path': ('paths__', "Path", 'parent'),
-                  'user grant': ('userGrants', 'UserUserGrant', 'grantor'),
-                  'group grant': ('groupGrants', 'UserGroupGrant', 'grantor'),
+                  'user grant': ('userGrants__', 'UserUserGrant', 'grantor'),
+                  'group grant': ('groupGrants__', 'UserGroupGrant', 'grantor'),
                   'user grant request': ('userGrantRequests__', "UserUserGrantRequest", 'parent'),
                   'engagement': ('userEngagements__', "Engagement", 'user'),
                   'group':('groupMembers__parent__', 'Group', 'members__user'),
