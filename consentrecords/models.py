@@ -728,10 +728,10 @@ class Grant(IInstance):
         data['privilege'] = self.privilege
         
         if 'parents' in fields:
-            if context.canRead(self.parent) and 'user' in fields:
-                data['user'] = self.parent.getData([], context)
+            if context.canRead(self.grantor) and 'user' in fields:
+                data['user'] = self.grantor.getData([], context)
             else:
-                data['user'] = self.parent.headData(context)
+                data['user'] = self.grantor.headData(context)
                 
         return data
         
