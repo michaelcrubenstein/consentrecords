@@ -728,10 +728,10 @@ class Grant(IInstance):
         data['privilege'] = self.privilege
         
         if 'parents' in fields:
-            if context.canRead(self.parent) and 'user' in fields:
-                data['user'] = self.parent.getData([], context)
+            if context.canRead(self.grantor) and 'user' in fields:
+                data['user'] = self.grantor.getData([], context)
             else:
-                data['user'] = self.parent.headData(context)
+                data['user'] = self.grantor.headData(context)
                 
         return data
         
@@ -751,12 +751,12 @@ class Grant(IInstance):
         return self
         
     def fetchPrivilege(self, user):
-        return 'administer' if self.parent.fetchPrivilege(user) == 'administer' else \
+        return 'administer' if self.grantor.fetchPrivilege(user) == 'administer' else \
         'write' if self.grantee.id == user.id \
         else None
     
     def administrableQuerySet(qs, user):
-            qClause = Q(grantor__primaryAdministrator==user) |\
+            qClause = Q(grantor__primaryAdministrator=user) |\
                       Q(grantor__userGrants__grantee=user, 
                         grantor__userGrants__privilege='administer', 
                         grantor__userGrants__deleteTransaction__isnull=True) |\
