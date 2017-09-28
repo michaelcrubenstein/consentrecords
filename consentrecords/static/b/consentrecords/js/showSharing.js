@@ -31,14 +31,12 @@ var SharingPanel = (function() {
 
 	SharingPanel.prototype.checkDeleteControlVisibility = function(items)
 	{
-		items.each(function(d, i)
-			{
-				var deleteControls = $(this).parent().find('button.delete');
-				if (!this.inEditMode)
-					crf.hideDeleteControls(deleteControls, 0);
-				else
-					crf.showDeleteControls(deleteControls, 0);
-			});
+		/* Note that items may contain 0 items, but this code still works. */
+		var deleteControls = $(items.node()).parent().find('button.delete');
+		if (!this.inEditMode)
+			crf.hideDeleteControls(deleteControls, 0);
+		else
+			crf.showDeleteControls(deleteControls, 0);
 	}
 	
 	/* Produces a function which adds new value view to a container view
