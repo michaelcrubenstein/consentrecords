@@ -60,7 +60,7 @@ def _orNoneForeignKey(data, key, context, resultClass, thisQS=None, thisQSType=N
         qs2 = qs2.distinct()
         count = len(qs2)
         if count == 0:
-            raise ValueError('the path does not yield any items: %s' % path)
+            raise ValueError('unrecognized %s' % resources[qsType])
         elif count > 1:
             raise ValueError('the path does not yield a single item: %s' % path)
         else:
@@ -6172,3 +6172,50 @@ class Context:
     def canAdminister(self, i):
         privilege = self.getPrivilege(i)
         return privilege == "administer"
+
+resources = {
+        Address: "address",
+        Comment: "comment",
+        CommentPrompt: "comment prompt",
+        CommentPromptText: "comment prompt translation",
+        DisqualifyingTag: "disqualifying tag",
+        Engagement: "engagement",
+        Enrollment: "enrollment",
+        Experience: "experience",
+        ExperienceCustomService: "experience custom service",
+        ExperienceService: "experience service",
+        ExperiencePrompt: "experience prompt",
+        ExperiencePromptService: "experience prompt service",
+        ExperiencePromptText: "experience prompt translation",
+        Group: "group",
+        GroupName: "group name",
+        GroupMember: "group member",
+        Inquiry: "inquiry",
+        Notification: "notification",
+        NotificationArgument: "notification argument",
+        Offering: "offering",
+        OfferingName: "offering name",
+        OfferingService: "offering service",
+        Organization: "organization",
+        OrganizationGroupGrant: "organization group grant",
+        OrganizationName: "organization name",
+        OrganizationUserGrant: "organization user grant",
+        Path: "path",
+        Period: "period",
+        Service: "service",
+        ServiceName: "service name",
+        ServiceOrganizationLabel: "service organization label",
+        ServiceSiteLabel: "service site label",
+        ServiceOfferingLabel: "service offering label",
+        ServiceImplication: "service implication",
+        Session: "session",
+        SessionName: "session name",
+        Site: "site",
+        SiteName: "site name",
+        Street: "street",
+        User: "user",
+        UserEmail: "user email",
+        UserGroupGrant: "user group grant",
+        UserUserGrant: "user user grant",
+        UserUserGrantRequest: "user user grant request",
+    }
