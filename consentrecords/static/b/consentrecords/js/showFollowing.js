@@ -46,8 +46,7 @@ var RequestFollowPanel = (function() {
 						);
 						_this.followingPanel._noPendingResultsDiv.style('display', 'none');
 						_this.hide();
-						bootstrap_alert.success("Access to {0} has been requested.".format(email),
-																		  ".alert-container");
+						bootstrap_alert.success("Access to {0} has been requested.".format(email));
 					}
 					
 					try

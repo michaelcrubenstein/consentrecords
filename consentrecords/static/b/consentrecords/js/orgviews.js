@@ -878,8 +878,7 @@ var NewInquirySearchView = (function()
 						console.assert(offering);
 						bootstrap_alert.success(
 							"{0} inquiry added to {1}/{2}"
-								.format(user.description(), offering.description(), _this.parent.description()),
-							".alert-container");
+								.format(user.description(), offering.description(), _this.parent.description()));
 						unblockClick();
 					}
 				if (this.parent.id())
@@ -981,8 +980,7 @@ var NewEnrollmentSearchView = (function()
 						console.assert(offering);
 						bootstrap_alert.success(
 							"{0} enrolled in {1}/{2}"
-								.format(user.description(), offering.description(), _this.parent.description()),
-							".alert-container");
+								.format(user.description(), offering.description(), _this.parent.description()));
 						unblockClick();
 					}
 				if (this.parent.id())
@@ -1234,7 +1232,7 @@ var RootPanelSearchView = (function () {
 	/* Overrides SearchView.prototype.onClickButton */
 	RootPanelSearchView.prototype.onClickButton = function(d, i, button) {
 		var _this = this;
-		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
+		if (prepareClick('click', 'pick {0}: {1}'.format(this.resultType().name, d.description())))
 		{
 			d.promiseData()
 				.then(function()
@@ -1493,8 +1491,7 @@ var NewGroupMemberSearchView = (function()
 					{
 						bootstrap_alert.success(
 							'{0} added to group "{1}"'
-								.format(user.description(), _this.parent.description()),
-							".alert-container");
+								.format(user.description(), _this.parent.description()));
 						unblockClick();
 					}
 				if (this.parent.id())
@@ -2809,7 +2806,7 @@ var UserPanel = (function () {
 			.datum(controller.newInstance())
 			.on('click', 
 				function(d) {
-					if (prepareClick('click', 'pick ' + crv.buttonTexts.publicAccess))
+					if (prepareClick('click', crv.buttonTexts.publicAccess))
 					{
 						try
 						{
