@@ -87,13 +87,19 @@ def resetPassword(request):
 
         if get_user_model().objects.filter(email=email).count() == 0:
             raise Exception("This email address is not recognized.");
+        
+        if request.user and request.user.is_superuser:
+            target = 60*24*7
+        else:
+            target = 30
             
-        newKey = PasswordReset.createPasswordReset(email)
+        newKey = PasswordReset.createPasswordReset(email, target=target)
         protocol = 'https://' if request.is_secure() else 'http://'
         
-        Emailer.sendResetPasswordEmail(email, 
-            protocol + request.get_host() + settings.PASSWORD_RESET_PATH + newKey + '/',
-            protocol + request.get_host())
+        if not (request.user and request.user.is_superuser and request.user.email != email):
+            Emailer.sendResetPasswordEmail(email, 
+                protocol + request.get_host() + settings.PASSWORD_RESET_PATH + newKey + '/',
+                protocol + request.get_host())
         
         results = {}
     except Exception as e:
