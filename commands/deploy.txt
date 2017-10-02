@@ -83,6 +83,7 @@ python3 manage.py migrate
 
 # Make the cron script executable.
 chmod a+x reports/06campaign1build.sh
+chmod a+x reports/09campaign1prizes.sh
 
 # python3 maintenance/initializefacts.py michaelcrubenstein@gmail.com
 # python3 maintenance/updatenulldescriptions.py michaelcrubenstein@gmail.com
