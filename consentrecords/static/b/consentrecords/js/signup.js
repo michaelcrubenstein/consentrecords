@@ -645,7 +645,7 @@ var ForgotPasswordPanel = (function()
 			
 	ForgotPasswordPanel.prototype.submit = function(successFunction, failFunction) {
 		var _this = this;
-		bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
+		bootstrap_alert.success('Sending email (this may take a few minutes)...');
 		
 		$.post(cr.urls.resetPassword, 
 			{ "email": $(this.emailInput).val()
@@ -653,7 +653,7 @@ var ForgotPasswordPanel = (function()
 		  .done(function(json, textStatus, jqXHR)
 			{
 				bootstrap_alert.close();
-				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', _this.alertSuccess);
+				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>');
 				successFunction();
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
