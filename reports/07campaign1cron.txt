@@ -4,3 +4,4 @@
 #
 # crontab -e
 0 4,16 * * * ~/eb_django_app/prod/consentrecords/reports/06campaign1build.sh
+*/10 * * * * ~/eb_django_app/prod/consentrecords/reports/09campaign1prizes.sh
