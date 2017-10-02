@@ -2840,6 +2840,40 @@ var UserPanel = (function () {
 			this, controller.newInstance(), controller.newInstance().primaryAdministrator, this.primaryAdministratorLabel,
 			PickPrimaryAdministratorPanel
 			);
+			
+		if (controller.newInstance().id() && controller.newInstance().privilege() == 'administer')
+		{
+			var _this = this;
+			this.appendActionButton("Reset Password", function() {
+				if (prepareClick('click', "Reset Password"))
+				{
+					showClickFeedback(this);
+					try
+					{
+						if (controller.newInstance().emails.length == 0)
+							cr.syncFail("Please specify an email address.");
+						else
+						{
+							bootstrap_alert.success('Resetting password (this may take a few minutes)...');
+		
+							$.post(cr.urls.resetPassword, 
+								{ email: controller.newInstance().emails()[0].text()
+								})
+							 .then(function()
+								{
+									bootstrap_alert.close();
+									bootstrap_alert.success('This password has been reset.');
+									unblockClick();
+								},
+								cr.thenFail)
+							  .fail(cr.syncFail);
+						}
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+		}
 	}
 	
 	return UserPanel;
