@@ -2806,7 +2806,7 @@ var UserPanel = (function () {
 			.datum(controller.newInstance())
 			.on('click', 
 				function(d) {
-					if (prepareClick('click', 'pick ' + crv.buttonTexts.publicAccess))
+					if (prepareClick('click', crv.buttonTexts.publicAccess))
 					{
 						try
 						{
