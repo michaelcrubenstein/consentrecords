@@ -1232,7 +1232,7 @@ var RootPanelSearchView = (function () {
 	/* Overrides SearchView.prototype.onClickButton */
 	RootPanelSearchView.prototype.onClickButton = function(d, i, button) {
 		var _this = this;
-		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
+		if (prepareClick('click', 'pick {0}: {1}'.format(this.resultType().name, d.description())))
 		{
 			d.promiseData()
 				.then(function()
