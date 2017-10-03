@@ -56,11 +56,7 @@ class AuthUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def get_full_name(self):
-        if (self.first_name is None):
-            fullname = self.email
-        else:
-            fullname = self.first_name+" "+self.last_name
-        return fullname
+        return self.first_name+" "+self.last_name if self.first_name else self.email
         
     def get_initials(self):
         return self.first_name[0]+"."+self.last_name[0]+"."
