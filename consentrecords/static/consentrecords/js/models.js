@@ -1746,8 +1746,12 @@ cr.Grantable = (function() {
 		    this._primaryAdministrator.setData(d['primary administrator']);
 		    this._primaryAdministrator = crp.pushInstance(this._primaryAdministrator);
 		}
-		this.setChildren(d, 'user grants', cr.UserGrant, this.userGrants);
-		this.setChildren(d, 'group grants', cr.GroupGrant, this.groupGrants);
+		
+		if ('userGrantType' in this)
+		{
+			this.setChildren(d, 'user grants', this.userGrantType(), this.userGrants);
+			this.setChildren(d, 'group grants', this.groupGrantType(), this.groupGrants);
+		}
     }
     
     /** Merge the contents of the specified source into this Grantable for
@@ -1829,7 +1833,7 @@ cr.Grantable = (function() {
 				{
 					if (_this.userGrants())
 					{
-						var newGrant = new cr.UserGrant();
+						var newGrant = new (_this.userGrantType())();
 						_this.userGrants().push(newGrant);
 						newGrant.clientID('1');
 						_this.updateData(changes, newIDs);
@@ -2002,6 +2006,54 @@ cr.Grant = (function() {
 	};
 	
 	return Grant;
+
+})();
+	
+cr.GroupGrant = (function() {
+	GroupGrant.prototype = Object.create(cr.Grant.prototype);
+	GroupGrant.prototype.constructor = GroupGrant;
+	
+	GroupGrant.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().groupGrants(), this);
+		$(this.parent()).trigger("groupGrantDeleted.cr", this);
+	}
+	
+	GroupGrant.prototype.granteeType = function()
+	{
+		return cr.Group;
+	}
+	
+	function GroupGrant() {
+	    cr.Grant.call(this);
+	};
+	
+	return GroupGrant;
+
+})();
+	
+cr.UserGrant = (function() {
+	UserGrant.prototype = Object.create(cr.Grant.prototype);
+	UserGrant.prototype.constructor = UserGrant;
+
+	UserGrant.prototype.triggerDeleted = function()
+	{
+		cr.IInstance.prototype.triggerDeleted.call(this);
+		cr.removeElement(this.parent().userGrants(), this);
+		$(this.parent()).trigger("userGrantDeleted.cr", this);
+	}
+	
+	UserGrant.prototype.granteeType = function()
+	{
+		return cr.User;
+	}
+	
+	function UserGrant() {
+	    cr.Grant.call(this);
+	};
+	
+	return UserGrant;
 
 })();
 	
@@ -4375,36 +4427,6 @@ cr.Group = (function() {
 
 })();
 	
-cr.GroupGrant = (function() {
-	GroupGrant.prototype = Object.create(cr.Grant.prototype);
-	GroupGrant.prototype.constructor = GroupGrant;
-	
-	GroupGrant.prototype.urlPath = function()
-	{
-		console.assert(this.id());
-		return 'group grant/{0}'.format(this.id());
-	}
-	
-	GroupGrant.prototype.triggerDeleted = function()
-	{
-		cr.IInstance.prototype.triggerDeleted.call(this);
-		cr.removeElement(this.parent().groupGrants(), this);
-		$(this.parent()).trigger("groupGrantDeleted.cr", this);
-	}
-	
-	GroupGrant.prototype.granteeType = function()
-	{
-		return cr.Group;
-	}
-	
-	function GroupGrant() {
-	    cr.Grant.call(this);
-	};
-	
-	return GroupGrant;
-
-})();
-	
 cr.GroupName = (function() {
 	GroupName.prototype = Object.create(cr.Name.prototype);
 	GroupName.prototype.constructor = GroupName;
@@ -5116,6 +5138,16 @@ cr.Organization = (function() {
 		}
 	}
 	
+	Organization.prototype.userGrantType = function()
+	{
+		return cr.OrganizationUserGrant;
+	}
+	
+	Organization.prototype.groupGrantType = function()
+	{
+		return cr.OrganizationGroupGrant;
+	}
+	
 	Organization.prototype.sites = function(newValue)
 	{
 		if (newValue === undefined)
@@ -5347,6 +5379,42 @@ cr.OrganizationName = (function() {
 	};
 	
 	return OrganizationName;
+
+})();
+	
+cr.OrganizationUserGrant = (function() {
+	OrganizationUserGrant.prototype = Object.create(cr.UserGrant.prototype);
+	OrganizationUserGrant.prototype.constructor = OrganizationUserGrant;
+
+	OrganizationUserGrant.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'organization user grant/{0}'.format(this.id());
+	}
+	
+	function OrganizationUserGrant() {
+	    cr.UserGrant.call(this);
+	};
+	
+	return OrganizationUserGrant;
+
+})();
+	
+cr.OrganizationGroupGrant = (function() {
+	OrganizationGroupGrant.prototype = Object.create(cr.GroupGrant.prototype);
+	OrganizationGroupGrant.prototype.constructor = OrganizationGroupGrant;
+
+	OrganizationGroupGrant.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'organization group grant/{0}'.format(this.id());
+	}
+	
+	function OrganizationGroupGrant() {
+	    cr.GroupGrant.call(this);
+	};
+	
+	return OrganizationGroupGrant;
 
 })();
 	
@@ -7448,6 +7516,31 @@ cr.User = (function() {
 	/* Returns a dictionary that describes all of the operations needed to change
 		the data in this object to the data in the revision.
 	 */
+	User.prototype.appendData = function(initialData)
+	{
+		cr.Grantable.prototype.appendData.call(this, initialData);
+		if (this.firstName())
+			initialData['first name'] = this.firstName();
+		if (this.lastName())
+			initialData['last name'] = this.lastName();
+		if (this.lastName())
+			initialData['birthday'] = this.birthday();
+		
+		if (this.path())
+		{
+			var pathData = {};
+			this.path().appendData(pathData);
+			if (Object.keys(pathData).length > 0)
+				initialData['path'] = pathData;
+		}
+		else
+		{
+			this.path(new Path());
+			this.path().setDefaultValues();
+		}
+		this.appendList(this.emails(), initialData, 'emails');
+	}
+	
 	User.prototype.appendChanges = function(revision, changes)
 	{
 		changes = cr.Grantable.prototype.appendChanges.call(this, revision, changes);
@@ -7521,6 +7614,16 @@ cr.User = (function() {
 		}
 		
 		return changed;
+	}
+	
+	User.prototype.userGrantType = function()
+	{
+		return cr.UserUserGrant;
+	}
+	
+	User.prototype.groupGrantType = function()
+	{
+		return cr.UserGroupGrant;
 	}
 	
 	User.prototype.firstName = function(newValue)
@@ -7914,33 +8017,39 @@ cr.UserEmail = (function() {
 
 })();
 	
-cr.UserGrant = (function() {
-	UserGrant.prototype = Object.create(cr.Grant.prototype);
-	UserGrant.prototype.constructor = UserGrant;
+cr.UserUserGrant = (function() {
+	UserUserGrant.prototype = Object.create(cr.UserGrant.prototype);
+	UserUserGrant.prototype.constructor = UserUserGrant;
 
-	UserGrant.prototype.urlPath = function()
+	UserUserGrant.prototype.urlPath = function()
 	{
 		console.assert(this.id());
-		return 'user grant/{0}'.format(this.id());
+		return 'user user grant/{0}'.format(this.id());
 	}
 	
-	UserGrant.prototype.triggerDeleted = function()
-	{
-		cr.IInstance.prototype.triggerDeleted.call(this);
-		cr.removeElement(this.parent().userGrants(), this);
-		$(this.parent()).trigger("userGrantDeleted.cr", this);
-	}
-	
-	UserGrant.prototype.granteeType = function()
-	{
-		return cr.User;
-	}
-	
-	function UserGrant() {
-	    cr.Grant.call(this);
+	function UserUserGrant() {
+	    cr.UserGrant.call(this);
 	};
 	
-	return UserGrant;
+	return UserUserGrant;
+
+})();
+	
+cr.UserGroupGrant = (function() {
+	UserGroupGrant.prototype = Object.create(cr.GroupGrant.prototype);
+	UserGroupGrant.prototype.constructor = UserGroupGrant;
+
+	UserGroupGrant.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'user group grant/{0}'.format(this.id());
+	}
+	
+	function UserGroupGrant() {
+	    cr.GroupGrant.call(this);
+	};
+	
+	return UserGroupGrant;
 
 })();
 	

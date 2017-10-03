@@ -192,8 +192,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 												session.description(),
 												user === cr.signedinUser ? "You have" : user.caption() + " has",
 												user === cr.signedinUser ? "you are" : user.caption() + " is");
-									bootstrap_alert.success(s,
-												  ".alert-container");
+									bootstrap_alert.success(s);
 									checkInquiryFunction(user, inquiry);
 									user.clearGroupGrants();
 								});
@@ -227,8 +226,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 								checkInquiryFunction(user, inquiries[0]);
 								bootstrap_alert.success(_this.description() + 
 													  " already signed up for " + 
-													  offering.description() + "/" + session.description(),
-													  ".alert-container");
+													  offering.description() + "/" + session.description());
 							}
 							else
 							{

@@ -142,6 +142,7 @@ var VerticalReveal = (function() {
 			args.newHeight = 'auto';
 		if (args.children === undefined)
 			args.children = jNode.children();
+		duration = args.duration || duration;
 
 		args.children.css('display', '');
 		this._isVisible = true;

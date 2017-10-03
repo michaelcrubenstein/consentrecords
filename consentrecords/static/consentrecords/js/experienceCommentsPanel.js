@@ -333,7 +333,7 @@ var ExperienceCommentsPanel = (function() {
 								try
 								{
 									showClickFeedback(this);
-									bootstrap_alert.success("Sending email (this may take a few minutes)...", this.alertSuccess);
+									bootstrap_alert.success("Sending email (this may take a few minutes)...");
 									_this.askQuestion(newQuestion)
 										.then(function()
 											{
