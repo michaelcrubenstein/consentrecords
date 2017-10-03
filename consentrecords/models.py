@@ -1807,7 +1807,7 @@ class Engagement(ChildInstance, dbmodels.Model):
         experiences = self.user.path.experiences.filter(deleteTransaction__isnull=True, 
             engagement=self)
         if experiences.exists():
-            experiences[0].update({start: self.start, end: self.end}, context)
+            experiences[0].update({'start': self.start, 'end': self.end}, context)
         else:
             offering = self.parent.parent
             newExperience = Experience.objects.create(transaction=context.transaction,
