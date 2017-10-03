@@ -474,6 +474,7 @@ var EnrollmentSearchView = (function () {
 		}
 		d3.event.preventDefault();
 	}
+	
 	EnrollmentSearchView.prototype.fillItems = function(items)
 	{
 		ChildSearchView.prototype.fillItems.call(this, items);
@@ -547,6 +548,16 @@ var EngagementSearchView = (function () {
 	EngagementSearchView.prototype.childPanelType = function()
 	{
 		return EngagementPanel;
+	}
+	
+	EngagementSearchView.prototype.fillItems = function(items)
+	{
+		ChildSearchView.prototype.fillItems.call(this, items);
+		appendInfoButtons(items, function(d)
+			{
+				return d.user();
+			}, 
+			function(items) { return items.insert('div', 'button:last-of-type'); });
 	}
 	
 	function EngagementSearchView(sitePanel, parent) {
