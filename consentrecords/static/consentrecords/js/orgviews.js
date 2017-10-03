@@ -878,8 +878,7 @@ var NewInquirySearchView = (function()
 						console.assert(offering);
 						bootstrap_alert.success(
 							"{0} inquiry added to {1}/{2}"
-								.format(user.description(), offering.description(), _this.parent.description()),
-							".alert-container");
+								.format(user.description(), offering.description(), _this.parent.description()));
 						unblockClick();
 					}
 				if (this.parent.id())
@@ -981,8 +980,7 @@ var NewEnrollmentSearchView = (function()
 						console.assert(offering);
 						bootstrap_alert.success(
 							"{0} enrolled in {1}/{2}"
-								.format(user.description(), offering.description(), _this.parent.description()),
-							".alert-container");
+								.format(user.description(), offering.description(), _this.parent.description()));
 						unblockClick();
 					}
 				if (this.parent.id())
@@ -1234,7 +1232,7 @@ var RootPanelSearchView = (function () {
 	/* Overrides SearchView.prototype.onClickButton */
 	RootPanelSearchView.prototype.onClickButton = function(d, i, button) {
 		var _this = this;
-		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
+		if (prepareClick('click', 'pick {0}: {1}'.format(this.resultType().name, d.description())))
 		{
 			d.promiseData()
 				.then(function()
@@ -1493,8 +1491,7 @@ var NewGroupMemberSearchView = (function()
 					{
 						bootstrap_alert.success(
 							'{0} added to group "{1}"'
-								.format(user.description(), _this.parent.description()),
-							".alert-container");
+								.format(user.description(), _this.parent.description()));
 						unblockClick();
 					}
 				if (this.parent.id())
@@ -2797,6 +2794,11 @@ var UserPanel = (function () {
 									 controller.newInstance().emails(),
 									 cr.UserEmail);
 
+		this.firstNameSection = this.appendTextSection(controller.newInstance(), controller.newInstance().firstName, crv.buttonTexts.firstName, 'text')
+			.classed('first', true);
+			
+		this.lastNameSection = this.appendTextSection(controller.newInstance(), controller.newInstance().lastName, crv.buttonTexts.lastName, 'text');
+		
 		var publicAccessTextContainer = null;
 		
 		this.publicAccessSection = this.mainDiv.append('section')
@@ -2804,7 +2806,7 @@ var UserPanel = (function () {
 			.datum(controller.newInstance())
 			.on('click', 
 				function(d) {
-					if (prepareClick('click', 'pick ' + crv.buttonTexts.publicAccess))
+					if (prepareClick('click', crv.buttonTexts.publicAccess))
 					{
 						try
 						{
@@ -2838,6 +2840,40 @@ var UserPanel = (function () {
 			this, controller.newInstance(), controller.newInstance().primaryAdministrator, this.primaryAdministratorLabel,
 			PickPrimaryAdministratorPanel
 			);
+			
+		if (controller.newInstance().id() && controller.newInstance().privilege() == 'administer')
+		{
+			var _this = this;
+			this.appendActionButton("Reset Password", function() {
+				if (prepareClick('click', "Reset Password"))
+				{
+					showClickFeedback(this);
+					try
+					{
+						if (controller.newInstance().emails.length == 0)
+							cr.syncFail("Please specify an email address.");
+						else
+						{
+							bootstrap_alert.success('Resetting password (this may take a few minutes)...');
+		
+							$.post(cr.urls.resetPassword, 
+								{ email: controller.newInstance().emails()[0].text()
+								})
+							 .then(function()
+								{
+									bootstrap_alert.close();
+									bootstrap_alert.success('This password has been reset.');
+									unblockClick();
+								},
+								cr.thenFail)
+							  .fail(cr.syncFail);
+						}
+					}
+					catch(err) { cr.syncFail(err); }
+				}
+			})
+			.classed('first', true);
+		}
 	}
 	
 	return UserPanel;

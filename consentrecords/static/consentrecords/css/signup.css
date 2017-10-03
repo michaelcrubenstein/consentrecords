@@ -212,12 +212,26 @@
 	  margin-bottom: -1px;
 	  border-bottom-right-radius: 0;
 	  border-bottom-left-radius: 0;
-	  margin-bottom: 10px;
+	  margin-bottom: 6px;
 	}
 	panel.sign-in input[type="password"] {
-	  margin-bottom: 10px;
+	  margin-bottom: 6px;
 	  border-top-left-radius: 0;
 	  border-top-right-radius: 0;
+	}
+	
+	panel.sign-in div.message {
+		border: 0px;
+		margin-bottom: 4px;
+		width: 100%;
+		color: red;
+		padding: 0px 10px;
+		font-size: 0.9em;
+		user-select: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		-o-user-select: none;
 	}
 
 	panel.sign-in .other-action {
