@@ -7523,7 +7523,7 @@ cr.User = (function() {
 			initialData['first name'] = this.firstName();
 		if (this.lastName())
 			initialData['last name'] = this.lastName();
-		if (this.lastName())
+		if (this.birthday())
 			initialData['birthday'] = this.birthday();
 		
 		if (this.path())
