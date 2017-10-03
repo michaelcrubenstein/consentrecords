@@ -2058,6 +2058,8 @@ cr.UserGrant = (function() {
 })();
 	
 cr.NamedInstance = (function() {
+	NamedInstance.prototype._names = null;
+	
 	NamedInstance.prototype.names = function(newData)
 	{
 		if (newData === undefined)
@@ -2070,7 +2072,7 @@ cr.NamedInstance = (function() {
 		}
 	}
 	
-	NamedInstance.prototype.setData = function(d, nameType)
+	NamedInstance.prototype.setNames = function(d, nameType)
 	{
 		cr.IInstance.prototype.setChildren.call(this, d, 'names', nameType, NamedInstance.prototype.names);
 	}
@@ -2078,7 +2080,7 @@ cr.NamedInstance = (function() {
 	/* Copies all of the data associated with this instance prior to making changes.
 		For experiences, comments are not copied.
 	 */
-	NamedInstance.prototype.duplicateData = function(newInstance, duplicateForEdit)
+	NamedInstance.prototype.duplicateNames = function(newInstance, duplicateForEdit)
 	{
 		newInstance._names = this.duplicateList(this._names, duplicateForEdit);
 		return this;
@@ -2101,7 +2103,7 @@ cr.NamedInstance = (function() {
     		this.description('');
     }
     
-	NamedInstance.prototype.updateData = function(d, newIDs)
+	NamedInstance.prototype.updateNames = function(d, newIDs)
 	{
 		if ('names' in d)
 		{
@@ -4301,9 +4303,9 @@ cr.ExperiencePromptText = (function() {
 	
 cr.Group = (function() {
 	Group.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(Group.prototype, cr.NamedInstance.prototype);
 	Group.prototype.constructor = Group;
 
-	Group.prototype._names = null;
 	Group.prototype._members = null;
 	
 	Group.prototype.urlPath = function()
@@ -4311,8 +4313,6 @@ cr.Group = (function() {
 		console.assert(this.id());
 		return 'group/{0}'.format(this.id());
 	}
-	
-	Group.prototype.names = cr.NamedInstance.prototype.names;
 	
 	Group.prototype.members = function(newValue)
 	{
@@ -4341,7 +4341,7 @@ cr.Group = (function() {
 	Group.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		newInstance._names = this.duplicateList(this._names, duplicateForEdit);
+		this.duplicateNames(newInstance, duplicateForEdit);
 		newInstance._members = this.duplicateList(this._members, duplicateForEdit);
 		
 		return this;
@@ -4366,7 +4366,7 @@ cr.Group = (function() {
 	Group.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		cr.NamedInstance.prototype.setData.call(this, d, cr.GroupName);
+		this.setNames(d, cr.GroupName);
 		this.setChildren(d, 'members', cr.GroupMember, this.members);
     }
     
@@ -4389,15 +4389,13 @@ cr.Group = (function() {
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
-    Group.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
-
 	/** Called after the contents of the Group have been updated on the server. */
 	Group.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
-		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateNames(d, newIDs))
 			changed = true;
 		
 		if (changed)
@@ -4657,6 +4655,7 @@ cr.NotificationArgument = (function() {
 	
 cr.Offering = (function() {
 	Offering.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(Offering.prototype, cr.NamedInstance.prototype);
 	Offering.prototype.constructor = Offering;
 
 	Offering.prototype._names = null;
@@ -4677,7 +4676,6 @@ cr.Offering = (function() {
 		return 'offering/{0}'.format(this.id());
 	}
 	
-	Offering.prototype.names = cr.NamedInstance.prototype.names;
 	Offering.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
 	
 	Offering.prototype.minimumAge = function(newValue)
@@ -4776,7 +4774,7 @@ cr.Offering = (function() {
 	Offering.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		cr.NamedInstance.prototype.setData.call(this, d, cr.OfferingName);
+		this.setNames(d, cr.OfferingName);
 
 		this._webSite = 'web site' in d ? d['web site'] : "";
 		this._minimumAge = 'minimum age' in d ? d['minimum age'] : "";
@@ -4832,7 +4830,7 @@ cr.Offering = (function() {
 	Offering.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		this.duplicateNames(newInstance, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		newInstance._minimumAge = this._minimumAge;
@@ -4899,15 +4897,13 @@ cr.Offering = (function() {
 				   .pullNewElements(this.offeringServices(), source.offeringServices());
 	}
 	
-    Offering.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
-
 	/** Called after the contents of the Offering have been updated on the server. */
 	Offering.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
-		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateNames(d, newIDs))
 			changed = true;
 		
 		if ('web site' in d)
@@ -5092,6 +5088,7 @@ cr.OfferingService = (function() {
 	
 cr.Organization = (function() {
 	Organization.prototype = Object.create(cr.Grantable.prototype);
+	Object.assign(Organization.prototype, cr.NamedInstance.prototype);
 	Organization.prototype.constructor = Organization;
 
 	Organization.prototype._webSite = null;
@@ -5100,7 +5097,6 @@ cr.Organization = (function() {
 	Organization.prototype._groups = null;
 	Organization.prototype._sites = null;
 	
-	Organization.prototype.names = cr.NamedInstance.prototype.names;
 	Organization.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
 	
 	Organization.prototype.urlPath = function()
@@ -5178,7 +5174,7 @@ cr.Organization = (function() {
 	Organization.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		this.duplicateNames(newInstance, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		newInstance._inquiryAccessGroup = this._inquiryAccessGroup;
@@ -5233,7 +5229,7 @@ cr.Organization = (function() {
 	Organization.prototype.setData = function(d)
 	{
 		cr.Grantable.prototype.setData.call(this, d);
-		cr.NamedInstance.prototype.setData.call(this, d, cr.OrganizationName);
+		this.setNames(d, cr.OrganizationName);
 
 		this._webSite = 'web site' in d ? d['web site'] : "";
 
@@ -5275,8 +5271,6 @@ cr.Organization = (function() {
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
-    Organization.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
-
 	/** Called after the contents of the Organization have been updated on the server. */
 	Organization.prototype.updateData = function(d, newIDs)
 	{
@@ -5291,7 +5285,7 @@ cr.Organization = (function() {
 			changed = true;
 		}
 		
-		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateNames(d, newIDs))
 			changed = true;
 
 		if (changed)
@@ -6027,6 +6021,7 @@ cr.Period = (function() {
 	
 cr.Service = (function() {
 	Service.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(Service.prototype, cr.NamedInstance.prototype);
 	Service.prototype.constructor = Service;
 
 	Service.prototype._stage = null;
@@ -6055,8 +6050,6 @@ cr.Service = (function() {
 			return this;
 		}
 	}
-	
-	Service.prototype.names = cr.NamedInstance.prototype.names;
 	
 	Service.prototype.organizationLabels = function(newData)
 	{
@@ -6105,7 +6098,7 @@ cr.Service = (function() {
 	Service.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		cr.NamedInstance.prototype.setData.call(this, d, cr.ServiceName);
+		this.setNames(d, cr.ServiceName);
 
 		this._stage = 'stage' in d ? d['stage'] : "";
 
@@ -6166,7 +6159,7 @@ cr.Service = (function() {
 	Service.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		this.duplicateNames(newInstance, duplicateForEdit);
 		
 		newInstance._stage = this._stage;
 		newInstance._organizationLabels = this.duplicateList(this._organizationLabels, duplicateForEdit);
@@ -6206,8 +6199,6 @@ cr.Service = (function() {
 				   .pullNewElements(this.serviceImplications(), source.serviceImplications());
 	}
 	
-    Service.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
-
 	/** Called after the contents of the Service have been updated on the server. */
 	Service.prototype.updateData = function(d, newIDs)
 	{
@@ -6215,7 +6206,7 @@ cr.Service = (function() {
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
 			
-		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateNames(d, newIDs))
 			changed = true;
 
 		if ('stage' in d)
@@ -6489,6 +6480,7 @@ cr.ServiceImplication = (function() {
 	
 cr.Session = (function() {
 	Session.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(Session.prototype, cr.NamedInstance.prototype);
 	Object.assign(Session.prototype, cr.DateRangeInstance.prototype);
 	Session.prototype.constructor = Session;
 	
@@ -6513,8 +6505,6 @@ cr.Session = (function() {
 		return 'session/{0}'.format(this.id());
 	}
 	
-	Session.prototype.names = cr.NamedInstance.prototype.names;
-
 	Session.prototype.registrationDeadline = function(newValue)
 	{
 		if (newValue === undefined)
@@ -6738,7 +6728,7 @@ cr.Session = (function() {
 	{
 		cr.IInstance.prototype.setData.call(this, d);
 		this.setDateRange(d);
-		cr.NamedInstance.prototype.setData.call(this, d, cr.SessionName);
+		this.setNames(d, cr.SessionName);
 
 		this._registrationDeadline = 'registration deadline' in d ? d['registration deadline'] : "";
 		this._canRegister = 'can register' in d ? d['can register'] : "";
@@ -6807,7 +6797,7 @@ cr.Session = (function() {
 	Session.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		this.duplicateNames(newInstance, duplicateForEdit);
     	this.duplicateDateRange(newInstance);
 		
 		newInstance._registrationDeadline = this._registrationDeadline;
@@ -6869,8 +6859,6 @@ cr.Session = (function() {
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
-    Session.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
-
 	Session.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
@@ -6879,7 +6867,7 @@ cr.Session = (function() {
 		if (this.updateDateRange(d, newIDs))
 			changed = true;
 		
-		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateNames(d, newIDs))
 			changed = true;
 
 		if ('registration deadline' in d)
@@ -6964,6 +6952,7 @@ cr.SessionName = (function() {
 	
 cr.Site = (function() {
 	Site.prototype = Object.create(cr.IInstance.prototype);
+	Object.assign(Site.prototype, cr.NamedInstance.prototype);
 	Site.prototype.constructor = Site;
 
 	Site.prototype._webSite = null;
@@ -6975,7 +6964,6 @@ cr.Site = (function() {
 	Site.prototype._offeringsPromise = null;
 
 	Site.prototype.webSite = cr.WebSiteInstance.prototype.webSite;
-	Site.prototype.names = cr.NamedInstance.prototype.names;
 	
 	Site.prototype.urlPath = function()
 	{
@@ -7019,7 +7007,7 @@ cr.Site = (function() {
 	Site.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		cr.NamedInstance.prototype.setData.call(this, d, cr.SiteName);
+		this.setNames(d, cr.SiteName);
 		
 		this._webSite = 'web site' in d ? d['web site'] : "";
 		if ('address' in d)
@@ -7073,7 +7061,7 @@ cr.Site = (function() {
 	Site.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		cr.NamedInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		this.duplicateNames(newInstance, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
 		if (newInstance._address == null)
@@ -7158,15 +7146,13 @@ cr.Site = (function() {
 		return this.pullNewElements(this.names(), source.names());
 	}
 	
-    Site.prototype.calculateDescription = cr.NamedInstance.prototype.calculateDescription;
-    
 	/** Called after the contents of the Site have been updated on the server. */
 	Site.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
 
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
-		if (cr.NamedInstance.prototype.updateData.call(this, d, newIDs))
+		if (this.updateNames(d, newIDs))
 			changed = true;
 		
 		if ('web site' in d)
