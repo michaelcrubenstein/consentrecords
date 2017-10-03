@@ -36,7 +36,10 @@ try:
     # Make a list of all users who have at least two experiences.
     # annotate with minimum date
     
+    userExperiences = Experience.objects.filter(transaction__user__email=F('parent__parent__emails__text'))
+    
     experiencesUsers = User.objects.filter(deleteTransaction__isnull=True)\
+        .filter(paths__experiences__in=userExperiences)\
         .annotate(min_experience_date=Min('paths__experiences__transaction__creation_time'))\
         .filter(min_experience_date__isnull=False)
     
@@ -57,11 +60,13 @@ try:
     
     # Exclude users whose second experience was before this day.
     pastExperiencesUsers = \
-        experiencesUsers.filter(paths__experiences__transaction__creation_time__gt=F('min_experience_date'),
+        experiencesUsers.filter(paths__experiences__in=userExperiences,
+                 paths__experiences__transaction__creation_time__gt=F('min_experience_date'),
                  paths__experiences__transaction__creation_time__lt=start)
     
     u1 = experiencesUsers.exclude(pk__in=pastExperiencesUsers)\
         .filter(pk__in=grantingUsers,
+                paths__experiences__in=userExperiences,
                 paths__experiences__transaction__creation_time__gt=F('min_experience_date'),
                 paths__experiences__transaction__creation_time__range=[start, end])\
         .annotate(prize_date=Min('paths__experiences__transaction__creation_time'))\
