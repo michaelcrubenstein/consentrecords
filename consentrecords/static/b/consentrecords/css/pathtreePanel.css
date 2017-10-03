@@ -45,6 +45,7 @@ div.pathlines {
 svg.pathway {
 	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
 	font-size: 11px;
+	margin-right: 12px;
 }
 
 svg.pathway tspan.site {
