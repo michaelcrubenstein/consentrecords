@@ -833,7 +833,7 @@ def updateValues(request, urlPath=None):
         raise Http404("updateValues only responds to POST methods")
     
     if not request.user.is_authenticated:
-        raise PermissionDenied
+        raise PermissionDenied("current user is not authenticated")
     
     hostURL = ("https://" if request.is_secure() else "http://") + request.get_host();
     return api.updateValues(request.user, urlPath, request.POST, hostURL)
@@ -849,11 +849,11 @@ def handleURL(request, urlPath=None):
         return api.getData(request.user, urlPath, request.GET)
     elif request.method == 'DELETE':
         if not request.user.is_authenticated:
-            raise PermissionDenied
+            raise PermissionDenied("current user is not authenticated")
         return api.delete(request.user, urlPath, request.GET)
     elif request.method == 'POST':
         if not request.user.is_authenticated:
-            raise PermissionDenied
+            raise PermissionDenied("current user is not authenticated")
         hostURL = ("https://" if request.is_secure() else "http://") + request.get_host();
         return api.updateValues(request.user, urlPath, request.POST, hostURL)
     else:
