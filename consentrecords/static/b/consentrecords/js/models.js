@@ -2189,24 +2189,36 @@ cr.OrganizationLinkInstance = (function() {
 		
 		if ('organization' in d) {
 			var organizationData = d['organization'];
-			var organizationID;
-			if (typeof(organizationData) == "string")
+			if (organizationData === null)
 			{
-				if (/^organization\/[A-Za-z0-9]{32}$/.test(organizationData))
-					organizationID = organizationData.substring("organization/".length);
+				/* Test case: Remove this organization link. */
+				if (this._organization)
+				{
+					this._organization = null;
+					changed = true;
+				}
+			}
+			else
+			{
+				var organizationID;
+				if (typeof(organizationData) == "string")
+				{
+					if (/^organization\/[A-Za-z0-9]{32}$/.test(organizationData))
+						organizationID = organizationData.substring("organization/".length);
+					else
+						console.assert(false);
+				}
+				else if ('id' in organizationData)
+					organizationID = organizationData['id'];
 				else
 					console.assert(false);
-			}
-			else if ('id' in organizationData)
-				organizationID = organizationData['id'];
-			else
-				console.assert(false);
 				
-			var newOrganization = crp.getInstance(organizationID);
-			if (this._organization != newOrganization)
-			{
-				this._organization = newOrganization;
-				changed = true;
+				var newOrganization = crp.getInstance(organizationID);
+				if (this._organization != newOrganization)
+				{
+					this._organization = newOrganization;
+					changed = true;
+				}
 			}
 		}
 		
@@ -2269,24 +2281,36 @@ cr.SiteLinkInstance = (function() {
 		
 		if ('site' in d) {
 			var siteData = d['site'];
-			var siteID;
-			if (typeof(siteData) == "string")
+			if (siteData === null)
 			{
-				if (/^site\/[A-Za-z0-9]{32}$/.test(siteData))
-					siteID = siteData.substring("site/".length);
+				/* Test case: Remove this site link. */
+				if (this._site)
+				{
+					this._site = null;
+					changed = true;
+				}
+			}
+			else
+			{
+				var siteID;
+				if (typeof(siteData) == "string")
+				{
+					if (/^site\/[A-Za-z0-9]{32}$/.test(siteData))
+						siteID = siteData.substring("site/".length);
+					else
+						console.assert(false);
+				}
+				else if ('id' in siteData)
+					siteID = siteData['id'];
 				else
 					console.assert(false);
-			}
-			else if ('id' in siteData)
-				siteID = siteData['id'];
-			else
-				console.assert(false);
 				
-			var newSite = crp.getInstance(siteID);
-			if (this._site != newSite)
-			{
-				this._site = newSite;
-				changed = true;
+				var newSite = crp.getInstance(siteID);
+				if (this._site != newSite)
+				{
+					this._site = newSite;
+					changed = true;
+				}
 			}
 		}
 		
@@ -2351,23 +2375,36 @@ cr.OfferingLinkInstance = (function() {
 		if ('offering' in d) {
 			var offeringData = d['offering'];
 			var offeringID;
-			if (typeof(offeringData) == "string")
+			
+			if (offeringData === null)
 			{
-				if (/^offering\/[A-Za-z0-9]{32}$/.test(offeringData))
-					offeringID = offeringData.substring("offering/".length);
+				/* Test case: Remove this offering link. */
+				if (this._offering)
+				{
+					this._offering = null;
+					changed = true;
+				}
+			}
+			else
+			{
+				if (typeof(offeringData) == "string")
+				{
+					if (/^offering\/[A-Za-z0-9]{32}$/.test(offeringData))
+						offeringID = offeringData.substring("offering/".length);
+					else
+						console.assert(false);
+				}
+				else if ('id' in offeringData)
+					offeringID = offeringData['id'];
 				else
 					console.assert(false);
-			}
-			else if ('id' in offeringData)
-				offeringID = offeringData['id'];
-			else
-				console.assert(false);
 			
-			var newOffering = crp.getInstance(offeringID);
-			if (this._offering != newOffering)
-			{
-				this._offering = newOffering;
-				changed = true;
+				var newOffering = crp.getInstance(offeringID);
+				if (this._offering != newOffering)
+				{
+					this._offering = newOffering;
+					changed = true;
+				}
 			}
 		}
 		
