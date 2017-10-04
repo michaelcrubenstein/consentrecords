@@ -308,24 +308,30 @@ var TagPoolView = (function () {
 		var promises = [];
 		hiddenG.each(function(fd)
 			{
-				if (!(fd.visible === undefined || fd.visible) &&
+				var showing = fd.visible === undefined || fd.visible;
+				var styles = {left: fd.x, top: fd.y * fd.emToPX, 
+					opacity: showing ? 1.0 : 0.0};
+				if (!showing &&
 					parseFloat($(this).css('opacity')) == 0)
 				{
-					$(this).css('left', fd.x)
-						.css('top', fd.y * fd.emToPX);
+					$(this).css(styles);
+				}
+				else if (duration == 0)
+				{
+					styles.display = showing ? '' : 'none';
+					$(this).css(styles);
 				}
 				else
 				{
-				    var styles = {left: fd.x, top: fd.y * fd.emToPX, 
-						opacity: (fd.visible === undefined || fd.visible) ? 1.0 : 0.0};
-					if (duration == 0)
-						$(this).css(styles);
-					else
-					{
-						promises.push($(this).animate(styles,
-							{duration: duration})
-							.promise());
-					}
+					var _thisFlag = this;
+					if (showing)
+						$(this).css('display', '');
+					promises.push($(this).animate(styles, {duration: duration})
+							.promise()
+							.done(function() { 
+								if (!showing)
+									$(_thisFlag).css({display: 'none'}); })
+						);
 				}
 			});
 			
@@ -403,7 +409,8 @@ var TagPoolView = (function () {
 	TagPoolView.prototype.appendFlag = function(g)
 	{
 		g.classed('flag', true)
-		 .style('opacity', '0');
+			.style('opacity', 0)
+			.style('display', 'none');
 		
 		g.style('border-left-color',
 			function(d)
