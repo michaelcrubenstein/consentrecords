@@ -639,7 +639,7 @@ var ExperienceCommentsPanel = (function() {
 								try
 								{
 									showClickFeedback(this);
-									_this.fd.experience.postComment({text: newText})
+									_this.fd.experience.postComment({text: newComment})
 										.then(function()
 											{
 												newCommentInput.node().value = '';
