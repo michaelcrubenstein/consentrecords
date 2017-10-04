@@ -348,7 +348,7 @@ var TagPoolView = (function () {
 		 
 		hidingG.each(function(fd)
 			{
-				var styles = {left: fd.x, top: fd.y * fd.emToPX};
+				var styles = {left: fd.x, top: fd.y * fd.emToPX, display: 'none'};
 				if (duration == 0)
 				{
 					styles.opacity = 0.0;
