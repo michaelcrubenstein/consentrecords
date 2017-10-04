@@ -560,7 +560,8 @@ var TagSearchView = (function() {
 						 "Internship", 
 						 "Volunteer", 
 						 "Exercise", 
-						 "Housing"];
+						 "Housing", 
+						 "Travel"];
 			this.flags().each(function(fs)
 				{
 					fs.visible = (types.indexOf(fs.description()) < 0 ? false : undefined);
