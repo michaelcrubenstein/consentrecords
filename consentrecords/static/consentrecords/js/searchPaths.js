@@ -521,7 +521,8 @@ var SearchPathsPanel = (function () {
  			.datum(s);
 			
 		this.poolContainer.appendFlag(g);
-		g.style('opacity', 1);
+		g.style('opacity', 1)
+			.style('display', '');
 		
 		/* Cover the old flag with a hole. */
 		d3.select(poolFlag).classed('hole', true)
@@ -578,7 +579,8 @@ var SearchPathsPanel = (function () {
 							});
 	
 					_this.queryTagPoolView.appendFlag(queryFlag);
-					$(queryFlag.node()).css(flagPosition);	/* Set the top and the left simultaneously. */
+					$(queryFlag.node()).css(flagPosition)
+						.css('display', '');	/* Set the top and the left simultaneously. */
 					queryFlag.transition()
 						.style('opacity', 1);
 					

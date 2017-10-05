@@ -1,0 +1,25 @@
+Hi {{ salutation }}-
+
+Last month, you wrote down a goal at one of the MLK Summer Scholar seminars. Will you take the next step and build a path to reach your goal?
+
+Your goal is waiting for you at pathadvisor.com. Just activate your path and fill a few more steps along the way. Use this website to activate your path:
+
+    {{ hostURL }}user/passwordreset/{{ resetKey }}
+
+No one can see your path until you are ready to share it. Make your path or other information about you visible here:
+
+    {{ hostURL }}settings
+
+One last thing. As an extra prize, we are giving away $5 Amazon gift card to the first 
+hundred people who share their paths in PathAdvisor this month. To win the prize, you must add
+at least two goals or experiences on your path and give a friend permission to read your path.
+If you share your path with a friend and your friend shares their path with you, you 
+each get a gift card!
+
+Have fun,
+Michael
+
+Michael Rubenstein
+Chief Path Advisor
+
+www.pathadvisor.com
