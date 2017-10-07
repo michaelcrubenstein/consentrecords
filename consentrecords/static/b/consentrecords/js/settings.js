@@ -886,7 +886,7 @@ var NotificationsPanel = (function () {
 
 		var deleteControls = crf.appendDeleteControls(items);
 
-		var q = new Queue();
+		var q = new cr.Queue();
 		items.each(function(d)
 				{
 					var name = d.name();

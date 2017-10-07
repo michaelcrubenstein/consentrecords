@@ -1,55 +1,3 @@
-var Queue = (function () {
-
-    Queue.prototype.autorun = true;
-    Queue.prototype.running = false;
-    Queue.prototype.queue = [];
-
-    function Queue(autorun) {
-        if (typeof autorun !== "undefined") {
-            this.autorun = autorun;
-        }
-        this.queue = []; //initialize the queue
-    };
-
-    Queue.prototype.add = function (callback) {
-        var _this = this;
-        //add callback to the queue
-        this.queue.push(
-        	function () {
-				var finished = callback();
-				if (typeof finished === "undefined" || finished) {
-					//  if callback returns `false`, then you have to 
-					//  call `next` somewhere in the callback
-					_this.dequeue();
-				}
-        	}
-        );
-
-        if (this.autorun && !this.running) {
-            // if nothing is running, then start the engines!
-            this.dequeue();
-        }
-
-        return this; // for chaining fun!
-    };
-
-    Queue.prototype.dequeue = function () {
-        this.running = false;
-        //get the first element off the queue
-        var shift = this.queue.shift();
-        if (shift) {
-            this.running = true;
-            shift();
-        }
-        return shift;
-    };
-
-    Queue.prototype.next = Queue.prototype.dequeue;
-
-    return Queue;
-
-})();
-
 var CRP = (function() {
 	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
 	CRP.prototype.promises = {};	/* keys are paths, values are promises */
@@ -120,8 +68,6 @@ var CRP = (function() {
 
 var crp = new CRP();
 
-var cr = {}
-
 cr.privileges = {
 	find: "find",
 	read: "read",
@@ -181,60 +127,6 @@ cr.ModelObject = (function()
 	
 	return ModelObject;
 })();
-	
-cr.urls = {
-		getUserID : "/api/getuserid/",
-		getData : "/api/",
-		updateValues : "/api/updatevalues/",
-		checkUnusedEmail : '/user/checkunusedemail/',
-		submitSignout: '/user/submitsignout/',
-		submitSignin: '/submitsignin/',
-		submitNewUser: '/submitnewuser/',
-		updateUsername: '/user/updateusername/',
-		updatePassword: '/user/updatepassword/',
-		acceptFollower: '/user/acceptFollower/',
-		requestAccess: '/user/requestAccess/',
-		resetPassword: '/user/resetpassword/',
-		log: '/monitor/log/',
-	};
-	
-cr.accessToken = null;
-cr.refreshToken = null;
-cr.tokenType = null;
-	
-cr.postError = function(jqXHR, textStatus, errorThrown)
-	{
-		if (jqXHR.status == 504 || textStatus == "timeout")
-			return "This operation ran out of time.";
-		else if (jqXHR.status == 403)
-			return "Your web page is out of date. You may be able to solve this by reloading the web page.";
-		else if (jqXHR.status == 0)
-			return "The server is not responding. Please try again.";
-		else
-			return jqXHR.statusText;
-	};
-
-/* Failure of a post event. */
-cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
-	{
-		failFunction(new Error(cr.postError(jqXHR, textStatus, errorThrown)));
-	};
-
-/* Failure of an ajax event that throws an error. */
-cr.thenFail = function(jqXHR, textStatus, errorThrown)
-	{
-		var r2 = $.Deferred();
-		r2.reject(new Error(cr.postError(jqXHR, textStatus, errorThrown)));
-		return r2;
-	};
-
-/*	Chain the failure event to be handled subsequently. */
-cr.chainFail = function(err)
-	{
-		var r2 = $.Deferred();
-		r2.reject(err);
-		return r2;
-	};
 	
 cr.getUserID = function(successFunction, failFunction)
 	{
@@ -382,20 +274,6 @@ cr.requestAccess = function(follower, followingPath, done, fail)
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 		});
 }
-
-cr._logQueue = new Queue(true)
-cr.logRecord = function(name, message)
-	{
-		cr._logQueue.add(function()
-		{
-			/* This message is silent and does not record errors. */
-			message = message !== undefined ? message : 'None';
-			$.post(cr.urls.log,
-				   {name: name, message: message })
-			.done(function() {cr._logQueue.dequeue()});
-			return false;
-		});
-	}
 
 cr.removeElement = function(array, item)
 {

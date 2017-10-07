@@ -35,6 +35,8 @@ urlpatterns = [
     url(r'^signup/', views.signup),
     url(r'^experience/([^/]+)/', views.showExperience),
 
+    url(r'^user/passwordreset/([A-Fa-f0-9]{32})/', views.passwordReset),
+
     url(r'^commentprompts/', views.showCommentPrompts),
     url(r'^experienceprompts/', views.showExperiencePrompts),
     url(r'^organizations/', views.showOrganizations),

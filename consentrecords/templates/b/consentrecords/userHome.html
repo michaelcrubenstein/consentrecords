@@ -149,6 +149,7 @@
 	<script src="{{cdn_url}}d3/3.5.17/d3.min.js"></script>
 	<script src="{{cdn_url}}datejs/1.0/date.min.js"></script>
 	<script src="{{cdn_url}}clipboard.js/1.7.1/clipboard.min.js"></script>
+	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "datejs/time.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/models.js" %}?v={{jsversion}}"></script>
@@ -694,6 +695,17 @@
 					}
 					needsSignin = true;
 				}
+				else if (stateString == "resetPassword")
+				{
+					var handleState = function()
+					{
+						firstPanel = new WelcomePanel();
+						firstPanel.showNow();
+						var signUp = new ResetPasswordPanel("{{resetkey}}");
+						signUp.showUp();
+					}
+					needsSignin = false;
+				}
 				else if (stateString.startsWith("me"))
 				{
 					var handleState = function(pathwayPanel)
@@ -797,7 +809,7 @@
 						return $(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
 							function() {
 								sitePanels.remove();
-								closealert();
+								bootstrap_alert.close();
 							}).promise();
 					});
 		}

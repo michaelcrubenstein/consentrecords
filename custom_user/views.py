@@ -63,16 +63,6 @@ def password(request):
 
 # Displays a web page in which a user can specify a new password based on a key.
 @ensure_csrf_cookie
-def passwordReset(request, resetKey):
-    # Don't rely on authentication.
-    
-    template = loader.get_template('custom_user/passwordreset.html')
-        
-    args = {
-        'resetkey': resetKey
-    }
-    return HttpResponse(template.render(args))
-
 # Creates a PasswordReset record and sends an email with its key so that a user 
 # can reset their password via email.
 def resetPassword(request):
