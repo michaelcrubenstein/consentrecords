@@ -54,97 +54,6 @@ RegExp.escape= function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
-<!-- Block of code for an alert area at the top of the window -->
-bootstrap_alert = function() {}
-bootstrap_alert.panel = null;
-bootstrap_alert.timeout = null;
-bootstrap_alert.closeOnTimeout = false;
-bootstrap_alert.show = function(parentDiv, message, alertClass) {
-	bootstrap_alert.closeOnTimeout = false;
-	if (bootstrap_alert.timeout)
-		clearTimeout(bootstrap_alert.timeout);
-	bootstrap_alert.timeout = setTimeout(function()
-		{
-			bootstrap_alert.timeout = null;
-			if (bootstrap_alert.closeOnTimeout && clickBlockCount == 0)
-				bootstrap_alert.close();
-		}, 1500);
-		
-	if (bootstrap_alert.panel == null)
-	{
-		bootstrap_alert.alertClass = alertClass;
-		var panel = d3.select('body').append('div')
-			.classed('alert', true)
-			.classed(alertClass, true)
-			.style('z-index', 1000);
-		bootstrap_alert.panel = panel.node();
-		
-		var closeButton = panel.append('button')
-			.classed('close', true)
-			.attr('aria-hidden', 'true')
-			.text('\u00D7');
-		$(closeButton.node()).focus();
-		panel.selectAll('span')
-			.data(message.toString().split('\n'))
-			.enter()
-			.append('span')
-			.html(function(d) { return d; });
-		panel.on('click', bootstrap_alert.close);
-		$(closeButton.node()).on('focusout', bootstrap_alert.close);
-		
-		$(bootstrap_alert.panel).offset({top: $(window).innerHeight(), 
-										 left: $(bootstrap_alert.panel).css('margin-left')})
-			.animate({'top': ($(window).innerHeight() - $(bootstrap_alert.panel).height()) / 3});
-	}
-	else
-	{
-		var panel = d3.select(bootstrap_alert.panel);
-		
-		panel.classed(bootstrap_alert.alertClass, false);
-		bootstrap_alert.alertClass = alertClass;
-		panel.classed(bootstrap_alert.alertClass, true);
-		panel.selectAll('span').remove();
-		panel.selectAll('span')
-			.data(message.toString().split('\n'))
-			.enter()
-			.append('span')
-			.html(function(d) { return d; });
-		$(bootstrap_alert.panel)
-			.animate({'top': ($(window).innerHeight() - $(bootstrap_alert.panel).height()) / 3});
-	}
-}
-bootstrap_alert.warning = function(message) {
-	bootstrap_alert.show(null, message, "alert-danger");
-}
-bootstrap_alert.success = function(message) {
-	bootstrap_alert.show(null, message, "alert-success");
-}
-bootstrap_alert.close = function()
-{
-	if (bootstrap_alert.timeout)
-	{
-		bootstrap_alert.closeOnTimeout = true;
-	}
-	else
-	{
-		if (bootstrap_alert.panel)
-		{
-			bootstrap_alert.closeOnTimeout = false;
-			var panel = bootstrap_alert.panel;
-			bootstrap_alert.panel = null;
-			$(panel)
-				.animate({'left': -$(window).innerWidth()})
-				.promise()
-				.done(function()
-					{
-						$(panel).remove();
-					});
-		}
-	}
-}
-
-closealert = bootstrap_alert.close;
-
 var crv = {
 	/* Reference https://www.loc.gov/standards/iso639-2/php/code_list.php */
 	defaultLanguageCode: 'en',
@@ -302,30 +211,15 @@ var crv = {
 	},
 };
 
-function syncFailFunction(error)
-{
-	cr.logRecord('sync fail', error);
-	if (typeof(error) == 'object' && 'stack' in error)
-		cr.logRecord('sync fail stack', error.stack);
-	bootstrap_alert.warning(error, ".alert-container");
-	unblockClick();
-}
-
-/* A default function used to report an error during an asynchronous operation
-	without unblocking a user event. */
-function asyncFailFunction(error)
-{
-	cr.logRecord('async fail', error);
-	if (typeof(error) == 'object' && 'stack' in error)
-		cr.logRecord('async fail stack', error.stack);
-	bootstrap_alert.warning(error, ".alert-container");
-	/* Don't unblock here, because there was no block. */
-}
-
-cr.syncFail = syncFailFunction;
-cr.asyncFail = asyncFailFunction;
-		
 var clickBlockCount = 0;
+
+/* Add a function to the bootstrap_alert to ensure that the user can respond to
+	events before an alert is closed.
+ */
+bootstrap_alert.canClose = function()
+	{
+		return clickBlockCount == 0;
+	};
 
 /* Determines whether clicks should be blocked on the page.
 	This is used to prevent extra clicks on buttons from repeating operations.
