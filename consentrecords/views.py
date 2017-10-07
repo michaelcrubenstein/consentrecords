@@ -901,7 +901,7 @@ def submitsignin(request):
         languageCode = request.POST.get('languageCode', 'en')
         context = Context(languageCode, request.user)
         user = context.user
-        results["user"] = user.getData(['system access', 'email'], context)
+        results['user'] = user.getData(['system access', 'email'], context)
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -964,7 +964,10 @@ def setResetPassword(request):
         else:
             raise Exception('This login is invalid.');
 
-        results = { 'user': Context(languageCode, user).user.id }
+        results = {}
+        context = Context(languageCode, request.user)
+        user = context.user
+        results['user'] = user.getData(['system access', 'email'], context)
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
