@@ -305,8 +305,8 @@ var SigninPanel = (function()
 	SigninPanel.prototype.constructor = SigninPanel;
 
 	SigninPanel.prototype.canSubmit = function() {
-	return $(this.passwordInput).val() !== "" &&
-		$(this.emailInput).val() !== "";
+		return $(this.passwordInput).val() &&
+			$(this.emailInput).val();
 	},
 
 	SigninPanel.prototype.checkenabled = function() {			
@@ -380,6 +380,40 @@ var SigninPanel = (function()
 		else
 			$(this.emailInput).focus();
 	}
+	
+	SigninPanel.prototype.submitSignin = function()
+	{
+		if (prepareClick('click', 'Signin Sign in'))
+		{
+			try
+			{
+				var _this = this;
+				this.submit()
+					.then(function(data)
+						{
+							cr.createSignedinUser(data.id)
+								.then(function()
+								{
+									_this.hideRight(unblockClick);
+								},
+								cr.syncFail)
+						}, 
+						function(err)
+						{
+							/* Error may be handled in submit, in which
+								case err will be undefined. */
+							if (err) 
+								cr.syncFail(err);
+							else
+								unblockClick();
+						});
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+		}
+	}
 
 	function SigninPanel()
 	{
@@ -419,38 +453,7 @@ var SigninPanel = (function()
 				.on('keypress', function() {
 						if (d3.event.which == 13)
 						{
-							if (prepareClick('return key', 'Signin sign in'))
-							{
-								try
-								{
-									if (_this.canSubmit())
-									{
-										_this.submit()
-											.then(function(data)
-											{
-												cr.createSignedinUser(data.id)
-													.then(function()
-													{
-														_this.hideRight(unblockClick);
-													},
-													cr.syncFail);
-											}, 
-											function(err)
-											{
-												/* Error may be handled in submit, in which
-													case err will be undefined. */
-												if (err) 
-													cr.syncFail(err);
-												else
-													unblockClick();
-											});
-									}
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
+							_this.submitSignin();
 							d3.event.preventDefault();
 						}
 					})
@@ -507,36 +510,10 @@ var SigninPanel = (function()
 			.text("Sign In")
 			.on('click', function()
 				{
-					if (prepareClick('click', 'Signin Sign in'))
-					{
-						try
-						{
-							_this.submit()
-								.then(function(data)
-									{
-										cr.createSignedinUser(data.id)
-											.then(function()
-											{
-												_this.hideRight(unblockClick);
-											},
-											cr.syncFail)
-									}, 
-									function(err)
-									{
-										if (err) 
-											cr.syncFail(err);
-										else
-											unblockClick();
-									});
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
+					_this.submitSignin();
 
-				   //stop form submission
-				   d3.event.preventDefault();
+					//stop form submission
+					d3.event.preventDefault();
 				});
 
 		this.panelDiv.append('hr');
