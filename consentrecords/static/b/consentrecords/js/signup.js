@@ -774,3 +774,279 @@ var ForgotPasswordPanel = (function()
 	}
 	return ForgotPasswordPanel;
 })();
+
+var ResetPasswordPanel = (function()
+{
+	ResetPasswordPanel.prototype = Object.create(crv.SitePanel.prototype);
+	ResetPasswordPanel.prototype.constructor = ResetPasswordPanel;
+
+	ResetPasswordPanel.prototype.submitButton = null;
+	ResetPasswordPanel.prototype.emailGroup = null;
+	ResetPasswordPanel.prototype.emailInput = null;
+	ResetPasswordPanel.prototype.emailOK = null;
+	
+	ResetPasswordPanel.prototype.canSubmit = function() {
+		var testusername = $(this.emailInput).val();
+		return validateEmail(testusername) &&
+			$(this.confirmInput).val() &&
+			$(this.passwordInput).val() == $(this.confirmInput).val();
+	}
+
+	ResetPasswordPanel.prototype.checkenabled = function() {
+		var submitEnabled = true;			
+		if (!validateEmail($(this.emailInput).val()))
+		{
+			submitEnabled = false;
+			$(this.emailGroup).removeClass( "has-success");
+			$(this.emailOK).removeClass( "glyphicon-ok" );
+		}
+		else
+		{
+			$(this.emailGroup).addClass( "has-success");
+			$(this.emailOK).addClass( "glyphicon-ok" );
+		}
+		
+		if ($(this.confirmInput).val() &&
+			$(this.passwordInput).val() == $(this.confirmInput).val())
+		{
+			$(this.confirmGroup).addClass( "has-success");
+			$(this.confirmOK).addClass( "glyphicon-ok" );
+		}
+		else
+		{
+			submitEnabled = false;
+			$(this.confirmGroup).removeClass( "has-success");
+			$(this.confirmOK).removeClass( "glyphicon-ok" );
+		}
+		
+		if (submitEnabled)
+		{
+			$(this.submitButton).removeClass("site-disabled-text")
+							   .addClass("site-active-text")
+							   .prop( "disabled", false );
+		}
+		else
+		{
+			$(this.submitButton).addClass("site-disabled-text")
+							   .removeClass("site-active-text")
+							   .prop( "disabled", true );
+		}
+	}
+			
+	ResetPasswordPanel.prototype.submit = function(resetKey) {
+		var _this = this;
+		
+		if (!$(this.emailInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.emailInput.focus();
+			this.emailMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+		{
+			this.emailMessageReveal.hide({duration: 400});
+		}
+		
+		if (!$(this.passwordInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.passwordInput.focus();
+			this.passwordMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+			this.passwordMessageReveal.hide({duration: 400});
+			
+		if (!$(this.confirmInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.confirmInput.focus();
+			this.confirmMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+			this.confirmMessageReveal.hide({duration: 400});
+
+		bootstrap_alert.success('Resetting password (this may take a few minutes)...');
+		return $.post(cr.urls.setResetPassword, 
+					{resetkey: resetKey,
+					 email: this.emailInput.value,
+					 password: this.passwordInput.value
+					})
+			.then(function(json, textStatus, jqXHR)
+				{
+					cr.logRecord('setResetPassword succeeds', _this.emailInput.value);
+					bootstrap_alert.success('Your password has been reset.');
+					return cr.createSignedinUser(json.user.id);
+				},
+				cr.thenFail);
+	}
+	
+	ResetPasswordPanel.prototype.submitReset = function(resetKey)
+	{
+		var _this = this;
+		if (prepareClick('click', 'reset password'))
+		{
+			try
+			{
+				this.submit(resetKey)
+					.then(function() { _this.hide(); }, 
+					function(err)
+					{
+						if (err)
+							cr.syncFail(err);
+						else
+							unblockClick();
+					});
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+		}
+	}
+				
+	function ResetPasswordPanel(resetKey)
+	{
+		this.createRoot(null, "Reset Password", "sign-in", revealPanelUp);
+		var _this = this;
+		
+		var form = this.panelDiv.append('form')
+			.classed('form-simple', true);
+		
+		form.append('div')
+			.classed('site-title', true)
+			.text("Reset Password");
+		
+		form.append('div')
+			.classed('help-block', true)
+			.text("Enter your email address and a new password to reset your password.");
+			
+		var emailGroup = form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('col-xs-12', true)
+			.append('div')
+			.classed('form-group has-feedback', true);
+		this.emailGroup = emailGroup.node();
+		
+		this.emailInput = emailGroup.append('input')
+			.classed('form-control feedback-control', true)
+			.attr('type', 'email')
+			.attr('placeholder', "Email Address")
+			.on('input', function() { _this.checkenabled(); })
+			.node();
+			
+		this.emailOK = emailGroup.append('span')
+			.classed("glyphicon form-control-feedback", true)
+			.node();
+		this.emailMessage = form.append('div')
+			.classed('message', true);
+		this.emailMessage.append('div')
+			.text('The email address is required.');
+		this.emailMessageReveal = new VerticalReveal(this.emailMessage.node());
+		this.emailMessageReveal.hide();
+		
+		var passwordGroup = form.append('div')
+			.classed('form-group', true);
+		var passwordLabel = passwordGroup.append('label')
+			.attr('for', 'id_newPassword')
+			.classed('control-label sr-only', true)
+			.text("New Password");
+		this.passwordInput = passwordGroup.append('input')
+			.attr('id', 'id_newPassword')
+			.classed('form-control feedback-control', true)
+			.attr('type', 'password')
+			.attr('placeholder', "New password")
+			.on('input', function() { _this.checkenabled(); })
+			.node();
+		
+		this.passwordMessage = form.append('div')
+			.classed('message', true);
+		this.passwordMessage.append('div')
+			.text('The password is required.');
+		this.passwordMessageReveal = new VerticalReveal(this.passwordMessage.node());
+		this.passwordMessageReveal.hide();
+
+		var confirmGroup = form.append('div')
+			.classed('form-group has-feedback', true);
+		this.confirmGroup = confirmGroup.node();
+		var confirmLabel = confirmGroup.append('label')
+			.attr('for', 'id_confirmNewPassword')
+			.classed('control-label sr-only', true)
+			.text("Confirm New Password");
+		this.confirmInput = confirmGroup.append('input')
+			.attr('id', 'id_confirmNewPassword')
+			.classed('form-control feedback-control', true)
+			.attr('type', 'password')
+			.attr('placeholder', "Confirm new password")
+			.on('input', function() { _this.checkenabled(); })
+			.on('keypress', function()
+				{
+					if (d3.event.which == 13)
+					{
+						_this.submitReset(resetKey);
+						d3.event.preventDefault();
+					}
+				})
+			.node();
+		this.confirmOK = emailGroup.append('span')
+			.classed("glyphicon form-control-feedback", true)
+			.node();
+		this.confirmMessage = form.append('div')
+			.classed('message', true);
+		this.confirmMessage.append('div')
+			.text('The confirmation does not match the password.');
+		this.confirmMessageReveal = new VerticalReveal(this.confirmMessage.node());
+		this.confirmMessageReveal.hide();
+
+		var buttonContainer = form.append('div')
+			.classed('form-group site-trio-container', true);
+			
+		buttonContainer.append('span')
+			.classed('done-button site-trio-clipped site-active-text', true)
+			.text(crv.buttonTexts.cancel)
+			.on('click', function()
+				{
+					if (prepareClick('click', 'hide panel button'))
+					{
+						try
+						{
+							showClickFeedback(this);
+							_this.hide();
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+				});
+			
+		buttonContainer.append('div')
+			.classed('site-trio-fill', true);
+		
+		buttonContainer.append('span')
+			.classed('submit-button site-trio-clipped site-active-text', true)
+			.text("Reset Password")
+			.on('click', function()
+				{
+					_this.submitReset(resetKey);					
+					//stop form submission
+					d3.event.preventDefault();
+				});
+				
+		$(this.node()).on("revealing.cr", function()
+		{
+			$(_this.emailInput).val("")
+				.focus();
+			_this.checkenabled();
+		});
+		
+	}
+	return ResetPasswordPanel;
+})();
+

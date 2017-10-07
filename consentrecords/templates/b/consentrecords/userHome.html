@@ -695,6 +695,17 @@
 					}
 					needsSignin = true;
 				}
+				else if (stateString == "resetPassword")
+				{
+					var handleState = function()
+					{
+						firstPanel = new WelcomePanel();
+						firstPanel.showNow();
+						var signUp = new ResetPasswordPanel("{{resetkey}}");
+						signUp.showUp();
+					}
+					needsSignin = false;
+				}
 				else if (stateString.startsWith("me"))
 				{
 					var handleState = function(pathwayPanel)
