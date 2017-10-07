@@ -3,7 +3,19 @@ from django.core.mail import send_mail
 
 from django.template import loader
 
+import socket
+
 class Emailer():
+    def _send(header, txtMessage, senderEMail, recipients, htmlMessage):
+        try:
+            send_mail(header, txtMessage, senderEMail,
+                recipients, fail_silently=False, html_message=htmlMessage)
+        except socket.gaierror as e:
+            if e.errno == socket.EAI_NONAME:
+                raise RuntimeError('the email can not be sent because the email server is not accessible')
+            else:
+                raise
+        
     # Sends a reset password message to the specified email recipient.
     def sendResetPasswordEmail(recipientEMail, resetURL, hostURL):
         context = {'resetURL': resetURL,
@@ -15,8 +27,8 @@ class Emailer():
         htmlMessage = htmlTemplate.render(context)
         txtMessage = txtTemplate.render(context)
 
-        send_mail('Password Reset', txtMessage, settings.PASSWORD_RESET_SENDER,
-            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+        Emailer._send('Password Reset', txtMessage, settings.PASSWORD_RESET_SENDER,
+            [recipientEMail], htmlMessage)
     
     def merge(html, dir):
         p = re.compile(r'{{\s*([^}\s]+)\s*}}')
@@ -43,8 +55,8 @@ class Emailer():
         htmlMessage = htmlTemplate.render(context)
         txtMessage = txtTemplate.render(context)
         
-        send_mail('Path Question From Another User', txtMessage, senderEMail,
-            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+        Emailer._send('Path Question From Another User', txtMessage, senderEMail,
+            [recipientEMail], htmlMessage)
     
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     # following - an instance of the path of the user who owns the experience containing the question.
@@ -63,9 +75,9 @@ class Emailer():
         htmlMessage = htmlTemplate.render(context)
         txtMessage = txtTemplate.render(context)
         
-        send_mail('Your Question Has Been Answered', txtMessage, 
+        Emailer._send('Your Question Has Been Answered', txtMessage, 
             settings.PASSWORD_RESET_SENDER,
-            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+            [recipientEMail], htmlMessage)
     
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     def sendSuggestExperienceByTagEmail(salutation, recipientEMail, tag, isAdmin, hostURL):
@@ -80,8 +92,8 @@ class Emailer():
         htmlMessage = htmlTemplate.render(context)
         txtMessage = txtTemplate.render(context)
         
-        send_mail('A Suggestion from PathAdvisor', txtMessage, settings.PASSWORD_RESET_SENDER,
-            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+        Emailer._send('A Suggestion from PathAdvisor', txtMessage, settings.PASSWORD_RESET_SENDER,
+            [recipientEMail], htmlMessage)
     
     # Sends an email when someone requests to follow the recipient of the email.
     def sendNewFollowerEmail(salutation, recipientEMail, follower, acceptURL, ignoreURL):
@@ -129,6 +141,6 @@ We hope you discover new opportunities and enjoy inspiring others by sharing you
 The PathAdvisor Team
 """ % (follower, acceptURL, ignoreURL)
         
-        send_mail('A New PathAdvisor Follower', message, settings.PASSWORD_RESET_SENDER,
-            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+        Emailer._send('A New PathAdvisor Follower', message, settings.PASSWORD_RESET_SENDER,
+            [recipientEMail], htmlMessage)
     
