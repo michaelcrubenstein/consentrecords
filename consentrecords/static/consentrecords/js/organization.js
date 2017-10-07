@@ -166,6 +166,7 @@ function appendInfoButtons(items, dataF, appendF)
 				}
 			}
 			d3.event.preventDefault();
+			d3.event.stopPropagation();
 		});
 	drawInfoButtons(infoButtons);
 	return outerDiv;

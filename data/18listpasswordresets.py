@@ -1,6 +1,9 @@
 # A script for listing the all of the activate passwordresets
 #
 # python3 data/18listpasswordresets.py
+#
+# To send emails:
+# python3 data/18listpasswordresets.py -send -host 'https://www.pathadvisor.com/' -template campaign01 -title 'Your PathAdvisor Path'
 
 import datetime
 import django; django.setup()
