@@ -384,6 +384,21 @@ def signup(request, email=None):
         
     return HttpResponse(template.render(args))
 
+def passwordReset(request, resetKey):
+    # Don't rely on authentication.
+    
+    LogRecord.emit(request.user, 'pathAdvisor/passwordReset', resetKey)
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+        
+    args = {
+        'state': 'resetPassword',
+        'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
+        'resetkey': resetKey,
+    }
+    return HttpResponse(template.render(args))
+
 def acceptFollower(request, userPath=None):
     if request.method != "POST":
         raise Http404("acceptFollower only responds to POST methods")

@@ -23,7 +23,6 @@ urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
     url(r'^accounts/login/$', auth_views.login, name='authLogin'),
     url(r'^admin/', admin.site.urls),
-    url(r'^user/', include('custom_user.urls')),
     url(r'^monitor/', include('monitor.urls')),
     url(r'^developer/', include('developer.urls')),
 
@@ -51,12 +50,15 @@ urlpatterns = [
     url(r'^services/', views.showServices),
     url(r'^users/', views.showUsers),
 
+    url(r'^user/passwordreset/([A-Fa-f0-9]{32})/', views.passwordReset),
+    url(r'^user/setresetpassword/', views.setResetPassword),
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
     url(r'^user/updateusername/', views.updateUsername, name='updateUsername'),
     url(r'^user/acceptFollower/(.*)/', views.acceptFollower),
     url(r'^user/acceptFollower/', views.acceptFollower),
     url(r'^user/requestAccess/', views.requestAccess, name='requestAccess'),
+    url(r'^user/', include('custom_user.urls')),
 
     url(r'^local/updatevalues/(.*)/', views.updateValues, name='updateValues'),
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),

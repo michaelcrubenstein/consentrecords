@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.db import transaction, connection
 from django.db.models import F, Q, Prefetch
 from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
@@ -21,6 +22,7 @@ import itertools
 from monitor.models import LogRecord
 from custom_user import views as userviews
 from custom_user.emailer import Emailer
+from custom_user.models import PasswordReset
 from consentrecords.models import *
 
 templateDirectory = 'consentrecords/'
@@ -299,7 +301,7 @@ def accept(request, email):
     
     language = request.GET.get('language', 'en')
     if request.user.is_authenticated:
-    	
+        
         user = Context(language, request.user).user
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -396,6 +398,21 @@ def signup(request, email=None):
     else:
         args['state'] = 'signup/'
         
+    return HttpResponse(template.render(args))
+
+def passwordReset(request, resetKey):
+    # Don't rely on authentication.
+    
+    LogRecord.emit(request.user, 'pathAdvisor/passwordReset', resetKey)
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+        
+    args = {
+        'state': 'resetPassword',
+        'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
+        'resetkey': resetKey
+    }
     return HttpResponse(template.render(args))
 
 def acceptFollower(request, userPath=None):
@@ -912,6 +929,47 @@ def submitNewUser(request):
         logger.error("%s" % traceback.format_exc())
         return HttpResponseBadRequest(reason=str(e))
         
+    return JsonResponse(results)
+
+# Resets the password for the specified email address based on the key.
+def setResetPassword(request):
+    try:
+        if request.method != "POST":
+            raise Exception("setResetPassword only responds to POST requests")
+
+        POST = request.POST
+        resetKey = POST['resetkey']
+        email = POST['email']
+        password = POST['password']
+        languageCode = POST.get('languageCode', 'en')
+        
+        LogRecord.emit(request.user, 'setResetPassword', email)
+
+        if get_user_model().objects.filter(email=email).count() == 0:
+            raise Exception("This email address is not recognized.");
+        
+        query_set = PasswordReset.objects.filter(id=resetKey)
+        if query_set.count() == 0:  
+            raise Exception("This reset key is not recognized.");
+        
+        pr = query_set.get()
+        pr.updatePassword(email, password)
+        
+        user = authenticate(email=email, password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+            else:
+                raise Exception('This account is disabled.')
+        else:
+            raise Exception('This login is invalid.');
+
+        results = { 'user': Context(languageCode, user).user.id }
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponseBadRequest(reason=str(e))
+            
     return JsonResponse(results)
 
 def updateUsername(request):
