@@ -46,6 +46,11 @@ panel.comments div.detail > svg {
 	fill: #777;
 }
 
+panel.comments .user-label {
+	font-weight: 600;
+	font-size: 1.3em;
+}
+
 panel.comments .flag-label {
 	font-weight: 600;
 	font-size: 1.2em;

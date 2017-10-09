@@ -609,7 +609,7 @@ crn.ExperienceCommentRequested = (function() {
 										showClickFeedback(this);
 					
 										var experienceInstance = crp.getInstance(args[1].id());
-										var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance));
+										var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance), "Notifications");
 										$(newPanel.mainDiv).on('revealing.cr', function()
 										{
 											newPanel.startEditing();
@@ -710,7 +710,7 @@ crn.ExperienceQuestionAnswered = (function() {
 												.then(function()
 													{
 														var experienceInstance = crp.getInstance(args[1].id());
-														var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance));
+														var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance), "Notifications");
 												
 														newPanel.showLeft()
 															.always(unblockClick);

@@ -495,7 +495,7 @@ var PathView = (function() {
 						.duration(200)
 						.style('fill-opacity', 0.4);
 				}
-				var newPanel = new ExperienceCommentsPanel(fd);
+				var newPanel = new ExperienceCommentsPanel(fd, this.sitePanel.headerText);
 				newPanel.showLeft()
 					.always(function()
 						{
@@ -1581,7 +1581,7 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.showCommentsPanelAsync = function(id)
 	{
-		var newPanel = new ExperienceCommentsPanel(this.getFlagData(id));
+		var newPanel = new ExperienceCommentsPanel(this.getFlagData(id), this.user.caption());
 		newPanel.showLeft();
 		return newPanel;
 	}

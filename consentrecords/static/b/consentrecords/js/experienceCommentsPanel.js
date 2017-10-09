@@ -381,7 +381,7 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
-	function ExperienceCommentsPanel(fd)
+	function ExperienceCommentsPanel(fd, backText)
 	{
 		this.createRoot(fd, "Experience", "comments", revealPanelLeft);
 		this.fd = fd;
@@ -422,9 +422,9 @@ var ExperienceCommentsPanel = (function() {
 				d3.event.preventDefault();
 			});
 		appendLeftChevronSVG(backButton).classed("chevron-left", true);
-		backButton.append("span").text("Back");
+		backButton.append("span").text(backText);
 
-		navContainer.appendTitle(fd.experience.parent().caption());
+		navContainer.appendTitle('');
 		
 		this.inEditMode = false;
 		if (fd.experience.canWrite())
@@ -529,6 +529,13 @@ var ExperienceCommentsPanel = (function() {
 		function resizeDetail()
 		{
 			fd.appendElements(_this.detailTextGroup, 12);
+			if (backText != fd.experience.parent().parent().caption())
+			{
+				var containerDiv = _this.detailTextGroup.select('div');
+				containerDiv.insert('div', ':first-child')
+					.classed('user-label', true)
+					.text(fd.experience.parent().parent().caption());
+			}
 			
 			if (fd.experience.canWrite())
 			{

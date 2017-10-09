@@ -831,6 +831,7 @@ var SiteNavContainer = (function() {
 	{
 		var h = this.div.selectAll('div.site-title');
 		h.text(title);
+		this.sitePanel.headerText = title;
 	}
 	
 	SiteNavContainer.prototype.appendTitle = function(newTitle)
