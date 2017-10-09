@@ -831,6 +831,7 @@ var SiteNavContainer = (function() {
 	{
 		var h = this.div.selectAll('div.site-title');
 		h.text(title);
+		this.sitePanel.headerText = title;
 	}
 	
 	SiteNavContainer.prototype.appendTitle = function(newTitle)
@@ -850,8 +851,10 @@ var SiteNavContainer = (function() {
 					{
 						rightWidth += $(this).outerWidth();
 					});
-				var padding = $(h.node()).innerWidth() - (getTextWidth(newTitle, h.style("font"))+1);
-				if (padding < 0)
+				h.style('padding-right', '0px')
+					 .style('padding-left', '0px');
+				var padding = newTitle ? ($(h.node()).innerWidth() - (getTextWidth(newTitle, h.style("font"))+1)) : 0;
+				if (padding <= 0)
 				{
 					h.style('padding-right', '0px')
 					 .style('padding-left', '0px');
@@ -874,6 +877,10 @@ var SiteNavContainer = (function() {
 			
 		$(this.sitePanel.node()).on('revealing.cr', f);
 		$(window).resize(f);
+		$(this.div.node()).on('remove', function()
+			{
+				$(window).off('resize', f);
+			});
 		
 		return h;
 	}
