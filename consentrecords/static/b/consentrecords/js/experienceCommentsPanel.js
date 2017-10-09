@@ -1,5 +1,28 @@
 /* experienceCommentsPanel.js */
 
+function blend_colors(color1, color2, percentage)
+{
+    // 3: we have valid input, convert colors to rgb
+    color1 = [parseInt(color1[1] + color1[2], 16), parseInt(color1[3] + color1[4], 16), parseInt(color1[5] + color1[6], 16)];
+    color2 = [parseInt(color2[1] + color2[2], 16), parseInt(color2[3] + color2[4], 16), parseInt(color2[5] + color2[6], 16)];
+
+    // 4: blend
+    var color3 = [ 
+        (1 - percentage) * color1[0] + percentage * color2[0], 
+        (1 - percentage) * color1[1] + percentage * color2[1], 
+        (1 - percentage) * color1[2] + percentage * color2[2]
+    ];
+
+	function int_to_hex(num)
+	{
+		var hex = Math.round(num).toString(16);
+		return (hex.length == 1) ? '0' + hex : hex;
+	}
+	
+    // 5: convert to hex
+    return '#' + int_to_hex(color3[0]) + int_to_hex(color3[1]) + int_to_hex(color3[2]);
+}
+
 var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype = Object.create(crv.SitePanel.prototype);
 	ExperienceCommentsPanel.prototype.constructor = ExperienceCommentsPanel;
@@ -8,9 +31,6 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.inEditMode = false;
 	ExperienceCommentsPanel.prototype.detailGroup = null;
 	ExperienceCommentsPanel.prototype.detailTextGroup = null;
-	ExperienceCommentsPanel.prototype.detailFrontRect = null;
-	ExperienceCommentsPanel.prototype.detailRectHeight = 0;
-	ExperienceCommentsPanel.prototype.svg = null;
 	ExperienceCommentsPanel.prototype.editChevronContainer = null;
 	
 	ExperienceCommentsPanel.prototype.editChevronWidth = 12; 	/* pixels */
@@ -182,20 +202,9 @@ var ExperienceCommentsPanel = (function() {
 				12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
 				18 is the height of the chevron, so that the chevron is vertically centered. 
 			 */
-			if (_this.detailRectHeight > 0)
-			{
-				this.editChevronContainer.transition()
-					.duration(400)
-					.attr("transform", 
-						"translate({0},{1})".format(
-							$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
-							(_this.detailRectHeight - _this.editChevronHeight) / 2));
-			}
-					
-			this.detailTextGroup.selectAll('line')
-				.transition()
-				.duration(400)
-				.attr('x2', $(_this.svg.node()).width() - (_this.editChevronWidth + 12) - 12);
+			
+			/* Set the width of this.detailGroup to be width of the container. */
+			$(this.detailGroup.node()).animate({'width': $(this.mainDiv.node()).innerWidth()} );
 		}
 		catch(err)
 		{
@@ -468,29 +477,28 @@ var ExperienceCommentsPanel = (function() {
 								_this.checkTextAreas()
 									.then(function()
 									{
-										_this.editChevronContainer.transition()
-											.duration(400)
-											.attr("transform", 
-												"translate({0},{1})".format(
-													$(_this.svg.node()).width(), 
-													($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
-													
-										_this.detailTextGroup.selectAll('line')
-											.transition()
-											.duration(400)
-											.attr('x2', $(_this.svg.node()).width());
+										try
+										{
+											$(_this.detailGroup.node())
+												.animate({'width': $(_this.mainDiv.node()).innerWidth() + 
+																   $(_this.editChevronContainer.node()).outerWidth(true)} );
 
-										var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
-										crf.hideDeleteControls(dials);
-										_this.inEditMode = false;
-										commentList.classed('edit', false);
-										commentList.selectAll('textarea')
-											.attr('readonly', 'readonly')
-											.classed('editable', false)
-											.classed('fixed-immediate', false)
-											.classed('fixed', true);
+											var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
+											crf.hideDeleteControls(dials);
+											_this.inEditMode = false;
+											commentList.classed('edit', false);
+											commentList.selectAll('textarea')
+												.attr('readonly', 'readonly')
+												.classed('editable', false)
+												.classed('fixed-immediate', false)
+												.classed('fixed', true);
 
-										unblockClick();
+											unblockClick();
+										}
+										catch(err)
+										{
+											cr.syncFail(err);
+										}
 									},
 									fail);
 							}
@@ -535,36 +543,22 @@ var ExperienceCommentsPanel = (function() {
 
 		var panel2Div = this.appendScrollArea();
 
-		this.svg = panel2Div.append('svg')
-			.attr('xmlns', "http://www.w3.org/2000/svg")
-			.attr('version', "1.1");
-		this.detailGroup = this.svg.append('g')
+		this.detailGroup = panel2Div.append('div')
 			.classed('detail', true)
 			.datum(fd);
-		this.detailTextGroup = this.detailGroup.append('g');
-		this.detailFrontRect = this.detailGroup.append('rect')
-			.classed('detail', true);
-		fd.colorElement(this.detailFrontRect.node());
+		this.detailTextGroup = this.detailGroup.append('div');
+		fd.colorHTMLElement(this.detailGroup.node());
 		
 		function resizeDetail()
 		{
-			fd.appendTSpans(_this.detailTextGroup, parseFloat(_this.svg.style('width')), 12);
-			var textBox = _this.detailTextGroup.node().getBBox();
-			_this.detailRectHeight = textBox.height + (textBox.y) + PathView.prototype.textBottomMargin;
-			_this.detailFrontRect.attr('height', _this.detailRectHeight)
-				.attr('width', _this.svg.style('width'));
-			_this.svg.attr('height', _this.detailRectHeight);
+			fd.appendElements(_this.detailTextGroup, 12);
+			_this.detailTextGroup.selectAll('div')
+				.style('border-top-color', blend_colors(fd.fontColor(), fd.flagColor(), 0.7));
 			
 			if (fd.experience.canWrite())
 			{
-				_this.editChevronContainer.attr("transform", 
-					"translate({0},{1})".format(
-						$(_this.svg.node()).width() - (_this.inEditMode ? _this.editChevronWidth + 12 : 0), 
-						(_this.detailRectHeight - _this.editChevronHeight) / 2));
-				
-				var lineWidth = $(_this.svg.node()).width() - (_this.inEditMode ? _this.editChevronWidth + 24 : 0);	
-				_this.detailTextGroup.selectAll('line')
-					.attr('x2', lineWidth);
+				$(_this.detailGroup.node()).width($(_this.mainDiv.node()).innerWidth() +
+					(_this.inEditMode ? 0 : $(_this.editChevronContainer.node()).outerWidth(true)));
 			}
 		}
 		setTimeout(resizeDetail);
@@ -572,7 +566,7 @@ var ExperienceCommentsPanel = (function() {
 		/* Update the contents of the top banner if the contents of the experience are changed. */
 		fd.setupChangeEventHandler(this.mainDiv.node(), function(eventObject, newValue)
 			{
-				fd.colorElement(_this.detailFrontRect.node());
+				fd.colorHTMLElement(_this.detailGroup.node());
 				resizeDetail();
 			});
 		
@@ -584,19 +578,11 @@ var ExperienceCommentsPanel = (function() {
 
 		if (fd.experience.canWrite())
 		{
-			this.editChevronContainer = this.detailGroup.append('g');
-		
-			this.editChevronContainer.append('g')
-				.classed('chevron-right', true)
-				.attr('transform', 'scale(0.0625)')
-				.append('polygon')
-				.attr('points', "0,32.4 32.3,0 192,160 192,160 192,160 32.3,320 0,287.6 127.3,160");
-			this.editChevronContainer.attr("transform", 
-					"translate({0},{1})".format(
-						$(_this.svg.node()).width(), 
-						$(_this.svg.node()).height() / 2));
+			this.editChevronContainer = appendRightChevronSVG(this.detailGroup);
+			$(this.editChevronContainer.node()).width(this.editChevronWidth)
+				.height(this.editChevronHeight);
 						
-			this.svg.on('click', function(e)
+			this.detailGroup.on('click', function(e)
 				{
 					if (_this.inEditMode)
 					{

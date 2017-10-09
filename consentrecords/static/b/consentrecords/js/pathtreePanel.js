@@ -236,6 +236,18 @@ var FlagController = (function() {
 			done();
 	}
 	
+	FlagController.prototype.colorHTMLElement = function(r)
+	{
+		var _this = this;
+		var f = function()
+			{
+				var pathGuide = PathGuides.data[_this.getColumn()]
+				$(r).css({'background-color': pathGuide.flagColor,
+						  color: pathGuide.fontColor});
+			}
+		this.checkOfferingCells(f);
+	}
+	
 	FlagController.prototype.colorElement = function(r)
 	{
 		var _this = this;
@@ -243,8 +255,8 @@ var FlagController = (function() {
 			{
 				var column = _this.getColumn();
 				var colorText = PathGuides.data[column].color;
-				r.setAttribute("fill", colorText);
-				r.setAttribute("stroke", colorText);
+				r.setAttribute('fill', colorText);
+				r.setAttribute('stroke', colorText);
 			}
 		this.checkOfferingCells(f);
 	}
@@ -270,15 +282,11 @@ var FlagController = (function() {
 		}
 	}
 	
-	FlagController.prototype.appendTSpans = function(detailGroup, maxWidth, x)
+	FlagController.prototype.appendElements = function(detailGroup)
 	{
-		x = x !== undefined ? x : this.textDetailLeftMargin;
-		
-		detailGroup.selectAll('text').remove();
-		detailGroup.selectAll('line').remove();
+		detailGroup.selectAll('div').remove();
 		
 		var title;
-		var tspan;
 		var e = this.experience;
 		title = e.pickedOrCreatedText(e.offering(), e.customOffering());
 		if (!title)
@@ -297,101 +305,46 @@ var FlagController = (function() {
 			siteString = "";
 		var dateRange = e.dateRange();
 		var tagDescriptions = e.getTagList();
-		var lineHeight = 0;
-		var lineMargin = 3;
+		var containerDiv = null;
 		
 		if (title)
 		{
-			tspan = detailGroup.append('text')
+			containerDiv = containerDiv || detailGroup.append('div');
+			containerDiv.append('div')
 				.classed('flag-label', true)
-				.text(title)
-				.attr("x", x)
-				.attr("dy", this.detailTopSpacing)
-				.attr("fill", this.fontColor());
-			lineHeight = tspan.node().getBBox().y + tspan.node().getBBox().height + lineMargin;
+				.text(title);
 		}
 		
 		if (orgString)
 		{
-			tspan = detailGroup.append('text')
+			containerDiv = containerDiv || detailGroup.append('div');
+			containerDiv.append('div')
 				.classed('detail-organization', true)
-				.text(orgString)
-				.attr("x", x)
-				.attr("fill", this.fontColor());
-			tspan.attr('y', lineHeight + tspan.node().getBBox().height || this.detailTopSpacing)
-			lineHeight = tspan.node().getBBox().y + tspan.node().getBBox().height + lineMargin;
+				.text(orgString);
 		}
 
 		if (siteString)
 		{
-			if (orgString)
-				lineHeight -= lineMargin;
-			tspan = detailGroup.append('text')
+			containerDiv = containerDiv || detailGroup.append('div');
+			containerDiv.append('div')
 				.classed('site', true)
-				.text(siteString)
-				.attr("x", x)
-				.attr("fill", this.fontColor());
-			tspan.attr('y', lineHeight + tspan.node().getBBox().height || this.detailTopSpacing)
-			lineHeight = tspan.node().getBBox().y + tspan.node().getBBox().height + lineMargin;
+				.text(siteString);
 		}
 
 		if (dateRange)
 		{
-			if (lineHeight > 0)
-			{
-				detailGroup.append('line')
-					.attr('x1', x)
-					.attr('x2', maxWidth)
-					.attr('y1', lineHeight)
-					.attr('y2', lineHeight)
-					.attr('stroke', this.fontColor());
-				lineHeight += lineMargin;
-			}
-			tspan = detailGroup.append('text')
+			detailGroup.append('div')
 				.classed('detail-dates', true)
-				.text(dateRange)
-				.attr("x", x)
-				.attr("fill", this.fontColor());
-			tspan.attr('y', lineHeight + tspan.node().getBBox().height || this.detailTopSpacing)
-			lineHeight = tspan.node().getBBox().y + tspan.node().getBBox().height + lineMargin;
+				.text(dateRange);
 		}
 		
 		if (tagDescriptions)
 		{
 			var _this = this;
-			if (lineHeight > 0)
-			{
-				detailGroup.append('line')
-					.attr('x1', x)
-					.attr('x2', maxWidth)
-					.attr('y1', lineHeight)
-					.attr('y2', lineHeight)
-					.attr('stroke', this.fontColor());
-				lineHeight += lineMargin;
-			}
-			var detailText = detailGroup.append('text')
-				.attr("x", x)
-				.attr("y", lineHeight || this.detailTopSpacing);
-			FlagController.appendWrappedText(tagDescriptions, function(spanIndex)
-				{
-					return detailText.append("tspan")
-						.classed('tags', true)
-						.attr("x", x)
-						.attr("dy", _this.detailTagSpacing)
-						.attr("fill", _this.fontColor());
-				},
-				maxWidth);
+			var detailText = detailGroup.append('div')
+				.classed('tags', true)
+				.text(tagDescriptions);
 		}
-	}
-	
-	FlagController.prototype.appendText = function(container, maxWidth)
-	{
-		var detailText = container.append('text');
-		maxWidth = maxWidth !== undefined ? maxWidth : 0;
-		
-		this.appendTSpans(detailText, maxWidth);
-		
-		return detailText;
 	}
 	
 	FlagController.prototype.setupChangeEventHandler = function(data, handler)
