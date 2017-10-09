@@ -850,8 +850,10 @@ var SiteNavContainer = (function() {
 					{
 						rightWidth += $(this).outerWidth();
 					});
-				var padding = $(h.node()).innerWidth() - (getTextWidth(newTitle, h.style("font"))+1);
-				if (padding < 0)
+				h.style('padding-right', '0px')
+					 .style('padding-left', '0px');
+				var padding = newTitle ? ($(h.node()).innerWidth() - (getTextWidth(newTitle, h.style("font"))+1)) : 0;
+				if (padding <= 0)
 				{
 					h.style('padding-right', '0px')
 					 .style('padding-left', '0px');
