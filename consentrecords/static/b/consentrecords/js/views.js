@@ -874,6 +874,10 @@ var SiteNavContainer = (function() {
 			
 		$(this.sitePanel.node()).on('revealing.cr', f);
 		$(window).resize(f);
+		$(this.div.node()).on('remove', function()
+			{
+				$(window).off('resize', f);
+			});
 		
 		return h;
 	}
