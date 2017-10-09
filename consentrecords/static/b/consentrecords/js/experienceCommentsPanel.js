@@ -1,28 +1,5 @@
 /* experienceCommentsPanel.js */
 
-function blend_colors(color1, color2, percentage)
-{
-    // 3: we have valid input, convert colors to rgb
-    color1 = [parseInt(color1[1] + color1[2], 16), parseInt(color1[3] + color1[4], 16), parseInt(color1[5] + color1[6], 16)];
-    color2 = [parseInt(color2[1] + color2[2], 16), parseInt(color2[3] + color2[4], 16), parseInt(color2[5] + color2[6], 16)];
-
-    // 4: blend
-    var color3 = [ 
-        (1 - percentage) * color1[0] + percentage * color2[0], 
-        (1 - percentage) * color1[1] + percentage * color2[1], 
-        (1 - percentage) * color1[2] + percentage * color2[2]
-    ];
-
-	function int_to_hex(num)
-	{
-		var hex = Math.round(num).toString(16);
-		return (hex.length == 1) ? '0' + hex : hex;
-	}
-	
-    // 5: convert to hex
-    return '#' + int_to_hex(color3[0]) + int_to_hex(color3[1]) + int_to_hex(color3[2]);
-}
-
 var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype = Object.create(crv.SitePanel.prototype);
 	ExperienceCommentsPanel.prototype.constructor = ExperienceCommentsPanel;
@@ -552,8 +529,6 @@ var ExperienceCommentsPanel = (function() {
 		function resizeDetail()
 		{
 			fd.appendElements(_this.detailTextGroup, 12);
-			_this.detailTextGroup.selectAll('div')
-				.style('border-top-color', blend_colors(fd.fontColor(), fd.flagColor(), 0.7));
 			
 			if (fd.experience.canWrite())
 			{
