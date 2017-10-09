@@ -636,7 +636,7 @@ var PathView = (function() {
 				{ 
 					_this.setupServiceTriggers(this, d, function(eventObject)
 						{
-							d.column = d.getColumn();
+							d.column = _this.getColumn(d);
 							_this.transitionPositions();
 						});
 					setupOnViewEventHandler($(d), "selectedChanged.cr", this, function(eventObject)
@@ -843,6 +843,12 @@ var PathView = (function() {
 			});
 	}
 	
+	/** Returns the column in this pathview for displaying the specified FlagController */
+	PathView.prototype.getColumn = function(fd)
+	{
+		return fd.getColumn();
+	}
+
 	PathView.prototype.transitionPositions = function()
 	{
 		var g = this.experienceFlags();
