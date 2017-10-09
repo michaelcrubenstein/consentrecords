@@ -1664,7 +1664,7 @@ var PathlinesPanel = (function () {
 // 				findButton.style("display", user.privilege() === cr.privileges.administer ? null : "none");
 				
 				this.isMinHeight = true;
-				this.handleResize();
+				$(window).resize();
 			});
 	}
 	
