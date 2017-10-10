@@ -4,6 +4,7 @@
 #
 # To send emails:
 # python3 data/18listpasswordresets.py -send -host 'https://www.pathadvisor.com/' -template campaign01 -title 'Your PathAdvisor Path'
+# python3 data/18listpasswordresets.py -after '2017-10-08 01:07:00' -send -host 'https://www.pathadvisor.com/' -template campaign01 -title 'Your PathAdvisor Path'
 
 import datetime
 import django; django.setup()
@@ -12,6 +13,7 @@ import getpass
 import sys
 import csv
 import traceback
+import dateutil.parser
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -24,7 +26,12 @@ from custom_user.models import *
 if __name__ == "__main__":
 
     try:
-        prs = PasswordReset.objects.filter(expiration__gte=datetime.datetime.now()).order_by('expiration')
+        if '-after' in sys.argv:
+            expiration = dateutil.parser.parse(sys.argv[sys.argv.index('-after') + 1])
+        else:
+            expiration = datetime.datetime.now()
+            
+        prs = PasswordReset.objects.filter(expiration__gte=expiration).order_by('expiration')
         
         if '-send' in sys.argv:
             hostURL = sys.argv[sys.argv.index('-host') + 1]
