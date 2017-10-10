@@ -378,8 +378,10 @@ var TagPoolView = (function () {
 	TagPoolView.prototype.filterFlags = function(filterText)
 	{
 		this.setFlagVisibles();
-			
-		var inputTexts = filterText.toLocaleUpperCase().split(' ');
+		
+		/* Split the filter text by word and eliminate null words. */	
+		var inputTexts = filterText.toLocaleUpperCase().split(' ')
+			.filter(function(s) { return s; });
 		var prefix;
 		if (inputTexts.length == 1 &&
 			inputTexts[0].length == 1)
@@ -1220,6 +1222,12 @@ var TagPoolSection = (function () {
 				cr.chainFail);
 	}
 	
+	/** Returns the type of search view to be create for this tag pool section. */
+	TagPoolSection.prototype.searchViewType = function()
+	{
+		return TagSearchView;
+	}
+	
 	function TagPoolSection(panel, controller, sectionLabel)
 	{
 		this.controller = controller;
@@ -1257,7 +1265,7 @@ var TagPoolSection = (function () {
 		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
 		this.tagHelp.text(this.firstTagHelp);
 			
-		this.searchView = new TagSearchView(searchContainer, this, controller);
+		this.searchView = new (this.searchViewType())(searchContainer, this, controller);
 		/* Mark the reveal as not visible or the metrics aren't calculated. */
 		this.searchView.reveal.isVisible(false);
 	}
