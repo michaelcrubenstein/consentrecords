@@ -414,316 +414,334 @@
 			var handleState = null;
 			var needsSignin = false;
 			{% if state %}
-				var stateString = "{{state}}"
-				if (stateString.startsWith("findNewExperience"))
+			var stateString = "{{state}}"
+			if (stateString.startsWith("findNewExperience"))
+			{
+				stateString = stateString.substring("findNewExperience".length);
+				var serviceValueID = null;
+				var offeringString = null;
+				if (stateString.length > 0)
 				{
-					stateString = stateString.substring("findNewExperience".length);
-					var serviceValueID = null;
-					var offeringString = null;
-					if (stateString.length > 0)
-					{
-						serviceValueID = stateString.substring(0, 32);
-						stateString = stateString.substring(32);
-						offeringString = stateString.substring(0, 32);
-						stateString = stateString.substring(32);
-					}
+					serviceValueID = stateString.substring(0, 32);
+					stateString = stateString.substring(32);
+					offeringString = stateString.substring(0, 32);
+					stateString = stateString.substring(32);
+				}
+				handleState = function()
+				{
+					new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString)
+						.showLeft();
+				}
+				stateString = "";	/* So it only happens once. */
+			}
+			else if (stateString.startsWith('user/'))
+			{
+				stateString = stateString.substring('user/'.length);
+				if (stateString.length > 0)
+				{
+					var pathwayID = stateString;
 					handleState = function()
 					{
-						new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString)
-							.showLeft();
-					}
-					stateString = "";	/* So it only happens once. */
-				}
-				else if (stateString.startsWith('user/'))
-				{
-					stateString = stateString.substring('user/'.length);
-					if (stateString.length > 0)
-					{
-						var pathwayID = stateString;
-						handleState = function()
-						{
-							crp.promise({path: 'user/' + pathwayID,
-										 fields: ['path'], 
-										 resultType: cr.User})
-								.done(function(users)
+						crp.promise({path: 'user/' + pathwayID,
+									 fields: ['path'], 
+									 resultType: cr.User})
+							.done(function(users)
+								{
+									if (users.length > 0)
 									{
-										if (users.length > 0)
+										var done;
+										var panel;
+										if (cr.signedinUser.id())
 										{
-											var done;
-											var panel;
-											if (cr.signedinUser.id())
-											{
-												panel = new PathlinesPanel(users[0], true);
-											}	
-											else
-											{
-												done = function()
-													{
-														firstPanel = new WelcomePanel();
-														firstPanel.showNow();
-													};
-												panel = new PathlinesPanel(users[0], done);
-											}
-											panel.pathtree.setUser(users[0].path(), true);
-											panel.showLeft();
-										}
+											panel = new PathlinesPanel(users[0], true);
+										}	
 										else
 										{
-											if (!cr.signedinUser.id())
-											{
-												firstPanel = new WelcomePanel();
-												firstPanel.showNow();
-											}
-											cr.asyncFail("The specified user does not exist or you do not have permission to view them.");
-										}
-									})
-								.fail(cr.asyncFail);
-						}
-					}
-					stateString = "";
-				}
-				else if (stateString.startsWith('addExperience/'))
-				{
-					// Test case: respond to an sent email to add experience.
-					stateString = stateString.substring('addExperience/'.length);
-					if (stateString.length > 0)
-					{
-						var experienceID = stateString;
-						handleState = function(pathwayPanel)
-						{
-							var pathway = pathwayPanel.pathtree;
-							var experiencesPath = cr.signedinUser.path();
-							cr.getData({path: 'experience/' + experienceID, 
-							            fields: ['services', 'custom services', 'offering', 'offering/services'],
-							            resultType: cr.Experience})
-								.then(function(experiences)
-								{
-									if (experiences.length > 0)
-									{
-										console.assert (experiences[0] instanceof cr.Experience);
-
-										var experienceController = new ExperienceController(cr.signedinUser.path(), experiences[0], false);
-										var newPanel = new NewExperiencePanel(experienceController);
-										newPanel.showUp();
-									}
-									else
-									{
-										cr.asyncFail("The specified experience does not exist or you do not have permission to view it.");
-									}
-								},
-								cr.asyncFail);
-						}
-					}
-					needsSignin = true;
-					stateString = "";
-				}
-				else if (stateString.startsWith("addToPathway"))
-				{
-					/* Add an experience specified in the URL to this pathway. */
-					handleState = function(pathwayPanel)
-					{
-						addToPathway(pathwayPanel);
-					}
-					needsSignin = true;
-				}
-				else if (stateString.startsWith('accept'))
-				{
-					/* Accept the specified follower */
-					handleState = function(pathwayPanel)
-					{
-						function clearAccessRequests(user)
-						{
-							var d = cr.signedinUser.userGrantRequests().find(function(d) 
-								{
-									return d.grantee().id() == user.id();
-								});
-							if (d)
-								d.triggerDeleted();
-						}
-						
-						var path = '{{follower}}'
-						cr.signedinUser.postUserGrant('{{privilege}}', path)
-							.then(function(changes, newIDs)
-								{
-									return cr.getData({path: 'user grant/' + newIDs['1'], resultType: cr.UserGrant, fields: ['none']})
-								})
-							.then(function(newValues)
-							{
-								// Remove any access request with this name.
-								var newValue = newValues[0].grantee();
-								clearAccessRequests(newValue);
-								bootstrap_alert.success("{0} is now following you.".format(newValue.description()), '.alert-container');
-							}, cr.asyncFail);
-					}
-					needsSignin = true;
-				}
-				else if (stateString.startsWith('ignore'))
-				{
-					/* Ignore the specified follower */
-					handleState = function(pathwayPanel)
-					{
-						var path = '{{follower}}'
-						cr.getData({path: path, resultType: cr.User, fields: ['none']})
-							.then(function(users)
-							{
-								if (users.length > 0)
-								{
-									var user = users[0];
-									var data = cr.signedinUser.userGrantRequests();
-									var v = data.find(function(d) { return d.grantee().id() === user.id(); });
-									if (v)
-									{
-										v.deleteData()
-											.then(function()
+											done = function()
 												{
-													bootstrap_alert.success("Access request from {0} has been denied.".format(v.description()), '.alert-container');
-												},
-											cr.asyncFail);
+													firstPanel = new WelcomePanel();
+													firstPanel.showNow();
+												};
+											panel = new PathlinesPanel(users[0], done);
+										}
+										panel.pathtree.setUser(users[0].path(), true);
+										panel.showLeft();
 									}
 									else
-										bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
+									{
+										if (!cr.signedinUser.id())
+										{
+											firstPanel = new WelcomePanel();
+											firstPanel.showNow();
+										}
+										cr.asyncFail("The specified user does not exist or you do not have permission to view them.");
+									}
+								})
+							.fail(cr.asyncFail);
+					}
+				}
+				stateString = "";
+			}
+			else if (stateString.startsWith('addExperience/'))
+			{
+				// Test case: respond to an sent email to add experience.
+				stateString = stateString.substring('addExperience/'.length);
+				if (stateString.length > 0)
+				{
+					var experienceID = stateString;
+					handleState = function(pathwayPanel)
+					{
+						var pathway = pathwayPanel.pathtree;
+						var experiencesPath = cr.signedinUser.path();
+						cr.getData({path: 'experience/' + experienceID, 
+									fields: ['services', 'custom services', 'offering', 'offering/services'],
+									resultType: cr.Experience})
+							.then(function(experiences)
+							{
+								if (experiences.length > 0)
+								{
+									console.assert (experiences[0] instanceof cr.Experience);
+
+									var experienceController = new ExperienceController(cr.signedinUser.path(), experiences[0], false);
+									var newPanel = new NewExperiencePanel(experienceController);
+									newPanel.showUp();
 								}
 								else
 								{
-									bootstrap_alert.warning("The user requesting access is not available.", '.alert-container');
+									cr.asyncFail("The specified experience does not exist or you do not have permission to view it.");
 								}
+							},
+							cr.asyncFail);
+					}
+				}
+				needsSignin = true;
+				stateString = "";
+			}
+			else if (stateString.startsWith("addToPathway"))
+			{
+				/* Add an experience specified in the URL to this pathway. */
+				handleState = function(pathwayPanel)
+				{
+					addToPathway(pathwayPanel);
+				}
+				needsSignin = true;
+			}
+			else if (stateString.startsWith('accept'))
+			{
+				/* Accept the specified follower */
+				handleState = function(pathwayPanel)
+				{
+					function clearAccessRequests(user)
+					{
+						var d = cr.signedinUser.userGrantRequests().find(function(d) 
+							{
+								return d.grantee().id() == user.id();
 							});
+						if (d)
+							d.triggerDeleted();
 					}
-					needsSignin = true;
-				}
-				else if (stateString.startsWith("settings/"))
-				{
-					/* Ignore the specified follower */
-					handleState = function(pathwayPanel)
-					{
-						try
-						{
-							var controller = new UserController(cr.signedinUser, true);
-							controller.oldInstance(cr.signedinUser);
-							new Settings(controller, revealPanelUp)
-								.showUp();
-						}
-						catch(err)
-						{
-							cr.asyncFail(err);
-						}
-					}
-					needsSignin = true;
-				}
-				else if (stateString.startsWith("signup/"))
-				{
-					stateString = stateString.substring("signup/".length);
 					
-					var handleState = function()
-					{
-						firstPanel = new WelcomePanel();
-						firstPanel.showNow();
-						var signUp = new Signup(firstPanel.node(), {email: stateString});
-						signUp.showUp();
-					}
-					needsSignin = false;
-				}
-				else if (stateString.startsWith("experience/"))
-				{
-					stateString = stateString.substring("experience/".length);
-					var experienceID = stateString.substring(0, stateString.indexOf("/"));
-					stateString = stateString.substring(stateString.indexOf("/")+1);
-					
-					handleState = function(pathwayPanel)
-					{
-						var f = function(pathwayPanel)
+					var path = '{{follower}}'
+					cr.signedinUser.postUserGrant('{{privilege}}', path)
+						.then(function(changes, newIDs)
 							{
-								/* Show the specified experience. 
-									Typically, this pathwayPanel will be the same as the
-									pathwayPanel passed into handleState, but it won't
-									be the same if the incorrect user is signed in.
-								 */
-								
-								try
-								{
-									var commentsPanel = pathwayPanel.showCommentsPanelAsync(experienceID);
-									
-									if (stateString.startsWith("comment/"))
-									{
-										stateString = stateString.substring("comment/".length);
-										var commentID = stateString.substring(0, stateString.indexOf("/"));
-										stateString = stateString.substring(stateString.indexOf("/")+1);
-										if (commentsPanel)
-										{
-											/* Turn on editing */
-											commentsPanel.startEditing();
-											/* Edit the comment with the specified id. */
-											commentsPanel.promise = commentsPanel.promise
-												.then(function()
-													{
-														commentsPanel.focusOnComment(commentID);
-													});									
-										}
-									}
-										
-								}
-								catch(err)
-								{
-									cr.asyncFail(err);
-								}
-							}
-							
-						if (pathwayPanel.pathtree.isUserSet)
+								return cr.getData({path: 'user grant/' + newIDs['1'], resultType: cr.UserGrant, fields: ['none']})
+							})
+						.then(function(newValues)
 						{
-							if (pathwayPanel.pathtree.path.experiences().find(function(e)
-								{
-									return e.id() == experienceID;
-								}))
+							// Remove any access request with this name.
+							var newValue = newValues[0].grantee();
+							clearAccessRequests(newValue);
+							bootstrap_alert.success("{0} is now following you.".format(newValue.description()), '.alert-container');
+						}, cr.asyncFail);
+				}
+				needsSignin = true;
+			}
+			else if (stateString.startsWith('ignore'))
+			{
+				/* Ignore the specified follower */
+				handleState = function(pathwayPanel)
+				{
+					var path = '{{follower}}'
+					cr.getData({path: path, resultType: cr.User, fields: ['none']})
+						.then(function(users)
+						{
+							if (users.length > 0)
 							{
-								f(pathwayPanel);
+								var user = users[0];
+								var data = cr.signedinUser.userGrantRequests();
+								var v = data.find(function(d) { return d.grantee().id() === user.id(); });
+								if (v)
+								{
+									v.deleteData()
+										.then(function()
+											{
+												bootstrap_alert.success("Access request from {0} has been denied.".format(v.description()), '.alert-container');
+											},
+										cr.asyncFail);
+								}
+								else
+									bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
 							}
 							else
 							{
-								sign_out()
-									.then(function()
-										{
-											checkSignin(f);
-										},
-										cr.asyncFail);
+								bootstrap_alert.warning("The user requesting access is not available.", '.alert-container');
+							}
+						});
+				}
+				needsSignin = true;
+			}
+			else if (stateString.startsWith("settings/"))
+			{
+				/* Ignore the specified follower */
+				handleState = function(pathwayPanel)
+				{
+					try
+					{
+						var controller = new UserController(cr.signedinUser, true);
+						controller.oldInstance(cr.signedinUser);
+						new Settings(controller, revealPanelUp)
+							.showUp();
+					}
+					catch(err)
+					{
+						cr.asyncFail(err);
+					}
+				}
+				needsSignin = true;
+			}
+			else if (stateString.startsWith("signup/"))
+			{
+				stateString = stateString.substring("signup/".length);
+				
+				var handleState = function()
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+					if (!navigator.cookieEnabled)
+						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+					else
+					{
+						var signUp = new Signup(firstPanel.node(), {email: stateString});
+						signUp.showUp();
+					}
+				}
+				needsSignin = false;
+			}
+			else if (stateString.startsWith("experience/"))
+			{
+				stateString = stateString.substring("experience/".length);
+				var experienceID = stateString.substring(0, stateString.indexOf("/"));
+				stateString = stateString.substring(stateString.indexOf("/")+1);
+				
+				handleState = function(pathwayPanel)
+				{
+					var f = function(pathwayPanel)
+						{
+							/* Show the specified experience. 
+								Typically, this pathwayPanel will be the same as the
+								pathwayPanel passed into handleState, but it won't
+								be the same if the incorrect user is signed in.
+							 */
+							
+							try
+							{
+								var commentsPanel = pathwayPanel.showCommentsPanelAsync(experienceID);
+								
+								if (stateString.startsWith("comment/"))
+								{
+									stateString = stateString.substring("comment/".length);
+									var commentID = stateString.substring(0, stateString.indexOf("/"));
+									stateString = stateString.substring(stateString.indexOf("/")+1);
+									if (commentsPanel)
+									{
+										/* Turn on editing */
+										commentsPanel.startEditing();
+										/* Edit the comment with the specified id. */
+										commentsPanel.promise = commentsPanel.promise
+											.then(function()
+												{
+													commentsPanel.focusOnComment(commentID);
+												});									
+									}
+								}
+									
+							}
+							catch(err)
+							{
+								cr.asyncFail(err);
 							}
 						}
-						else
-							$(pathwayPanel.pathtree).on('userSet.cr', function()
-								{
-									f(pathwayPanel);
-								});
-					}
-					needsSignin = true;
-				}
-				else if (stateString == "resetPassword")
-				{
-					var handleState = function()
+						
+					if (pathwayPanel.pathtree.isUserSet)
 					{
-						firstPanel = new WelcomePanel();
-						firstPanel.showNow();
+						if (pathwayPanel.pathtree.path.experiences().find(function(e)
+							{
+								return e.id() == experienceID;
+							}))
+						{
+							f(pathwayPanel);
+						}
+						else
+						{
+							sign_out()
+								.then(function()
+									{
+										checkSignin(f);
+									},
+									cr.asyncFail);
+						}
+					}
+					else
+						$(pathwayPanel.pathtree).on('userSet.cr', function()
+							{
+								f(pathwayPanel);
+							});
+				}
+				needsSignin = true;
+			}
+			else if (stateString == "resetPassword")
+			{
+				var handleState = function()
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+					if (!navigator.cookieEnabled)
+						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+					else
+					{
 						var signUp = new ResetPasswordPanel("{{resetkey}}");
 						signUp.showUp();
 					}
-					needsSignin = false;
 				}
-				else if (stateString.startsWith("me"))
+				needsSignin = false;
+			}
+			else if (stateString.startsWith("me"))
+			{
+				var handleState = function(pathwayPanel)
 				{
-					var handleState = function(pathwayPanel)
-					{
-					}
-					needsSignin = true;
 				}
+				needsSignin = true;
+			}
 			{% endif %}
 
 			{% if userID %}
-			cr.createSignedinUser("{{userID}}")
-				.fail(function(err)
-					{
-						cr.signedinUser.clear();
-						firstPanel = new WelcomePanel();
-						firstPanel.showNow();
-						cr.asyncFail(err);
-					});
+			if (!navigator.cookieEnabled)
+			{
+				firstPanel = new WelcomePanel();
+				firstPanel.showNow();
+				cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+			}
+			else
+			{
+				cr.createSignedinUser("{{userID}}")
+					.fail(function(err)
+						{
+							cr.signedinUser.clear();
+							firstPanel = new WelcomePanel();
+							firstPanel.showNow();
+							cr.asyncFail(err);
+						});
 					
 				cr.signedinUser.one("signin.cr", null, function(eventObject)
 					{
@@ -748,6 +766,7 @@
 							cr.asyncFail(err);
 						}
 					});
+			}
 			{% endif %}
 			
 			/* Initialize all of the objects that are dependent on whether or not the user is
@@ -757,8 +776,17 @@
 			{
 				if (needsSignin)
 				{
-					firstPanel = null;
-					checkSignin(handleState);
+					if (!navigator.cookieEnabled)
+					{
+						firstPanel = new WelcomePanel();
+						firstPanel.showNow();
+						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+					}
+					else
+					{
+						firstPanel = null;
+						checkSignin(handleState);
+					}
 				}
 				else if (handleState)
 					handleState();

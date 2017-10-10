@@ -281,13 +281,18 @@ var WelcomePanel = (function () {
 						showClickFeedback(this);
 						if (prepareClick('click',  'Sign In button'))
 						{
-							var signinPanel = new SigninPanel();
-							signinPanel.showLeft().then(
-								function()
-								{
-									signinPanel.initializeFocus();
-									unblockClick();
-								});
+							if (!navigator.cookieEnabled)
+								cr.syncFail(new Error(crv.buttonTexts.cookiesRequired));
+							else
+							{
+								var signinPanel = new SigninPanel();
+								signinPanel.showLeft().then(
+									function()
+									{
+										signinPanel.initializeFocus();
+										unblockClick();
+									});
+							}
 						}
 						d3.event.preventDefault();
 					})
