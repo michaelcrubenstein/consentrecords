@@ -116,8 +116,14 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
 	{
 		/* Test case: add a comment to an experience that has had a comment */
-		return this.fd.experience.postComment({asker: cr.signedinUser.path().urlPath(),
-											   question: newText});
+		var experience = this.fd.experience;
+		return cr.signedinUser.promiseData(['path'])
+			.then(function()
+				{
+					return experience.postComment({asker: cr.signedinUser.path().urlPath(),
+												   question: newText});
+				},
+				cr.chainFail);
 	}
 	
 	/**
