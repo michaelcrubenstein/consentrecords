@@ -72,6 +72,8 @@ var crv = {
 		changeEmail: "Change Email",
 		changePassword: "Change Password",
 		city: "City",
+		cookiesRequired:
+			"this operation requires cookies to be enabled. Please enable cookies for this browser and reload this page.",
 		currentTimeframe: "Something I'm Doing Now",
 		disqualifyingTags: "Disqualifying Tags",
 		domain: "Domain",
