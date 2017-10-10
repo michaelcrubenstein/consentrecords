@@ -2389,6 +2389,73 @@ var PickStagePanel = (function () {
 	return PickStagePanel;
 })();
 
+var ServiceTagSearchView = (function () {
+	ServiceTagSearchView.prototype = Object.create(TagSearchView.prototype);
+	ServiceTagSearchView.prototype.constructor = ServiceTagSearchView;
+	
+    ServiceTagSearchView.prototype.setFlagVisibles = function()
+    {
+    	TagSearchView.prototype.setFlagVisibles.call(this);
+    	
+    	/* If there is no text, add all of the services that are implied by a 
+    		service that is already selected.
+    	 */
+    	if (!this.focusNode.value)
+    	{
+    		var container = this.poolSection.section.select('.tags-container');
+			var tagDivs = container.selectAll('input.tag');
+			
+			var implications = [];
+			var setServices = tagDivs.data();
+			tagDivs.each(function(si1)
+				{
+					if (si1)
+					{
+						si1.service().serviceImplications().forEach(function(si2)
+							{
+								if (!(si2.service().id() in implications || 
+									  setServices.find(function(si3) { return si3 && si3.service().id() == si2.service().id(); })))
+									implications.push(si2.service().id());
+							});
+					}
+				});
+				
+			this.flags().each(function(sd)
+				{
+					console.assert(sd.service);
+					if (implications.find(function(s) { return s == sd.service.id(); }))
+						sd.visible = true;
+				});
+		}
+    }
+	
+	function ServiceTagSearchView(container, poolSection, controller)
+	{
+		TagSearchView.call(this, container, poolSection, controller);
+	}
+	
+	return ServiceTagSearchView;
+})();
+
+var ServiceTagPoolSection = (function () {
+	ServiceTagPoolSection.prototype = Object.create(TagPoolSection.prototype);
+	ServiceTagPoolSection.prototype.constructor = ServiceTagPoolSection;
+	
+	/** Returns the type of search view to be create for this tag pool section. */
+	ServiceTagPoolSection.prototype.searchViewType = function()
+	{
+		return ServiceTagSearchView;
+	}
+	
+	function ServiceTagPoolSection(panel, controller, sectionLabel)
+	{
+		TagPoolSection.call(this, panel, controller, sectionLabel);
+	}
+	
+	return ServiceTagPoolSection;
+})();
+
+
 var ServicePanel = (function () {
 	ServicePanel.prototype = Object.create(EditItemPanel.prototype);
 	ServicePanel.prototype.constructor = ServicePanel;
@@ -2446,7 +2513,7 @@ var ServicePanel = (function () {
 		this.stageSection.classed('first', true);
 
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, controller, crv.buttonTexts.implications);
+		this.tagPoolSection = new ServiceTagPoolSection(this, controller, crv.buttonTexts.implications);
 		this.tagPoolSection.section.classed('first', true);
 
 		var tagsFocused = function(eventObject, inputNode)
