@@ -2273,7 +2273,8 @@ var EditItemPanel = (function () {
 		
 		this.navContainer.appendTitle(header);
 		
-		var doneButton = this.navContainer.appendRightButton();
+		var doneButton = this.navContainer.appendRightButton()
+			.classed('default-link', true);
 			
 		doneButton.on('click', function()
 			{
