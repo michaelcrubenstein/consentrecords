@@ -1243,7 +1243,6 @@ var TagPoolSection = (function () {
 			
 		var _this = this;
 		tagsContainer.append('button')
-			.classed('site-active-text', true)
 			.text('Add Tag')
 			.on('click', function()
 				{
