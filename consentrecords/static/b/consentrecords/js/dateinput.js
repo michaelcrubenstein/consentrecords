@@ -465,7 +465,7 @@ var DateWheel = (function () {
 		/* Initialize oldYear, oldMonth and oldDay to reasonable values */
 		this.oldYear = currentDate.getUTCFullYear();
 		this.oldMonth = currentDate.getUTCMonth() + 1;
-		this.oldDay = currentDate.getUTCDate();
+		this.oldDay = 0;	/* no day */
 		
 		this.checkMinDate(minDate, maxDate);
 	}
