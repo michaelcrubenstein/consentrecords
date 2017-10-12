@@ -1806,6 +1806,29 @@ var NewExperiencePanel = (function () {
 				},
 				cr.chainFail);
 	}
+	
+	NewExperiencePanel.prototype.checkDateAlignment = function()
+	{
+		if ($(this.optionPanel.node()).innerWidth() <
+			$(this.optionPanel.node()).children().map(function(e) { return $(this).outerWidth(); })
+				.toArray().reduce(function(a, b) { return a + b; }, 0))
+		{
+			$(this.startDateContainer.selectAll('label').node()).width('auto');
+			$(this.endDateContainer.selectAll('label').node()).width('auto');
+			
+			this.startDateContainer.selectAll('ol').style('text-align', null);
+			this.endDateContainer.selectAll('ol').style('text-align', null);
+		}
+		else
+		{
+			var width = $(this.optionPanel.select('label').node()).width();
+			$(this.startDateContainer.selectAll('label').node()).width(width);
+			$(this.endDateContainer.selectAll('label').node()).width(width);
+			
+			this.startDateContainer.selectAll('ol').style('text-align', 'left');
+			this.endDateContainer.selectAll('ol').style('text-align', 'left');
+		}
+	}
 		
 	function NewExperiencePanel(experienceController, showFunction) {
 		EditItemPanel.call(this, experienceController);
@@ -1937,13 +1960,13 @@ var NewExperiencePanel = (function () {
 					return "{0}-{1}".format(todayDate.getUTCFullYear() - 100, getMonthString(todayDate));
 				 })();
 		
-			var optionPanel = panel2Div.append('section')
+			this.optionPanel = panel2Div.append('section')
 				.classed('date-range-options', true);
 		
-			optionPanel.append('div')
+			this.optionPanel.append('label')
 				.text(this.timeframeLabel);
 
-			var buttonDiv = optionPanel.append('div');
+			var buttonDiv = this.optionPanel.append('div');
 			this.previousExperienceButton = buttonDiv.append('button')
 				.classed('previous', true)
 				.on('click', function()
@@ -2248,6 +2271,7 @@ var NewExperiencePanel = (function () {
 				$(panel2Div.node()).on('resize.cr', function()
 				{
 					_this.resizeVisibleSearch(0);
+					_this.checkDateAlignment();
 				});
 				_this.tagPoolSection.searchView.showSearch(0);
 			});
