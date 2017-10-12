@@ -2274,6 +2274,7 @@ var NewExperiencePanel = (function () {
 					_this.checkDateAlignment();
 				});
 				_this.tagPoolSection.searchView.showSearch(0);
+				_this.checkDateAlignment();
 			});
 	}
 	
