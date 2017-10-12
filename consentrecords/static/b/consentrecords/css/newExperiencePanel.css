@@ -136,23 +136,26 @@
 		width: 100%;
 	}
 	
-	section.date-range-options> div:first-of-type {
+	section.date-range-options > label {
 		display: inline-block;
 		margin-left: 12px;
 		padding-top: 6px;
+		line-height: 1.5em;	/* The same as .cell.unique>ol */
+		color: #222;
+		font-size: 13px;
+		font-weight: normal; 
 		cursor: default;
 		user-select: none;
 		-webkit-user-select: none;
 		-moz-user-select: none;
 		-ms-user-select: none;
 		-o-user-select: none;
-		font-size: 0.8em;
-		color: #666;
 	}
 	
 	section.date-range-options > div:last-of-type {
 		display: inline-block;
 		margin-left: 12px;
+		margin-right: 12px;
 		text-align: center;
 	}
 	

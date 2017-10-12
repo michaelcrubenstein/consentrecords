@@ -1235,15 +1235,15 @@ var TagPoolSection = (function () {
 		this.section = panel.mainDiv.append('section')
 			.classed('cell tags custom', true);
 		var tagsTopContainer = this.section.append('div');
-		label = tagsTopContainer.append('label')
-			.text("{0}:".format(sectionLabel));
+		if (sectionLabel)
+			tagsTopContainer.append('label')
+				.text("{0}:".format(sectionLabel));
 		
 		var tagsContainer = tagsTopContainer.append('span')
 			.classed('tags-container', true);
 			
 		var _this = this;
 		tagsContainer.append('button')
-			.classed('site-active-text', true)
 			.text('Add Tag')
 			.on('click', function()
 				{
