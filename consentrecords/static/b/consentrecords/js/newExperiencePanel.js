@@ -1432,11 +1432,6 @@ var NewExperiencePanel = (function () {
 		this.tagPoolSection.setTagInputWidth(inputNode);
 	}
 	
-	NewExperiencePanel.prototype.appendTag = function(container, instance)
-	{
-		return this.tagPoolSection.appendTag(container, instance);
-	}
-	
 	NewExperiencePanel.prototype.showTags = function()
 	{
 		var offeringTags = this.controller().primaryServices() || [];
@@ -1685,21 +1680,6 @@ var NewExperiencePanel = (function () {
 		}
 		else
 			return false;
-	}
-	
-	NewExperiencePanel.prototype.setTagHelp = function()
-	{
-		this.tagPoolSection.setTagHelp();
-	}
-	
-	NewExperiencePanel.prototype.hideAddTagButton = function()
-	{
-		this.tagPoolSection.hideAddTagButton();
-	}
-	
-	NewExperiencePanel.prototype.showAddTagButton = function()
-	{
-		this.tagPoolSection.showAddTagButton();
 	}
 	
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
