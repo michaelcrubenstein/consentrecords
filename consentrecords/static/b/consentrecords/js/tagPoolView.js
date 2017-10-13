@@ -913,7 +913,7 @@ var TagPoolSection = (function () {
 						// In this case, do nothing.
 						;
 					}
-					$(this).remove();
+					_this.checkInputControls(this);
 				}
 				else if (d instanceof _this.controller.serviceLinkType())
 				{
@@ -923,7 +923,7 @@ var TagPoolSection = (function () {
 						_this.controller.removeService(d);
 						var newValue = _this.controller.addService(newText);
 						d3.select(this).datum(newValue);
-						$(this).trigger('input');
+						_this.checkInputControls(this);
 					}
 					else if (newService != d.service())
 					{
@@ -931,7 +931,7 @@ var TagPoolSection = (function () {
 						d.service(newService)
 						 .description(newService.description());
 						this.value = newService.description();
-						$(this).trigger('input');
+						_this.checkInputControls(this);
 					}
 					else
 						{	/* No change */ }
@@ -947,7 +947,7 @@ var TagPoolSection = (function () {
 							d.name(newText)
 							 .description(newText);
 							this.value = newText;
-							$(this).trigger('input');
+							_this.checkInputControls(this);
 						}
 					}
 					else
@@ -957,7 +957,7 @@ var TagPoolSection = (function () {
 						var newValue = _this.controller.addService(newService);
 						d3.select(this).datum(newValue);
 						this.value = newService.description();
-						$(this).trigger('input');
+						_this.checkInputControls(this);
 					}
 				}
 				else
