@@ -964,6 +964,30 @@ var TagPoolSection = (function () {
 		$(this).trigger('tagsChanged.cr');	
 	}
 	
+	TagPoolSection.prototype.checkInputDatum = function(inputNode, instance)
+	{
+		/* If this is an empty node with no instance to remove, then don't handle here. */
+		if (!inputNode.value && !instance)
+			return false;
+		/* If this is a node whose value matches the previous value, then don't handle here. */
+		else if (instance && inputNode.value == instance.description())
+			return false;
+		else if (instance && inputNode.value != instance.description())
+		{
+			this.checkTagInput();
+			this.showAddTagButton();
+			/* Do not prevent default. */
+			return false;
+		}
+		else
+		{
+			this.checkTagInput();
+			this.showAddTagButton();
+			this.searchView.constrainTagFlags();
+			return true;
+		}
+	}
+	
 	TagPoolSection.prototype.checkInputControls = function(inputNode)
 	{
 		if (inputNode == document.activeElement)
@@ -1006,6 +1030,7 @@ var TagPoolSection = (function () {
 		$(input.node()).on('input', function()
 			{
 				/* Check for text changes for all input boxes.  */
+				_this.checkInputDatum(this, d3.select(this).datum());
 				_this.checkInputControls(this);
 			})
 			.on('focusin', function()
@@ -1034,25 +1059,11 @@ var TagPoolSection = (function () {
 			})
 			.keydown( function(event) {
 				if (event.keyCode == 9) {
-					/* If this is an empty node with no instance to remove, then don't handle here. */
-					if (!input.node().value && !instance)
-						return;
-					/* If this is a node whose value matches the previous value, then don't handle here. */
-					else if (instance && input.node().value == instance.description())
-						return;
-					else if (instance && input.node().value != instance.description())
-					{
-						_this.checkTagInput();
-						_this.showAddTagButton();
-						/* Do not prevent default. */
-					}
-					else
-					{
-						_this.checkTagInput();
-						_this.showAddTagButton();
-						_this.searchView.constrainTagFlags();
+					var instance = d3.select(this).datum();
+					
+					if (_this.checkInputDatum(this, instance))
 						event.preventDefault();
-					}
+					_this.showAddTagButton();
 				}
 			});
 
