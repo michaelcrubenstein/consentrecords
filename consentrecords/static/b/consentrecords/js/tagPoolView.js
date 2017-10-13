@@ -1063,7 +1063,6 @@ var TagPoolSection = (function () {
 			.keypress(function(e) {
 				if (e.which == 13)
 				{
-					_this.hideReveal();
 					e.preventDefault();
 				}
 			})
