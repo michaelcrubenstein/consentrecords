@@ -964,6 +964,19 @@ var TagPoolSection = (function () {
 		$(this).trigger('tagsChanged.cr');	
 	}
 	
+	TagPoolSection.prototype.checkInputControls = function(inputNode)
+	{
+		if (inputNode == document.activeElement)
+		{
+			if (!inputNode.value)
+				this.hideAddTagButton();
+			else
+				this.showAddTagButton();
+			this.searchView.constrainTagFlags();
+		}
+		this.setTagInputWidth(inputNode);
+	}
+	
 	TagPoolSection.prototype.appendTag = function(instance, placeholder)
 	{
 		var _this = this;
@@ -993,15 +1006,7 @@ var TagPoolSection = (function () {
 		$(input.node()).on('input', function()
 			{
 				/* Check for text changes for all input boxes.  */
-				if (this == document.activeElement)
-				{
-					if (!document.activeElement.value)
-						_this.hideAddTagButton();
-					else
-						_this.showAddTagButton();
-					_this.searchView.constrainTagFlags();
-				}
-				_this.setTagInputWidth(this);
+				_this.checkInputControls(this);
 			})
 			.on('focusin', function()
 			{
