@@ -967,11 +967,12 @@ var TagPoolSection = (function () {
 	TagPoolSection.prototype.appendTag = function(instance, placeholder)
 	{
 		var _this = this;
+		placeholder = placeholder !== undefined ? placeholder : "Tag";
 		
 		var input = this.tagsContainer.insert('input', 'button')
 			.datum(instance)
 			.classed('tag', true)
-			.attr('placeholder', 'Tag')
+			.attr('placeholder', placeholder)
 			.attr('value', instance && instance.description());
 		
 		var startFocus;	
