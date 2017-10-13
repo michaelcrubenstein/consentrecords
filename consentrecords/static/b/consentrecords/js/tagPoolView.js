@@ -888,12 +888,14 @@ var TagPoolSection = (function () {
 					{
 						/* Remove a standard service */
 						_this.controller.removeService(d);
+						d3.select(this).datum(null);
 					}
 					else if (_this.controller.customServiceType() &&
 							 d instanceof _this.controller.customServiceType())
 					{
 						/* Remove a custom service */
 						_this.controller.removeCustomService(d);
+						d3.select(this).datum(null);
 					}
 					else if (d)
 					{
@@ -951,9 +953,10 @@ var TagPoolSection = (function () {
 				else
 				{
 					/* The blank tag. */
-					_this.controller.addService(newService || newText);
+					var newValue = _this.controller.addService(newService || newText);
+					d3.select(this).datum(newValue);
 					_this.showTags();
-					this.value = "";
+					this.value = newValue ? newValue.description() : "";
 					$(this).attr('placeholder', $(this).attr('placeholder'));
 				}
 			});
