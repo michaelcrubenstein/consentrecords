@@ -1416,8 +1416,6 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.currentExperienceLabel = "Something I'm Doing Now";
 	NewExperiencePanel.prototype.goalLabel = "My Goal";
 	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a tag or a title.';
-	NewExperiencePanel.prototype.firstTagHelp = 'What type of experience is this?';
-	NewExperiencePanel.prototype.otherTagHelp = 'What other tag goes with this experience?';
 	NewExperiencePanel.prototype.organizationDefaultPlaceholder = 'Organization (Optional)';
 	NewExperiencePanel.prototype.siteDefaultPlaceholder = 'Location (Optional)';
 	NewExperiencePanel.prototype.offeringDefaultPlaceholder = 'Title';
@@ -1430,11 +1428,6 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.setTagInputWidth = function(inputNode)
 	{
 		this.tagPoolSection.setTagInputWidth(inputNode);
-	}
-	
-	NewExperiencePanel.prototype.appendTag = function(container, instance)
-	{
-		return this.tagPoolSection.appendTag(container, instance);
 	}
 	
 	NewExperiencePanel.prototype.showTags = function()
@@ -1687,21 +1680,6 @@ var NewExperiencePanel = (function () {
 			return false;
 	}
 	
-	NewExperiencePanel.prototype.setTagHelp = function()
-	{
-		this.tagPoolSection.setTagHelp();
-	}
-	
-	NewExperiencePanel.prototype.hideAddTagButton = function()
-	{
-		this.tagPoolSection.hideAddTagButton();
-	}
-	
-	NewExperiencePanel.prototype.showAddTagButton = function()
-	{
-		this.tagPoolSection.showAddTagButton();
-	}
-	
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
 	{
 		var _this = this;
@@ -1891,7 +1869,8 @@ var NewExperiencePanel = (function () {
 		
 		/* The tags section. */
 		this.tagPoolSection = new TagPoolSection(this, experienceController, '');
-		
+		this.tagPoolSection.addAddTagButton();
+				
 		var tagsChanged = function() { _this.setPlaceholders(); }
 		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);
 		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
@@ -1925,8 +1904,7 @@ var NewExperiencePanel = (function () {
 					var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
 					if (tagInput.size() == 0)
 					{
-						var tagsContainer = tagPoolSection.section.select('.tags-container');
-						tagInput = tagPoolSection.appendTag(tagsContainer, null);
+						tagInput = tagPoolSection.appendTag(null);
 						tagPoolSection.hideAddTagButton(0);
 					}
 				}, cr.chainFail);
