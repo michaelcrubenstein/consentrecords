@@ -1869,7 +1869,8 @@ var NewExperiencePanel = (function () {
 		
 		/* The tags section. */
 		this.tagPoolSection = new TagPoolSection(this, experienceController, '');
-		
+		this.tagPoolSection.addAddTagButton();
+				
 		var tagsChanged = function() { _this.setPlaceholders(); }
 		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);
 		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 

@@ -1145,20 +1145,23 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.hideAddTagButton = function(duration)
 	{
-		if (duration === 0)
-			button.style('opacity', 0)
-				  .style('display', 'none');
-		else
 		var button = this.tagsContainer.select('button');
+		if (button.size())
 		{
-			if (button.style('display') != 'none')
+			if (duration === 0)
+				button.style('opacity', 0)
+					  .style('display', 'none');
+			else
 			{
-				button.interrupt().transition()
-					.style('opacity', 0)
-					.each('end', function()
-						{
-							button.style('display', 'none');
-						});
+				if (button.style('display') != 'none')
+				{
+					button.interrupt().transition()
+						.style('opacity', 0)
+						.each('end', function()
+							{
+								button.style('display', 'none');
+							});
+				}
 			}
 		}
 	}
@@ -1258,17 +1261,8 @@ var TagPoolSection = (function () {
 		return TagSearchView;
 	}
 	
-	function TagPoolSection(panel, controller, sectionLabel)
+	TagPoolSection.prototype.addAddTagButton = function()
 	{
-		this.controller = controller;
-		
-		this.section = panel.mainDiv.append('section')
-			.classed('cell tags custom', true);
-		var tagsTopContainer = this.section.append('div');
-		if (sectionLabel)
-			tagsTopContainer.append('label')
-				.text("{0}:".format(sectionLabel));
-		
 		var _this = this;
 		this.tagsContainer.append('button')
 			.text('Add Tag')
@@ -1286,6 +1280,18 @@ var TagPoolSection = (function () {
 								tagInput.node().focus();
 							});
 				});
+	}
+	
+	function TagPoolSection(panel, controller, sectionLabel)
+	{
+		this.controller = controller;
+		
+		this.section = panel.mainDiv.append('section')
+			.classed('cell tags custom', true);
+		var tagsTopContainer = this.section.append('div');
+		if (sectionLabel)
+			tagsTopContainer.append('label')
+				.text("{0}:".format(sectionLabel));
 		
 		this.tagsContainer = tagsTopContainer.append('span')
 			.classed('tags-container', true);
