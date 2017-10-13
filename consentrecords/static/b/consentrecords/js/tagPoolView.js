@@ -744,14 +744,13 @@ var TagSearchView = (function() {
 				$(this.poolSection).trigger('tagsChanged.cr');
 				this.poolSection.showTags();
 
-				var container = this.poolSection.section.select('.tags-container');
 				var _this = this;
 				
 				var node;
 				if (moveToNewInput)
 					node = null;
 				else
-					node = container
+					node = this.poolSection.tagsContainer
 						.selectAll('input.tag')
 						.filter(function(d)	
 							{ return d instanceof _this.controller.serviceLinkType() &&
@@ -762,7 +761,7 @@ var TagSearchView = (function() {
 				 */
 				if (!node)
 				{
-					var newInput = this.poolSection.appendTag(container, null);
+					var newInput = this.poolSection.appendTag(null);
 					newInput.node().focus();
 				}
 				else
@@ -873,9 +872,8 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.checkTagInput = function(exceptNode)
 	{
-		var tagsContainer = this.section.select('.tags-container');
 		var _this = this;
-		tagsContainer.selectAll('input.tag').each(function(d, i)
+		this.tagsContainer.selectAll('input.tag').each(function(d, i)
 			{
 				/* Skip the exceptNode */
 				if (this == exceptNode)
@@ -963,11 +961,11 @@ var TagPoolSection = (function () {
 		$(this).trigger('tagsChanged.cr');	
 	}
 	
-	TagPoolSection.prototype.appendTag = function(container, instance)
+	TagPoolSection.prototype.appendTag = function(instance, placeholder)
 	{
 		var _this = this;
 		
-		var input = container.insert('input', 'button')
+		var input = this.tagsContainer.insert('input', 'button')
 			.datum(instance)
 			.classed('tag', true)
 			.attr('placeholder', 'Tag')
@@ -1060,8 +1058,7 @@ var TagPoolSection = (function () {
 		var tags = [];
 		var _this = this;
 		
-		var container = this.section.select('.tags-container');
-		var tagDivs = container.selectAll('input.tag');
+		var tagDivs = this.tagsContainer.selectAll('input.tag');
 		tags = tags.concat(this.controller.serviceLinks()
 			.filter(function(s) 
 			{
@@ -1096,7 +1093,7 @@ var TagPoolSection = (function () {
 		{
 			if (ds.indexOf(tags[i]) < 0)
 			{
-				this.appendTag(container, tags[i]);
+				this.appendTag(tags[i]);
 			}
 			else
 			{
@@ -1118,11 +1115,11 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.hideAddTagButton = function(duration)
 	{
-		var button = this.section.select('.tags-container>button');
 		if (duration === 0)
 			button.style('opacity', 0)
 				  .style('display', 'none');
 		else
+		var button = this.tagsContainer.select('button');
 		{
 			if (button.style('display') != 'none')
 			{
@@ -1138,8 +1135,8 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.showAddTagButton = function()
 	{
-		var button = this.section.select('.tags-container>button');
-		if (button.style('display') == 'none')
+		var button = this.tagsContainer.select('button');
+		if (button.size() && button.style('display') == 'none')
 		{
 			button.style('display', null);
 			button.interrupt().transition()
@@ -1242,11 +1239,8 @@ var TagPoolSection = (function () {
 			tagsTopContainer.append('label')
 				.text("{0}:".format(sectionLabel));
 		
-		var tagsContainer = tagsTopContainer.append('span')
-			.classed('tags-container', true);
-			
 		var _this = this;
-		tagsContainer.append('button')
+		this.tagsContainer.append('button')
 			.text('Add Tag')
 			.on('click', function()
 				{
@@ -1258,11 +1252,14 @@ var TagPoolSection = (function () {
 							{
 								$(_thisButton).css('display', 'none');
 								_this.checkTagInput(null);
-								var tagInput = _this.appendTag(tagsContainer, null);
+								var tagInput = _this.appendTag(null);
 								tagInput.node().focus();
 							});
 				});
 		
+		this.tagsContainer = tagsTopContainer.append('span')
+			.classed('tags-container', true);
+			
 		searchContainer = this.section.append('div');
 		
 		this.tagHelp = searchContainer.append('div').classed('tag-help', true);

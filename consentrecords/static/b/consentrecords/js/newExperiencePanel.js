@@ -1903,8 +1903,7 @@ var NewExperiencePanel = (function () {
 					var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
 					if (tagInput.size() == 0)
 					{
-						var tagsContainer = tagPoolSection.section.select('.tags-container');
-						tagInput = tagPoolSection.appendTag(tagsContainer, null);
+						tagInput = tagPoolSection.appendTag(null);
 						tagPoolSection.hideAddTagButton(0);
 					}
 				}, cr.chainFail);
