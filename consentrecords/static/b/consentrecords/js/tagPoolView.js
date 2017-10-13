@@ -798,6 +798,9 @@ var TagPoolSection = (function () {
 	TagPoolSection.prototype.searchView = null;
 	TagPoolSection.prototype.allServices = null;
 
+	TagPoolSection.prototype.firstTagHelp = "What type of experience is this?";
+	TagPoolSection.prototype.otherTagHelp = "What other tag goes with this experience?";
+
 	TagPoolSection.prototype.getInputTextWidth = function(inputNode)
 	{
 		var div = document.createElement('span');
