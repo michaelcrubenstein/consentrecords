@@ -870,6 +870,16 @@ var TagPoolSection = (function () {
 		this.setTagColor(inputNode);
 	}
 	
+	TagPoolSection.prototype.checkEmptyTagInput = function(inputNode)
+	{
+		var newText = inputNode.value.trim();
+		var newService = newText && this.searchView.hasNamedService(newText.toLocaleLowerCase());
+		
+		if (!newText ||
+			(!newService && !this.controller.customServiceType()))
+			$(inputNode).remove();
+	}
+	
 	TagPoolSection.prototype.checkTagInput = function(exceptNode)
 	{
 		var _this = this;
@@ -1063,6 +1073,7 @@ var TagPoolSection = (function () {
 					
 					if (_this.checkInputDatum(this, instance))
 						event.preventDefault();
+					_this.checkEmptyTagInput(this);
 					_this.showAddTagButton();
 				}
 			});
