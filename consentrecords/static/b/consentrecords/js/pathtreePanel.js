@@ -1098,7 +1098,6 @@ var PathLines = (function() {
 	{
 		var containerBounds = this.containerDiv.getBoundingClientRect();
 		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
-		//var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
 		var svgHeight = containerBounds.height;
 		
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
