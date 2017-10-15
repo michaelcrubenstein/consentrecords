@@ -282,15 +282,10 @@ var TagPoolView = (function () {
 		return (nextY + this.flagHeightEM) * this.emToPX;
 	}
 	
-	/* Lay out all of the contents within the div object. */
-	TagPoolView.prototype.layoutFlags = function(maxX, duration)
+	TagPoolView.prototype.moveFlags = function(duration)
 	{
-		maxX = maxX !== undefined ? maxX : $(this.div.node()).width();
 		duration = duration !== undefined ? duration : 700;
-		
 		var g = this.flags();
-		
-		var height = this._setFlagCoordinates(g, maxX);
 		
 		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
 		/* If it was visible and it is still visible, animate its position. */
@@ -367,6 +362,18 @@ var TagPoolView = (function () {
 			});
 			
 		return $.when.apply(null, promises);
+	}
+	
+	
+	/* Lay out all of the contents within the div object. */
+	TagPoolView.prototype.layoutFlags = function(maxX, duration)
+	{
+		maxX = maxX !== undefined ? maxX : $(this.div.node()).width();
+		
+		var g = this.flags();
+		
+		this._setFlagCoordinates(g, maxX);
+		this.moveFlags(duration);
 	}
 	
 	TagPoolView.prototype.setFlagVisibles = function()
