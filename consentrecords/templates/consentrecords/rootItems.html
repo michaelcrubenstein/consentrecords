@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-transluscent">
+	
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-title" content="PathAdvisor {{rootItemPluralName}}">
+    
+    <title>PathAdvisor - {{rootItemPluralName}}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- Custom styles for this template -->
+    <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/showFollowing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/showSharing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/signup.css" %}?v={{jsversion}}" rel="stylesheet">
+    
+    <link href="{% static "custom_user/css/formsimple.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
+
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+	<!-- Styles for this web page -->
+	<style>
+		body {
+		  background: #eee;
+		}
+	</style>
+
+  </head>
+
+  <body>
+	<panel id="id_panel1" class="initial list">
+	</panel>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	<script src="{{cdn_url}}jquery/3.1.1/jquery.min.js"></script>
+	<script src="{{cdn_url}}jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="{{cdn_url}}jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="{{cdn_url}}spin.js/2.3.2/spin.min.js"></script>
+
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+	<script src="{{cdn_url}}twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="{{cdn_url}}d3/3.5.17/d3.min.js"></script>
+	<script src="{{cdn_url}}datejs/1.0/date.min.js"></script>
+	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/models.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/dateinput.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/controllers.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/views.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/getDataChunker.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/pathtreePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/showFollowing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/showSharing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/signup.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/settings.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
+
+	<!-- Scripts for this web page -->
+	<script type="text/JavaScript">
+	
+		staticPath = '{% static "" %}';
+		jsVersionPathSuffix = '?v={{jsversion}}';
+		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
+		leftChevronPath = '{% static "consentrecords/png/ios7-arrow-back-512px.svg" %}'
+		settingsImagePath = '{% static "consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
+		notificationsImagePath = '{% static "consentrecords/png/notifications.png" %}' + jsVersionPathSuffix;
+		shareImagePath = '{% static "consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
+		myPathwayImagePath = '{% static "consentrecords/png/mypathway.svg" %}' + jsVersionPathSuffix;
+		compareImagePath = '{% static "consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
+		inquiryImagePath = '{% static "consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
+		
+		/* For show methods, the obj is the DOM object that contains the item being shown.
+							 the d object contains the field information.
+							 d["data"] has the data for the instance of this field.
+		 */
+		 
+		function csrfSafeMethod(method) {
+			// these HTTP methods do not require CSRF protection
+			return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+		}
+		$.ajaxSetup({
+			beforeSend: function(xhr, settings) {
+				if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+					xhr.setRequestHeader("X-CSRFToken", $.cookie("csrftoken"));
+				}
+			}
+		});
+
+		/* The global object used to identify the current user. */
+		{% if userID %}
+		cr.createSignedinUser("{{userID}}", ['system access'])
+			.fail(cr.asyncFail);
+		{% endif %}
+		
+		$(document).ready (function(e) {
+			try
+			{
+				var panel = new {{panelType}}(revealPanelLeft);
+				panel.showNow();
+			}
+			catch(err) { cr.asyncFail(err); }
+		});
+	</script>
+
+<!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}?v={{jsversion}}"></script>
+  </body>
+</html>

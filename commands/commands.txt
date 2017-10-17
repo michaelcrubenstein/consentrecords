@@ -132,12 +132,17 @@ aws elb create-load-balancer --load-balancer-name btc-load-balancer --listeners 
 virtualenv -p python3 ~/eb_django_app/prod
 
 ##################################################################
-# Create the requirements file for elb
+# Create the requirements file for elastic beanstalk
 ##################################################################
 
 -- from the eb-django-app directory
+cd ~/eb-django-app
 pip3 freeze > requirements.txt
--- After you do this, you have to prefix the line that contains mysql-connector-python with --allow-external
+-- After you create the requirements.txt file, you have to remove the line that 
+-- contains mysql-connector-python because a patched version of mysql-connector-python 
+-- is in the PYTHONPATH. If you fail to remove the line, then the unpatched version 
+-- takes precedence on the elastic beanstalk instance.
+-- The patches are enumerated in setupenvironment.txt
 sudo nano requirements.txt
 
 ##################################################################
@@ -184,32 +189,16 @@ use consentrecordsdev;
 
 ##################################################################
 # Update to .bashrc and .bash_profile packages on development machine
+# These files are located in the user's home directory (such as michaelr)
 ##################################################################
-export PATH=/Library/Frameworks/Python.framework/Versions/3.4/bin:$PATH
-
-pip3 install virtualenv
-virtualenv ~/GitHub
-cd ~/GitHub
-. bin/activate
-pip3 install django
-
-##################################################################
-# Set the environment variable DJANGO_SETTINGS_MODULE for collectstatic operation
-##################################################################
-
-export DJANGO_SETTINGS_MODULE=consentrecords.settings
-export PYTHONPATH=~/eb_django_app/prod/consentrecords:$PYTHONPATH
-export PYTHONPATH=~/eb_django_app/prod/consentrecords/consentrecords:$PYTHONPATH
-
-export PYTHONPATH=~/GitHub/consentrecords/consentrecords:~/GitHub/consentrecords
+export PATH=/Library/Frameworks/Python.framework/Versions/3.6/bin:$PATH
 
 ##################################################################
 # How to bring up the development system from a reboot.
 ##################################################################
-cd ~/GitHub
-source ./bin/activate
-cd ~/GitHub
-export PYTHONPATH=~/GitHub/consentrecords/consentrecords:~/GitHub/consentrecords
+cd $VIRTUAL_ENV
+source bin/activate
+export PYTHONPATH=$VIRTUAL_ENV/consentrecords/consentrecords:$VIRTUAL_ENV/consentrecords
 export DJANGO_SETTINGS_MODULE=consentrecords.settings
 cd consentrecords
 python3 manage.py runserver --insecure
@@ -229,9 +218,9 @@ python3 consentrecords/bootstrap.py
 ##################################################################
 
 export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
+cd $VIRTUAL_ENV/consentrecords
 sftp -b - -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
 cd eb_django_app/prod/consentrecords
-lcd ~/GitHub/consentrecords
 cd data
 lcd data
 
@@ -307,8 +296,12 @@ from parse import cssparser
 from consentrecords.views import api
 terms.initialize()
 
+user = authenticate(username='testuser28@pathadvisor.com', password=getpass.getpass("Password: "))
+path='ad5b6f1e2ab84f2c935651f345b7226b'
+q = QueryDict()
+profile.run('api.getData(user, path, q)')
+
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
-from django.http import QueryDict
 path='Service'
 q = QueryDict('fields=%5B%5D')
 profile.run('api.getData(user, path, q)')
@@ -328,8 +321,25 @@ profile.run('api.getData(user, path, q)')
 
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 from django.http import QueryDict
-path='#107d7f83095d41efb0472a60f4816043'
+path='107d7f83095d41efb0472a60f4816043'
 q = QueryDict('fields=%5B%22More+Experience%22%2C%22parents%22%2C%22type%22%5D')
+profile.run('api.getData(user, path, q)')
+
+path = 'Path[More Experience[Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]|Offering>Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]]]'
+q = QueryDict('fields=%5B%22parents%22%2C%22user%22%5D&start=0&end=20')
+user = AnonymousUser()
+profile.run('api.getData(user, path, q)')
+
+# Production system: Paths that have a College experience, a Grade 8 and a Business Founder experience
+path = 'Path[More Experience[Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]|Offering>Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]]][More Experience[Service[Service=25e4ab353e2f4dab8c1320f967c3474f]|Offering>Service[Service=25e4ab353e2f4dab8c1320f967c3474f]]][More Experience[Service[Service=3c25cc1b36e74351aeb2aac8f25dc8c4]|Offering>Service[Service=3c25cc1b36e74351aeb2aac8f25dc8c4]]]'
+q = QueryDict('fields=%5B%22parents%22%2C%22user%22%5D&start=0&end=20')
+user = AnonymousUser()
+profile.run('api.getData(user, path, q)')
+
+# Production system: Paths that have a College experience and a Job experience
+path = 'Path[More Experience[Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]|Offering>Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]]][More Experience[Service[Service=38752df1adf54bd6ad9dbe2e1be6dfc2]|Offering>Service[Service=38752df1adf54bd6ad9dbe2e1be6dfc2]]]'
+q = QueryDict('fields=%5B%22parents%22%2C%22user%22%5D&start=0&end=20')
+user = AnonymousUser()
 profile.run('api.getData(user, path, q)')
 
 userInfo = UserInfo(user)
@@ -363,3 +373,10 @@ def d1(i):
         transactionState = TransactionState(user.transaction.user)
         i.value_set.get(field=terms.name, deleteTransaction__isnull=True).updateValue({'text': i.description.text[1:]}, transactionState)
         Instance.updateDescriptions([i], nameLists)
+
+##################################################################
+# If the key needs to change, it is referenced by name in the following locations:
+##################################################################
+
+grep -n 'Be The Change Projects' config.yml
+grep -n 'Be The Change Projects' ~/eb_django_app/.elasticbeanstalk/consentrecords-prod.env.yml

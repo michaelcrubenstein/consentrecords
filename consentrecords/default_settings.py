@@ -28,7 +28,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'oauth2_provider',
     'corsheaders',
     'consentrecords',
     'custom_user',
@@ -38,10 +37,9 @@ INSTALLED_APPS = (
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'oauth2_provider.backends.OAuth2Backend',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -51,7 +49,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'oauth2_provider.middleware.OAuth2TokenMiddleware',
 )
 
 ROOT_URLCONF = 'consentrecords.urls'
@@ -117,11 +114,13 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT= os.path.join(BASE_DIR, 'static')
 
+CDN_URL = 'https://cdnjs.cloudflare.com/ajax/libs/'
+
 # Auth User Model
 AUTH_USER_MODEL = 'custom_user.AuthUser'
 
 # Email address of the sender of emails.
-PASSWORD_RESET_SENDER = r'info@pathadvisor.com'
+PASSWORD_RESET_SENDER = r'no-reply@pathadvisor.com'
 
 # Path of the web page to reset the password of a user.
 PASSWORD_RESET_PATH = r'/user/passwordreset/'
@@ -139,7 +138,7 @@ CR_REQ_HOST = r'http://localhost:8000/'
 
 FACEBOOK_SHOW = False
 
-JS_VERSION = '17'
+JS_VERSION = '24'
 
 from consentrecords.email_settings import *
 

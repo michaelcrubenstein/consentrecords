@@ -1,4 +1,4 @@
-# python3 data/04dumpconfiguration.py -path _term -q > data/terms.txt 
+# python3 data/04dumpconfiguration.py -path _term -r -q > data/terms.txt 
 # python3 data/04dumpconfiguration.py -path '"Service Domain"' -q > data/servicedomains.txt 
 # python3 data/04dumpconfiguration.py -path Stage -q > data/stages.txt 
 # python3 data/04dumpconfiguration.py -path Service -r -q > data/services.txt 
@@ -88,6 +88,8 @@ if __name__ == "__main__":
                 username = input('Email Address: ')
             except IndexError:
                 username = input('Email Address: ')
+            except Exception:
+                username = input('Email Address: ')
     
             password = getpass.getpass("Password: ")
             user = authenticate(username=username, password=password)
@@ -101,13 +103,18 @@ if __name__ == "__main__":
                               .select_related('description')\
                               .order_by('description__text', 'id')
 
-            sys.stderr.write('Count: %s\n'%len(terms))
-            
             if '-r' in sys.argv:
                 for term in terms:
                     writedescription(term, 0, fieldsDataDictionary)
             
             for term in terms:
                 writeinstance(term, 0, fieldsDataDictionary)
+                sys.stdout.flush()
+            
+            sys.stderr.write('Count: %s\n'%len(terms))
+            
     except Exception as e:
         sys.stderr.write("%s\n" % traceback.format_exc())
+
+    sys.stdout.flush()
+    sys.stderr.flush()

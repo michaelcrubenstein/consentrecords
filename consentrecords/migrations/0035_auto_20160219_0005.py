@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='value',
             name='field',
-            field=models.ForeignKey(to='consentrecords.Instance', editable=False, related_name='fieldValues', null=True, db_column='fieldid'),
+            field=models.ForeignKey(to='consentrecords.Instance', editable=False, related_name='fieldValues', null=True, db_column='fieldid', on_delete=models.CASCADE),
         ),
     ]

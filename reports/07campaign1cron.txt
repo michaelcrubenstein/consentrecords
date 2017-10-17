@@ -1,0 +1,7 @@
+# The following cron job runs the script for counting various parameters for campaign1 
+# every day at midnight and noon EST.
+# use the following command to edit the cron file:
+#
+# crontab -e
+0 4,16 * * * ~/eb_django_app/prod/consentrecords/reports/06campaign1build.sh
+*/10 * * * * ~/eb_django_app/prod/consentrecords/reports/09campaign1prizes.sh

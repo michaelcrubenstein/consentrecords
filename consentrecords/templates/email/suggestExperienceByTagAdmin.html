@@ -1,0 +1,24 @@
+<body>
+	<style>
+		body {
+			font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+			font-size: 14px;
+		}
+	</style>
+	<p>Hi{% if salutation %} {{ salutation }}{% endif %}!</p>
+	<p>Everyone wants to see paths that are as complete as possible. In reviewing your path, 
+	I thought of an experience that you could add.</p>
+	
+	<p>Can you add your <a href="{{href}}">{{ tag }}</a> experience to your path? You can 
+	click <a href="{{href}}">here</a> to add this experience.
+
+	<p>Please feel free to add other experiences and goals to your path. I look forward to 
+	learning more about you.</p>
+
+	<p>Thanks.</p>
+	<p>Michael Rubenstein
+	<br><small>Director of Support</small></p>
+	<img src="{{ staticURL }}consentrecords/png/Email LOGO 1.png" width="100"></img>
+	<br><a href="www.pathadvisor.com">www.pathadvisor.com</a>
+	<br></i>Real Paths That Are Right For You</i>
+</body>

@@ -14,44 +14,63 @@ panel.comments div.panel-fill {
 	background: white;
 }
 
-panel.comments svg {
-	width: 100%;
-}
-
-panel.comments svg {
+panel.comments div.detail {
 	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
-	font-size: 11px;
+	font-size: 12px;
+	display: flex;
+	align-items: center;
 }
 
-panel.comments svg tspan.site {
+panel.comments div.detail > div {
+	flex-grow: 100;
+	padding-left: 15px;
 }
 
-panel.comments svg tspan.tags {
+panel.comments div.detail > div > div {
+	opacity: 0.7;
 }
 
-panel.comments svg .flag-label {	/* For both flags and detail panels */
-	text-anchor: start;
+panel.comments div.detail > div > div:first-child {
+	opacity: 1.0;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+
+panel.comments div.detail > div > div:last-child {
+	padding-bottom: 6px;
+}
+
+panel.comments div.detail > svg {
+	margin-left: 15px;
+	margin-right: 15px;
+	fill: #777;
+}
+
+panel.comments .user-label {
+	font-weight: 600;
+	font-size: 1.3em;
+}
+
+panel.comments .flag-label {
 	font-weight: 600;
 	font-size: 1.2em;
 }
 
-panel.comments svg .flag-label {	/* For both flags and detail panels */
-	text-anchor: start;
-	font-weight: 600;
-	font-size: 1.2em;
-}
-
-panel.comments svg line {	/* For both flags and detail panels */
+panel.comments svg line {
 	stroke-opacity: 0.3;
 }
 
-section.comments {
+section.comments ol.cell-items>li {
 	font-size: 0.8em;
+}
+
+section.comments ol.cell-items>li:hover {
+	background-color: transparent;
 }
 
 section.comments > ol > li > div {
 	position: relative;
-	padding: 6px 12px 0px 12px;
+	padding: 6px 12px 0px 0px;
 }
 
 @keyframes showBorder {
@@ -89,6 +108,10 @@ section.comments textarea.fixed {
 	-webkit-animation-iteration-count: 1;
 	animation-fill-mode: both;
 	animation-iteration-count: 1;
+}
+
+section.comments textarea.fixed-immediate {
+	border-color: transparent;
 }
 
 section.comments div.asker {
@@ -148,6 +171,3 @@ section.comment-prompts div>span {
 	display: inline-block;
 }
 
-panel.comments svg g.chevron-right>polygon {
-	fill: #777;
-}

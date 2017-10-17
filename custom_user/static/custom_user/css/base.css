@@ -1,47 +1,3 @@
-.site-two-nav-container {
-	padding-top: 55px;
-	padding-bottom: 55px;
-}
-.site-top-navbar {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	right: 0px;
-}
-.site-bottom-navbar {
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	bottom: 0px;
-}
-.site-alert-under {
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	opacity: 0.8;
-}
-.site-content-panel-under {	/* A content panel that has a navbar above. */
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 40px;
-	bottom: 0px;
-}
-.site-content-panel-under-over {	/* A content panel that has a navbar above and below. */
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 40px;
-	bottom: 40px;
-}
-
-/* A span that functions as a link to another page. */
-.site-span-link:hover {
-	text-decoration: none;
-	cursor: pointer;
-}
-
 /* The container for a trio of items. */
 .site-trio-container {
 	display: table;
@@ -112,5 +68,49 @@
 		padding-bottom: 15px;
 	}
 }
-	
+
+/* Alerts are styled here and in consentrecords. */	
+/* This makes alert fall on top and over other items. */
+body > div.alert {
+	width: calc(100% - 30px);
+	position: fixed;
+	border-radius: 0px;
+	margin-left: 15px;
+	margin-right: 15px;
+}
+
+body > div.alert > button:focus {
+	outline: none;
+}
+
+/* This corrects a problem caused by bootstrap that introduces a gap below alerts when they are visible.
+	The problem is that it leads to an invalid outerHeight for the .alert container.
+ */
+.alert {
+	margin-bottom: 0px;
+}
+
+body > div.alert > span {
+	display: block;
+}
+
+.site-title {
+	font-size: medium;
+	min-height: 40px;
+	padding-top: 9px;
+	padding-bottom: 2px;
+	flex-grow: 100;
+	flex-shrink: 100;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: center;
+	margin: 0 auto;
+	font-weight: 600;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+}
 

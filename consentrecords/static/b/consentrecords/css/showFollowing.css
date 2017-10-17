@@ -1,12 +1,24 @@
-	panel.following ol+div  {
-		padding-left: 12px;
-		color: #777;
-	}
-	
-	section.cell.documentation {
-		padding: .5em 1em;
-		font-size: 0.8em;
-		color: #666;
-		background-color: transparent;
-	}
-	
+/* showFollowing.css */
+
+panel.following ol+div  {
+	padding-left: 12px;
+	color: #777;
+}
+
+.compare-button {
+	background: transparent;
+	cursor: pointer;
+	color: #2C55CC;
+	font-family: serif;
+	font-weight: bold;
+	font-size: 16px;
+	text-align: center;
+	width: 23px;
+	height: 23px;
+	align-self: center;
+	-webkit-align-self: center;
+}
+.compare-button:focus {
+	outline: none;
+}
+

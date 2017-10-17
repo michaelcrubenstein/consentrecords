@@ -1,27 +1,34 @@
+from django.conf import settings
 from django.core.mail import send_mail
 
+from django.template import loader
+
+import socket
+
 class Emailer():
-    # Sends a reset password message to the specified email recipient.
-    def sendResetPasswordEmail(senderEMail, recipientEMail, resetURL):
-        htmlMessage = """\
-<p>There has been a request to reset your password at pathadvisor.com.</p>
-<p>Click <a href="%s">here</a> to reset your password.</p>
-
-<p><b>The PathAdvisor Team</b></p>
-""" % resetURL
-
-        message = """\
-There has been a request to reset your password at pathadvisor.com.
-Open the following link in your web browser to reset your password:
-
-%s
-
-Thanks.
-The PathAdvisor Team
-""" % resetURL
+    def _send(header, txtMessage, senderEMail, recipients, htmlMessage):
+        try:
+            send_mail(header, txtMessage, senderEMail,
+                recipients, fail_silently=False, html_message=htmlMessage)
+        except socket.gaierror as e:
+            if e.errno == socket.EAI_NONAME:
+                raise RuntimeError('the email can not be sent because the email server is not accessible')
+            else:
+                raise
         
-        send_mail('Password Reset', message, senderEMail,
-            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+    # Sends a reset password message to the specified email recipient.
+    def sendResetPasswordEmail(recipientEMail, resetURL, hostURL):
+        context = {'resetURL': resetURL,
+                   'staticURL': hostURL + '/static/',
+                  }
+
+        htmlTemplate = loader.get_template('email/resetPassword.html')
+        txtTemplate = loader.get_template('email/resetPassword.txt')
+        htmlMessage = htmlTemplate.render(context)
+        txtMessage = txtTemplate.render(context)
+
+        Emailer._send('Password Reset', txtMessage, settings.PASSWORD_RESET_SENDER,
+            [recipientEMail], htmlMessage)
     
     def merge(html, dir):
         p = re.compile(r'{{\s*([^}\s]+)\s*}}')
@@ -34,54 +41,74 @@ The PathAdvisor Team
         return p.sub(f, html)
         
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
-    def sendNewExperienceQuestionEmail(senderEMail, salutation, recipientEMail, experienceValue, follower, question, commentValue, hostURL):
-        answerURL = hostURL + '/experience/%s/comment/%s/' % (experienceValue.id, commentValue.id)
-        htmlMessage = """<body><style>
-</style><p>Hi%s!</p>
-<p>You have received a question at pathadvisor.com from %s.</p>
-<blockquote>Regarding: %s<br><br>%s</b><br><br>
-            <a href="%s">Reply</a></blockquote>
-
-<p>We hope you appreciate their question and enjoy inspiring others by sharing your answer.</p>
-
-<p><b>The PathAdvisor Team</b></p>
-</body>
-""" % (" " + salutation if salutation else "", follower.getDescription(), experienceValue.referenceValue.getDescription(), question, answerURL)
-
-        message = """\
-Hi%s!
-
-You have received a question at pathadvisor.com from %s.
-
-     Regarding: %s
-     %s
-
-Open the following link in your web browser to answer this question:
-
-%s
-
-We hope you appreciate their question and enjoy inspiring others by sharing your answer.
-
-The PathAdvisor Team
-""" % (" " + salutation if salutation else "", follower.getDescription(), experienceValue.referenceValue.getDescription(), question, answerURL)
+    def sendRequestExperienceCommentEmail(senderEMail, salutation, recipientEMail, experience, follower, isAdmin, question, comment, hostURL):
+        answerURL = hostURL + '/experience/%s/comment/%s/' % (experience.id.hex, comment.id.hex)
+        context = {'salutation': " " + salutation if salutation else "", 
+                   'asker': follower,
+                   'experience': experience.description(),
+                   'question': question,
+                   'staticURL': hostURL + '/static/',
+                   'replyHRef': answerURL}
+        s = 'email/requestExperienceComment' + ('Admin' if isAdmin else '')
+        htmlTemplate = loader.get_template(s+'.html')
+        txtTemplate = loader.get_template(s+'.txt')
+        htmlMessage = htmlTemplate.render(context)
+        txtMessage = txtTemplate.render(context)
         
-        send_mail('Path Question From Another User', message, senderEMail,
-            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+        Emailer._send('Path Question From Another User', txtMessage, senderEMail,
+            [recipientEMail], htmlMessage)
     
-    # Sends a reset password message to the specified email recipient.
-    def sendNewFollowerEmail(senderEMail, salutation, recipientEMail, follower, acceptURL, ignoreURL):
+    # Sends a message saying that the specified experiement has a new question to the specified email recipient.
+    # following - an instance of the path of the user who owns the experience containing the question.
+    def sendAnswerExperienceQuestionEmail(salutation, recipientEMail, experience, following, isAdmin, comment, hostURL):
+        experienceHRef = hostURL + '/experience/%s/' % experience.id.hex
+        context = {'salutation': salutation, 
+                   'following': following.description(),
+                   'experience': experience.description(),
+                   'question': comment.question,
+                   'answer': comment.text,
+                   'staticURL': hostURL + '/static/',
+                   'experienceHRef': experienceHRef}
+        s = 'email/answerExperienceQuestion' + ('Admin' if isAdmin else '')
+        htmlTemplate = loader.get_template(s+'.html')
+        txtTemplate = loader.get_template(s+'.txt')
+        htmlMessage = htmlTemplate.render(context)
+        txtMessage = txtTemplate.render(context)
+        
+        Emailer._send('Your Question Has Been Answered', txtMessage, 
+            settings.PASSWORD_RESET_SENDER,
+            [recipientEMail], htmlMessage)
+    
+    # Sends a message saying that the specified experiement has a new question to the specified email recipient.
+    def sendSuggestExperienceByTagEmail(salutation, recipientEMail, tag, isAdmin, hostURL):
+        answerURL = '%s/add/?m=%s' % (hostURL, tag.description())
+        context = {'salutation': " " + salutation if salutation else "", 
+                   'tag': tag.description(),
+                   'staticURL': hostURL + '/static/',
+                   'href': answerURL}
+        s = 'email/suggestExperienceByTag' + ('Admin' if isAdmin else '')
+        htmlTemplate = loader.get_template(s+'.html')
+        txtTemplate = loader.get_template(s+'.txt')
+        htmlMessage = htmlTemplate.render(context)
+        txtMessage = txtTemplate.render(context)
+        
+        Emailer._send('A Suggestion from PathAdvisor', txtMessage, settings.PASSWORD_RESET_SENDER,
+            [recipientEMail], htmlMessage)
+    
+    # Sends an email when someone requests to follow the recipient of the email.
+    def sendNewFollowerEmail(salutation, recipientEMail, follower, acceptURL, ignoreURL):
         htmlMessage = """<body><style>
     p > span {
-    	margin-left: 20px;
-    	margin-right: 20px;
-    	text-decoration: none;
+        margin-left: 20px;
+        margin-right: 20px;
+        text-decoration: none;
         cursor: pointer;
         color: #2222FF;
         font-family: "SF-UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
         font-size: 15px;
     }
     p>span>a {
-    	text-decoration: none;
+        text-decoration: none;
         cursor: pointer;
         color: #2222FF;
         font-family: "SF-UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -114,6 +141,6 @@ We hope you discover new opportunities and enjoy inspiring others by sharing you
 The PathAdvisor Team
 """ % (follower, acceptURL, ignoreURL)
         
-        send_mail('A New PathAdvisor Follower', message, senderEMail,
-            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+        Emailer._send('A New PathAdvisor Follower', message, settings.PASSWORD_RESET_SENDER,
+            [recipientEMail], htmlMessage)
     

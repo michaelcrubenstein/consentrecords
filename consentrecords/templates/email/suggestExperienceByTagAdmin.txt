@@ -1,0 +1,20 @@
+Hi{% if salutation %} {{ salutation }}{% endif %}!
+
+Everyone wants to see paths that are as complete as possible. In reviewing your path, 
+I thought of an experience that you could add.
+	
+Can you add your {{ tag }} experience to your path? Here is a link you can paste into 
+a browser:
+
+{{href}}
+
+Please feel free to add other experiences and goals to your path. I look forward to 
+learning more about you.
+
+Thanks.
+
+Michael Rubenstein
+Director of Support
+
+www.pathadvisor.com
+Real Paths, Right For You

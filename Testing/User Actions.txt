@@ -16,6 +16,8 @@
 	2d. Specify a name
 	2e. Click the Done button
 	
+unwind one transaction.
+	
 # Test api.getData with a string by displaying an Organization Name Translation
 3. From signed in as an administrator
 	3a. Go to URL/list/?path=Organization&type=Organization&header=Local%20Organizations
@@ -26,5 +28,28 @@
 # Test api.updateValues by editing an address of a site by editing one Street Address and adding another.
 # Test api.deleteInstances by deleting an Organization with a name.
 
+unwind three transactions.
+
 # Test api.updateValues by picking a new user for a group.
 # Test api.deleteValue by deleting a user from a group.
+
+# Test New Experience Panel
+4. Log in as a non-administrator
+	4a. Create a new historical event
+	4b. Fill in a tag, organization, site, offering by picking
+	4c. Click Done
+	4d. Create a new goal
+	4e. Fill in a tag, organization, site, offering by custom text
+		"Baseball Umpire", "Major League Baseball", "Boston Red Sox", "Umpire"
+	4f. Click Done
+		Flag appears in last column.
+	4g. Click the new flag
+	4h. Click the Edit button
+	4i. Click the right chevron
+	4j. Click the Add Tag text
+	4k. Click Job
+	4l. Click Done
+	4m. Click Done
+	4n. Click Back
+	
+unwind two transactions.

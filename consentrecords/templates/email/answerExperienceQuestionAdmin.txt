@@ -1,0 +1,16 @@
+Hi{% if salutation %} {{ salutation }}{% endif %}!
+
+I have answered your question regarding my {{ experience }} experience.
+
+     Q: {{ question }}
+     A: {{ answer }}
+
+You can see more about my experience here:
+
+{{ experienceHRef }}
+
+Thank you for participating in PathAdvisor.
+
+Michael Rubenstein
+Director of Support
+www.pathadvisor.com

@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transaction',
             name='user',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, default=111),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, default=111, on_delete=models.CASCADE),
             preserve_default=False,
         ),
         migrations.DeleteModel(

@@ -22,19 +22,16 @@ from consentrecords import views
 urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
     url(r'^accounts/login/$', auth_views.login, name='authLogin'),
-    url(r'^admin/', include(admin.site.urls)),
-    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-    url(r'^user/', include('custom_user.urls')),
+    url(r'^admin/', admin.site.urls),
     url(r'^monitor/', include('monitor.urls')),
     url(r'^developer/', include('developer.urls')),
 
     url(r'^b/', include('b.urls')),
     
     url(r'^$', views.home, name='home'),
-    url(r'^org/$', views.orgHome, name='orgHome'),
+    url(r'^org/$', views.orgHome),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^find/', views.find),
-    url(r'^list', views.showInstances, name='list'),
     url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
     url(r'^add/([A-Fa-f0-9]{32})/', views.addExperience),
     url(r'^add/', views.addToPathway),
@@ -47,26 +44,31 @@ urlpatterns = [
     url(r'^signup/', views.signup),
     url(r'^experience/([^/]+)/', views.showExperience),
 
+    url(r'^commentprompts/', views.showCommentPrompts),
+    url(r'^experienceprompts/', views.showExperiencePrompts),
+    url(r'^organizations/', views.showOrganizations),
+    url(r'^services/', views.showServices),
+    url(r'^users/', views.showUsers),
+
+    url(r'^user/passwordreset/([A-Fa-f0-9]{32})/', views.passwordReset),
+    url(r'^user/setresetpassword/', views.setResetPassword),
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
     url(r'^user/updateusername/', views.updateUsername, name='updateUsername'),
-    url(r'^user/acceptFollower/([^?]*)/', views.acceptFollower),
+    url(r'^user/acceptFollower/(.*)/', views.acceptFollower),
     url(r'^user/acceptFollower/', views.acceptFollower),
     url(r'^user/requestAccess/', views.requestAccess, name='requestAccess'),
-    url(r'^user/requestExperienceComment/', views.requestExperienceComment, name='requestExperienceComment'),
+    url(r'^user/', include('custom_user.urls')),
 
-    url(r'^local/getuserid/', views.getUserID),
-    
+    url(r'^local/updatevalues/(.*)/', views.updateValues, name='updateValues'),
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
     
-    url(r'^api/getuserid/', views.getUserID),
-    
-    url(r'^api/updatevalues/', views.ApiEndpoint.as_view()),
+    url(r'^api/updatevalues/(.*)/', views.updateValues),
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),
     url(r'^api/deleteinstances/', views.ApiEndpoint.as_view()),
     url(r'^api/deletevalue/', views.ApiEndpoint.as_view()),
     
-    url(r'^api/([^?]*)/', views.handleURL),
+    url(r'^api/(.*)/', views.handleURL),
     url(r'^api/$', views.handleURL),
     
     url(r'^doc/features/', views.features),

@@ -1,0 +1,19 @@
+<body>
+	<style>
+		body {
+			font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+			font-size: 14px;
+		}
+	</style>
+	<p>Hi{% if salutation %} {{ salutation }}{% endif %}!</p>
+	<p>You have received a question at pathadvisor.com from me.</p>
+	<blockquote>Regarding: {{ experience }}<br>{{ question }}</b><br><br>
+				<a href="{{ replyHRef }}">Reply</a></blockquote>
+
+	<p>I hope you appreciate my question and enjoy inspiring others by sharing your answer.</p>
+
+	<p>Michael Rubenstein
+	<br><small>Director of Support</small></p>
+	<img src="{{ staticURL }}consentrecords/png/Email LOGO 1.png" width="100"></img>
+	<br><a href="www.pathadvisor.com">www.pathadvisor.com</a>
+</body>

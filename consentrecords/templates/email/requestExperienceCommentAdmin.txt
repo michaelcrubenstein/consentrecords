@@ -1,0 +1,16 @@
+Hi{% if salutation %} {{ salutation }}{% endif %}!
+
+You have received a question at pathadvisor.com from me.
+
+     Regarding: {{ experience }}
+     {{ question }}
+
+Open the following link in your web browser to answer this question:
+
+{{ replyHRef }}
+
+I hope you appreciate my question and enjoy inspiring others by sharing your answer.
+
+Michael Rubenstein
+Director of Support
+www.pathadvisor.com

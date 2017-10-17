@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='deletedfact',
             name='id',
-            field=models.ForeignKey(to='consentrecords.Fact', editable=False, serialize=False, primary_key=True),
+            field=models.ForeignKey(to='consentrecords.Fact', editable=False, serialize=False, primary_key=True, on_delete=models.CASCADE),
         ),
     ]

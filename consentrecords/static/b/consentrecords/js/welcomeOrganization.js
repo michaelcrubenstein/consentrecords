@@ -1,6 +1,7 @@
 var WelcomeOrganizationPanel = (function () {
-	WelcomeOrganizationPanel.prototype = new SitePanel();
-	
+	WelcomeOrganizationPanel.prototype = Object.create(crv.SitePanel.prototype);
+	WelcomeOrganizationPanel.prototype.constructor = WelcomeOrganizationPanel;
+
 	WelcomeOrganizationPanel.prototype.handleResize = function()
 	{
 	}
@@ -17,20 +18,26 @@ var WelcomeOrganizationPanel = (function () {
 				})
 			.append('span').text('Done');
 
+		navContainer.appendTitle("PathAdvisor");
+		
 		var signinSpan = navContainer.appendRightButton()
 			.on("click", function()
 				{
 					showClickFeedback(this);
 					if (prepareClick('click',  'Sign In button'))
 					{
-						showFixedPanel(_this.node(), "#id_sign_in_panel");
+						var signinPanel = new SigninPanel();
+						signinPanel.showLeft().then(
+							function()
+							{
+								signinPanel.initializeFocus();
+								unblockClick();
+							});
 					}
 					d3.event.preventDefault();
 				})
 			.append('span').text('Sign In');
 			
-		navContainer.appendTitle("PathAdvisor");
-		
 		var panel2Div = this.appendScrollArea();
 		
 		var d = panel2Div;

@@ -5,16 +5,22 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 }
+html {
+	height: 100%;
+	width: 100%;
+}
 body {
   font-size: medium;
   overflow-y: hidden;
   overflow-x: hidden;
+	height: 100%;
+	width: 100%;
 }
 body>panel {
 	height: 100%;
 	width: 100%;
 	display: block;
-	position: absolute;
+	position: fixed;
 	overflow-y: hidden;
 }
 panel.site-panel>nav {
@@ -27,6 +33,7 @@ panel.site-panel>nav {
 panel.site-panel>nav>div {
 	width: 100%;
 	min-height: 40px;
+	display: flex;
 }
 
 panel.initial {
@@ -96,8 +103,10 @@ panel.edit {
 	min-height: 40px;
 	padding-top: 9px;
 	padding-bottom: 2px;
-	display: block;
-    width: 100%;
+	flex-grow: 100;
+	flex-shrink: 100;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	text-align: center;
 	margin: 0 auto;
@@ -111,8 +120,6 @@ panel.edit {
 
 panel>nav .left-link {
 	max-width: calc(100% - 48px);	/* Subtract 48 pixels to ensure it doesn't run into the right link */
-	overflow: hidden;
-	text-overflow: ellipsis;
 	text-align: left;
 	white-space: nowrap;
 	display: inline-block;
@@ -122,8 +129,6 @@ panel>nav .left-link {
 }
 panel>nav .right-link {
 	max-width: 100%;
-	overflow: hidden;
-	text-overflow: ellipsis;
 	text-align: right;
 	white-space: nowrap;
 	display: inline-block;
@@ -133,7 +138,7 @@ panel>nav .right-link {
 }
 
 .default-link {
-	font-weight: 500
+	font-weight: 600;
 }
 
 /* Links go on the right or left over titles. */
@@ -243,10 +248,6 @@ panel.view .panel-fill>header
 	padding: 6px 12px;
 }
 
-.cell.unique {
-	background: white;
-}
-
 button {
 	appearance: none;
 	-webkit-appearance: none;
@@ -287,15 +288,25 @@ button:hover {
 	background: #f8f8f8;
 	opacity: 1.0;
 }
-.cell.btn {
-	padding: 0px 0px;		/* To override btn style. */
-}
-.cell>ol {
+ol.cell-items {
 	margin: 0;				/* To override bootstrap ol style */
 	font-size: 15px;
 }
-.multi-row-content {
-	padding: 6px 12px;
+ol.cell-items {
+	background: white;
+}
+
+button.add-item {
+	text-align: left;
+	padding: 0px;
+}
+button.add-item > div {
+	margin-left: 12px;
+	padding-right: 12px;
+	padding-top: 6px;
+	padding-bottom: 6px;
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #eee;
 }
 .border-above {
 	border-top: 1px solid #eee;
@@ -308,36 +319,50 @@ section.cell {
 	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
 	padding-right: 0px;
 }
+
+/* Display a label in a cell. Note that the label may or may not be contained in the
+	top level of the cell. For example, see newExperiencePanel.css tag cells.
+ */
+.cell label {
+    color: #222;
+	font-size: 13px;
+	font-weight: normal; 
+	
+	/* The following margin and padding allow for overlines. */
+	margin: 0;
+	padding: 6px 0px;
+	margin-left: 12px;
+}
+
 .cell-border-below {
 	margin-left: 12px;
 	border-bottom: 1px solid #eee;
 }
-.multi-line-item {
-	display: inline-block;
-	padding: 6px 12px;
-	margin-bottom: 0;
-	font-weight: 400;
-	white-space: nowrap;
-	vertical-align: middle;
-	width: 100%;
-}
-.cell.edit {
+
+.cell.first {
 	margin-top: 12px;
 }
-.cell.unique.edit {
-	border-bottom: 1px solid #eee;
-}
-.cell.unique.edit>label {
-	line-height: 1.5em;	/* The same as .cell.unique.view>label and .right-label */
+
+.cell.unique {
+	background: white;
+	display: flex;
+	align-items: center;	/* Items should be aligned to the center because the label font is different from the data font. */
+	-webkit-align-items: center;
 }
 
-.cell label {
-    color: #222;
-	font-size: 13px;
-	font-weight: normal;
-	margin: 0;
-	padding: 6px 12px;
-	padding-right: 0px;	/* Since the ol to the right has 12 px of left padding */
+.cell.unique>label {
+	line-height: 1.5em;	/* The same as .cell.unique>ol */
+}
+
+.cell.unique.edit:last-of-type {
+	border-bottom: 1px solid #eee;
+}
+*.overlined {
+	border-top: 1px solid #eee;
+}
+
+.cell.unique>label.overlined {
+    padding-top: 9px;	/* Extra padding on the top is needed for overlined items. */
 }
 
 .cell.action {
@@ -345,38 +370,41 @@ section.cell {
 	text-align: left;
 }
 
-.panel-fill>section.cell.action.first {
-	margin-top: 12px;
+.text-fill {
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+}
+.cell.unique.view>* {
+	border-bottom: 1px solid #eee;
 }
 
-.string-value-view {
-	position: relative;
-	overflow: hidden;
-	width: auto;
-}
-.cell.unique>label {
-	width: auto;
-	float: left;
-}
 .cell.unique.view>label {
-	margin-left: 0px;
+	margin-left: 12px;
 	margin-right: auto;
-	padding-left: 12px;
-	line-height: 1.5em; 
+	padding-left: 0px;
+	padding-bottom: 7px;	/* An extra pixel so that borders line up properly. */
 	vertical-align: middle;
 }
 .cell.unique>ol {
 	overflow: hidden;
 	width:auto;
-	padding: 6px 12px;
-}
-
-.right-label {
-	padding: 6px 12px;
 	line-height: 1.5em; 
 	vertical-align: middle;
 	text-align: right;
 }
+
+.cell.unique>ol:first-child {
+	text-align: left;
+}
+
+/* Add a border bottom to each child of the last element if the
+	item list has something underneath it in the section (such as 
+	an Add button).
+ */
+.cell.multiple.view>ol>li:last-child>* {
+	border-bottom: 1px solid #eee;
+}
+
 .cell.multiple.edit>label {
 	padding-top: 0px;	/* Set to 0px because there is already a margin of 12 pixels for each section. */
 	font-size: 13px;
@@ -384,7 +412,6 @@ section.cell {
 	padding-bottom: 2px;
 }
 .cell.multiple.edit > ol {
-	background: white;
 	border-top: 1px solid #eee;
 	/* The bottom border is provided by the add-value button, below */
 }
@@ -398,25 +425,22 @@ panel.list .description-text {
 	text-align: left;
 }
 .site-chevron-right {
+	height: 14px;
 	color: #777;
+	padding-left: 12px;
+	padding-right: 12px;
+	align-self: center;
+	-webkit-align-self: center;
 }
 .site-chevron-right+.description-text {
 	margin-right: 18px;
 }
-.string-input-container {
-	overflow: hidden;	/* This causes the input container to expand. */
-}
-.string-input-container > input:only-child {
-	width: 100%;
-}
-.cell.edit.translation li select:first-child {
-	float: right;
+.cell.edit.translation li select {
 	width: 80px;
+	margin-right: 12px;
 	outline: none;
-}
-.cell.edit.translation li select:first-child+*:last-child {
-	margin-right: 83px;
-	display: block;
+	align-self: center;
+	-webkit-align-self: center;
 }
 li > .row-button {
 	text-align: left;
@@ -426,18 +450,33 @@ li > .row-button > .glyphicon-ok {
 	margin-right: 0.3em;
 }
 
-/* If there is a label for a unique string item, right-align the input and its container. */
-.cell.unique.edit.string label+ol .string-input-container {
+li>span.glyphicon:first-child {
+	padding-left: 12px;
+	padding-right: 27px;
+}
+
+li>span.glyphicon.glyphicon-ok:first-child {
+	padding-left: 12px;
+	padding-right: 12px;
+	align-self: center;
+	-webkit-align-self: center;
+}
+
+.cell.unique>ol {
+	flex-grow: 100;
+}
+
+/* If there is a label for a unique input item, right-align the input. */
+.cell.unique.edit>label+ol input {
 	text-align: right;
 }
-.cell.unique.edit.string label+ol input {
-	text-align: right;
-}
+
 .cell.edit input[type=text],
 .cell.edit input[type=number],
 .cell.edit input[type=month],
 .cell.edit input[type=email],
 .cell.edit input[type=url],
+.cell.edit input[type=time],
 .cell.edit input[type=date] {
 	-webkit-appearance:none;
 	-moz-appearance:none;
@@ -450,6 +489,7 @@ li > .row-button > .glyphicon-ok {
 .cell.edit input[type=month]:focus,
 .cell.edit input[type=email]:focus,
 .cell.edit input[type=url]:focus,
+.cell.edit input[type=time]:focus,
 .cell.edit input[type=date]:focus {
 	outline: none;
 }
@@ -457,11 +497,25 @@ li > .row-button > .glyphicon-ok {
 	margin-right: 3px;
 }
 
-.expanding-div {
-	overflow: hidden;
-	width: auto;
-	display: block;
+.cell.edit.unique.instance {
+	font-weight: 400;
+	line-height: 1.42857143;
+	white-space: nowrap;
+	vertical-align: middle;
+	-ms-touch-action: manipulation;
+	touch-action: manipulation;
+	cursor: pointer;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	background-image: none;
+	position: relative;
+	font-size: 15px;
+	width: 100%;
+	padding: 0px 0px;
 }
+
 .left-expanding-div {
 	overflow: hidden;
 	width: auto;
@@ -472,15 +526,20 @@ li > .row-button > .glyphicon-ok {
 	float: right;
 }
 div.add-value {
-	border-top: 1px solid #eee;
-	border-bottom: 1px solid #eee;
-}
-div.add-value>button {
 	overflow: hidden;
 	display: block;
 	width: 100%;
-	padding: 6px 12px;
+	padding-left: 12px;
+	border-bottom: 1px solid #eee;
 	text-align: left;
+	align-items: center;
+	-webkit-align-items: center;
+	background-color: white;
+}
+
+div.add-value>div {
+	padding-top: 6px;
+	padding-bottom: 6px;
 }
 
 .searchbar {
@@ -512,12 +571,27 @@ div.add-value>button {
 	width: auto;
 	float: right;
 }
+
+.info-button-container {
+	align-self: center;
+	-webkit-align-self: center;
+	margin-right: 12px;
+}
+
 .info-button {
-	display: flex;
-	border: none;
-	border-radius: 0;
 	background: transparent;
-	background-color: transparent;
+	cursor: pointer;
+	border-color: #2C55CC;
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 12px;
+	color: #2C55CC;
+	font-family: serif;
+	font-weight: bold;
+	font-size: 16px;
+	text-align: center;
+	width: 23px;
+	height: 23px;
 }
 .info-button:focus {
 	outline: none;
@@ -525,7 +599,6 @@ div.add-value>button {
 
 .glyphicon-minus-sign {
 	position: relative;
-	margin-right: 12px;
 	color: red;
 	-ms-transform: rotate(90deg); /* IE 9 */
 	-webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
@@ -535,7 +608,6 @@ div.add-value>button {
 	background: transparent;
 	background-color: transparent;
 	padding: 0px;
-	padding-top: 1px;	/* A hack for Safari icon */
 	outline: none;
 }
 .glyphicon-minus-sign:hover {
@@ -545,43 +617,71 @@ div.add-value>button {
 	outline: none;
 }
 
-.delete-dial
-{
-	left: -12px;
-	top: 9px;
-	opacity: 0;
-	position: absolute;
+ol.cell-items>li {
+	display: flex;
+	position: relative;	/* Relative position is needed to set the left edge of the item. */
+	font-size: 15px;
+	min-height: 30px;
+	cursor: pointer;
 }
 
-.delete-confirm-container>button {
+ol.cell-items>li>.growable {
+	flex-grow: 100;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+
+/* If the growable is the first item, give it a left margin of 12 pixels. */
+ol.cell-items>li>.growable:first-child {
+	margin-left: 12px;
+}
+
+/* If the growable is the last item, give it a right margin of 12 pixels. */
+ol.cell-items>li>.growable:last-child {
+	padding-right: 12px;
+}
+
+ol.cell-items>li>.unselectable {
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+}
+
+section.hover-items:hover {
+	background-color: #F8F8F8;
+}	
+
+.hover-items li:hover {
+	background-color: #F8F8F8;
+}
+
+/** styles for the delete control. */
+ol.deletable-items>li>button:first-child
+{
+	opacity: 0;
+	padding: 0px 12px;
+	margin-right: 0px;
+}
+
+/** styles for the contents of the notification. */
+ol.deletable-items>li>p {
+	margin-bottom: 6px;
+}
+
+/** styles for the confirm delete control. */
+ol.deletable-items>li>button:last-child {
+	position: relative;
 	background: red;
 	color: white;
 	border: none;
 	border-radius: 0;
 	padding: 6px 12px;
-	width: auto;
-	float: right;
 }
-.delete-confirm-container>button:hover {
-	background: red;
-}
-.delete-confirm-container>button:focus {
+ol.deletable-items>li>button:last-child:focus {
 	outline: none;
 }
-.delete-confirm-container>button+div {
-	overflow: hidden;	/* So that the area next to the button shrinks as the button is expanded. */
-	width: auto;
-	display: block;
-}
-.right-vertical-chevron {	/* A hack to get the chevrons in the correct vertical alignment in 
-								conjunction with right-fixed-width-div. */
-	line-height: 1.3em;
-	vertical-align: middle;
-/* 
-	margin-top: 3px;
-	margin-bottom: 3px;
- */
-}
+
 ol, ul {
 	list-style-type: none;
 	-webkit-padding-start: 0px;
@@ -658,26 +758,28 @@ section.date-container div.date-row {
 }
 
 /* section.date-container is in the new-experience panel. */
-section.date-container>div.in-cell-button {
+div.not-sure-button {
 	font-size: .9em;
 	display: block;
-	padding-left: 12px;
-	padding-right: 12px;
+	width: 100%;
+	background-color: white;
+	padding: 6px 12px;
 	text-align: center;
 	position: relative;
 }
 
-section.date-container>div.in-cell-button>div {
+div.not-sure-button>div {
 	display: inline-block;
 	margin-left: auto;
 	margin-right: auto;
 	padding-bottom: 4px;
 }
 
-section.date-container .right-vertical-chevron {
-	display: inline-block;
-	overflow-x: hidden;
-	position: relative;
+section.cell.documentation {
+	padding: .5em 1em;
+	font-size: 0.8em;
+	color: #666;
+	background-color: transparent;
 }
 
 select::-ms-expand {

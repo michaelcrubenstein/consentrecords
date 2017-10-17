@@ -17,8 +17,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False, serialize=False)),
                 ('text', models.CharField(max_length=255, db_index=True)),
-                ('instance', models.ForeignKey(to='consentrecords.Instance', editable=False)),
-                ('language', models.ForeignKey(null=True, editable=False, to='consentrecords.Instance', related_name='language')),
+                ('instance', models.ForeignKey(to='consentrecords.Instance', editable=False, on_delete=models.CASCADE)),
+                ('language', models.ForeignKey(null=True, editable=False, to='consentrecords.Instance', related_name='language', on_delete=models.CASCADE)),
             ],
         ),
     ]

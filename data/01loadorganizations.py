@@ -24,6 +24,7 @@ if __name__ == "__main__":
 
     with transaction.atomic():
         transactionState = TransactionState(user)
+        userInfo = UserInfo(user)
         orgTerm = terms['Organization']
         nameTerm = terms['_name']
         nameList = NameList()
@@ -50,6 +51,6 @@ if __name__ == "__main__":
                         print ("? %s: %s: %s" % (orgName, value[0].stringValue, item.id))
                     else:
                         propertyList = {'_name': [{'text': orgName, 'languageCode': 'en'}]}
-                        item, newValue = instancecreator.create(orgTerm, None, None, -1, propertyList, nameList, transactionState)
+                        item, newValue = instancecreator.create(orgTerm, None, None, -1, propertyList, nameList, userInfo, transactionState)
                         print("+ %s: %s" % (orgName, item.id))
 

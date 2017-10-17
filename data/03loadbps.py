@@ -14,24 +14,24 @@ from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
 
-def addUniqueChild(parent, typeID, propertyList, nameList, transactionState):
+def addUniqueChild(parent, typeID, propertyList, nameList, userInfo, transactionState):
     children = parent.value_set.filter(field=typeID,
                                     deleteTransaction__isnull=True)
     if len(children):
         return children[0].referenceValue
     else:
         propertyList = {}
-        item, newValue = instancecreator.create(typeID, parent, typeID, -1, propertyList, nameList, transactionState)
+        item, newValue = instancecreator.create(typeID, parent, typeID, -1, propertyList, nameList, userInfo, transactionState)
         return item
         
-def addUniqueValue(parent, field, stringValue, transactionState):
+def addUniqueValue(parent, field, stringValue, userInfo, transactionState):
     children = parent.value_set.filter(field=field,
                                        stringValue=stringValue,
                                        deleteTransaction__isnull=True)
     if len(children):
         return children[0]
     else:
-        return parent.addValue(field, stringValue, 0, transactionState)
+        return parent.addValue(field, stringValue, 0, userInfo, transactionState)
         
 def addUniqueReferenceValue(parent, field, referenceValue, transactionState):
     children = parent.value_set.filter(field=field,
@@ -117,30 +117,30 @@ if __name__ == "__main__":
                         print ("? %s: %s: %s" % (orgName, value[0].stringValue, item.id))
                     else:
                         propertyList = {'_name': [{'text': orgName, 'languageCode': 'en'}]}
-                        org, newValue = instancecreator.create(orgTerm, None, None, -1, propertyList, nameList, transactionState)
+                        org, newValue = instancecreator.create(orgTerm, None, None, -1, propertyList, nameList, userInfo, transactionState)
                         print("+ %s: %s" % (orgName, item.id))
                 
-                sitesInstance = addUniqueChild(org, sitesTerm, {}, nameList, transactionState)
+                sitesInstance = addUniqueChild(org, sitesTerm, {}, nameList, userInfo, transactionState)
 
                 sites = getChildrenByName(sitesInstance, siteTerm, siteName)
                 if len(sites):
                     siteInstance = sites[0].referenceValue
                 else:
                     propertyList = {'_name': [{'text': siteName, 'languageCode': 'en'}]}
-                    siteInstance, newValue = instancecreator.create(siteTerm, sitesInstance, siteTerm, -1, propertyList, nameList, transactionState)
+                    siteInstance, newValue = instancecreator.create(siteTerm, sitesInstance, siteTerm, -1, propertyList, nameList, userInfo, transactionState)
                     sitesInstance.cacheDescription(nameList)
            
                 addressInstance = addUniqueChild(siteInstance, addressTerm,
                         {'Street': [streetName], 'City': [cityName], 'State': [stateInstance.id], 'Zip Code': [zipName]},
-                        nameList, transactionState)
+                        nameList, userInfo, transactionState)
                 if addressInstance.transaction != transactionState.transaction:
-                    addUniqueValue(addressInstance, streetTerm, streetName, transactionState)
-                    addUniqueValue(addressInstance, cityTerm, cityName, transactionState)
+                    addUniqueValue(addressInstance, streetTerm, streetName, userInfo, transactionState)
+                    addUniqueValue(addressInstance, cityTerm, cityName, userInfo, transactionState)
                     addUniqueReferenceValue(addressInstance, stateTerm, stateInstance, transactionState)
-                    addUniqueValue(addressInstance, zipTerm, zipName, transactionState)
+                    addUniqueValue(addressInstance, zipTerm, zipName, userInfo, transactionState)
                 addressInstance.cacheDescription(nameList)
 
-                offeringsInstance = addUniqueChild(siteInstance, offeringsTerm, {}, nameList, transactionState)
+                offeringsInstance = addUniqueChild(siteInstance, offeringsTerm, {}, nameList, userInfo, transactionState)
 
                 print(str(siteInstance))                    
                 for g in grades:
@@ -150,7 +150,7 @@ if __name__ == "__main__":
                     else:
                         propertyList = {'_name': [{'text': g, 'languageCode': 'en'}]}
                         offeringInstance, newValue = instancecreator.create(offeringTerm, offeringsInstance, offeringTerm, 
-                                                                            -1, propertyList, nameList, transactionState)
+                                                                            -1, propertyList, nameList, userInfo, transactionState)
                         offeringsInstance.cacheDescription(nameList)
                     
                     for service in [schoolInstance, educationInstance]:
@@ -159,7 +159,7 @@ if __name__ == "__main__":
                             position = offeringInstance.getNextElementIndex(serviceTerm)
                             offeringInstance.addReferenceValue(serviceTerm, service, position, transactionState)
                     
-                    sessionsInstance = addUniqueChild(offeringInstance, sessionsTerm, {}, nameList, transactionState)
+                    sessionsInstance = addUniqueChild(offeringInstance, sessionsTerm, {}, nameList, userInfo, transactionState)
 
                     sessions = getChildrenByName(sessionsInstance, sessionTerm, '2015-2016')
                     if len(sessions):
@@ -168,6 +168,6 @@ if __name__ == "__main__":
                         startDate = '2015-09-10' if g.startswith('Kindergarten') else '2015-09-08'
                         propertyList = {'_name': ['2015-2016'], 'Start': [startDate], 'End': ['2016-06-22']}
                         sessionInstance, newValue = instancecreator.create(sessionTerm, sessionsInstance, sessionTerm, 
-                                                                            -1, propertyList, nameList, transactionState)
+                                                                            -1, propertyList, nameList, userInfo, transactionState)
                         sessionsInstance.cacheDescription(nameList)                    
                     print('    ' + str(offeringInstance))                    

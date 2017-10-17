@@ -1,8 +1,9 @@
 var UpdatePasswordPanel = (function () {
-	UpdatePasswordPanel.prototype = new SitePanel();
+	UpdatePasswordPanel.prototype = Object.create(crv.SitePanel.prototype);
+	UpdatePasswordPanel.prototype.constructor = UpdatePasswordPanel;
 
 	function UpdatePasswordPanel() {
-		this.createRoot(null, "Password", "view", revealPanelUp);
+		this.createRoot(null, "Password", "view change-password", revealPanelUp);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -16,14 +17,16 @@ var UpdatePasswordPanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append('span').text(crv.buttonTexts.cancel);
+	
+		navContainer.appendTitle('Password');
 	
 		var addButton = navContainer.appendRightButton()
 			.on("click", function()
 			{
 				if (prepareClick('click', 'Change'))
 				{
-					username = cr.signedinUser.getDatum(cr.fieldNames.email);
+					username = cr.signedinUser.emails()[0].text();
 					if (newPasswordInput.property('value').length == 0)
 						syncFailFunction("The new password can not be blank.");
 					else if (newPasswordInput.property('value') != confirmPasswordInput.property('value'))
@@ -48,8 +51,6 @@ var UpdatePasswordPanel = (function () {
 				d3.event.preventDefault();
 			});
 		addButton.append('span').text('Change');
-	
-		navContainer.appendTitle('Password');
 	
 		var panel2Div = this.appendFillArea();
 			
@@ -93,7 +94,8 @@ var UpdatePasswordPanel = (function () {
 })();
 
 var UpdateUsernamePanel = (function () {
-	UpdateUsernamePanel.prototype = new SitePanel();
+	UpdateUsernamePanel.prototype = Object.create(crv.SitePanel.prototype);
+	UpdateUsernamePanel.prototype.constructor = UpdateUsernamePanel;
 
 	function UpdateUsernamePanel(user) {
 		this.createRoot(null, "Username", "view", revealPanelUp);
@@ -110,7 +112,7 @@ var UpdateUsernamePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Cancel");
+		backButton.append("span").text(crv.buttonTexts.cancel);
 	
 		function onChange()
 			{
@@ -137,6 +139,8 @@ var UpdateUsernamePanel = (function () {
 				}
 			}
 			
+		navContainer.appendTitle('Email');
+	
 		var addButton = navContainer.appendRightButton()
 			.on("click", function()
 				{
@@ -145,15 +149,13 @@ var UpdateUsernamePanel = (function () {
 				});
 		addButton.append('span').text('Change');
 	
-		navContainer.appendTitle('Email');
-	
 		var panel2Div = this.appendFillArea();
 			
 		var form = panel2Div.append('form')
 						.classed('form-simple form-signin', true);
 		form.append('div')
 			.classed('help-block', true)
-			.text("Current Email: " + cr.signedinUser.getDatum(cr.fieldNames.email));
+			.text("Current Email: " + cr.signedinUser.emails()[0].text());
 		
 		form.append('label').attr('for', 'id_newusername').attr('class', 'sr-only').text('New Email');
 		var newUsernameInput = form.append('input')

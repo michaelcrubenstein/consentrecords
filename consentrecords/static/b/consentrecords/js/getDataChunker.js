@@ -3,35 +3,40 @@
 var GetDataChunker = (function() {
 	GetDataChunker.prototype.path = null;
 	GetDataChunker.prototype.fields = [];
+	GetDataChunker.prototype.resultType = null;
 	GetDataChunker.prototype._increment = 20;
 	GetDataChunker.prototype._containerNode = null;
 	GetDataChunker.prototype._loadingMessage = null;
 	GetDataChunker.prototype._isSpinning = null;
 	GetDataChunker.prototype._start = 0;
-	GetDataChunker.prototype._inGetData = false;
+	GetDataChunker.prototype._searchCount = 0;
+	GetDataChunker.prototype._curSearchID = 0;
 	GetDataChunker.prototype._onFoundInstances = null;
 	GetDataChunker.prototype._onDoneSearch = null;
 	GetDataChunker.prototype._check = null;
 	
 	GetDataChunker.prototype.invalidatePendingData = function()
 	{
-		this._inGetData = false;
+		this._curSearchID = 0;
+	}
+	
+	GetDataChunker.prototype._scrollingNode = function()
+	{
+		if ($(this._containerNode).css('overflow-y') == 'scroll')
+			return $(this._containerNode);
+		else
+			return $(this._containerNode).scrollParent();
 	}
 	
 	GetDataChunker.prototype._clearScrollCheck = function()
 	{
 		if (this._check != null)
 		{
-			var scrollingNode;
-			if ($(this._containerNode).css('overflow-y') == 'scroll')
-				scrollingNode = $(this._containerNode);
-			else
-				scrollingNode = $(this._containerNode).scrollParent();
-			scrollingNode.off("scroll", this._check);
-			scrollingNode.off("resize.cr", this._check);
+			this._scrollingNode().off("scroll resize.cr", this._check);
 			this._check = null;
 		}
 		this.invalidatePendingData();
+		this._start = 0;
 	}
 	
 	GetDataChunker.prototype.clearLoadingMessage = function()
@@ -44,7 +49,17 @@ var GetDataChunker = (function() {
 			this._isSpinning = false;
 		}
 		this._clearScrollCheck();
-		this._start = 0;
+	}
+	
+	GetDataChunker.prototype.increment = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._increment;
+		else
+		{
+			this._increment = newValue;
+			return this;
+		}
 	}
 	
 	GetDataChunker.prototype._restart = function(instances, startVal)
@@ -52,7 +67,7 @@ var GetDataChunker = (function() {
 		if (!this._loadingMessage)
 			throw "loadingMessage is not set up";
 			
-		if (instances.length < this._increment)
+		if (instances.length < this.increment())
 		{
 			this.clearLoadingMessage();
 			if (this._onDoneSearch)
@@ -60,11 +75,11 @@ var GetDataChunker = (function() {
 		}
 		else
 		{
-			this._start += this._increment;
+			this._start += this.increment();
 			if (!this.isOverflowingY(this._loadingMessage.node()))
 				this._continue(startVal);
 			else
-				this._inGetData = false;
+				this.invalidatePendingData();
 		}
 	}
 	
@@ -82,11 +97,6 @@ var GetDataChunker = (function() {
 		}
 	}
 	
-	GetDataChunker.prototype._dataGetter = function()
-	{
-		return cr.getData;
-	}
-	
 	GetDataChunker.prototype._continue = function(startVal)
 	{
 		var _this = this;
@@ -94,25 +104,29 @@ var GetDataChunker = (function() {
 			throw ("path is not specified to GetDataChunker._continue");
 		
 		this.showLoadingMessage();
+		
+		this._searchCount += 1;
+		var curSearchCount = this._searchCount;
+		this._curSearchID = this._searchCount;
 
-		this._dataGetter()({path: this.path, 
+		cr.getData({path: this.path, 
+		            resultType: this.resultType,
 					start: this._start,
-					end: this._start + this._increment,
+					end: this._start + this.increment(),
 					fields: this.fields})
 			.then(function(instances) 
 						{ 
-							/* this.inGetData is set to false if the scrollCheck is cleared, which occurs when
+							/* this._curSearchID is set to 0 if the scrollCheck is cleared, which occurs when
 								this is destroyed. If it is destroyed, there may be an asynchronous call hanging out,
 								which is handled here.
 							 */
-							if (_this._inGetData)
+							if (_this._curSearchID == curSearchCount)
 							{
 								if (_this._onFoundInstances(instances, startVal))
 									_this._restart(instances, startVal);
 							}
 						},
 					cr.asyncFail);
-		this._inGetData = true;
 	}
 	
 	GetDataChunker.prototype._setScrollCheck = function(startVal)
@@ -120,24 +134,18 @@ var GetDataChunker = (function() {
 		var _this = this;
 		
 		this._clearScrollCheck();
-		this._start = 0;
 
 		this._check = function(eventObject)
 		{
 			_this._onScroll(eventObject.data);
 		}
 		
-		var scrollingNode;
-		if ($(this._containerNode).css('overflow-y') == 'scroll')
-			scrollingNode = $(this._containerNode);
-		else
-			scrollingNode = $(this._containerNode).scrollParent();
-		
+		var scrollingNode = this._scrollingNode();
 		if (scrollingNode.length == 0)
 			throw new Error("scrollParent not specified; containerNode is not displayed");
 			
-		scrollingNode.scroll(startVal, this._check);
-		scrollingNode.on("resize.cr", this._check);
+		scrollingNode.scroll(startVal, this._check)
+					 .on("resize.cr", this._check);
 	}
 	
 	/* checkStart is called to start up a new search that is going to append its results
@@ -177,7 +185,7 @@ var GetDataChunker = (function() {
 		    a short gap for the user to type. In that gap, there is no path and 
 		    we shouldn't continue.
 		 */
-		if (this._loadingMessage != null && this.path && !this._inGetData)
+		if (this._loadingMessage != null && this.path && this._curSearchID == 0)
 		{
 			if (!this.isOverflowingY(this._loadingMessage.node()))
 				this._continue(startVal);
@@ -196,6 +204,8 @@ var GetDataChunker = (function() {
 
 	GetDataChunker.prototype.appendButtonContainers = function(data)
 	{
+		console.assert(data instanceof Array);
+		
 		var _this = this;
 		
 		/* Ensure that the container is visible, so that the new items will also appear. */
@@ -211,9 +221,15 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype.hasShortResults = function()
 	{
-		return this.buttons().size() < this._increment &&
-			   !this._inGetData &&
+		return this.buttons().size() < this.increment() &&
+			   this._curSearchID == 0 &&
 			   !this._isSpinning;
+	}
+	
+	/* Called when one of the items that had been found is deleted. */
+	GetDataChunker.prototype.onItemDeleted = function()
+	{
+		this._start -= 1;
 	}
 	
 	GetDataChunker.prototype.hasButtons = function()
@@ -233,7 +249,7 @@ var GetDataChunker = (function() {
 		this._isSpinning = false;
 		this.path = null;
 		this._start = 0;
-		this._inGetData = false;
+		this._curSearchID = 0;
 		this._onFoundInstances = onFoundInstances;
 		this._onDoneSearch = onDoneSearch;
 		this._check = null;
@@ -241,7 +257,7 @@ var GetDataChunker = (function() {
 		var _this = this;
 		$(this._containerNode).on("remove", function()
 			{
-				_this._inGetData = false;
+				_this.invalidatePendingData();
 			});
 	}
 	

@@ -1,0 +1,50 @@
+Pathways Panel
+	Experience Comments Panel
+	More Ideas Panels
+	Edit Experience Panel (Also used to add an experience)
+	Search Panel
+		Other Path Panel
+	Settings Panel
+		Pick Public Visibility Panel
+		Sharing Panel
+			Add User or Group Panel
+		Following Panel
+			Request to Follow Panel
+			Compare Paths Panel
+			Other Path Panel
+		Change Email Panel
+		Change Password Panel
+	Notifications Panel
+		Other Path Panel
+		Experience Comment Panel
+
+/find/ URL
+Find a New Experience Panel
+	Sign Up/Back Out Panel
+
+Org home
+	Pick Action Panel
+	Pick Site Panel
+	Pick Offering Panel
+	Pick Session Panel
+	Record Inquiry Panel
+	Manage Session Panel
+	    Pick Can Register Panel
+		Inquiries Panel
+			Inquiry Panel
+		Enrollments Panel
+			Enrollment Panel
+		Engagements Panel
+			Engagement Panel
+		Periods Panel
+			Period Panel
+	Record Enrollment Panel
+	Record Enrollment from Inquiry Panel
+	Record Participation Panel
+
+View Root Objects Panel
+Edit Root Objects Panel
+View Object Panel
+Edit Object Panel
+Pick Object Panel
+

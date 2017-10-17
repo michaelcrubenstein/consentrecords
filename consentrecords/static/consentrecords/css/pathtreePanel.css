@@ -45,6 +45,7 @@ div.pathlines {
 svg.pathway {
 	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
 	font-size: 11px;
+	margin-right: 12px;
 }
 
 svg.pathway tspan.site {
@@ -77,41 +78,6 @@ svg.pathway g.guide rect.column-icon {
 	stroke-width: 2;
 	stroke-opacity: 0.0;
 	fill-opacity: 0.0;
-}
-
-g.flag rect.opaque {
-	fill-opacity: 1.0;
-	fill: white;
-	stroke-opacity: 0.0;
-}
-g.flag rect.bg {
-	fill-opacity: 0.2;
-	stroke-width: 0;
-	stroke-opacity: 0.0;
-}
-g.flag.selected rect.bg {
-	fill-opacity: 0.6;
-}
-g.flag line.flag-pole {
-	stroke-opacity: 0.6;
-	stroke-width: 3;
-}
-
-g.flag .flag-label {	/* For flags */
-	text-anchor: start;
-	-webkit-user-select: none;  /* Chrome all / Safari all */
-	-moz-user-select: none;     /* Firefox all */
-	-ms-user-select: none;      /* IE 10+ */
-	user-select: none;
-	cursor: default;
-}
-
-g.flag .flag-label>tspan:nth-child(1) {	/* For flags */
-	font-weight: 600;
-}
-
-g.flag .flag-label>tspan:nth-child(2) {	/* For flags */
-	font-weight: 400;
 }
 
 g.detail .flag-label {	/* For detail panels */
@@ -272,5 +238,15 @@ panel.settings span.badge {
 
 panel.settings span.badge:hover {
 	background-color: #2222FF;
+}
+
+panel.notifications .is-fresh {
+	background: #D5DDF5;
+}
+
+panel.notifications div.no-results {
+	font-size: 0.8em;
+	font-style: italic;
+	color: #888888;
 }
 

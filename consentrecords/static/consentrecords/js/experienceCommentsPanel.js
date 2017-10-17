@@ -1,55 +1,51 @@
 /* experienceCommentsPanel.js */
 
 var ExperienceCommentsPanel = (function() {
-	ExperienceCommentsPanel.prototype = new SitePanel();
+	ExperienceCommentsPanel.prototype = Object.create(crv.SitePanel.prototype);
+	ExperienceCommentsPanel.prototype.constructor = ExperienceCommentsPanel;
+
 	ExperienceCommentsPanel.prototype.fd = null;
 	ExperienceCommentsPanel.prototype.inEditMode = false;
 	ExperienceCommentsPanel.prototype.detailGroup = null;
 	ExperienceCommentsPanel.prototype.detailTextGroup = null;
-	ExperienceCommentsPanel.prototype.detailFrontRect = null;
-	ExperienceCommentsPanel.prototype.detailRectHeight = 0;
-	ExperienceCommentsPanel.prototype.svg = null;
 	ExperienceCommentsPanel.prototype.editChevronContainer = null;
 	
 	ExperienceCommentsPanel.prototype.editChevronWidth = 12; 	/* pixels */
 	ExperienceCommentsPanel.prototype.editChevronHeight = 18; 	/* pixels */
 	
-	ExperienceCommentsPanel.prototype.appendDescriptions = function(buttons)
+	ExperienceCommentsPanel.prototype.youAskedText = "You asked";
+	ExperienceCommentsPanel.prototype.someoneAskedText = "{0} asked";
+	
+	ExperienceCommentsPanel.prototype.appendDescriptions = function(items)
 	{
-		var divs = buttons.append('div');
+		var divs = items.append('div')
+			.classed('growable', true);
 		
+		var _this = this;
 		var askers = divs.append('div')
 			.classed('asker', true)
 			.datum(function(d) { 
-				var cp = d.getValue("Comment Request"); 
-				return cp && cp.getInstanceID() && cp.getValue("Path"); })
-			.text(function(d) {
-					if (!d || !d.getInstanceID())
+				return d.asker(); })
+			.text(function(path) {
+					if (!path || !path.id())
 						return null;
-					if (d.getInstanceID() == cr.signedinUser.getValue('Path').getInstanceID())
-						return "You asked";
+					if (path.id() == cr.signedinUser.path().id())
+						return _this.youAskedText;
 					else {
-						var s = d.instance().getDescription();
-						if (s == "None")
-							s = "Someone";
-						return "{0} asked".format(s);
+						return _this.someoneAskedText.format(path.caption());
 					}
 				});
 
 		var questions = divs.append('textarea')
 			.classed('question', true)
-			.datum(function(d) { 
-				var cp = d.getValue("Comment Request");
-				return cp && cp.getInstanceID() && cp.getValue(cr.fieldNames.text); })
 			.text(function(d) { 
-					return d && d.text; 
+					return d && d.question(); 
 				});
 				
 		var answers = divs.append('textarea')
 			.classed('answer', true)
-			.datum(function(d) { return d.getValue(cr.fieldNames.text); })
 			.text(function(d) { 
-					return (d && d.text); 
+					return (d && d.text()); 
 				})
 			.attr('placeholder', 'No Answer');
 				
@@ -60,10 +56,10 @@ var ExperienceCommentsPanel = (function() {
 			eventObject.stopPropagation();
 		}
 			
-		buttons.selectAll('textarea.question')
+		divs.selectAll('textarea.question')
 			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
-			.classed('fixed', !this.inEditMode)
+			.classed('fixed-immediate', !this.inEditMode)
 			.each(function()
 				{
 					this.setAttribute('style', 'height:0px;overflow-y:hidden;display:inline-block;');
@@ -73,10 +69,10 @@ var ExperienceCommentsPanel = (function() {
 					$(this).on('resize.cr', checkSize);
 				});
 				
-		buttons.selectAll('textarea.answer')
+		divs.selectAll('textarea.answer')
 			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
-			.classed('fixed', !this.inEditMode)
+			.classed('fixed-immediate', !this.inEditMode)
 			.each(function()
 				{
 					this.setAttribute('style', 'height:0px;overflow-y:hidden;display:inline-block;');
@@ -87,145 +83,129 @@ var ExperienceCommentsPanel = (function() {
 				});
 	}
 	
+	ExperienceCommentsPanel.prototype.checkDeleteControlVisibility = function(items)
+	{
+		var deleteControls = $(items.node()).parent().find('button.delete');
+		if (!this.inEditMode)
+			crf.hideDeleteControls(deleteControls, 0);
+		else
+			crf.showDeleteControls(deleteControls, 0);
+	}
+	
 	ExperienceCommentsPanel.prototype.loadComments = function(data)
 	{
 		var commentList = this.mainDiv.select('section.comments>ol');
 		var items = appendItems(commentList, data);
 		
-		appendConfirmDeleteControls(items);
-		var buttons = items.append('div');
+		var deleteControls = crf.appendDeleteControls(items);
+		this.appendDescriptions(items);
+		crf.appendConfirmDeleteControls(items);
 
-		var deleteControls = this.appendDeleteControls(buttons);
-
-		this.appendDescriptions(buttons);
-		if (!this.inEditMode)
-			this.hideDeleteControlsNow($(deleteControls[0]));
-		else
-			this.showDeleteControls($(deleteControls[0]), 0);
-			
 		checkItemsDisplay(commentList.node());
 		
 		/* Force each item to resize in case the commentList was previously empty and hidden. */
-		items.each(function(d) { $(this).trigger("resize.cr"); });
-	}
-	
-	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
-	{
-		var comments = this.fd.experience.getValue("Comments");
-		var initialData = {};
-		initialData[cr.fieldNames.text] = [{text: newText}];
+		items.each(function(d) 
+			{ 
+				$(this).trigger("resize.cr"); 
+				$(this).find('textarea').trigger('resize.cr');
+			});
 		
-		if (comments.getInstanceID())
-		{
-			/* Test case: add a comment to an experience that has had a comment */
-			var commentCell = comments.getCell("Comment");
-			$.when(cr.createInstance(commentCell.field, comments.getInstanceID(), initialData))
-		     .then(function(newValue)
-					{
-						newValue.promiseCellsFromCache()
-							.then( 
-							function() {
-								commentCell.addValue(newValue);
-								done(newValue);
-							},
-							fail);
-					},
-					fail);
-		}
-		else
-		{
-			/* Test case: add a comment to an experience that has not had a comment previously added. */
-			$.when(comments.saveNew({Comment: [{cells: initialData}]}))
-			 .then(done, fail);
-		}
+		this.checkDeleteControlVisibility(items);
 	}
 	
 	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
 	{
-		
 		/* Test case: add a comment to an experience that has had a comment */
-		return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.getValue("Path"), newText);
+		var experience = this.fd.experience;
+		return cr.signedinUser.promiseData(['path'])
+			.then(function()
+				{
+					return experience.postComment({asker: cr.signedinUser.path().urlPath(),
+												   question: newText});
+				},
+				cr.chainFail);
 	}
 	
+	/**
+		Checks all of the text areas in the panel to see if their contents have changed. 
+		If so, then the changes are saved.
+	 */
 	ExperienceCommentsPanel.prototype.checkTextAreas = function(done, fail)
 	{
 		var commentsDiv = this.mainDiv.select('section.comments');
-		var cell = commentsDiv.datum();
-		var initialData = [];
-		var sourceObjects = [];
+		var changes = [];
 		
 		commentsDiv.selectAll('li textarea').each(function(d)
 			{
 				var newValue = this.value.trim();
 				if (d)
-					d.appendUpdateCommands(0, newValue, initialData, sourceObjects);
+				{
+					if (d.id())
+					{
+						if (d3.select(this).classed('question') && newValue != d.question())
+							changes.push({'id': d.id(), 'question': newValue});
+						else if (d3.select(this).classed('answer') && newValue != d.text())
+							changes.push({'id': d.id(), 'text': newValue});
+					}
+				}
 			});
-		if (initialData.length > 0)
-		{
-			cr.updateValues(initialData, sourceObjects)
-				.then(function() {
-					if (done)
-						done();
-				}, 
-				fail);
-		}
+		if (changes.length > 0)
+			return this.fd.experience.update({'comments': changes});
 		else
-			done();
+		{
+			var r = $.Deferred();
+			r.resolve(null);
+			return r;
+		}
 	}
 	
+	/**
+		Change the UI elements to indicate that this panel is in Edit mode.
+	 */
 	ExperienceCommentsPanel.prototype.startEditing = function()
 	{
-		if (prepareClick('click', 'Edit Experience Comments'))
+		try
 		{
-			try
-			{
-				var _this = this;
-				var commentList = this.mainDiv.select('section.comments>ol');
-				showClickFeedback(this.editButton.node(), function()
-					{
-						_this.editButton.selectAll('span').text("Done");
-					});
-				this.showDeleteControls();
-				this.inEditMode = true;
-				commentList.classed('edit', true);
-				commentList.selectAll('textarea')
-					.attr('readonly', null)
-					.classed('fixed', false)
-					.classed('editable', true);
-				
-				/* position the edit chevron as appropriate. 
-					12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
-					18 is the height of the chevron, so that the chevron is vertically centered. 
-				 */
-				this.editChevronContainer.transition()
-					.duration(400)
-					.attr("transform", 
-						"translate({0},{1})".format(
-							$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
-							($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
-							
-				this.detailTextGroup.selectAll('line')
-					.transition()
-					.duration(400)
-					.attr('x2', $(_this.svg.node()).width() - (_this.editChevronWidth + 12) - 12);
-
-							
-				unblockClick();
-			}
-			catch(err)
-			{
-				this.editButton.selectAll('span').text("Edit");
-				cr.syncFail(err);
-			}
+			var _this = this;
+			var commentList = this.mainDiv.select('section.comments>ol');
+			var dials = $(this.node()).find('ol.deletable-items>li>button:first-of-type');
+			showClickFeedback(this.editButton.node(), function()
+				{
+					_this.editButton.selectAll('span').text(crv.buttonTexts.done);
+				});
+			crf.showDeleteControls(dials);
+			this.inEditMode = true;
+			commentList.classed('edit', true);
+			commentList.selectAll('textarea')
+				.attr('readonly', null)
+				.classed('fixed fixed-immediate', false)
+				.classed('editable', true);
+			
+			/* position the edit chevron as appropriate. 
+				12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
+				18 is the height of the chevron, so that the chevron is vertically centered. 
+			 */
+			
+			/* Set the width of this.detailGroup to be width of the container. */
+			$(this.detailGroup.node()).animate({'width': $(this.mainDiv.node()).innerWidth()} );
+		}
+		catch(err)
+		{
+			this.editButton.selectAll('span').text(crv.buttonTexts.edit);
+			throw err;
 		}
 	}
 	
+	/**
+		Sets the keyboard focus to the text of the comment that has the specified 
+		Value ID.
+	 */
 	ExperienceCommentsPanel.prototype.focusOnComment = function(id)
 	{
 		var commentList = this.mainDiv.select('section.comments>ol');
 		var textAreas = $(commentList.node()).children('li')
 			.filter(function() {
-					return d3.select(this).datum().id == id;
+					return d3.select(this).datum().id() == id;
 				});
 		if (textAreas.length == 0)
 			throw new Error('The specified comment is not recognized.');
@@ -248,9 +228,13 @@ var ExperienceCommentsPanel = (function() {
 		answerTextArea.focus();
 	}
 
+	/**
+		Displays a panel for editing the description of the experience: its organization,
+		site, offering, etc.
+	 */
 	ExperienceCommentsPanel.prototype.showDetailPanel = function(fd)
 	{
-		if (fd.experience.getTypeName() == "Experience") {
+		if (fd.experience instanceof cr.Engagement) {
 			;	/* Nothing to edit */
 		}
 		else
@@ -259,12 +243,11 @@ var ExperienceCommentsPanel = (function() {
 			{
 				try
 				{
-					var experience = new Experience(fd.experience.cell.parent, fd.experience);
-					experience.replaced(fd.experience);
-					
-					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
-					
-					editPanel.showLeft().then(unblockClick);
+					var experienceController = new ExperienceController(fd.experience.parent(), fd.experience, true);
+					experienceController.oldInstance(fd.experience);
+					new NewExperiencePanel(experienceController, revealPanelLeft)
+						.showLeft()
+						.always(unblockClick);
 				}
 				catch(err)
 				{
@@ -275,7 +258,136 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
-	function ExperienceCommentsPanel(fd)
+	/**
+		Deletes any notifications of the currently logged in user that are no longer valid
+		for this experience.
+		Invalid notifications include crn.ExperienceCommentRequested notifications where
+		the comment has been specified.
+	 */
+	ExperienceCommentsPanel.prototype.clearNotifications = function()
+	{
+		var _this = this;
+		var changes = [];
+
+		if (cr.signedinUser.notifications())
+		{
+			cr.signedinUser.notifications().forEach(function(n)
+				{
+					if (n.name() == "crn.ExperienceCommentRequested")
+					{
+						var args = n.args();
+						if (args.length >= 3 && 
+							args[1].id() == _this.fd.experience.id())
+						{
+							var comment = crp.getInstance(args[2].id());
+							if (comment && comment.text())
+							{
+								changes.push({'delete': n.id()});
+							}
+						}
+					}
+				});
+		}	
+		if (changes.length > 0)
+		{
+			return cr.signedinUser.update({'notifications': changes});
+		}
+		else
+		{
+			var r = $.Deferred();
+			r.resolve(null);
+			return r;
+		}
+	}
+	
+	ExperienceCommentsPanel.prototype.setupAsk = function()
+	{
+		var _this = this;
+		var canBeAsked = this.fd.experience.path().canAnswerExperience();
+		if (cr.signedinUser.id() && canBeAsked != "no")
+		{
+			var newQuestionDiv = this.mainDiv.append('section')
+				.classed('new-comment', true);
+			var newQuestionInput = newQuestionDiv.append('textarea')
+				.attr('rows', 3);
+			newQuestionInput.attr('placeholder', "New Question");
+
+			var askButton = newQuestionDiv.append('button')
+				.classed('post site-active-div', true)
+				.text("Ask")
+				.on('click', function()
+					{
+						var newQuestion = newQuestionInput.node().value;
+						if (newQuestion)
+						{
+							if (prepareClick('click', 'Ask Question'))
+							{
+								try
+								{
+									showClickFeedback(this);
+									bootstrap_alert.success("Sending email (this may take a few minutes)...");
+									_this.askQuestion(newQuestion)
+										.then(function()
+											{
+												newQuestionInput.node().value = '';
+												bootstrap_alert.close();
+												unblockClick();
+											},
+											cr.syncFail);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
+							}
+						}
+					});
+			
+			var commentPromptsDiv = this.mainDiv.append('section')
+				.classed('comment-prompts', true);
+			
+			var resizeQuestionBoxes = function()
+				{
+					var newQuestionHMargin = ($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width())
+					var newQuestionWidth = $(newQuestionDiv.node()).width() - newQuestionHMargin;
+					var askWidth = $(askButton.node()).outerWidth(true);
+					if (_this.postButtonNode && $(_this.postButtonNode).outerWidth(true) > askWidth)
+						askWidth = $(_this.postButtonNode).outerWidth(true);
+					newQuestionWidth -= askWidth;
+				
+					$(newQuestionInput.node()).width(newQuestionWidth);
+					commentPromptsDiv
+						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
+				}
+			
+			crp.promise({path:  'comment prompt',
+			             resultType: cr.CommentPrompt})
+			.then(function(prompts)
+				{
+					commentPromptsDiv.selectAll('div')
+						.data(prompts)
+						.enter()
+						.append('div')
+						.append('span')
+						.classed('site-active-text', true)
+						.text(function(d) 
+							{ return d.description(); })
+						.on('click', function(d)
+							{
+								newQuestionInput.node().value = '';
+								newQuestionInput.node().value = d.description();
+								newQuestionInput.node().focus();
+								var textWidth = newQuestionInput.node().value.length;
+								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
+							});
+					resizeQuestionBoxes();
+				}, cr.asyncFail)		
+							
+			$(this.mainDiv.node()).on('resize.cr', resizeQuestionBoxes);
+		}
+	}
+	
+	function ExperienceCommentsPanel(fd, backText)
 	{
 		this.createRoot(fd, "Experience", "comments", revealPanelLeft);
 		this.fd = fd;
@@ -292,11 +404,21 @@ var ExperienceCommentsPanel = (function() {
 					try
 					{
 						showClickFeedback(this);
-						_this.checkTextAreas(function()
-							{
-								_this.hide();
-							},
-							cr.syncFail);
+						if (fd.experience.canWrite())
+						{
+							_this.checkTextAreas()
+								.then(function()
+									{
+										return _this.clearNotifications();
+									})
+								.then(function()
+									{
+										_this.hide();
+									},
+								cr.syncFail);
+						}
+						else
+							_this.hide();
 					}
 					catch(err)
 					{
@@ -306,20 +428,10 @@ var ExperienceCommentsPanel = (function() {
 				d3.event.preventDefault();
 			});
 		appendLeftChevronSVG(backButton).classed("chevron-left", true);
-		backButton.append("span").text("Back");
+		backButton.append("span").text(backText);
 
-		var shareButton = navContainer.appendRightButton()
-			.classed("share", true)
-			.on('click', function()
-				{
-					if (prepareClick('click', 'share'))
-					{
-						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.cell.parent);
-					}
-				});
-		shareButton.append("img")
-			.attr("src", shareImagePath);
-
+		navContainer.appendTitle('');
+		
 		this.inEditMode = false;
 		if (fd.experience.canWrite())
 		{		
@@ -332,10 +444,10 @@ var ExperienceCommentsPanel = (function() {
 						{
 							/* Store the new text in a button so that it is set properly
 								when an error occurs whether or not the callback to showClickFeedback is called. */
-							var newButtonText = "Edit";
+							var newButtonText = crv.buttonTexts.edit;
 							var fail = function(err)
 								{
-									newButtonText = "Done";
+									newButtonText = crv.buttonTexts.done;
 									_this.editButton.selectAll('span').text(newButtonText);
 									cr.syncFail(err);
 								}
@@ -345,29 +457,31 @@ var ExperienceCommentsPanel = (function() {
 									{
 										_this.editButton.selectAll('span').text(newButtonText);
 									});
-								_this.checkTextAreas(function()
+								_this.checkTextAreas()
+									.then(function()
 									{
-										_this.editChevronContainer.transition()
-											.duration(400)
-											.attr("transform", 
-												"translate({0},{1})".format(
-													$(_this.svg.node()).width(), 
-													($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
-													
-										_this.detailTextGroup.selectAll('line')
-											.transition()
-											.duration(400)
-											.attr('x2', $(_this.svg.node()).width());
+										try
+										{
+											$(_this.detailGroup.node())
+												.animate({'width': $(_this.mainDiv.node()).innerWidth() + 
+																   $(_this.editChevronContainer.node()).outerWidth(true)} );
 
-										_this.hideDeleteControls();
-										_this.inEditMode = false;
-										commentList.classed('edit', false);
-										commentList.selectAll('textarea')
-											.attr('readonly', 'readonly')
-											.classed('editable', false)
-											.classed('fixed', true);
+											var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
+											crf.hideDeleteControls(dials);
+											_this.inEditMode = false;
+											commentList.classed('edit', false);
+											commentList.selectAll('textarea')
+												.attr('readonly', 'readonly')
+												.classed('editable', false)
+												.classed('fixed-immediate', false)
+												.classed('fixed', true);
 
-										unblockClick();
+											unblockClick();
+										}
+										catch(err)
+										{
+											cr.syncFail(err);
+										}
 									},
 									fail);
 							}
@@ -379,73 +493,84 @@ var ExperienceCommentsPanel = (function() {
 					}
 					else
 					{
-						_this.startEditing();
+						if (prepareClick('click', 'Edit Experience Comments'))
+						{
+							try
+							{
+								_this.startEditing();
+								unblockClick();
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
 					}
 				});
 			this.editButton
 				.classed('edit', true)
-				.append('span').text("Edit");
+				.append('span').text(crv.buttonTexts.edit);
 		}
 
-		navContainer.appendTitle('Experience');
-		
+		var shareButton = navContainer.appendRightButton()
+			.classed("share", true)
+			.on('click', function()
+				{
+					if (prepareClick('click', 'share'))
+					{
+						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.path());
+					}
+				});
+		shareButton.append("img")
+			.attr("src", shareImagePath);
+
 		var panel2Div = this.appendScrollArea();
 
-		this.svg = panel2Div.append('svg')
-			.attr('xmlns', "http://www.w3.org/2000/svg")
-			.attr('version', "1.1");
-		this.detailGroup = this.svg.append('g')
+		this.detailGroup = panel2Div.append('div')
 			.classed('detail', true)
 			.datum(fd);
-		this.detailTextGroup = this.detailGroup.append('g');
-		this.detailFrontRect = this.detailGroup.append('rect')
-			.classed('detail', true);
-		fd.colorElement(this.detailFrontRect.node());
+		this.detailTextGroup = this.detailGroup.append('div');
+		fd.colorHTMLElement(this.detailGroup.node());
 		
 		function resizeDetail()
 		{
-			fd.appendTSpans(_this.detailTextGroup, parseFloat(_this.svg.style('width')), 12);
-			var textBox = _this.detailTextGroup.node().getBBox();
-			_this.detailRectHeight = textBox.height + (textBox.y) + PathView.prototype.textBottomMargin;
-			_this.detailFrontRect.attr('height', _this.detailRectHeight)
-				.attr('width', _this.svg.style('width'));
-			_this.svg.attr('height', _this.detailRectHeight);
+			fd.appendElements(_this.detailTextGroup, 12);
+			if (backText != fd.experience.parent().parent().caption())
+			{
+				var containerDiv = _this.detailTextGroup.select('div');
+				containerDiv.insert('div', ':first-child')
+					.classed('user-label', true)
+					.text(fd.experience.parent().parent().caption());
+			}
 			
 			if (fd.experience.canWrite())
-				_this.editChevronContainer.attr("transform", 
-					"translate({0},{1})".format(
-						$(_this.svg.node()).width() - (_this.inEditMode ? _this.editChevronWidth + 12 : 0), 
-						($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
-
+			{
+				$(_this.detailGroup.node()).width($(_this.mainDiv.node()).innerWidth() +
+					(_this.inEditMode ? 0 : $(_this.editChevronContainer.node()).outerWidth(true)));
+			}
 		}
 		setTimeout(resizeDetail);
 		
+		/* Update the contents of the top banner if the contents of the experience are changed. */
 		fd.setupChangeEventHandler(this.mainDiv.node(), function(eventObject, newValue)
 			{
-				fd.colorElement(_this.detailFrontRect.node());
+				fd.colorHTMLElement(_this.detailGroup.node());
 				resizeDetail();
 			});
 		
-		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", this.node(), function(eventObject)
+		/* Hide this panel if the experience is deleted */
+		setupOneViewEventHandler(fd.experience, "deleted.cr", this.node(), function(eventObject)
 			{
 				_this.hideNow();
 			});
 
 		if (fd.experience.canWrite())
 		{
-			this.editChevronContainer = this.detailGroup.append('g');
-		
-			this.editChevronContainer.append('g')
-				.classed('chevron-right', true)
-				.attr('transform', 'scale(0.0625)')
-				.append('polygon')
-				.attr('points', "0,32.4 32.3,0 192,160 192,160 192,160 32.3,320 0,287.6 127.3,160");
-			this.editChevronContainer.attr("transform", 
-					"translate({0},{1})".format(
-						$(_this.svg.node()).width(), 
-						$(_this.svg.node()).height() / 2));
+			this.editChevronContainer = appendRightChevronSVG(this.detailGroup);
+			$(this.editChevronContainer.node()).width(this.editChevronWidth)
+				.height(this.editChevronHeight);
 						
-			this.svg.on('click', function(e)
+			this.detailGroup.on('click', function(e)
 				{
 					if (_this.inEditMode)
 					{
@@ -454,38 +579,18 @@ var ExperienceCommentsPanel = (function() {
 				})
 		}
 		
-		var comments = fd.experience.getValue("Comments");
+		var comments = fd.experience.comments();
 		var commentsDiv = panel2Div.append('section')
 			.classed('multiple comments', true);
-		var commentList = commentsDiv.append('ol');
+		var commentList = crf.appendItemList(commentsDiv)
+			.classed('deletable-items', true);
 		commentList.classed('edit', this.inEditMode);
 		
-		function onCommentAdded(eventObject, newData)
-		{
-			_this.loadComments([newData]);
-		}
-		
-		/* commentsCells is an array of cells contained within a Comments instance. */
-		function onCommentsChecked(commentsCells)
-		{
-			var commentCell = commentsCells.find(function(cell)
+		setupOnViewEventHandler(fd.experience, 'commentAdded.cr', commentsDiv.node(), 
+			function (eventObject, newData)
 				{
-					return cell.field.name == "Comment";
+					_this.loadComments([newData]);
 				});
-			setupOnViewEventHandler(commentCell, 'valueAdded.cr', commentsDiv.node(), onCommentAdded);
-			_this.loadComments(commentCell.data);
-		}
-		
-		setupOnViewEventHandler(comments, 'dataChanged.cr', commentsDiv.node(), 
-			function (eventObject, changeTarget)
-			{
-				if (changeTarget.getTypeName() == "Comments")
-					changeTarget.promiseCellsFromCache(["Comment/Comment Request"])
-						.then(function()
-							{
-								onCommentsChecked(comments.getCells());
-							}, cr.asyncFail)
-			});
 		
 		if (fd.experience.canWrite())
 		{
@@ -495,7 +600,7 @@ var ExperienceCommentsPanel = (function() {
 				.attr('rows', 3);
 			newCommentInput.attr('placeholder', 'New Comment');
 
-			var postButton = newCommentDiv.append('button')
+			this.postButtonNode = newCommentDiv.append('button')
 				.classed('post site-active-div', true)
 				.text('Post')
 				.on('click', function()
@@ -508,55 +613,10 @@ var ExperienceCommentsPanel = (function() {
 								try
 								{
 									showClickFeedback(this);
-									_this.postComment(newComment, function()
-										{
-											newCommentInput.node().value = '';
-											unblockClick();
-										},
-										cr.syncFail);
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
-						}
-					});
-
-			$(panel2Div.node()).on('resize.cr', function()
-				{
-					$(newCommentInput.node()).width(
-						$(newCommentDiv.node()).width() - 
-						$(postButton.node()).outerWidth(true) -
-						($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
-				});
-		}
-			
-		if (cr.signedinUser.getInstanceID())
-		{
-			var newQuestionDiv = panel2Div.append('section')
-				.classed('new-comment', true);
-			var newQuestionInput = newQuestionDiv.append('textarea')
-				.attr('rows', 3);
-			newQuestionInput.attr('placeholder', 'New Question');
-
-			var askButton = newQuestionDiv.append('button')
-				.classed('post site-active-div', true)
-				.text('Ask')
-				.on('click', function()
-					{
-						var newQuestion = newQuestionInput.node().value;
-						if (newQuestion)
-						{
-							if (prepareClick('click', 'Ask Question'))
-							{
-								try
-								{
-									showClickFeedback(this);
-									_this.askQuestion(newQuestion)
+									_this.fd.experience.postComment({text: newComment})
 										.then(function()
 											{
-												newQuestionInput.node().value = '';
+												newCommentInput.node().value = '';
 												unblockClick();
 											},
 											cr.syncFail);
@@ -567,73 +627,33 @@ var ExperienceCommentsPanel = (function() {
 								}
 							}
 						}
-					});
-			
-			var commentPromptsDiv = panel2Div.append('section')
-				.classed('comment-prompts', true);
-			
-			var resizeQuestionBoxes = function()
+					})
+				.node();
+
+			$(panel2Div.node()).on('resize.cr', function()
 				{
-					var newQuestionHMargin = ($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width())
-					var newQuestionWidth = $(newQuestionDiv.node()).width() - newQuestionHMargin;
-					var askWidth = $(askButton.node()).outerWidth(true);
-					if (postButton && $(postButton.node()).outerWidth(true) > askWidth)
-						askWidth = $(postButton.node()).outerWidth(true);
-					newQuestionWidth -= askWidth;
-				
-					$(newQuestionInput.node()).width(newQuestionWidth);
-					commentPromptsDiv
-						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
-				}
-			
-			crp.promise({path:  'Comment Prompt'})
-			.then(function(prompts)
-				{
-					commentPromptsDiv.selectAll('div')
-						.data(prompts)
-						.enter()
-						.append('div')
-						.append('span')
-						.classed('site-active-text', true)
-						.text(function(d) 
-							{ return d.getDatum(cr.fieldNames.text); })
-						.on('click', function(d)
-							{
-								newQuestionInput.node().value = '';
-								newQuestionInput.node().value = d.getDatum(cr.fieldNames.text);
-								newQuestionInput.node().focus();
-								var textWidth = newQuestionInput.node().value.length;
-								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
-							});
-					resizeQuestionBoxes();
-				}, cr.asyncFail)		
-							
-			$(panel2Div.node()).on('resize.cr', resizeQuestionBoxes);
+					$(newCommentInput.node()).width(
+						$(newCommentDiv.node()).width() - 
+						$(_this.postButtonNode).outerWidth(true) -
+						($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
+				});
 		}
-			
-		$(panel2Div.node()).on('resize.cr', resizeDetail);	
-						
-		$(panel2Div.node()).on('resize.cr', function()
-			{
-				commentList.selectAll('textarea')
-					.each(function()
-						{
-							$(this).trigger('resize.cr');
-						});
-			});					
+		else
+			this.postButtonNode = null;
 		
-		if (comments.getInstanceID())
+		if (fd.experience.id())
 		{
-			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
-				comments are loaded. This won't happen if the comments are already loaded.
-			 */
-			this.promise = comments.promiseCellsFromCache(["Comment/Comment Request"])
-				.then(function(commentsCells)
+			this.promise = fd.experience.promiseData(['comments'])
+				.then(function(comments)
 					{
 						var r = $.Deferred();
 						setTimeout(function()
 							{
-								onCommentsChecked(commentsCells);
+			/* Put the call to loadComments in a setTimeout to ensure that the panel's css 
+				is set up before the comments are loaded. The panel's css won't be set up 
+				if the comments are already loaded.
+			 */
+								_this.loadComments(fd.experience.comments());
 								r.resolve();
 							});
 						return r;
@@ -644,6 +664,22 @@ var ExperienceCommentsPanel = (function() {
 			this.promise = $.Deferred();
 			this.promise.resolve();
 		}
+
+		this.promise = this.promise
+			.then(function()
+				{
+					$(panel2Div.node()).on('resize.cr', resizeDetail);	
+			
+					$(panel2Div.node()).on('resize.cr', function()
+						{
+							commentList.selectAll('textarea')
+								.each(function()
+									{
+										$(this).trigger('resize.cr');
+									});
+						});	
+					_this.setupAsk();
+				});
 	}
 		
 	return ExperienceCommentsPanel;

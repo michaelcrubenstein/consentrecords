@@ -85,6 +85,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 
 	<script type="text/javascript">
@@ -132,7 +133,7 @@
 				  .done(function(json, textStatus, jqXHR)
 					{
 						if (json['success']) {
-							closealert();
+							bootstrap_alert.close();
 							window.location = "{{nextURL}}";
 						}
 						else {
@@ -156,7 +157,7 @@
 			}
 		
 			$("form").on('submit', function (e) {
-				closealert();
+				bootstrap_alert.close();
 			
 				if (checkStep1())
 				{
@@ -182,7 +183,7 @@
 				  .done(function(json, textStatus, jqXHR)
 					{
 						if (json['success']) {
-							closealert();
+							bootstrap_alert.close();
 							if (successFunction)
 								successFunction();
 						}

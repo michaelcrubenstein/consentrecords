@@ -1,3 +1,6 @@
+# A script for listing the users created between a specified start date and end date.
+# The -all option including users created for testing (.pathadvisor.com and .consentrecords.org)
+#
 # python3 data/10listusers.py -start 2016-05-08 -end 2016-05-08
 # python3 data/10listusers.py -start 2016-05-08 -end 2016-05-08 -all
 
@@ -30,7 +33,7 @@ if __name__ == "__main__":
         
         print ('Start, End Dates:', startDate, endDate)
 
-        users = Instance.objects.filter(typeID=terms.user, deleteTransaction__isnull=True)\
+        users = User.objects.filter(deleteTransaction__isnull=True)\
             .order_by('transaction__creation_time');
         
         if startDate:
@@ -47,18 +50,21 @@ if __name__ == "__main__":
         if '-all' in sys.argv:
             t = (lambda u: True)
         else:
-            t = (lambda u: not u.getDescription().endswith('@pathadvisor.com') and\
-                           not u.getDescription().endswith('@consentrecords.org'))
+            t = (lambda u: not u.description().endswith('@pathadvisor.com') and\
+                           not u.description().endswith('@consentrecords.org'))
         for u in users:
             if t(u):
                 try:
-                    p = u.value_set.get(field=terms['Path'], deleteTransaction__isnull=True)
-                    experiences = p.referenceValue.value_set.filter(field=terms['More Experience'], deleteTransaction__isnull=True)
+                    p = u.path
+                    experiences = p.experiences.filter(deleteTransaction__isnull=True)
                     experienceCount = experiences.count()
                     sum += experienceCount
                 except Exception as e:
+                    print(traceback.format_exc())
                     experienceCount = 0
-                sys.stdout.write("%s\t%s\t%s\n" % (u.getDescription(), experienceCount, u.transaction.creation_time))
+                    
+                sys.stdout.write("%s\t%s\t%s\n" % (u.description(), experienceCount, u.transaction.creation_time))
+
             # raise RuntimeError("Done")
                                 
         print ('Experience Count: ', sum)

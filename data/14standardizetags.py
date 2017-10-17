@@ -35,59 +35,6 @@ def parseProperty(s):
     v = a[1].strip() if len(a) > 1 else None
     return t, v
 
-def loadRoot(type, field, value, nameList, transactionState):
-    languageCode, text = parseTranslation(value)
-    
-    objs = Instance.objects.filter(deleteTransaction__isnull=True,
-                            typeID=type,
-                            value__deleteTransaction__isnull=True,
-                            value__field=field,
-                            value__stringValue__iexact=text)
-    if len(objs):
-        root = objs[0]
-    else:
-        objs = Instance.objects.filter(deleteTransaction__isnull=True,
-                                typeID=type,
-                                value__deleteTransaction__isnull=True,
-                                value__field=field,
-                                value__stringValue__istartswith=text);
-        if len(objs):
-            root = objs[0]
-            value = root.value_set.filter(field=field, stringValue__istartswith=text, deleteTransaction__isnull=True)
-            print ("? %s: %s: %s" % (text, value[0].stringValue, root.id))
-            if input('Create anyway? (y/n): ') == 'y':
-                propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
-                root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
-                print("+ %s: %s" % (text, root.id))
-        else:
-            propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
-            root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
-            print("+ %s: %s" % (text, root.id))
-        
-    return root
-    
-def findFieldData(fieldsData, field):
-    for fd in fieldsData:
-        if fd["nameID"] == field.id:
-            return fd
-    raise RuntimeError("Unrecognize field: %s" % str(field))
-    
-def getSubFieldType(fd, field):
-    if "ofKindInstance" not in fd:
-        fd["ofKindInstance"] = Instance.objects.get(pk=fd['ofKindID'])
-    return fd["ofKindInstance"]
-
-def hasUniqueValue(fd):
-    if "capacity" not in fd:
-        return False
-    return fd["capacity"] == "_unique value"
-       
-def isTextField(fd):
-    return fd['dataType'] != '_translation' and fd['dataType'] != '_object'
-    
-def isObjectField(fd):
-    return fd['dataType'] == '_object'
-    
 def isTranslationField(fd):
     return fd['dataType'] == '_translation'
     
@@ -170,7 +117,7 @@ if __name__ == "__main__":
                         field=serviceField,
                         referenceValue_id=d[key].id).exists():
                         c.markAsDeleted(transactionState)
-                        parent.addValue(serviceField, d[key], parent.getNextElementIndex(serviceField), transactionState)
+                        parent.addValue(serviceField, d[key], parent.getNextElementIndex(serviceField), userInfo, transactionState)
                         print(parent.description.text, d[key])
                                 
             customOfferings = Value.objects.filter(\
@@ -186,7 +133,7 @@ if __name__ == "__main__":
                         referenceValue__value__deleteTransaction__isnull=True,
                         referenceValue__value__field=serviceField,
                         referenceValue__value__referenceValue_id=d[key].id).exists():
-                        parent.addValue(serviceField, d[key], parent.getNextElementIndex(serviceField), transactionState)
+                        parent.addValue(serviceField, d[key], parent.getNextElementIndex(serviceField), userInfo, transactionState)
                         print(str(parent.parent.parent), parent.description.text, d[key])
     except Exception as e:
         print("%s" % traceback.format_exc())

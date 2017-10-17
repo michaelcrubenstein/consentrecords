@@ -1,0 +1,177 @@
+/* tagPoolView.css */
+
+section.tags {
+	background-color: white;
+}
+
+section.tags div.tag-help {
+	margin: 6px 12px;
+	cursor: default;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	font-size: 0.8em;
+	color: #666;
+}
+
+section.tags.custom>div:last-of-type {
+	display: flex;
+	flex-direction: column;
+}
+
+section.tags>div:last-of-type>div.pool-container {
+	margin-top: 0px;
+	flex-grow: 1;
+}
+
+section.tags > div:first-of-type {
+	display: flex;
+	width: 100%;
+	padding-top: 6px;
+}
+
+section.tags label {
+	padding-bottom: 0px;
+}
+
+section.tags span.tags-container {
+	margin-left: 12px;
+	display: inline-block;
+	margin-bottom: 6px;
+	flex-grow: 1;
+}
+
+section.tags input.tag {
+	display: inline-block;
+	background-color: white;
+	color: #222;
+	border-style: solid;
+	border-width: 0px;
+	border-left: solid 3px;
+	border-color: transparent;
+	outline: none;
+	padding-left: 1.5px;
+	padding-right: 3.5px;
+	margin-right: 15px;
+	margin-bottom: 6px;
+	font-size: 11px;
+	font-weight: 600;
+	height: 25px;
+	border-radius: 0px;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+}
+
+section.tags input.tag:focus {
+	display: inline-block;
+	background-color: white;
+	color: #222;
+	border-style: solid;
+	border-width: 1px;
+	border-color: #ddd;
+	outline: none;
+	padding-left: 3px;
+}
+
+section.tags input.tag::-moz-selection,
+section.tags input.tag::selection
+{
+  color: white; background: #2C55CC;
+}
+
+section.tags span.textWidth {
+	display: inline-block;
+	border-style: solid;
+	border-width: 0px;
+	border-left: solid 3px;
+	font-size: 11px;
+	font-weight: 600;
+	padding-left: 3px;
+	padding-right: 1.5px;
+}
+
+section.tags button {
+	font-size: 11px;
+	font-weight: 600;
+	padding-left: 3px;
+	padding-right: 1.5px;
+	height: 25px;			/* Matches input-tag */
+	margin-bottom: 6px;		/* Matches input-tag */
+	color: #999;
+	border-color: transparent;
+	outline: none;
+}
+
+div.pool-container {
+	position: relative;	/* So the containing items are properly positioned. */
+	width: calc(100% - 20px);
+	margin: 10px;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+
+svg.flags {
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+	font-size: 11px;
+	width: 100%;
+}
+
+g.flag rect.opaque {
+	fill-opacity: 1.0;
+	fill: white;
+	stroke-opacity: 0.0;
+}
+g.flag rect.bg {
+	fill-opacity: 0.2;
+	stroke-width: 0;
+	stroke-opacity: 0.0;
+}
+g.flag.selected rect.bg {
+	fill-opacity: 0.6;
+}
+g.flag line.flag-pole {
+	stroke-opacity: 0.6;
+	stroke-width: 3;
+}
+
+g.flag .flag-label {	/* For flags */
+	text-anchor: start;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+	cursor: default;
+}
+
+g.flag .flag-label>tspan:nth-child(1) {	/* For flags */
+	font-weight: 600;
+}
+
+g.flag .flag-label>tspan:nth-child(2) {	/* For flags */
+	font-weight: 400;
+}
+
+span.flag {
+	position: absolute;
+	border-left-style: solid;
+	border-left-width: 3px;
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+	font-size: 11px;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+	cursor: default;
+	font-weight: 600;
+	padding-left: 0.3em;
+	padding-right: 0.6em;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	margin-right: 1em;
+	line-height: 15px;
+	white-space: nowrap;
+}

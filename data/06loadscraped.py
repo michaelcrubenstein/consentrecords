@@ -48,7 +48,7 @@ def parseProperty(s):
     v = a[1].strip() if len(a) > 1 else None
     return t, v
 
-def loadRoot(type, field, value, nameList, transactionState):
+def loadRoot(type, field, value, nameList, userInfo, transactionState):
     languageCode, text = parseTranslation(value)
     
     objs = Instance.objects.filter(deleteTransaction__isnull=True,
@@ -70,11 +70,11 @@ def loadRoot(type, field, value, nameList, transactionState):
             print ("? %s: %s: %s" % (text, value[0].stringValue, root.id))
             if input('Create anyway? (y/n): ') == 'y':
                 propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
-                root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
+                root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, userInfo, transactionState)
                 print("+ %s: %s" % (text, root.id))
         else:
             propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
-            root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
+            root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, userInfo, transactionState)
             print("+ %s: %s" % (text, root.id))
         
     return root
@@ -166,7 +166,7 @@ if __name__ == "__main__":
                 s, indent = readIndentedLine(f); c += 1
                 field, text = parseProperty(s)
                 print(type.getDescription(), field.getDescription(), text)
-                items = [(0, loadRoot(type, field, text, nameList, transactionState))]
+                items = [(0, loadRoot(type, field, text, nameList, userInfo, transactionState))]
                 s, indent = readIndentedLine(f); c += 1
                 while len(s) > 0:
                     while len(items) and indent <= items[-1][0]:
@@ -177,7 +177,7 @@ if __name__ == "__main__":
                         type = terms[s]
                         s, indent = readIndentedLine(f); c += 1
                         field, text = parseProperty(s)
-                        items = [(0, loadRoot(type, field, text, nameList, transactionState))]
+                        items = [(0, loadRoot(type, field, text, nameList, userInfo, transactionState))]
                         s, indent = readIndentedLine(f); c += 1
                     else:
                         lastIndent, item = items[-1]
@@ -192,7 +192,7 @@ if __name__ == "__main__":
                             currentIndent = indent
 
                             if hasUniqueValue(fieldData):
-                                child = instancecreator.addUniqueChild(item, field, type, {}, nameList, transactionState)
+                                child = instancecreator.addUniqueChild(item, field, type, {}, nameList, userInfo, transactionState)
                                 s, indent = readIndentedLine(f); c += 1
                             else:
                                 s, indent = readIndentedLine(f); c += 1
@@ -202,16 +202,16 @@ if __name__ == "__main__":
                                     fieldData = findFieldData(fieldsData, nameField)
                                     if isObjectField(fieldData):
                                         referenceValue = getReferenceValue(item, nameField, value, fieldData, nameList, userInfo)
-                                        child = instancecreator.addNamedByReferenceChild(item, field, type, nameField, fieldData, referenceValue, nameList, transactionState)
+                                        child = instancecreator.addNamedByReferenceChild(item, field, type, nameField, fieldData, referenceValue, nameList, userInfo, transactionState)
                                     else:
                                         if isTranslationField(fieldData):
                                             languageCode, textValue = parseTranslation(value)
                                         else:
                                             languageCode, textValue = (None, value)
-                                        child = instancecreator.addNamedChild(item, field, type, nameField, fieldData, textValue, languageCode, nameList, transactionState)
+                                        child = instancecreator.addNamedChild(item, field, type, nameField, fieldData, textValue, languageCode, nameList, userInfo, transactionState)
                                     s, indent = readIndentedLine(f); c += 1
                                 else:
-                                    child = instancecreator.addUniqueChild(item, field, type, {}, nameList, transactionState)
+                                    child = instancecreator.addUniqueChild(item, field, type, {}, nameList, userInfo, transactionState)
                             Instance.updateDescriptions([child], nameList)
                         
                             if child.parent != item:
@@ -220,13 +220,13 @@ if __name__ == "__main__":
                         else:
                             # This is an additional property.
                             if isTextField(fieldData):
-                                item.getOrCreateTextValue(field, {'text': text}, fieldData, transactionState)
+                                item.getOrCreateTextValue(field, {'text': text}, fieldData, userInfo, transactionState)
                             elif isTranslationField(fieldData):
                                 languageCode, value = parseTranslation(text)
-                                item.getOrCreateTranslationValue(field, value, languageCode, fieldData, transactionState)
+                                item.getOrCreateTranslationValue(field, value, languageCode, fieldData, userInfo, transactionState)
                             else:
                                 referenceValue = getReferenceValue(item, field, text, fieldData, nameList, userInfo)
-                                item.getOrCreateReferenceValue(field, referenceValue, fieldData, transactionState)
+                                item.getOrCreateReferenceValue(field, referenceValue, fieldData, userInfo, transactionState)
                             
                             if 'descriptorType' in fieldData:
                                 Instance.updateDescriptions([item], nameList)

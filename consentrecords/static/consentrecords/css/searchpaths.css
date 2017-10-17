@@ -86,13 +86,8 @@ text.icon-label {
 	cursor: default;
 }
 
-svg.flags {
-	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
-	font-size: 11px;
-	width: 100%;
-}
-
-svg.travel.flags {
+/* Override the position for the travel div. */
+panel.search-paths>div.panel-fill>div.travel.flags {
 	position: absolute;
 }
 
@@ -101,28 +96,23 @@ rect.hole {
 	fill: #666;
 }
 
-div.pool-container {
-	width: calc(100% - 20px);
-	margin: 10px;
-	overflow-y: scroll;
-	-webkit-overflow-scrolling: touch;
+span.hole {
+	background-color: #666;
+	border-right-color: #666;
+	color: #666;
 }
 
-panel.search-paths div.query-container {
+div.query-container {
 	width: calc(100% - 20px);
 	height: 101px;
 	margin-top: 0px;
 	margin-left: 10px;
-	
-}
-
-div.query-container {
-	border: #777 dotted;
-	border-width: 1px;
-	border-radius: 5px;
 	margin-right: 10px;
 	margin-bottom: 10px;
 	padding: 10px;
+	border: #777 dotted;
+	border-width: 1px;
+	border-radius: 5px;
 }
 
 div.query-container>span {
@@ -142,11 +132,8 @@ div.query-container>span {
 	cursor: default;
 }
 
-div.query-container>svg {
+div.query-container>div.query-tag-pool {
 	position: absolute;		/* So that it appears above the span. */
-}
-
-panel.search-paths div.query-container>svg {
 	width: calc(100% - 20px);
 	height: calc(100% - 20px);
 }
@@ -157,7 +144,12 @@ div.results-container {
 	-webkit-overflow-scrolling: touch;
 }
 
-div.results-container li div>div {
+div.results-container li {
+	background-color: white;
+	padding: 6px 12px;
+}
+
+div.results-container li div {
 	display: block;
 	color: #444;
 	font-size: smaller;
@@ -168,7 +160,7 @@ div.results-container li div>div {
 	cursor: pointer;
 }
 
-div.results-container li div>div:first-child
+div.results-container li div:first-child
 {
 	color: #333;
 	text-align: left;

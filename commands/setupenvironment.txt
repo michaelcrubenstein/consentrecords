@@ -1,0 +1,104 @@
+# On Mac, Download the version of the python installer from www.python.org
+# This will create a version of the python environment in /Library/Frameworks/Python.Framekwork
+# After installing python 3.6 (which includes pip3)
+
+pip3 install virtualenv
+
+# Create a new directory and create a virtualenv there.
+mkdir python36env
+virtualenv -p /Library/Frameworks/Python.framework/Versions/3.6/bin/python3.6 python36env
+
+# Move to the new directory and activate the virtual environment.
+cd python36env
+source bin/activate
+
+# Install the aws command line interface (cli)
+pip3 install awscli
+
+# Install the aws elastic beanstalk command line interface
+pip3 install awsebcli
+
+pip3 install mysql-connector-python-rf
+
+pip3 install django
+
+pip3 install django-cors-headers
+
+pip3 install django-oauth-toolkit
+
+pip3 install django-oauth2-provider
+
+pip3 install djangorestframework
+
+pip3 install django-filter
+
+# Installs tzlocal, used to get the local timezone
+pip3 install tzlocal
+
+# To clone the branch from GitHub Desktop:
+# 1. Open GitHub Desktop
+# 2. Make sure that consentrecords is not present in the list of repositories on the left.
+# 3. From the File menu, choose Clone Repositories
+# 4. Choose consentrecords
+# 5. Choose the folder containing the Virtual Environment that will contain consentrecords.
+
+# Put a copy of the following files into consentrecords/consentrecords
+# These files are not in the repository because they contain security credentials
+# email_settings.py
+# local_settings.py
+# production_settings.py
+
+# Fix bug in /lib/python3.6/site-packages/mysql/connector/django/base.py, 
+# DatabaseWrapper.__init function 
+# The _class properties need to be set before calling super and the
+# corresponding properties should not be set after.
+
+    def __init__(self, *args, **kwargs):
+        self.client_class = DatabaseClient
+        self.creation_class = DatabaseCreation
+        self.features_class = DatabaseFeatures
+        self.introspection_class = DatabaseIntrospection
+        self.validation_class = DatabaseValidation
+        self.ops_class = DatabaseOperations
+        
+        super(DatabaseWrapper, self).__init__(*args, **kwargs)
+        
+        try:
+            self._use_pure = self.settings_dict['OPTIONS']['use_pure']
+        except KeyError:
+            self._use_pure = True
+
+        if not self.use_pure:
+            self.converter = DjangoCMySQLConverter()
+        else:
+            self.converter = DjangoMySQLConverter()
+
+        # self.ops = DatabaseOperations(self)
+        # self.features = DatabaseFeatures(self)
+        # self.client = DatabaseClient(self)
+        # self.creation = DatabaseCreation(self)
+        # self.introspection = DatabaseIntrospection(self)
+        # self.validation = DatabaseValidation(self)
+
+# Fix bug in /lib/python3.6/site-packages/mysql/connector/django/operations.py
+# DatabaseOperations.bulk_insert_sql function
+
+    def bulk_insert_sql(self, fields, placeholder_rows):
+        """
+        Format the SQL for bulk insert
+        """
+        placeholder_rows_sql = (", ".join(row) for row in placeholder_rows)
+        values_sql = ", ".join("(%s)" % sql for sql in placeholder_rows_sql)
+        return "VALUES " + values_sql
+
+# Fix bug in /lib/python3.6/site-packages/mysql/connector/django/validations.py
+# Line 46
+            if getattr(field, 'remote_field', None) is None:
+
+# Make sure mysql-connector-python-rf is installed:
+pip3 install --egg mysql-connector-python-rf
+cd eb_django_app/prod/lib/python3.5/site-packages/mysql/connector/django
+lcd python36env/lib/python3.6/site-packages/mysql/connector/django
+put base.py
+put operations.py
+put validations.py

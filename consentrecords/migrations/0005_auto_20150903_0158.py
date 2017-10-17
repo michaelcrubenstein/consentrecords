@@ -15,13 +15,13 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='DeletedFact',
             fields=[
-                ('id', models.ForeignKey(editable=False, to='consentrecords.Fact', primary_key=True, serialize=False)),
+                ('id', models.ForeignKey(editable=False, to='consentrecords.Fact', primary_key=True, serialize=False, on_delete=models.CASCADE)),
             ],
         ),
         migrations.AlterField(
             model_name='fact',
             name='transaction',
-            field=models.ForeignKey(to='consentrecords.Transaction', editable=False),
+            field=models.ForeignKey(to='consentrecords.Transaction', editable=False, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='transaction',
@@ -31,11 +31,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transaction',
             name='user',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, editable=False),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, editable=False, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='deletedfact',
             name='transaction',
-            field=models.ForeignKey(to='consentrecords.Transaction', editable=False),
+            field=models.ForeignKey(to='consentrecords.Transaction', editable=False, on_delete=models.CASCADE),
         ),
     ]

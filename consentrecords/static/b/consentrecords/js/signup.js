@@ -1,5 +1,7 @@
 var Signup = (function () {
-	Signup.prototype = new SitePanel();
+	Signup.prototype = Object.create(crv.SitePanel.prototype);
+	Signup.prototype.constructor = Signup;
+
 	Signup.prototype.dots = null;
 
 	Signup.prototype.checkUnusedEmail = function(email, successFunction, failFunction) {
@@ -19,22 +21,21 @@ var Signup = (function () {
 			});
 	}
 			
-	Signup.prototype.submit = function(username, password, initialData, successFunction, failFunction)
+	Signup.prototype.submit = function(username, password, initialData)
 	{
 		bootstrap_alert.show($('.alert-container'), "Signing up...\n(this may take a minute)", "alert-info");
 
-		$.post(cr.urls.submitNewUser, 
+		return $.post(cr.urls.submitNewUser, 
 			{ username: username,
 				password: password,
 				properties: JSON.stringify(initialData)
 			})
-		  .done(function(json, textStatus, jqXHR)
+		  .then(function(json, textStatus, jqXHR)
 			{
-				successFunction(json.user);
-			})
-		  .fail(function(jqXHR, textStatus, errorThrown) {
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-		  });
+				var r2 = $.Deferred();
+				r2.resolve(json.user);
+				return r2;
+			}, cr.thenFail);
 	}
 
 	function Signup(initialData)
@@ -50,45 +51,33 @@ var Signup = (function () {
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
-		this.dots = new DotsNavigator(panel2Div, 3);
+		this.dots = new DotsNavigator(panel2Div, 2);
 		this.dots.datum = this;	
 		this.dots.finalText = "Create";	
 
-		this.dots.appendForwardButton(navContainer, function()
-			{
-				var birthDay = _thisSignup.getBirthday();
-				var birthMonth = birthDay.substr(0, 7);
-				var initialData = {"Birthday": [{text: birthDay}],
-				                   "Path": 
-				                   		[{cells: {"Birthday": [{text: birthMonth}] }}
-				                   		]};
-				initialData[cr.fieldNames.publicAccess] = [{path: "term[name=privilege]>enumerator[name=find]"}];
-				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
-					initialData, 
-					function(data)
-					{
-						cr.signedinUser.updateFromChangeData(data);
-						cr.signedinUser.promiseCells([cr.fieldNames.systemAccess])
-							.then(function()
-							{
-								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								_thisSignup.hideDown(
-									function()
-									{
-										$(cr.signedinUser).trigger("signin.cr");
-										unblockClick();
-									});
-							},
-						cr.syncFail);
-					},
-					cr.syncFail)
-				
-			});
 		this.dots.appendBackButton(navContainer, function() {
 			_thisSignup.hideDown(unblockClick);
 		});
 		
 		navContainer.appendTitle('New Account');
+
+		this.dots.appendForwardButton(navContainer, function()
+			{
+				var initialData = {};
+				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
+					initialData)
+					.then(function(data)
+						{
+							return cr.createSignedinUser(data.id);
+						}, 
+						cr.chainFail)
+					.then(function(user)
+						{
+							$("panel.sign-in").hide("slide", {direction: "right"}, 0);
+							_thisSignup.hideDown(unblockClick);
+						},
+						cr.syncFail);				
+			});
 
 		function getAlignmentFunction(done)
 		{
@@ -123,114 +112,6 @@ var Signup = (function () {
 			return Math.round($(listNode).scrollTop() / itemHeight);
 		}
 		
-		function setupPanel0(signup)
-		{
-			var p = d3.select(this);
-			
-			p.classed('birthday', true);
-
-			p.append('h1')
-				.text('Birthday');
-				
-			var row = p.append('table').classed('labeled', true)
-				.append('tr');
-			row.append('td').text('Birth Month');
-			var yearCell = row.append('td').classed('full-width', true);
-			var monthInput = yearCell.append('div')
-				.classed('site-active-text', true)
-				.text('month year')
-				.on('change', function(d)
-					{
-						console.log('monthInput change {0}'.format(monthInput.node().selectedIndex));
-						d3.select(this).selectAll(":first-child").attr('disabled', true);
-						signup.dots.checkForwardEnabled();
-					});
-			
-			var pickerRow = p.select('table').append('tr');
-			var pickerCell = pickerRow.append('td')
-				.attr('colspan', '2');		
-			var datePickerContainer = pickerCell.append('div')
-				.classed('wheel', true);
-			var monthPickerList = datePickerContainer.append('ol');
-			var yearPickerList = datePickerContainer.append('ol');
-			
-			function setPickedText()
-			{
-				var m = getPickedItem(monthPickerList.node());
-				var y = getPickedItem(yearPickerList.node());
-				monthInput.text("{0} {1}".format(m, y));
-			}
-					
-			$(monthPickerList.node()).scroll(getAlignmentFunction(setPickedText));
-			$(yearPickerList.node()).scroll(getAlignmentFunction(setPickedText));
-			
-			var topShade = datePickerContainer.append('div')
-				.classed('topShade', true);
-			var bottomShade = datePickerContainer.append('div')
-				.classed('bottomShade', true);
-					
-			p.append('p')
-				.text('Your birthday will be shared only with people you want. We collect your birth month and year to help match you to the right opportunities.');
-				
-			var minYear, maxYear;
-			maxYear = (new Date()).getUTCFullYear();
-	
-			minYear = maxYear-100;
-		
-			var years = [];
-			for (var i = maxYear; i >= minYear; --i)
-				years.push(i);
-			
-			yearPickerList.selectAll('li')
-				.data(years)
-				.enter()
-				.append('li')
-				.text(function(d) { return d; });
-					
-			var months = Date.CultureInfo.monthNames;
-			
-			monthPickerList.selectAll('li')
-				.data(months)
-				.enter()
-				.append('li')
-				.text(function(d) { return d; });
-				
-			var birthdayString = years[0] + "-" + "01";
-				
-			signup.getBirthday = function()
-			{
-				var m = getPickedIndex(monthPickerList.node());
-				var y = getPickedItem(yearPickerList.node());
-				m += 1;
-				if (m < 10)
-					m = "0{0}".format(m);
-				return "{0}-{1}".format(y, m);
-			}
-			
-			setPickedText();
-			p.node().onGoingForward = function(gotoNext)
-			{
-				gotoNext();
-			}
-			
-			p.append('div')
-				.append('a').attr('id', "id_termsOfUseLink")
-				.classed("btn btn-link btn-xs", true)
-				.text("Terms Of Use")
-				.on('click', function() {
-		var message = "<p>Information in this system will only be used according to your consent except " +
-			" as required by law. By signing up for this system, you consent to allow this system to store" +
-			" the information you have entered.</p>";
-		$(termsAlert.node()).html('<div class="alert alert-info alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+message+'</div>');
-
-				});
-			
-			var termsAlert = p.append('div')
-				.append('div').attr('id', "id_termsAlert");
-				
-			this.onReveal = null;
-		}
-	
 		function setupPanel2(signup)
 		{
 			var p = d3.select(this);
@@ -406,97 +287,8 @@ var Signup = (function () {
 			this.onReveal = null;
 		}
 	
-		function setupPanel4(signup)
-		{
-			var p = d3.select(this);
-			
-			p.append('h1').classed('', true)
-				.text('Sharing');
-			
-			p.append('p')
-				.text('Do you want your profile to be visible to others?');
-			
-			var t = p.append('table').classed('option', true);	
-			var row = t.append('tr');
-			var cell = row.append('td');
-			cell.append('input')
-				.attr('type', 'radio')
-				.attr('name', 'publicAccess')
-				.property('value', 'none')
-				.on('change', function()
-					{
-						var _this = this;
-						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
-					});
-			cell.append('span').text('Hidden');
-			row.append('td').append('p').text('No one will be able to locate or identify you.');
-
-			row = t.append('tr');
-			cell = row.append('td');
-			var findInput = cell.append('input')
-				.attr('type', 'radio')
-				.attr('checked', 1)
-				.attr('name', 'publicAccess')
-				.property('value', cr.privileges.find)
-				.on('change', function()
-					{
-						var _this = this;
-						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
-					});
-			cell.append('span').text('By Request');
-			row.append('td').append('p').text('Others can request access to your profile if they know your email address.');
-
-			row = t.append('tr');
-			cell = row.append('td');
-			var readInput = cell.append('input')
-				.attr('type', 'radio')
-				.attr('name', 'publicAccess')
-				.property('value', cr.privileges.read)
-				.on('change', function()
-					{
-						var _this = this;
-						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
-					});
-			cell.append('span').text('Public');
-			row.append('td').append('p').text('Others can look at your profile (except for information you hide from view).');
-
-			signup.getPublicAccess = function()
-			{
-				var s = t.selectAll('input[name=publicAccess]:checked').property('value');
-				if (s === 'none')
-					return null;
-				else
-					return s;
-			}
-			
-			this.onCheckFowardEnabled = function()
-			{
-				return false;	/* Block moving forward until the following script completes. */
-			}
-			
-			crp.promise({path: 'term[name=privilege]'})
-				.done(function(newInstances)
-					{
-						var enumeratorCell = newInstances[0].getCell('enumerator');
-						for (var i = 0; i < enumeratorCell.data.length; ++i)
-						{
-							var d = enumeratorCell.data[i];
-							if (d.getDescription() === cr.privileges.read)
-								readInput.property('value', d.getInstanceID());
-							else if (d.getDescription() === cr.privileges.find)
-								findInput.property('value', d.getInstanceID());
-						}
-						p.node().onCheckForwardEnabled = undefined;
-						signup.dots.checkForwardEnabled();
-					})
-				.fail(cr.asyncFail);
-			
-			this.onReveal = null;
-		}
-	
 		this.dots.nthPanel(0).onReveal = setupPanel2;
 		this.dots.nthPanel(1).onReveal = setupPanel3;
-		this.dots.nthPanel(2).onReveal = setupPanel0;
 		
 		setTimeout(function()
 			{
@@ -509,11 +301,12 @@ var Signup = (function () {
 
 var SigninPanel = (function()
 {
-	SigninPanel.prototype = new SitePanel();
-	
+	SigninPanel.prototype = Object.create(crv.SitePanel.prototype);
+	SigninPanel.prototype.constructor = SigninPanel;
+
 	SigninPanel.prototype.canSubmit = function() {
-	return $(this.passwordInput).val() !== "" &&
-		$(this.emailInput).val() !== "";
+		return $(this.passwordInput).val() &&
+			$(this.emailInput).val();
 	},
 
 	SigninPanel.prototype.checkenabled = function() {			
@@ -528,17 +321,38 @@ var SigninPanel = (function()
 				.classed("site-active-text", true);
 		}
 	},
-
-	SigninPanel.prototype.submit = function(successFunction, failFunction) {
-		if (!this.canSubmit())
-			return;
+	
+	SigninPanel.prototype.submit = function() {
+		if (!$(this.emailInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.emailInput.focus();
+			this.emailMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+		{
+			this.emailMessageReveal.hide({duration: 400});
+		}
+		
+		if (!$(this.passwordInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.passwordInput.focus();
+			this.passwordMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+			this.passwordMessageReveal.hide({duration: 400});
 		
 		bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 		
 		var _this = this;
-		$.post(cr.urls.submitSignin, { username : $(this.emailInput).val(),
+		return $.post(cr.urls.submitSignin, { username : $(this.emailInput).val(),
 									  password : $(this.passwordInput).val() })
-			.done(function(json)
+			.then(function(json)
 				{
 					if ($(_this.rememberMeCheckbox).prop("checked"))
 						$.cookie("email", $(_this.emailInput).val(), { expires : 10 });
@@ -549,13 +363,11 @@ var SigninPanel = (function()
 					$(_this.passwordInput).val("")
 				
 					$.cookie("authenticator", "email", { path: "/"});
-					if (successFunction)
-						successFunction(json.user);
-				})
-			.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				});
+					var r2 = $.Deferred();
+					r2.resolve(json.user);
+					return r2;
+				},
+				cr.thenFail);
 	}
 
 	SigninPanel.prototype.initializeFocus = function()
@@ -567,6 +379,40 @@ var SigninPanel = (function()
 		}
 		else
 			$(this.emailInput).focus();
+	}
+	
+	SigninPanel.prototype.submitSignin = function()
+	{
+		if (prepareClick('click', 'Signin Sign in'))
+		{
+			try
+			{
+				var _this = this;
+				this.submit()
+					.then(function(data)
+						{
+							cr.createSignedinUser(data.id)
+								.then(function()
+								{
+									_this.hideRight(unblockClick);
+								},
+								cr.syncFail)
+						}, 
+						function(err)
+						{
+							/* Error may be handled in submit, in which
+								case err will be undefined. */
+							if (err) 
+								cr.syncFail(err);
+							else
+								unblockClick();
+						});
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+		}
 	}
 
 	function SigninPanel()
@@ -581,9 +427,6 @@ var SigninPanel = (function()
 			.classed('site-title', true)
 			.text("Sign In to PathAdvisor");
 		
-		form.append('div')
-			.classed('alert-container', true);
-			
 		this.emailInput = form.append('input')
 				.attr('type', 'email')
 				.attr('maxlength', '254')
@@ -593,24 +436,12 @@ var SigninPanel = (function()
 				.attr('autofocus', '')
 				.on('input', function() { _this.checkenabled(); })
 				.node();
-		
-		var signInSuccess = function(data)
-		{
-			crp.clear();
-			cr.signedinUser.updateFromChangeData(data);
-			cr.signedinUser.promiseCells([cr.fieldNames.systemAccess])
-				.then(function()
-					{
-						_this.hideRight(function()
-							{
-								crp.pushInstance(cr.signedinUser);
-								$(cr.signedinUser).trigger("signin.cr");
-								unblockClick();
-							});
-					
-					},
-					cr.syncFail);
-		}
+		this.emailMessage = form.append('div')
+			.classed('message', true);
+		this.emailMessage.append('div')
+			.text('The email address is required.');
+		this.emailMessageReveal = new VerticalReveal(this.emailMessage.node());
+		this.emailMessageReveal.hide();
 		
 		this.passwordInput = form.append('input')
 				.attr('type', 'password')
@@ -622,21 +453,17 @@ var SigninPanel = (function()
 				.on('keypress', function() {
 						if (d3.event.which == 13)
 						{
-							if (prepareClick('return key', 'Signin sign in'))
-							{
-								try
-								{
-									_this.submit(signInSuccess, cr.syncFail);
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
+							_this.submitSignin();
 							d3.event.preventDefault();
 						}
 					})
 				.node();
+		this.passwordMessage = form.append('div')
+			.classed('message', true);
+		this.passwordMessage.append('div')
+			.text('The password is required.');
+		this.passwordMessageReveal = new VerticalReveal(this.passwordMessage.node());
+		this.passwordMessageReveal.hide();
 				
 		var rememberMeCheckboxLabel = form.append('div')
 			.classed('checkbox', true)
@@ -653,7 +480,7 @@ var SigninPanel = (function()
 			
 		buttonContainer.append('span')
 			.classed('signin-cancel-button site-trio-clipped site-active-text', true)
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'hide panel button'))
@@ -683,20 +510,10 @@ var SigninPanel = (function()
 			.text("Sign In")
 			.on('click', function()
 				{
-					if (prepareClick('click', 'Signin Sign in'))
-					{
-						try
-						{
-							_this.submit(signInSuccess, cr.syncFail);
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
+					_this.submitSignin();
 
-				   //stop form submission
-				   d3.event.preventDefault();
+					//stop form submission
+					d3.event.preventDefault();
 				});
 
 		this.panelDiv.append('hr');
@@ -771,7 +588,9 @@ var SigninPanel = (function()
 
 var ForgotPasswordPanel = (function()
 {
-	ForgotPasswordPanel.prototype = new SitePanel();
+	ForgotPasswordPanel.prototype = Object.create(crv.SitePanel.prototype);
+	ForgotPasswordPanel.prototype.constructor = ForgotPasswordPanel;
+
 	ForgotPasswordPanel.prototype.submitButton = null;
 	ForgotPasswordPanel.prototype.emailGroup = null;
 	ForgotPasswordPanel.prototype.emailInput = null;
@@ -803,7 +622,7 @@ var ForgotPasswordPanel = (function()
 			
 	ForgotPasswordPanel.prototype.submit = function(successFunction, failFunction) {
 		var _this = this;
-		bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
+		bootstrap_alert.success('Sending email (this may take a few minutes)...');
 		
 		$.post(cr.urls.resetPassword, 
 			{ "email": $(this.emailInput).val()
@@ -811,7 +630,7 @@ var ForgotPasswordPanel = (function()
 		  .done(function(json, textStatus, jqXHR)
 			{
 				bootstrap_alert.close();
-				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', _this.alertSuccess);
+				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>');
 				successFunction();
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
@@ -859,7 +678,7 @@ var ForgotPasswordPanel = (function()
 			
 		buttonContainer.append('span')
 			.classed('done-button site-trio-clipped site-active-text', true)
-			.text("Cancel")
+			.text(crv.buttonTexts.cancel)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'hide panel button'))
@@ -955,3 +774,279 @@ var ForgotPasswordPanel = (function()
 	}
 	return ForgotPasswordPanel;
 })();
+
+var ResetPasswordPanel = (function()
+{
+	ResetPasswordPanel.prototype = Object.create(crv.SitePanel.prototype);
+	ResetPasswordPanel.prototype.constructor = ResetPasswordPanel;
+
+	ResetPasswordPanel.prototype.submitButton = null;
+	ResetPasswordPanel.prototype.emailGroup = null;
+	ResetPasswordPanel.prototype.emailInput = null;
+	ResetPasswordPanel.prototype.emailOK = null;
+	
+	ResetPasswordPanel.prototype.canSubmit = function() {
+		var testusername = $(this.emailInput).val();
+		return validateEmail(testusername) &&
+			$(this.confirmInput).val() &&
+			$(this.passwordInput).val() == $(this.confirmInput).val();
+	}
+
+	ResetPasswordPanel.prototype.checkenabled = function() {
+		var submitEnabled = true;			
+		if (!validateEmail($(this.emailInput).val()))
+		{
+			submitEnabled = false;
+			$(this.emailGroup).removeClass( "has-success");
+			$(this.emailOK).removeClass( "glyphicon-ok" );
+		}
+		else
+		{
+			$(this.emailGroup).addClass( "has-success");
+			$(this.emailOK).addClass( "glyphicon-ok" );
+		}
+		
+		if ($(this.confirmInput).val() &&
+			$(this.passwordInput).val() == $(this.confirmInput).val())
+		{
+			$(this.confirmGroup).addClass( "has-success");
+			$(this.confirmOK).addClass( "glyphicon-ok" );
+		}
+		else
+		{
+			submitEnabled = false;
+			$(this.confirmGroup).removeClass( "has-success");
+			$(this.confirmOK).removeClass( "glyphicon-ok" );
+		}
+		
+		if (submitEnabled)
+		{
+			$(this.submitButton).removeClass("site-disabled-text")
+							   .addClass("site-active-text")
+							   .prop( "disabled", false );
+		}
+		else
+		{
+			$(this.submitButton).addClass("site-disabled-text")
+							   .removeClass("site-active-text")
+							   .prop( "disabled", true );
+		}
+	}
+			
+	ResetPasswordPanel.prototype.submit = function(resetKey) {
+		var _this = this;
+		
+		if (!$(this.emailInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.emailInput.focus();
+			this.emailMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+		{
+			this.emailMessageReveal.hide({duration: 400});
+		}
+		
+		if (!$(this.passwordInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.passwordInput.focus();
+			this.passwordMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+			this.passwordMessageReveal.hide({duration: 400});
+			
+		if (!$(this.confirmInput).val())
+		{
+			var r2 = $.Deferred();
+			r2.reject();
+			this.confirmInput.focus();
+			this.confirmMessageReveal.show({duration: 400});
+			return r2;
+		}
+		else
+			this.confirmMessageReveal.hide({duration: 400});
+
+		bootstrap_alert.success('Resetting password (this may take a few minutes)...');
+		return $.post(cr.urls.setResetPassword, 
+					{resetkey: resetKey,
+					 email: this.emailInput.value,
+					 password: this.passwordInput.value
+					})
+			.then(function(json, textStatus, jqXHR)
+				{
+					cr.logRecord('setResetPassword succeeds', _this.emailInput.value);
+					bootstrap_alert.success('Your password has been reset.');
+					return cr.createSignedinUser(json.user.id);
+				},
+				cr.thenFail);
+	}
+	
+	ResetPasswordPanel.prototype.submitReset = function(resetKey)
+	{
+		var _this = this;
+		if (prepareClick('click', 'reset password'))
+		{
+			try
+			{
+				this.submit(resetKey)
+					.then(function() { _this.hide(); }, 
+					function(err)
+					{
+						if (err)
+							cr.syncFail(err);
+						else
+							unblockClick();
+					});
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+		}
+	}
+				
+	function ResetPasswordPanel(resetKey)
+	{
+		this.createRoot(null, "Reset Password", "sign-in", revealPanelUp);
+		var _this = this;
+		
+		var form = this.panelDiv.append('form')
+			.classed('form-simple', true);
+		
+		form.append('div')
+			.classed('site-title', true)
+			.text("Reset Password");
+		
+		form.append('div')
+			.classed('help-block', true)
+			.text("Enter your email address and a new password to reset your password.");
+			
+		var emailGroup = form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('col-xs-12', true)
+			.append('div')
+			.classed('form-group has-feedback', true);
+		this.emailGroup = emailGroup.node();
+		
+		this.emailInput = emailGroup.append('input')
+			.classed('form-control feedback-control', true)
+			.attr('type', 'email')
+			.attr('placeholder', "Email Address")
+			.on('input', function() { _this.checkenabled(); })
+			.node();
+			
+		this.emailOK = emailGroup.append('span')
+			.classed("glyphicon form-control-feedback", true)
+			.node();
+		this.emailMessage = form.append('div')
+			.classed('message', true);
+		this.emailMessage.append('div')
+			.text('The email address is required.');
+		this.emailMessageReveal = new VerticalReveal(this.emailMessage.node());
+		this.emailMessageReveal.hide();
+		
+		var passwordGroup = form.append('div')
+			.classed('form-group', true);
+		var passwordLabel = passwordGroup.append('label')
+			.attr('for', 'id_newPassword')
+			.classed('control-label sr-only', true)
+			.text("New Password");
+		this.passwordInput = passwordGroup.append('input')
+			.attr('id', 'id_newPassword')
+			.classed('form-control feedback-control', true)
+			.attr('type', 'password')
+			.attr('placeholder', "New password")
+			.on('input', function() { _this.checkenabled(); })
+			.node();
+		
+		this.passwordMessage = form.append('div')
+			.classed('message', true);
+		this.passwordMessage.append('div')
+			.text('The password is required.');
+		this.passwordMessageReveal = new VerticalReveal(this.passwordMessage.node());
+		this.passwordMessageReveal.hide();
+
+		var confirmGroup = form.append('div')
+			.classed('form-group has-feedback', true);
+		this.confirmGroup = confirmGroup.node();
+		var confirmLabel = confirmGroup.append('label')
+			.attr('for', 'id_confirmNewPassword')
+			.classed('control-label sr-only', true)
+			.text("Confirm New Password");
+		this.confirmInput = confirmGroup.append('input')
+			.attr('id', 'id_confirmNewPassword')
+			.classed('form-control feedback-control', true)
+			.attr('type', 'password')
+			.attr('placeholder', "Confirm new password")
+			.on('input', function() { _this.checkenabled(); })
+			.on('keypress', function()
+				{
+					if (d3.event.which == 13)
+					{
+						_this.submitReset(resetKey);
+						d3.event.preventDefault();
+					}
+				})
+			.node();
+		this.confirmOK = emailGroup.append('span')
+			.classed("glyphicon form-control-feedback", true)
+			.node();
+		this.confirmMessage = form.append('div')
+			.classed('message', true);
+		this.confirmMessage.append('div')
+			.text('The confirmation does not match the password.');
+		this.confirmMessageReveal = new VerticalReveal(this.confirmMessage.node());
+		this.confirmMessageReveal.hide();
+
+		var buttonContainer = form.append('div')
+			.classed('form-group site-trio-container', true);
+			
+		buttonContainer.append('span')
+			.classed('done-button site-trio-clipped site-active-text', true)
+			.text(crv.buttonTexts.cancel)
+			.on('click', function()
+				{
+					if (prepareClick('click', 'hide panel button'))
+					{
+						try
+						{
+							showClickFeedback(this);
+							_this.hide();
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+				});
+			
+		buttonContainer.append('div')
+			.classed('site-trio-fill', true);
+		
+		buttonContainer.append('span')
+			.classed('submit-button site-trio-clipped site-active-text', true)
+			.text("Reset Password")
+			.on('click', function()
+				{
+					_this.submitReset(resetKey);					
+					//stop form submission
+					d3.event.preventDefault();
+				});
+				
+		$(this.node()).on("revealing.cr", function()
+		{
+			$(_this.emailInput).val("")
+				.focus();
+			_this.checkenabled();
+		});
+		
+	}
+	return ResetPasswordPanel;
+})();
+

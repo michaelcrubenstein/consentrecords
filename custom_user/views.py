@@ -24,10 +24,10 @@ def signin(request):
     
     backURL = request.GET.get(u'backURL', "/")
         
-    context = RequestContext(request, {
+    args = {
         'backURL' : backURL,
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
 
 # Displays a web page in which a user can specify an email address for 
 # resetting their password.
@@ -40,11 +40,11 @@ def forgotPassword(request):
     backURL = request.GET.get('backURL', '/')
     nextURL = request.GET.get('nextURL', '/')
         
-    context = RequestContext(request, {
+    args = {
         'backURL': backURL,
         'nextURL': nextURL,
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
 
 # Displays a web page in which a user can change their password.
 @ensure_csrf_cookie
@@ -55,42 +55,41 @@ def password(request):
     template = loader.get_template('custom_user/password.html')
     backURL = request.GET.get('back', '/')
         
-    context = RequestContext(request, {
+    args = {
         'user': request.user,
         'backURL': backURL,
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
 
 # Displays a web page in which a user can specify a new password based on a key.
 @ensure_csrf_cookie
-def passwordReset(request):
-    # Don't rely on authentication.
-    
-    template = loader.get_template('custom_user/passwordreset.html')
-    resetKey = request.GET.get('key', "")
-        
-    context = RequestContext(request, {
-        'resetkey': resetKey
-    })
-    return HttpResponse(template.render(context))
-
-# Creates a record so that a user can reset their password via email.
+# Creates a PasswordReset record and sends an email with its key so that a user 
+# can reset their password via email.
 def resetPassword(request):
     try:
-        if request.method != "POST":
+        if request.method != 'POST':
             raise Exception("resetPassword only responds to POST requests")
 
         POST = request.POST
         email = request.POST['email']
         
+        LogRecord.emit(request.user, 'create PasswordReset', email)
+
         if get_user_model().objects.filter(email=email).count() == 0:
             raise Exception("This email address is not recognized.");
-            
-        newKey = PasswordReset.createPasswordReset(email)
-        protocol = "https://" if request.is_secure() else "http://"
         
-        Emailer.sendResetPasswordEmail(settings.PASSWORD_RESET_SENDER, email, 
-            protocol + request.get_host() + settings.PASSWORD_RESET_PATH + "?key=" + newKey)
+        if request.user and request.user.is_superuser:
+            target = 60*24*7
+        else:
+            target = 30
+            
+        newKey = PasswordReset.createPasswordReset(email, target=target)
+        protocol = 'https://' if request.is_secure() else 'http://'
+        
+        if not (request.user and request.user.is_superuser and request.user.email != email):
+            Emailer.sendResetPasswordEmail(email, 
+                protocol + request.get_host() + settings.PASSWORD_RESET_PATH + newKey + '/',
+                protocol + request.get_host())
         
         results = {}
     except Exception as e:
@@ -103,9 +102,6 @@ def resetPassword(request):
 # Resets the password for the specified email address based on the key.
 def setResetPassword(request):
     try:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % "Start setResetPassword")
-
         if request.method != "POST":
             raise Exception("setResetPassword only responds to POST requests")
 
@@ -114,6 +110,8 @@ def setResetPassword(request):
         email = request.POST['email']
         password = request.POST['password']
         
+        LogRecord.emit(request.user, 'setResetPassword', email)
+
         if get_user_model().objects.filter(email=email).count() == 0:
             raise Exception("This email address is not recognized.");
         
@@ -149,11 +147,11 @@ def signup(request):
     backURL = request.GET.get('backURL', '/')
     nextURL = request.GET.get('nextURL', '/')
 
-    context = RequestContext(request, {
+    args = {
         'backURL' : backURL,
         'nextURL' : nextURL,
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
     
 class AccountDisabledError(ValueError):
     def __str__(self):
