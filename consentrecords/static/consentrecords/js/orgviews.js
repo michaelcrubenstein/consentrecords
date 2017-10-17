@@ -1519,7 +1519,7 @@ var NewGroupMemberSearchView = (function()
 								}
 								else
 								{
-									changes = {'inquiries':
+									changes = {'members':
 										[{'add': '1', 'user': user.urlPath()}]};
 									_this.parent.update(changes)
 										.then(f, cr.syncFail);
