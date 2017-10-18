@@ -701,7 +701,6 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.initGoalDateRange = function()
 	{
-		var todayDate = getUTCTodayDate();
 		this.newInstance().start("");
 		this.newInstance().end("");
 		return this;
