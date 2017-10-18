@@ -75,6 +75,7 @@ var crv = {
 		cookiesRequired:
 			"this operation requires cookies to be enabled. Please enable cookies for this browser and reload this page.",
 		currentTimeframe: "Something I'm Doing Now",
+		currentTimeframeShort: "Doing Now",
 		disqualifyingTags: "Disqualifying Tags",
 		domain: "Domain",
 		done: "Done",
@@ -94,6 +95,7 @@ var crv = {
 		experiencePrompts: "Experience Prompts",
 		firstName: "First Name",
 		goalTimeframe: "My Goal",
+		goalTimeframeShort: "Goal",
 		group: "Group",
 		groups: "Groups",
 		hidden: "Hidden",

@@ -1524,11 +1524,14 @@ var PathlinesPanel = (function () {
 				{
 					try
 					{
-						new AddOptions(_this);
+						var path = _this.pathtree.path;
+						var experienceController = new ExperienceController(path, null, false);
+						var panel = new QuickAddExperiencePanel(_this.node(), experienceController);
+						unblockClick();
 					}
 					catch(err)
 					{
-						syncFailFunction(err);
+						cr.syncFail(err);
 					}
 				}
 				d3.event.preventDefault();
@@ -1763,7 +1766,21 @@ var AddOptions = (function () {
 		addButton(div, 'More Ideas',
 			function()
 			{
-				new ExperienceIdeas(panelNode, pathlinesPanel.pathtree.path, unblockClick, cr.syncFail);
+				try
+				{
+					var path = pathlinesPanel.pathtree.path;
+					var experienceController = new ExperienceController(path, null, false);
+					var panel = new QuickAddExperiencePanel(panelNode, experienceController);
+					panel.done = function()
+						{
+							skipButton.on('click')();
+						};
+					unblockClick();
+				}
+				catch(err)
+				{
+					syncFailFunction(err);
+				}
 			});
 		
 		var cancelButton = addButton(div, 'Cancel', handleCancel);
@@ -1961,12 +1978,12 @@ var ExperienceIdeaPanel = (function() {
 					{
 						try
 						{
-							var panel = new NewExperiencePanel(experienceController);
+							var panel = new QuickAddExperiencePanel(experienceController);
 							panel.done = function()
 								{
 									skipButton.on('click')();
 								};
-							panel.showUp()
+							panel.showLeft()
 								.always(unblockClick);
 						}
 						catch(err)
