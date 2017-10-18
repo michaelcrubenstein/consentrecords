@@ -48,16 +48,6 @@ svg.pathway {
 	margin-right: 12px;
 }
 
-svg.pathway tspan.site {
-	font-size: smaller;
-	fill: #555;
-}
-
-svg.pathway tspan.tags {
-	font-size: smaller;
-	fill: #555;
-}
-
 svg.pathway g.year text {
 	fill: #777;
 	text-anchor: end;
@@ -90,10 +80,6 @@ g.detail .flag-label {	/* For detail panels */
 	cursor: default;
 }
 
-g.detail rect.bg {
-	fill: white;
-}
-	
 g.detail rect.detail {
 	fill-opacity: 0.2;
 	stroke-width: 0;
@@ -107,13 +93,6 @@ g.detail image {
 	cursor: pointer;
 }
 	
-g.detail line {
-	text-decoration: none;
-	cursor: pointer;
-	stroke: #AAA;
-	stroke-width: 0.5px;
-}
-
 g.detail rect.comments {
 	fill: transparent;
 	cursor: pointer;
