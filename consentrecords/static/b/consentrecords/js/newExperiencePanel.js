@@ -1754,12 +1754,17 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.completeShow = function()
 	{
-		var tagPoolSection = this.tagPoolSection;
+		var _this = this;
 		$.when(this._fillTagsPromise)
 			.then(function()
 				{
-					var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
-					tagInput.node().focus();
+					if (_this.controller().newInstance().experienceServices().length == 0)
+					{
+						var tagInput = _this.tagPoolSection.tagsContainer.select('input.tag');
+						tagInput.node().focus();
+					}
+					else
+						_this.ensureDateEditorVisible(_this.startHidable);
 				});
 	}
 	
@@ -1901,7 +1906,7 @@ var NewExperiencePanel = (function () {
 			.then(function()
 				{
 					var tagPoolSection = _this.tagPoolSection;
-					var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
+					var tagInput = tagPoolSection.tagsContainer.select('input.tag');
 					if (tagInput.size() == 0)
 					{
 						tagInput = tagPoolSection.appendTag(null);
@@ -2251,7 +2256,10 @@ var NewExperiencePanel = (function () {
 					_this.resizeVisibleSearch(0);
 					_this.checkDateAlignment();
 				});
-				_this.tagPoolSection.searchView.showSearch(0);
+				if (experienceController.newInstance().experienceServices().length == 0)
+					_this.tagPoolSection.searchView.showSearch(0);
+				else
+					_this.ensureDateEditorVisible(_this.startHidable);
 				_this.checkDateAlignment();
 			});
 	}
