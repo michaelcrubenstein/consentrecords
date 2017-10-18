@@ -70,42 +70,6 @@ svg.pathway g.guide rect.column-icon {
 	fill-opacity: 0.0;
 }
 
-g.detail .flag-label {	/* For detail panels */
-	text-anchor: start;
-	font-weight: 500;
-	-webkit-user-select: none;  /* Chrome all / Safari all */
-	-moz-user-select: none;     /* Firefox all */
-	-ms-user-select: none;      /* IE 10+ */
-	user-select: none;
-	cursor: default;
-}
-
-g.detail rect.detail {
-	fill-opacity: 0.2;
-	stroke-width: 0;
-	stroke-opacity: 0.0;
-	text-decoration: none;
-	cursor: pointer;
-}
-	
-g.detail image {
-	text-decoration: none;
-	cursor: pointer;
-}
-	
-g.detail rect.comments {
-	fill: transparent;
-	cursor: pointer;
-}
-	
-g.detail text.comments {
-	fill: #2C55CC;
-}
-	
-g.detail text.comments:hover {
-	fill: #2222FF;
-}
-	
 panel.idea {
 	position: absolute;
 	background-color: #96AAd6;
