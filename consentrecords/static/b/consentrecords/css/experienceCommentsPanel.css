@@ -19,6 +19,12 @@ panel.comments div.detail {
 	font-size: 12px;
 	display: flex;
 	align-items: center;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	cursor: default;
 }
 
 panel.comments div.detail > div {
