@@ -2516,6 +2516,7 @@ var ServicePanel = (function () {
 		/* The tags section. */
 		this.tagPoolSection = new ServiceTagPoolSection(this, controller, crv.buttonTexts.implications);
 		this.tagPoolSection.section.classed('first', true);
+		this.tagPoolSection.addAddTagButton();
 
 		var tagsFocused = function(eventObject, inputNode)
 			{

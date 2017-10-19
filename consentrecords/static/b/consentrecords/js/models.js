@@ -6122,6 +6122,12 @@ cr.Service = (function() {
 	}
 	
 	/** Called after the contents of the Service have been updated on the server. */
+    Service.prototype.promiseData = function(fields)
+    {
+    	fields = fields !== undefined ? fields : ['services'];
+    	return cr.IInstance.prototype.promiseData.call(this, fields);
+    }
+    
 	Service.prototype.updateData = function(d, newIDs)
 	{
 		var changed = false;
