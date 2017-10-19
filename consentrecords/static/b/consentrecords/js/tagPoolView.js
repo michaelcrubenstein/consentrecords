@@ -1,7 +1,6 @@
 var ServiceFlagController = (function() {
 	ServiceFlagController.prototype.service = null;
 	
-	ServiceFlagController.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
 	ServiceFlagController.prototype.flagLineOneDY = '1.4em';
 	ServiceFlagController.prototype.flagHeightEM = 2.333;
 	ServiceFlagController.prototype.emToPX = 11;
@@ -91,9 +90,9 @@ var ServiceFlagController = (function() {
 	}
 	
 	/* Returns True if the service contains the specified text. */
-	ServiceFlagController.prototype.descriptionContains = function(s, prefix)
+	ServiceFlagController.prototype.descriptionContains = function(s, prefix, service)
 	{
-		return this.service && this.service.descriptionContains(s, prefix);
+		return this.service && this.service.descriptionContains(s, prefix, service);
 	}
 	
 	ServiceFlagController.prototype.colorElement = function(r)
@@ -227,7 +226,7 @@ var VerticalReveal = (function() {
 
 var TagPoolView = (function () {
 	TagPoolView.prototype.container = null;
-	TagPoolView.prototype.div = null;
+	TagPoolView.prototype.flagsContainer = null;
 	
 	TagPoolView.prototype.flagHSpacing = 15;
 	TagPoolView.prototype.flagVSpacing = 1.0;
@@ -236,61 +235,93 @@ var TagPoolView = (function () {
 
 	TagPoolView.prototype.node = function()
 	{
-		return this.div.node();
+		return this.flagsContainer.node();
 	}
 	
 	TagPoolView.prototype.flags = function()
 	{
-		return this.div.selectAll('span.flag');
+		return this.flagsContainer.selectAll('span.flag');
 	}
 	
 	TagPoolView.prototype.$flags = function()
 	{
-		return $(this.div.node()).children('span.flag');
+		return $(this.flagsContainer.node()).children('span.flag');
 	}
 	
 	/* Sets the x, y and y2 coordinates of each flag. */
-	TagPoolView.prototype._setFlagCoordinates = function(g, maxX)
+	TagPoolView.prototype._setFlagCoordinates = function(g, maxX, filterText)
 	{
 		var _this = this;
 
+		var upperText = filterText && filterText.toLocaleUpperCase();
+		var filterService = upperText && this.hasNamedService(upperText);
+		var flagSets = [[], [], [], []];
+		if (filterService)
+		{
+			g.each(function(fd)
+				{
+					if (fd.visible === undefined || fd.visible)
+					{
+						if (fd.service == filterService)
+							flagSets[1].push(this);
+						else if (fd.service.serviceImplications().find(function(si)
+							{
+								return si.service() == filterService;
+							}))
+							flagSets[2].push(this);
+						else if (fd.service.impliedDirectlyBy().indexOf(filterService) >= 0)
+							flagSets[0].push(this);
+						else
+							flagSets[3].push(this);
+					}
+				});
+		}
+		else
+		{
+			g.each(function(fd)
+				{
+					if (fd.visible === undefined || fd.visible)
+						flagSets[3].push(this);
+				});
+		}
+		
 		var deltaY = this.flagHeightEM + this.flagVSpacing;
 		var startX = 0;
 		var nextY = 0;
 		var nextX = 0;
-		g.each(function(fd, i)
+		
+		flagSets.forEach(function(fs)
 			{
-				fd.x = nextX;
-				if (fd.visible === undefined || fd.visible)
+				if (fs.length)
 				{
-					var thisSpacing = $(this).outerWidth();
-					nextX += thisSpacing;
-					if (nextX >= maxX && fd.x > startX)
-					{
-						nextY += deltaY;
-						nextX = startX;
-						fd.x = nextX;
-						nextX += thisSpacing;
-					}
-					nextX += _this.flagHSpacing;
+					fs.forEach(function(gNode)
+						{
+							var fd = d3.select(gNode).datum();
+							var thisSpacing = $(gNode).outerWidth();
+							fd.x = nextX;
+							nextX += thisSpacing;
+							if (nextX >= maxX && fd.x > startX)
+							{
+								nextY += deltaY;
+								nextX = startX;
+								fd.x = nextX;
+								nextX += thisSpacing;
+							}
+							nextX += _this.flagHSpacing;
+							fd.y = nextY;
+						});
+					nextX = startX;
+					nextY += deltaY;
 				}
-				
-				fd.y = nextY;
-				fd.y2 = fd.y + fd.flagHeightEM;
 			});
 		
 		return (nextY + this.flagHeightEM) * this.emToPX;
 	}
 	
-	/* Lay out all of the contents within the div object. */
-	TagPoolView.prototype.layoutFlags = function(maxX, duration)
+	TagPoolView.prototype.moveFlags = function(duration)
 	{
-		maxX = maxX !== undefined ? maxX : $(this.div.node()).width();
 		duration = duration !== undefined ? duration : 700;
-		
 		var g = this.flags();
-		
-		var height = this._setFlagCoordinates(g, maxX);
 		
 		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
 		/* If it was visible and it is still visible, animate its position. */
@@ -298,46 +329,77 @@ var TagPoolView = (function () {
 		/* Calculate all of the groups before moving any of them so that subsequent sets are properly calculated. */
 		
 		var hiddenG = g.filter(function(fd) { return parseFloat($(this).css('opacity')) < 1; });
-		var movingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+		var movingG = g.filter(function(fd) { return $(this).css('opacity') != "0" && 
 									   (fd.visible === undefined || fd.visible); });
-		var hidingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+		var hidingG = g.filter(function(fd) { return $(this).css('opacity') != "0" && 
 									   !(fd.visible === undefined || fd.visible); });
 		var $g = this.$flags();
 		$g.stop();
 		
 		var promises = [];
+		if (duration == 0)
+			$(this.flagsContainer.node()).scrollTop(0);
+		else if ($(this.flagsContainer.node()).scrollTop() > 0)
+			promises.push($(this.flagsContainer.node()).animate({scrollTop: 0}, {duration: duration})
+				.promise());
+		
+		var showingFlags = [];		
 		hiddenG.each(function(fd)
 			{
 				var showing = fd.visible === undefined || fd.visible;
-				var styles = {left: fd.x, top: fd.y * fd.emToPX, 
-					opacity: showing ? 1.0 : 0.0};
+				var styles;
+				if (showing)
+					styles = {left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0};
+				else
+					styles = {opacity: 0.0};
+					
 				if (!showing &&
-					parseFloat($(this).css('opacity')) == 0)
+					$(this).css('opacity') == "0")
 				{
-					$(this).css(styles);
+					;
 				}
 				else if (duration == 0)
 				{
 					styles.display = showing ? '' : 'none';
 					$(this).css(styles);
 				}
+				else if (showing)
+				{
+					
+					if ($(this).css('opacity') == "0")
+					{
+						$(this).css({display: '', left: fd.x, top: fd.y * fd.emToPX});
+						showingFlags.push(this);
+					}
+					else
+					{
+						$(this).css('display', '');
+						promises.push($(this).animate(styles, {duration: duration})
+											 .promise()
+							);
+					}
+				}
 				else
 				{
 					var _thisFlag = this;
-					if (showing)
-						$(this).css('display', '');
 					promises.push($(this).animate(styles, {duration: duration})
 							.promise()
 							.done(function() { 
-								if (!showing)
-									$(_thisFlag).css({display: 'none'}); })
+								$(_thisFlag).css({display: 'none'}); })
 						);
 				}
 			});
+		
+		if (showingFlags.length)
+			promises.push($(showingFlags).animate({opacity: 1}, {duration: duration})
+						   .promise());
 			
 		movingG.each(function(fd)
 			{
-				var styles = {left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0};
+				var styles = {left: fd.x, top: fd.y * fd.emToPX};
+				if ($(this).css('opacity') != "1")
+					styles.opacity = 1;
+					
 				if (duration == 0)
 					$(this).css(styles);
 				else
@@ -345,28 +407,41 @@ var TagPoolView = (function () {
 						{duration: duration})
 							.promise());
 			});
-		 
+		
+		var hidingFlags = [];
 		hidingG.each(function(fd)
 			{
-				var styles = {left: fd.x, top: fd.y * fd.emToPX, display: 'none'};
-				if (duration == 0)
-				{
-					styles.opacity = 0.0;
-					$(this).css(styles);
-				}
-				else
-				{
-					promises.push($(this).animate({opacity: 0.0},
-						{duration: duration,
-						 complete: function()
-							{
-								$(this).css(styles);
-							}})
-						.promise());
-				}
+				hidingFlags.push(this);
 			});
+		if (hidingFlags.length)
+		{
+			var $hidingFlags = $(hidingFlags);
+			if (duration == 0)
+				$hidingFlags.css({opacity: 0});
+			else
+			{
+				var p = $hidingFlags.animate({opacity: 0.0},
+					{duration: duration})
+					.promise()
+					.done(function()
+						{
+							$hidingFlags.css({display: 'none'});
+						});
+				promises.push(p);
+			}
+		}
 			
 		return $.when.apply(null, promises);
+	}
+	
+	
+	/* Lay out all of the contents within the div object. */
+	TagPoolView.prototype.layoutFlags = function(maxX, duration)
+	{
+		maxX = maxX !== undefined ? maxX : $(this.flagsContainer.node()).width();
+		
+		this._setFlagCoordinates(this.flags(), maxX, this.focusNode && this.focusNode.value);
+		return this.moveFlags(duration);
 	}
 	
 	TagPoolView.prototype.setFlagVisibles = function()
@@ -378,9 +453,11 @@ var TagPoolView = (function () {
 	TagPoolView.prototype.filterFlags = function(filterText)
 	{
 		this.setFlagVisibles();
+		var upperText = filterText.toLocaleUpperCase();
+		var filterService = upperText && this.hasNamedService(upperText);
 		
 		/* Split the filter text by word and eliminate null words. */	
-		var inputTexts = filterText.toLocaleUpperCase().split(' ')
+		var inputTexts = upperText.split(' ')
 			.filter(function(s) { return s; });
 		var prefix;
 		if (inputTexts.length == 1 &&
@@ -393,19 +470,25 @@ var TagPoolView = (function () {
 			{
 				return new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
 			});
-			
+		
+		/* Make the services that are directly implied by filterService visible. */
+		var sis = filterService && filterService.serviceImplications().map(function(si) { return si.service(); })
+			.filter(function(s) { return s != filterService && s.impliedDirectlyBy().indexOf(filterService) >= 0;});
+
 		if (inputTexts.length > 0)
 		{
 			this.flags().each(function(fs)
 				{
-					if (!fs.descriptionContains(filterText.toLocaleUpperCase(), prefix) &&
+					if (!fs.descriptionContains(upperText, prefix, filterService) &&
 						!inputRegExps.reduce(function(a, b)
 							{
 								return a && b.test(fs.description());
-							}, true))
+							}, true) &&
+						(!filterService || sis.indexOf(fs.service) < 0))
 						fs.visible = false;
 				});
 		}
+		
 	}
 	
 	TagPoolView.prototype.appendFlag = function(g)
@@ -443,7 +526,7 @@ var TagPoolView = (function () {
 		var _this = this;
 		this.flags().remove();
 		
-		var g = this.div.selectAll('span')
+		var g = this.flagsContainer.selectAll('span')
 			.data(data)
 			.enter()
 			.append('span');
@@ -460,8 +543,8 @@ var TagPoolView = (function () {
 		var sd = data.find(function(sd) {
 				var d = sd.service;
 				return d.names().find(
-					function(d) { return d.description().toLocaleLowerCase() === compareText;}) ||
-					(d.description && d.description().toLocaleLowerCase() === compareText);
+						function(d) { return d.description().toLocaleUpperCase() === compareText;}) ||
+					(d.description && d.description().toLocaleUpperCase() === compareText);
 			});
 		return sd && sd.service;
 	}
@@ -470,7 +553,7 @@ var TagPoolView = (function () {
 	{
 		console.assert(container);
 		this.container = container;
-		this.div = container.append('div')
+		this.flagsContainer = container.append('div')
 			.classed(divClass, true);
 	}
 	
@@ -531,7 +614,7 @@ var TagSearchView = (function() {
 				duration, step, done);
 		}
 		else
-			this.layoutFlags(undefined, duration);
+			return this.layoutFlags(undefined, duration);
 	}
 	
 	TagSearchView.prototype.firstTagInputNode = function()
@@ -571,102 +654,6 @@ var TagSearchView = (function() {
 		}
 	}
 
-	TagSearchView.prototype.filterFlags = function(filterText)
-	{
-		TagPoolView.prototype.filterFlags.call(this, filterText);
-		
-		if (filterText)
-		{
-			var flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
-			var flagData = flags.data();
-			var flagDescriptions = flagData.map(function(fs) { return fs.description().toLocaleUpperCase(); });
-			
-			var flagIndexOf = function(s)
-			{
-				var min, mid, max;
-				min = 0; 
-				max = flagData.length - 1;
-				
-				var t = s;
-				while (max >= min)
-				{
-					mid = Math.floor((min + max) / 2);
-					var target = flagDescriptions[mid];
-					if (target < t)
-						min = mid + 1;
-					else if (target > t)
-						max = mid - 1;
-					else
-						return mid;
-				}
-				return -1;
-			}
-			
-			var flagIndex = flagIndexOf(filterText.toLocaleUpperCase());
-			if (flagIndex >= 0)
-			{
-				var rootService = flagData[flagIndex];
-				// Add to the visible list any item that contains the root service as a sub service.
-				this.flags().each(function(fs)
-					{
-						if (!fs.visible && fs.service.serviceImplications().find(function(subService)
-							{
-								return subService.service().id() == rootService.service.id();
-							}))
-							fs.visible = true;
-					});
-				flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
-				flagData = flags.data();
-				flagDescriptions = flagData.map(function(fs) { return fs.description().toLocaleUpperCase(); });
-			}
-			
-			var levels = {};
-			var levelCount = 1;
-			var flagServices = {};
-			
-			// Fill flagServices with all of the subServices associated with each flag that are
-			// in the set of visible flags except for the service itself.
-			flags.each(function(fs)
-			{
-				flagServices[fs.service.id()] = fs.service.serviceImplications()
-					.map(function(serviceImplication) { return serviceImplication.service(); })
-					.filter(function(s) {
-						return flagIndexOf(s.description().toLocaleUpperCase()) >= 0 && 
-										   s.id() != fs.service.id();
-					});
-			});
-			
-			for (levelCount = 1; 
-			     (Object.keys(levels).length < flagData.length &&
-				   levelCount <= 3);
-				 ++levelCount)
-			{
-				flags.each(function(fs)
-				{
-					var thisID = fs.service.id();
-					
-					if (!(thisID in levels))
-					{
-						// Add a service into the levels list if all of its visible flags 
-						// are already in the levels except for itself.
-						var f = function(s)
-							{
-								return s.id() in levels && levels[s.id()] < levelCount;
-							};
-						
-						if (flagServices[thisID].filter(f).length == flagServices[thisID].length)
-							levels[thisID] = levelCount;
-					}
-				});
-			}
-			
-			flags.each(function(fs)
-				{
-					fs.visible = fs.service.id() in levels;
-				});
-		}
-	}
-	
 	TagSearchView.prototype.constrainTagFlags = function(duration)
 	{
 		this.filterFlags(this.focusNode.value);
@@ -873,7 +860,7 @@ var TagPoolSection = (function () {
 	TagPoolSection.prototype.checkEmptyTagInput = function(inputNode)
 	{
 		var newText = inputNode.value.trim();
-		var newService = newText && this.searchView.hasNamedService(newText.toLocaleLowerCase());
+		var newService = newText && this.searchView.hasNamedService(newText.toLocaleUpperCase());
 		
 		if (!newText ||
 			(!newService && !this.controller.customServiceType()))
@@ -890,7 +877,7 @@ var TagPoolSection = (function () {
 					return;
 					
 				var newText = this.value.trim();
-				var newService = newText && _this.searchView.hasNamedService(newText.toLocaleLowerCase());
+				var newService = newText && _this.searchView.hasNamedService(newText.toLocaleUpperCase());
 				if (!newText ||
 					(!newService && !_this.controller.customServiceType()))
 				{
@@ -913,7 +900,10 @@ var TagPoolSection = (function () {
 						// In this case, do nothing.
 						;
 					}
-					_this.checkInputControls(this);
+					if (!newText && this != document.activeElement)
+						d3.select(this).remove();
+					else
+						_this.checkInputControls(this);
 				}
 				else if (d instanceof _this.controller.serviceLinkType())
 				{

@@ -1,6 +1,6 @@
 /* Global data for managing pathGuides in different contexts. */
 var PathGuides = {
-		labelYs: [11, 22]
+		labelYs: ["1.6em", "4.5em"]
 	};
 
 PathGuides.data = [{name: "Housing", labelY: PathGuides.labelYs[0], 

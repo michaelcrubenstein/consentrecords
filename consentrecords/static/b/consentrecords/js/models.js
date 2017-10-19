@@ -5945,6 +5945,8 @@ cr.Service = (function() {
 	Service.prototype._siteLabels = null;
 	Service.prototype._offeringLabels = null;
 	Service.prototype._serviceImplications = null;
+	Service.prototype._impliedBy = null;
+	Service.prototype._impliedDirectlyBy = null;
 	
 	Service.prototype.urlPath = function()
 	{
@@ -6008,6 +6010,11 @@ cr.Service = (function() {
 			this._serviceImplications = newData;
 			return this;
 		}
+	}
+	
+	Service.prototype.impliedDirectlyBy = function()
+	{
+		return this._impliedDirectlyBy;
 	}
 	
 	Service.prototype.setData = function(d)
@@ -6170,6 +6177,38 @@ cr.Service = (function() {
         	})
         	.done(function(services)
         		{
+        			services.forEach(function(s)
+        				{
+        					s.serviceImplications().forEach(function(si)
+        						{
+        							var s2 = si.service();
+        							if (s2 != s)
+        							{
+										s2._impliedBy.push(s);
+										s2._impliedDirectlyBy.push(s);
+        							}
+        						});
+        				});
+        			services.forEach(function(s)
+        				{
+        					for (var i = 0; i < s._impliedBy.length - 1; ++i)
+        					{
+        						var s2 = s._impliedBy[i];
+        						var removedS2 = false;
+        						for (var j = i + 1; j < s._impliedBy.length; ++j)
+        						{
+        							var s3 = s._impliedBy[j];
+        							if (s2._impliedBy.indexOf(s3) >= 0)
+        								cr.removeElement(s._impliedDirectlyBy, s3);
+        							else if (!removedS2 && s3._impliedBy.indexOf(s2) >= 0)
+        							{
+        								cr.removeElement(s._impliedDirectlyBy, s2);
+        								removedS2 = true;
+        							}
+        						}
+        					}
+        				});
+        				
         			result = $.Deferred();
         			result.resolve(services);
         			return result;
@@ -6255,18 +6294,23 @@ cr.Service = (function() {
 	}
 	
 	/* Returns True if the service contains the specified text. */
-	Service.prototype.descriptionContains = function(s, prefix)
+	Service.prototype.descriptionContains = function(s, prefix, service)
 	{
-		var re = new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
-		if (re.test(this.description()))
-			return true;
-		
-		var services = this.serviceImplications();
-		return services.find(function(d) { return d.description().toLocaleUpperCase() == s; });	
+		if (service)
+		{
+			return this == service || service.impliedDirectlyBy().indexOf(this) >= 0;
+		}
+		else
+		{
+			var re = new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
+			return re.test(this.description());
+		}
 	}
 	
 	function Service() {
 	    cr.IInstance.call(this);
+	    this._impliedBy = [];
+	    this._impliedDirectlyBy = [];
 	};
 	
 	return Service;
