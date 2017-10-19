@@ -223,7 +223,6 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.poolContainer = null;
 	SearchPathsPanel.prototype.queryTagPoolView = null;
 	
-	SearchPathsPanel.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
 	SearchPathsPanel.prototype.searchFlagHSpacing = 15;
 	SearchPathsPanel.prototype.searchFlagVSpacing = 1.0;
 	SearchPathsPanel.prototype.flagHeightEM = 2.333;

@@ -44,7 +44,7 @@ div.pathlines {
 
 svg.pathway {
 	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
-	font-size: 11px;
+	font-size: 12px;
 	margin-right: 12px;
 }
 
@@ -54,7 +54,7 @@ svg.pathway g.year text {
 }
 
 svg.pathway g.guide line.column {
-	stroke-width: 2;
+	stroke-width: 0.2em;
 	stroke-opacity: 0.1;
 }
 svg.pathway g.guide text.column-label {

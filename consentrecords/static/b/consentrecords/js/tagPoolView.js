@@ -1,7 +1,6 @@
 var ServiceFlagController = (function() {
 	ServiceFlagController.prototype.service = null;
 	
-	ServiceFlagController.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
 	ServiceFlagController.prototype.flagLineOneDY = '1.4em';
 	ServiceFlagController.prototype.flagHeightEM = 2.333;
 	ServiceFlagController.prototype.emToPX = 11;
