@@ -1215,6 +1215,20 @@ var PathLines = (function() {
 			consume the entire container. */
 		this.setupHeights();
 		
+		this.guideGroup.selectAll('g')
+			.append('rect')
+			.attr('y', function(d, i) { return "{0}em".format(parseFloat(PathGuides.data[i].labelY) - 1.6); })
+			.attr('x', -24)
+			.attr('height', function(d, i) 
+				{ return "{0}px".format(1.2*parseFloat($(this).parent().css('font-size')) + parseFloat($(this).parent().children('text').outerHeight()))
+				})
+			.attr('width', 48)
+			.attr('fill', 'transparent')
+			.on('click', function(d, i)
+				{
+					new ColumnInfoPanel(_this.sitePanel.node(), _this.path, d, unblockClick, cr.syncFail);
+				});
+		
 		$(this.sitePanel.mainDiv.node()).on("resize.cr", function()
 			{
 				_this.handleResize();
@@ -2105,5 +2119,157 @@ var OtherPathPanel = (function () {
 	}
 	
 	return OtherPathPanel;
+})();
+
+var ColumnInfoPanel = (function() {
+	
+	ColumnInfoPanel.prototype.showIdeaPanel = function(done)
+	{
+		$(this.ideaPanel.node()).css('top',
+			"{0}px".format(($(this.panelNode).height() - $(this.ideaPanel.node()).outerHeight()) / 2));
+		var newLeft = "{0}px".format(($(this.panelNode).width() - $(this.ideaPanel.node()).outerWidth()) / 2);
+		$(this.ideaPanel.node()).animate({left: newLeft},
+			{done: done});
+	}
+	
+	function ColumnInfoPanel(panelNode, path, guideData, done, fail)
+	{
+		var _this = this;
+		this.panelNode = panelNode;
+		
+		var data;
+		
+		try
+		{
+			var dimmer = new Dimmer(this.panelNode);
+			dimmer.show();
+			var onCancel = function()
+			{
+				dimmer.hide();
+				_this.ideaPanel.remove();
+			}
+		
+			dimmer.mousedown(onCancel);
+			
+			this.ideaPanel = d3.select(panelNode).append('panel')
+				.classed('idea', true)
+				.style('left', '100%');
+			
+			this.ideaPanel.append('div')
+				.classed('title', true)
+				.text(guideData.name);
+		
+			var promptDiv = this.ideaPanel.append('div')
+				.classed('prompt', true)
+				.html(PathGuides.help[guideData.name]);
+		
+			var footer = this.ideaPanel.append('footer');
+		
+			var column = PathGuides.data.indexOf(guideData);
+			var filter = function(fs)
+				{
+					if (fs instanceof ServiceFlagController)
+						return fs.service.getColumn() == column;
+					else
+						return fs.getColumn() == column;
+				}
+				
+			var skipButton = footer.append('button')
+				.classed('skip', true)
+				.text("Add {0} Experience".format(guideData.name))
+				.on('click', function()
+					{
+						if (prepareClick('click', "Add {0} Experience".format(guideData.name)))
+						{
+							try
+							{
+								var controller = new ExperienceController(path, null, false);
+								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Previous', 'Current']);
+								panel.promise
+									.fail(function(err)
+									{
+										dimmer.hide();
+									})
+									.always(function()
+										{
+											var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
+											$(_this.ideaPanel.node()).animate({left: newLeft},
+												{done: function()
+													{
+														_this.ideaPanel.remove();
+														unblockClick();
+													}});
+										});
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
+					});
+		
+			var answerButton = footer.append('button')
+				.classed('answer', true)
+				.text("Add {0} Goal".format(guideData.name))
+				.on('click', function()
+					{
+						if (prepareClick('click', "Add {0} Goal".format(guideData.name)))
+						{
+							try
+							{
+								var controller = new ExperienceController(path, null, false);
+								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Goal']);
+								panel.promise
+									.fail(function(err)
+									{
+										dimmer.hide();
+										unblockClick();
+									})
+									.always(function()
+										{
+											var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
+											$(_this.ideaPanel.node()).animate({left: newLeft},
+												{done: function()
+													{
+														_this.ideaPanel.remove();
+														unblockClick();
+													}});
+										});
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
+					});
+		
+			var closeButton = this.ideaPanel.append('button')
+				.classed('close', true)
+				.on('click', onCancel);
+			var closeSpan = closeButton.append('span')
+				.text(String.fromCharCode(215)	/* 215 - unicode value for times character */);
+		
+			this.showIdeaPanel();
+		}
+		catch(err)
+		{
+			fail(err)
+		}
+	}
+	
+	return ColumnInfoPanel;
+})();
+
+var ExperienceIdeaPanel = (function() {
+	ExperienceIdeaPanel.prototype.panelNode = null;
+	ExperienceIdeaPanel.prototype.dimmer = null;
+	
+	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experienceController, getNext)
+	{
+		var _this = this;
+		this.panelNode = panelNode;
+		this.dimmer = dimmer;
+	}
+	return ExperienceIdeaPanel;
 })();
 
