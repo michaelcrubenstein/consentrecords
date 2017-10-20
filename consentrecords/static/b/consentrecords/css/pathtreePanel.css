@@ -89,8 +89,7 @@ panel.idea > .title {
 	margin-top: 1em;
 	color: white;
 	background-color: transparent;
-	text-align: center;
-	font-size: 0.8em;
+	font-weight: 500;
 }
 
 panel.idea > .prompt {
@@ -99,9 +98,11 @@ panel.idea > .prompt {
 	color: white;
 	background-color: transparent;
 	outline: none;
+	font-size: 0.8em;
 }
 
 panel.idea > footer {
+	display: flex;
 	width: 100%;
 	border-top-style: solid;
 	border-top-color: white;
@@ -126,13 +127,14 @@ panel.idea footer button.skip {
 	border-right-width: 0.05em;
 	border-bottom-left-radius: 0.5em;
 	outline: none;
+	vertical-align: middle;
 }
 
 panel.idea footer button.answer {
 	width: 50%;
 	font-size: 0.8em;
 	font-weight: bold;
-	padding: 0.6em 0em;
+	padding: 0.6em 0;
 	color: white;
 	background-color: #2C55CC;
 	border: none;
@@ -141,6 +143,7 @@ panel.idea footer button.answer {
 	border-top-width: 0.05em;
 	border-bottom-right-radius: 0.5em;
 	outline: none;
+	vertical-align: middle;
 }
 
 panel.idea > footer button.answer:only-of-type {
