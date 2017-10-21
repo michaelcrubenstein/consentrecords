@@ -277,13 +277,13 @@ var QuickAddExperiencePanel = (function () {
 	{
 		var children;
 		var _this = this;
-		if (this.filter)
+		if (d.service == null)
+			children = [];
+		else if (this.filter)
 			children = d.service.impliedDirectlyBy().filter(function(s)
 				{
 					return _this.filter(s);
 				});
-		else if (d.service == null)
-			children = [];
 		else
 			children = d.service.impliedDirectlyBy();
 		return children.length;

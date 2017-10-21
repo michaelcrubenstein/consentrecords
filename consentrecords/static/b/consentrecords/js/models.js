@@ -6287,18 +6287,6 @@ cr.Service = (function() {
 		return PathGuides.data[column].fontColor;
 	}
 	
-	Service.prototype.flagColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].flagColor;
-	}
-	
-	Service.prototype.poleColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].poleColor;
-	}
-	
 	/* Returns True if the service contains the specified text. */
 	Service.prototype.descriptionContains = function(s, prefix, service)
 	{
