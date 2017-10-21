@@ -1813,7 +1813,7 @@ var OfferingPanel = (function () {
 		/* The tags section. */
 		this.tagPoolSection = new TagPoolSection(this, controller, crv.buttonTexts.tags);
 		this.tagPoolSection.section.classed('first', true);
-		this.tagsSection.addAddTagButton();
+		this.tagPoolSection.addAddTagButton();
 
 		var tagsFocused = function(eventObject, inputNode)
 			{
