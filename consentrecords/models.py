@@ -365,11 +365,14 @@ class IInstance():
                 noneName = v.text
         return noneName or enName or ''
     
+    def checkCanWrite(self, context):
+        if not context.canWrite(self):
+            raise PermissionDenied('you do not have sufficient write privileges for this operation')
+    
     def markDeleted(self, context):
         if self.deleteTransaction_id:
             raise RuntimeError('%s is already deleted' % str(self))
-        if not context.canWrite(self):
-            raise PermissionDenied('you do not have sufficient write privileges for this operation')
+        self.checkCanWrite(context)
         self.deleteTransaction = context.transaction
         self.save()
     
@@ -676,8 +679,7 @@ class TranslationInstance(ChildInstance):
         return "%s\t%s\t%s" % (self.id, self.languageCode or '-', self.text or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'text' in changes and changes['text'] != self.text:
@@ -694,8 +696,7 @@ class TranslationInstance(ChildInstance):
             self.save()
             
     def create(objects, parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-            raise PermissionError
+        parent.checkCanWrite(context)
             
         newItem = objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -818,8 +819,7 @@ class ServiceLinkInstance(ChildInstance):
         return "%s\t%s" % (self.id, self.service or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'service' in changes:
@@ -1247,8 +1247,7 @@ class Address(ChildInstance, dbmodels.Model):
             (self.id, self.city or '-', self.state or '-', self.zipCode or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'city' in changes and changes['city'] != self.city:
@@ -1355,9 +1354,9 @@ class Comment(ChildInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         question = _orNone(data, 'question')
         askerPath = _orNoneForeignKey(data, 'asker', context, Path)
-        if not (context.canWrite(parent) or \
-                (askerPath and question and context.user and askerPath == context.user.path and context.canRead(parent))):
-           raise PermissionDenied('you do not have permission to create this comment')
+        
+        if not (askerPath and question and context.user and askerPath == context.user.path and context.canRead(parent)):
+            self.checkCanWrite(context)
         
         newItem = Comment.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -1436,8 +1435,7 @@ class Comment(ChildInstance, dbmodels.Model):
              )
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise PermissionDenied('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         textChanging = 'text' in changes and changes['text'] and not self.text and changes['text'] != self.text
@@ -1567,8 +1565,7 @@ class CommentPrompt(RootInstance, PublicInstance, dbmodels.Model):
         return self.id
             
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         self.updateChildren(changes, 'translations', context, CommentPromptText, self.texts, newIDs)
                                                          
@@ -1637,8 +1634,7 @@ class DisqualifyingTag(ServiceLinkInstance, PublicInstance, dbmodels.Model):
         return str(self.service)
 
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied
+        parent.checkCanWrite(context)
            
         newItem = DisqualifyingTag.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -1742,6 +1738,12 @@ class Engagement(ChildInstance, dbmodels.Model):
                                Q(user__emails__position=0))\
                        .order_by('user__emails__text')
     
+    def markDeleted(self, context):
+        for i in self.experiences.filter(deleteTransaction__isnull=True):
+            i.markDeleted(context)
+            
+        super(Engagement, self).markDeleted(context)
+    
     def create(parent, data, context, newIDs={}):
         user = _orNoneForeignKey(data, 'user', context, User)
         newItem = Engagement.objects.create(transaction=context.transaction,
@@ -1795,8 +1797,7 @@ class Engagement(ChildInstance, dbmodels.Model):
              )
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'user' in changes:
@@ -1922,8 +1923,7 @@ class Enrollment(ChildInstance, dbmodels.Model):
         self.user = h.user 
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'user' in changes:
@@ -2089,6 +2089,12 @@ class Experience(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return Path.readableQuerySet(qs, user, prefix='parent')
             
+    def checkCanWrite(self, context):
+        if self.engagement and context.canWrite(self.engagement):
+        	return
+
+        super(Experience, self).checkCanWrite(context)
+    
     def markDeleted(self, context):
         for i in self.customServices.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
@@ -2108,8 +2114,7 @@ class Experience(ChildInstance, dbmodels.Model):
         super(Experience, self).markDeleted(context)
     
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied
+        parent.checkCanWrite(context)
         
         ExperiencePrompt.validateTimeframe(data, 'timeframe')
         _validateDate(data, 'start')
@@ -2399,8 +2404,7 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         return queryset.order_by('position')
                 
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied
+        parent.checkCanWrite(context)
         
         if 'name' not in data or not data['name']:
             raise ValueError('the name of a custom service is required.')
@@ -2429,8 +2433,7 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         return "%s\t%s\t%s" % (self.id, (self.position if (self.position != None) else '-'), self.name or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'name' in changes and changes['name'] != self.name:
@@ -2486,8 +2489,7 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
         return Path.readableQuerySet(qs, user, prefix='parent__parent')
             
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied("write permission failed")
+        parent.checkCanWrite(context)
         
         service = _orNoneForeignKey(data, 'service', context, Service)
         if not service:
@@ -2702,8 +2704,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
             )
              
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         Service.validateStage(changes, 'stage')
         ExperiencePrompt.validateTimeframe(changes, 'timeframe')
@@ -2782,8 +2783,7 @@ class ExperiencePromptService(OrderedServiceLinkInstance, PublicInstance, dbmode
         return str(self.service)
 
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied("write permission failed")
+        parent.checkCanWrite(context)
            
         newItem = ExperiencePromptService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -2907,8 +2907,7 @@ class Group(ChildInstance, dbmodels.Model):
         super(Group, self).markDeleted(context)
 
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied("write permission failed")
+        parent.checkCanWrite(context)
            
         newItem = Group.objects.create(transaction=context.transaction,
                                  parent=parent,
@@ -2920,8 +2919,7 @@ class Group(ChildInstance, dbmodels.Model):
         return newItem                          
         
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         self.updateChildren(changes, 'names', context, GroupName, self.names, newIDs)
         self.updateChildren(changes, 'members', context, GroupMember, self.members, newIDs)
@@ -3033,8 +3031,7 @@ class GroupMember(ChildInstance, dbmodels.Model):
                        .order_by('user__emails__text')
     
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied("write permission failed")
+        parent.checkCanWrite(context)
            
         newItem = GroupMember.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -3057,8 +3054,7 @@ class GroupMember(ChildInstance, dbmodels.Model):
         return "%s\t%s" % (self.id, str(self.user) if self.user else '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'user' in changes:
@@ -3169,8 +3165,7 @@ class Inquiry(ChildInstance, dbmodels.Model):
         return "%s\t%s" % (self.id, str(self.user) if self.user else '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'user' in changes:
@@ -3318,8 +3313,7 @@ class Notification(ChildInstance, dbmodels.Model):
         return s
 
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'is fresh' in changes and changes['is fresh'] != self.isFresh:
@@ -3530,8 +3524,7 @@ class Offering(ChildInstance, dbmodels.Model):
                 serviceSet.add(imp.impliedService)
 
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied("write permission failed")
+        parent.checkCanWrite(context)
            
         newItem = Offering.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -3574,8 +3567,7 @@ class Offering(ChildInstance, dbmodels.Model):
             self.maximumGrade or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'web site' in changes and changes['web site'] != self.webSite:
@@ -3707,8 +3699,7 @@ class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied("write permission failed")
+        parent.checkCanWrite(context)
            
         newItem = OfferingService.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -3876,8 +3867,7 @@ class Organization(SecureRootInstance, dbmodels.Model):
             )
     
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'web site' in changes and changes['web site'] != self.webSite:
@@ -4361,8 +4351,7 @@ class Path(IInstance, dbmodels.Model):
         )
     
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         Path.validateCanAnswerExperience(changes, 'can answer experience')
         
@@ -4482,8 +4471,7 @@ class Period(ChildInstance, dbmodels.Model):
         pass
     
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied("write permission failed")
+        parent.checkCanWrite(context)
         
         Period.validateWeekday(data, 'weekday')
         Period.validateTime(data, 'start time')
@@ -4519,8 +4507,7 @@ class Period(ChildInstance, dbmodels.Model):
             self.endTime or '-')
     
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'weekday' in changes and changes['weekday'] != self.weekday:
@@ -4699,8 +4686,7 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
         return "%s\t%s" % (self.id, self.stage or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'stage' in changes and changes['stage'] != self.stage:
@@ -4929,8 +4915,7 @@ class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
                        .order_by('impliedService__names__text')
     
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-            raise PermissionError
+        parent.checkCanWrite(context)
             
         newItem = ServiceImplication.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -4953,8 +4938,7 @@ class ServiceImplication(ChildInstance, PublicInstance, dbmodels.Model):
         return "%s\t%s" % (self.id, str(self.impliedService) if self.impliedService else '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'service' in changes:
@@ -5120,8 +5104,7 @@ class Session(ChildInstance, dbmodels.Model):
         _validateEnumeration(data, key, validValues)
     
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied
+        parent.checkCanWrite(context)
         
         _validateDate(data, 'registration deadline')
         _validateDate(data, 'start')
@@ -5166,8 +5149,7 @@ class Session(ChildInstance, dbmodels.Model):
              self.start or '-', self.end or '-', self.canRegister or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise PermissionDenied('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         _validateDate(changes, 'start')
         _validateDate(changes, 'end')
@@ -5355,8 +5337,7 @@ class Site(ChildInstance, dbmodels.Model):
         super(Site, self).markDeleted(context)
             
     def create(parent, data, context, newIDs={}):
-        if not context.canWrite(parent):
-           raise PermissionDenied
+        parent.checkCanWrite(context)
            
         newItem = Site.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -5385,8 +5366,7 @@ class Site(ChildInstance, dbmodels.Model):
         return "%s\t%s" % (self.id, self.webSite or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'web site' in changes and changes['web site'] != self.webSite:
@@ -5538,8 +5518,7 @@ class Street(ChildInstance, dbmodels.Model):
         return "%s\t%s\t%s" % (self.id, self.position, self.text or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'text' in changes and changes['text'] != self.text:
@@ -5811,8 +5790,7 @@ class User(SecureRootInstance, dbmodels.Model):
             )
     
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         if 'birthday' in changes:
             _validateDate(changes, 'birthday')
@@ -5968,8 +5946,7 @@ class UserEmail(ChildInstance, dbmodels.Model):
         return "%s\t%s\t%s" % (self.id, self.position, self.text or '-')
            
     def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
+        self.checkCanWrite(context)
         
         history = None
         if 'text' in changes and changes['text'] != self.text:
