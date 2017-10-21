@@ -117,6 +117,7 @@ var Controller = (function() {
 						{
 							r2.reject(err);
 						}
+						bootstrap_alert.close();
 						return r2;
 					});
 		}
@@ -354,7 +355,7 @@ var ExperienceController = (function() {
 	ExperienceController.prototype = Object.create(ChildController.prototype);
 	ExperienceController.prototype.constructor = ExperienceController;
 	
-	ExperienceController.prototype.addingMessage = "Adding Experience To Your Pathway...";
+	ExperienceController.prototype.addingMessage = "Adding Experience...";
 	ExperienceController.prototype.savingMessage = "Saving Experience...";
 	ExperienceController.prototype.groupKey = 'experiences';
 	ExperienceController.prototype.addEventType = 'experienceAdded.cr';
@@ -700,7 +701,6 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.initGoalDateRange = function()
 	{
-		var todayDate = getUTCTodayDate();
 		this.newInstance().start("");
 		this.newInstance().end("");
 		return this;

@@ -273,7 +273,6 @@ var ExperienceDatumSearchView = (function() {
 	ExperienceDatumSearchView.prototype.startSearchTimeout = function(searchText)
 	{
 		this.setupSearchTypes(searchText);
-		this.checkHelp(!this.typeName);
 		this.showSearch();
 		if (this.typeName)
 			SearchOptionsView.prototype.startSearchTimeout.call(this, searchText);
@@ -283,7 +282,6 @@ var ExperienceDatumSearchView = (function() {
 	{
 		val = val !== undefined ? val : this.inputCompareText();
 		this.setupSearchTypes(val);
-		this.checkHelp(!this.typeName);
 		this.showSearch();
 		if (this.typeName)
 			SearchOptionsView.prototype.restartSearchTimeout.call(this, val);
@@ -375,14 +373,6 @@ var ExperienceDatumSearchView = (function() {
 					_this.setupChunkerArguments(_this._foundCompareText);
 					this.checkStart(_this._foundCompareText);
 				}
-				else if (!_this.getDataChunker.hasButtons() && !_this.inputText())
-				{
-					if ("checkHelp" in _this)
-					{
-						_this.checkHelp(true);
-						_this.showSearch();
-					}
-				}
 			};
 	}
 	
@@ -472,33 +462,6 @@ var OrganizationLinkSearchView = (function() {
 		}
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.typeNames[0];
-	}
-	
-	OrganizationLinkSearchView.prototype.checkHelp = function(showHelp)
-	{
-		var helpDiv = d3.select(this.helpNode);
-
-		if (showHelp == (helpDiv.style('display') == 'block'))
-			return false;
-			
-		if (showHelp)
-		{
-			var texts = [{styles: '', text: 'The name of the organization that is providing this experience.'},
-						 ];
-			helpDiv.selectAll('p')
-				.data(texts)
-				.enter()
-				.append('p')
-				.classed('list', function(d) { return d.styles == 'list'; })
-				.text(function(d) { return d.text; });
-			helpDiv.style('display', 'block');
-		}
-		else
-		{
-			helpDiv.selectAll('p').remove();
-			helpDiv.style('display', 'none');
-		}
-		return true;
 	}
 	
 	OrganizationLinkSearchView.prototype.fillItems = function(buttons)
@@ -771,38 +734,6 @@ var SiteLinkSearchView = (function() {
 		}
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.typeNames[0];
-	}
-	
-	SiteLinkSearchView.prototype.checkHelp = function(showHelp)
-	{
-		var helpDiv = d3.select(this.helpNode);
-
-		if (showHelp == (helpDiv.style('display') == 'block'))
-			return false;
-			
-		if (showHelp)
-		{
-			var texts = [{styles: '', text: 'Examples:'}, 
-						 {styles: 'list', text: 'Blackstone Community Center\n'},
-						 {styles: 'list', text: 'Esplanade Boat House'},
-						 {styles: 'list', text: 'Jackson/Mann School'},
-						 {styles: 'list', text: 'McLean Playground'},
-						 {styles: 'list', text: '24 Beacon St., Boston, MA'},
-						 ];
-			helpDiv.selectAll('p')
-				.data(texts)
-				.enter()
-				.append('p')
-				.classed('list', function(d) { return d.styles == 'list'; })
-				.text(function(d) { return d.text; });
-			helpDiv.style('display', 'block');
-		}
-		else
-		{
-			helpDiv.selectAll('p').remove();
-			helpDiv.style('display', 'none');
-		}
-		return true;
 	}
 	
 	SiteLinkSearchView.prototype.fillItems = function(buttons)
@@ -1152,33 +1083,6 @@ var OfferingLinkSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	OfferingLinkSearchView.prototype.checkHelp = function(showHelp)
-	{
-		var helpDiv = d3.select(this.helpNode);
-
-		if (showHelp == (helpDiv.style('display') == 'block'))
-			return false;
-			
-		if (showHelp)
-		{
-			var texts = [{styles: '', text: 'The name of the program or service provided.'}, 
-						 ];
-			helpDiv.selectAll('p')
-				.data(texts)
-				.enter()
-				.append('p')
-				.classed('list', function(d) { return d.styles == 'list'; })
-				.text(function(d) { return d.text; });
-			helpDiv.style('display', 'block');
-		}
-		else
-		{
-			helpDiv.selectAll('p').remove();
-			helpDiv.style('display', 'none');
-		}
-		return true;
-	}
-	
 	OfferingLinkSearchView.prototype.fillItems = function(buttons)
 	{
 		var _this = this;
@@ -1416,8 +1320,6 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.currentExperienceLabel = "Something I'm Doing Now";
 	NewExperiencePanel.prototype.goalLabel = "My Goal";
 	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a tag or a title.';
-	NewExperiencePanel.prototype.firstTagHelp = 'What type of experience is this?';
-	NewExperiencePanel.prototype.otherTagHelp = 'What other tag goes with this experience?';
 	NewExperiencePanel.prototype.organizationDefaultPlaceholder = 'Organization (Optional)';
 	NewExperiencePanel.prototype.siteDefaultPlaceholder = 'Location (Optional)';
 	NewExperiencePanel.prototype.offeringDefaultPlaceholder = 'Title';
@@ -1430,11 +1332,6 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.setTagInputWidth = function(inputNode)
 	{
 		this.tagPoolSection.setTagInputWidth(inputNode);
-	}
-	
-	NewExperiencePanel.prototype.appendTag = function(container, instance)
-	{
-		return this.tagPoolSection.appendTag(container, instance);
 	}
 	
 	NewExperiencePanel.prototype.showTags = function()
@@ -1598,7 +1495,7 @@ var NewExperiencePanel = (function () {
 		else
 			this.siteSearchView.clearFromSite();
 	}
-		
+	
 	NewExperiencePanel.prototype.checkOfferingInput = function()
 	{
 		var newText = this.offeringSearchView.inputText();
@@ -1687,28 +1584,10 @@ var NewExperiencePanel = (function () {
 			return false;
 	}
 	
-	NewExperiencePanel.prototype.setTagHelp = function()
-	{
-		this.tagPoolSection.setTagHelp();
-	}
-	
-	NewExperiencePanel.prototype.hideAddTagButton = function()
-	{
-		this.tagPoolSection.hideAddTagButton();
-	}
-	
-	NewExperiencePanel.prototype.showAddTagButton = function()
-	{
-		this.tagPoolSection.showAddTagButton();
-	}
-	
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
 	{
 		var _this = this;
-		d3.select(inputNode)
-			.style('background-color', null)
-			.style('border-color', null)
-			.style('color', null);
+		PathGuides.clearNode(inputNode);
 			
 		var done = function()
 			{
@@ -1774,37 +1653,38 @@ var NewExperiencePanel = (function () {
 					.text(this.previousExperienceButton.classed('pressed') ? crv.buttonTexts.ended : crv.buttonTexts.ends);
 	}
 	
-	NewExperiencePanel.prototype.completeShow = function()
+	NewExperiencePanel.prototype.focusLastTag = function()
 	{
-		var tagPoolSection = this.tagPoolSection;
-		$.when(this._fillTagsPromise)
-			.then(function()
-				{
-					var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
-					tagInput.node().focus();
-				});
+		var tagInputNode = this.tagPoolSection.tagsContainer.select('input.tag:last-of-type').node();
+		tagInputNode.focus();
+		tagInputNode.setSelectionRange(0, tagInputNode.value.length)
 	}
 	
-	NewExperiencePanel.prototype.showUp = function()
+	NewExperiencePanel.prototype.checkDateAlignment = function()
 	{
-		var _this = this;
-		return EditItemPanel.prototype.showUp.call(this)
-			.then(function()
-				{
-					_this.completeShow();
-				},
-				cr.chainFail);
-	}
-		
-	NewExperiencePanel.prototype.showLeft = function()
-	{
-		var _this = this;
-		return EditItemPanel.prototype.showLeft.call(this)
-			.then(function()
-				{
-					_this.completeShow();
-				},
-				cr.chainFail);
+		if (!('optionPanel' in this))
+		{
+			; /* Do nothing */
+		}
+		else if ($(this.optionPanel.node()).innerWidth() <
+			$(this.optionPanel.node()).children().map(function(e) { return $(this).outerWidth(); })
+				.toArray().reduce(function(a, b) { return a + b; }, 0))
+		{
+			$(this.startDateContainer.selectAll('label').node()).width('auto');
+			$(this.endDateContainer.selectAll('label').node()).width('auto');
+			
+			this.startDateContainer.selectAll('ol').style('text-align', null);
+			this.endDateContainer.selectAll('ol').style('text-align', null);
+		}
+		else
+		{
+			var width = $(this.optionPanel.select('label').node()).width();
+			$(this.startDateContainer.selectAll('label').node()).width(width);
+			$(this.endDateContainer.selectAll('label').node()).width(width);
+			
+			this.startDateContainer.selectAll('ol').style('text-align', 'left');
+			this.endDateContainer.selectAll('ol').style('text-align', 'left');
+		}
 	}
 		
 	function NewExperiencePanel(experienceController, showFunction) {
@@ -1867,8 +1747,9 @@ var NewExperiencePanel = (function () {
 		var searchContainer;
 		
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, experienceController, crv.buttonTexts.tags);
-		
+		this.tagPoolSection = new TagPoolSection(this, experienceController, '');
+		this.tagPoolSection.addAddTagButton();
+				
 		var tagsChanged = function() { _this.setPlaceholders(); }
 		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);
 		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
@@ -1899,11 +1780,10 @@ var NewExperiencePanel = (function () {
 			.then(function()
 				{
 					var tagPoolSection = _this.tagPoolSection;
-					var tagInput = tagPoolSection.section.select('.tags-container>input.tag');
+					var tagInput = tagPoolSection.tagsContainer.select('input.tag');
 					if (tagInput.size() == 0)
 					{
-						var tagsContainer = tagPoolSection.section.select('.tags-container');
-						tagInput = tagPoolSection.appendTag(tagsContainer, null);
+						tagInput = tagPoolSection.appendTag(null);
 						tagPoolSection.hideAddTagButton(0);
 					}
 				}, cr.chainFail);
@@ -1920,12 +1800,12 @@ var NewExperiencePanel = (function () {
 				this.appendUniqueValue(crv.buttonTexts.ended, getLocaleDateString(experience.end()));
 
 			if (experience.organization())
-				this.appendUniqueValue(crv.buttonTexts.organization, experience.organization().description())
+				this.appendUniqueValue('', experience.organization().description())
 					.classed('first', true);
 			if (experience.site())
-				this.appendUniqueValue(crv.buttonTexts.site, experience.site().description());
+				this.appendUniqueValue('', experience.site().description());
 			if (experience.offering())
-				this.appendUniqueValue(crv.buttonTexts.offering, experience.offering().description());
+				this.appendUniqueValue('', experience.offering().description());
 		}
 		else
 		{
@@ -1937,13 +1817,13 @@ var NewExperiencePanel = (function () {
 					return "{0}-{1}".format(todayDate.getUTCFullYear() - 100, getMonthString(todayDate));
 				 })();
 		
-			var optionPanel = panel2Div.append('section')
+			this.optionPanel = panel2Div.append('section')
 				.classed('date-range-options', true);
 		
-			optionPanel.append('div')
+			this.optionPanel.append('label')
 				.text(this.timeframeLabel);
 
-			var buttonDiv = optionPanel.append('div');
+			var buttonDiv = this.optionPanel.append('div');
 			this.previousExperienceButton = buttonDiv.append('button')
 				.classed('previous', true)
 				.on('click', function()
@@ -2216,6 +2096,7 @@ var NewExperiencePanel = (function () {
 		
 		$(this.node()).one('revealing.cr', function()
 			{
+				_this.updateInputs();
 				_this.showTags();
 				
 				if (!experienceController.newInstance().engagement())
@@ -2248,8 +2129,9 @@ var NewExperiencePanel = (function () {
 				$(panel2Div.node()).on('resize.cr', function()
 				{
 					_this.resizeVisibleSearch(0);
+					_this.checkDateAlignment();
 				});
-				_this.tagPoolSection.searchView.showSearch(0);
+				_this.checkDateAlignment();
 			});
 	}
 	

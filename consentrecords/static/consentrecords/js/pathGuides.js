@@ -1,6 +1,6 @@
 /* Global data for managing pathGuides in different contexts. */
 var PathGuides = {
-		labelYs: [11, 22]
+		labelYs: ["1.6em", "4.5em"]
 	};
 
 PathGuides.data = [{name: "Housing", labelY: PathGuides.labelYs[0], 
@@ -19,3 +19,50 @@ PathGuides.data = [{name: "Housing", labelY: PathGuides.labelYs[0],
 				    color: "#0694F3", "fontColor": "#034A7A", flagColor: "#CDEAFC", poleColor: "#6ABFF8"},
 				  {name: "Other", labelY: PathGuides.labelYs[1], 
 				    color: "#777777", "fontColor": "#3C3C3C", flagColor: "#E4E4E4", poleColor: "#ADADAD"}];
+				    
+PathGuides.help = {
+	"Housing": "<p>Experiences and goals related to where you live and what kind of housing you live in.</p>" +
+		"<p>Where you live might be a city, state, province or country. Examples of kinds of housing include " +
+		"a house, an apartment, a hotel or motel, a shelter or a foster home.</p>",
+	"School": "<p>Experiences and goals related to schools you attend (by grade), academic degrees and specific classes.</p>" +
+"<p>For examples, Grade 8 in your middle school, the drawing class you took in high school, or your goal of a Master's Degree in Business Administration</p>",
+	"Interests": "<p>Interests are experiences or goals that include academic disciplines, recreational activities or hobbies that interest you. Interests are " +
+	"primarily intellectual or emotional; physical activities are classified under Wellness.</p>",
+	"Career": "<p>Experiences and goals related to internships, jobs or professions.</p>" +
+	"<p>For example, a summer job working in a restaurant, an internship with a law firm, a retail job at a store or a job as a doctor.</p>",
+	"Skills": "<p>Experiences and goals related to specific skills that you master.</p>" +
+	"<p>For example, language skills, computer programming skills, leadership skills, etc.</p>",
+	"Giving Back": "<p>Experiences and goals related to giving back to the world.</p>" +
+	"<p>For example, volunteering in your community, mentoring fellow employees at work, etc.</p>",
+	"Wellness": "<p>Experiences and goals related to taking care of yourself, including exercise and sports, family relationships, health care, etc.</p>" +
+	"<p>For example, playing soccer, knee surgery or becoming a parent, etc.</p>",
+	"Other": "<p>Any experience or goal that does not have a standard tag that fits into one of the other categories.</p>"
+	};
+
+PathGuides.fillNode = function(node, column)
+{
+	pathGuide = PathGuides.data[column];
+
+	d3.select(node)
+		.style('background-color', pathGuide.flagColor)
+		.style('border-color', pathGuide.poleColor)
+		.style('color', pathGuide.fontColor);
+}
+
+PathGuides.fillOtherNode = function(node)
+{
+	pathGuide = PathGuides.data[PathGuides.data.length - 1];
+
+	d3.select(node)
+		.style('background-color', pathGuide.flagColor)
+		.style('border-color', pathGuide.poleColor)
+		.style('color', pathGuide.fontColor);
+}
+
+PathGuides.clearNode = function(node)
+{
+	d3.select(node)
+		.style('background-color', null)
+		.style('border-color', null)
+		.style('color', null);
+}

@@ -1,7 +1,6 @@
 var ServiceFlagController = (function() {
 	ServiceFlagController.prototype.service = null;
 	
-	ServiceFlagController.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
 	ServiceFlagController.prototype.flagLineOneDY = '1.4em';
 	ServiceFlagController.prototype.flagHeightEM = 2.333;
 	ServiceFlagController.prototype.emToPX = 11;
@@ -73,27 +72,15 @@ var ServiceFlagController = (function() {
 		return PathGuides.data[column].fontColor;
 	}
 	
-	ServiceFlagController.prototype.flagColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].flagColor;
-	}
-	
-	ServiceFlagController.prototype.poleColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].poleColor;
-	}
-	
 	ServiceFlagController.prototype.description = function()
 	{
-		return this.service.description();
+		return this.service ? this.service.description() : "Other";
 	}
 	
 	/* Returns True if the service contains the specified text. */
-	ServiceFlagController.prototype.descriptionContains = function(s, prefix)
+	ServiceFlagController.prototype.descriptionContains = function(s, prefix, service)
 	{
-		return this.service && this.service.descriptionContains(s, prefix);
+		return this.service && this.service.descriptionContains(s, prefix, service);
 	}
 	
 	ServiceFlagController.prototype.colorElement = function(r)
@@ -227,7 +214,7 @@ var VerticalReveal = (function() {
 
 var TagPoolView = (function () {
 	TagPoolView.prototype.container = null;
-	TagPoolView.prototype.div = null;
+	TagPoolView.prototype.flagsContainer = null;
 	
 	TagPoolView.prototype.flagHSpacing = 15;
 	TagPoolView.prototype.flagVSpacing = 1.0;
@@ -236,61 +223,93 @@ var TagPoolView = (function () {
 
 	TagPoolView.prototype.node = function()
 	{
-		return this.div.node();
+		return this.flagsContainer.node();
 	}
 	
 	TagPoolView.prototype.flags = function()
 	{
-		return this.div.selectAll('span.flag');
+		return this.flagsContainer.selectAll('span.flag');
 	}
 	
 	TagPoolView.prototype.$flags = function()
 	{
-		return $(this.div.node()).children('span.flag');
+		return $(this.flagsContainer.node()).children('span.flag');
 	}
 	
 	/* Sets the x, y and y2 coordinates of each flag. */
-	TagPoolView.prototype._setFlagCoordinates = function(g, maxX)
+	TagPoolView.prototype._setFlagCoordinates = function(g, maxX, filterText)
 	{
 		var _this = this;
 
+		var upperText = filterText && filterText.toLocaleUpperCase();
+		var filterService = upperText && this.hasNamedService(upperText);
+		var flagSets = [[], [], [], []];
+		if (filterService)
+		{
+			g.each(function(fd)
+				{
+					if (fd.visible === undefined || fd.visible)
+					{
+						if (fd.service == filterService)
+							flagSets[1].push(this);
+						else if (fd.service.serviceImplications().find(function(si)
+							{
+								return si.service() == filterService;
+							}))
+							flagSets[2].push(this);
+						else if (fd.service.impliedDirectlyBy().indexOf(filterService) >= 0)
+							flagSets[0].push(this);
+						else
+							flagSets[3].push(this);
+					}
+				});
+		}
+		else
+		{
+			g.each(function(fd)
+				{
+					if (fd.visible === undefined || fd.visible)
+						flagSets[3].push(this);
+				});
+		}
+		
 		var deltaY = this.flagHeightEM + this.flagVSpacing;
 		var startX = 0;
 		var nextY = 0;
 		var nextX = 0;
-		g.each(function(fd, i)
+		
+		flagSets.forEach(function(fs)
 			{
-				fd.x = nextX;
-				if (fd.visible === undefined || fd.visible)
+				if (fs.length)
 				{
-					var thisSpacing = $(this).outerWidth();
-					nextX += thisSpacing;
-					if (nextX >= maxX && fd.x > startX)
-					{
-						nextY += deltaY;
-						nextX = startX;
-						fd.x = nextX;
-						nextX += thisSpacing;
-					}
-					nextX += _this.flagHSpacing;
+					fs.forEach(function(gNode)
+						{
+							var fd = d3.select(gNode).datum();
+							var thisSpacing = $(gNode).outerWidth();
+							fd.x = nextX;
+							nextX += thisSpacing;
+							if (nextX >= maxX && fd.x > startX)
+							{
+								nextY += deltaY;
+								nextX = startX;
+								fd.x = nextX;
+								nextX += thisSpacing;
+							}
+							nextX += _this.flagHSpacing;
+							fd.y = nextY;
+						});
+					nextX = startX;
+					nextY += deltaY;
 				}
-				
-				fd.y = nextY;
-				fd.y2 = fd.y + fd.flagHeightEM;
 			});
 		
 		return (nextY + this.flagHeightEM) * this.emToPX;
 	}
 	
-	/* Lay out all of the contents within the div object. */
-	TagPoolView.prototype.layoutFlags = function(maxX, duration)
+	TagPoolView.prototype.moveFlags = function(duration)
 	{
-		maxX = maxX !== undefined ? maxX : $(this.div.node()).width();
 		duration = duration !== undefined ? duration : 700;
-		
 		var g = this.flags();
-		
-		var height = this._setFlagCoordinates(g, maxX);
 		
 		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
 		/* If it was visible and it is still visible, animate its position. */
@@ -298,46 +317,77 @@ var TagPoolView = (function () {
 		/* Calculate all of the groups before moving any of them so that subsequent sets are properly calculated. */
 		
 		var hiddenG = g.filter(function(fd) { return parseFloat($(this).css('opacity')) < 1; });
-		var movingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+		var movingG = g.filter(function(fd) { return $(this).css('opacity') != "0" && 
 									   (fd.visible === undefined || fd.visible); });
-		var hidingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+		var hidingG = g.filter(function(fd) { return $(this).css('opacity') != "0" && 
 									   !(fd.visible === undefined || fd.visible); });
 		var $g = this.$flags();
 		$g.stop();
 		
 		var promises = [];
+		if (duration == 0)
+			$(this.flagsContainer.node()).scrollTop(0);
+		else if ($(this.flagsContainer.node()).scrollTop() > 0)
+			promises.push($(this.flagsContainer.node()).animate({scrollTop: 0}, {duration: duration})
+				.promise());
+		
+		var showingFlags = [];		
 		hiddenG.each(function(fd)
 			{
 				var showing = fd.visible === undefined || fd.visible;
-				var styles = {left: fd.x, top: fd.y * fd.emToPX, 
-					opacity: showing ? 1.0 : 0.0};
+				var styles;
+				if (showing)
+					styles = {left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0};
+				else
+					styles = {opacity: 0.0};
+					
 				if (!showing &&
-					parseFloat($(this).css('opacity')) == 0)
+					$(this).css('opacity') == "0")
 				{
-					$(this).css(styles);
+					;
 				}
 				else if (duration == 0)
 				{
 					styles.display = showing ? '' : 'none';
 					$(this).css(styles);
 				}
+				else if (showing)
+				{
+					
+					if ($(this).css('opacity') == "0")
+					{
+						$(this).css({display: '', left: fd.x, top: fd.y * fd.emToPX});
+						showingFlags.push(this);
+					}
+					else
+					{
+						$(this).css('display', '');
+						promises.push($(this).animate(styles, {duration: duration})
+											 .promise()
+							);
+					}
+				}
 				else
 				{
 					var _thisFlag = this;
-					if (showing)
-						$(this).css('display', '');
 					promises.push($(this).animate(styles, {duration: duration})
 							.promise()
 							.done(function() { 
-								if (!showing)
-									$(_thisFlag).css({display: 'none'}); })
+								$(_thisFlag).css({display: 'none'}); })
 						);
 				}
 			});
+		
+		if (showingFlags.length)
+			promises.push($(showingFlags).animate({opacity: 1}, {duration: duration})
+						   .promise());
 			
 		movingG.each(function(fd)
 			{
-				var styles = {left: fd.x, top: fd.y * fd.emToPX, opacity: 1.0};
+				var styles = {left: fd.x, top: fd.y * fd.emToPX};
+				if ($(this).css('opacity') != "1")
+					styles.opacity = 1;
+					
 				if (duration == 0)
 					$(this).css(styles);
 				else
@@ -345,28 +395,41 @@ var TagPoolView = (function () {
 						{duration: duration})
 							.promise());
 			});
-		 
+		
+		var hidingFlags = [];
 		hidingG.each(function(fd)
 			{
-				var styles = {left: fd.x, top: fd.y * fd.emToPX, display: 'none'};
-				if (duration == 0)
-				{
-					styles.opacity = 0.0;
-					$(this).css(styles);
-				}
-				else
-				{
-					promises.push($(this).animate({opacity: 0.0},
-						{duration: duration,
-						 complete: function()
-							{
-								$(this).css(styles);
-							}})
-						.promise());
-				}
+				hidingFlags.push(this);
 			});
+		if (hidingFlags.length)
+		{
+			var $hidingFlags = $(hidingFlags);
+			if (duration == 0)
+				$hidingFlags.css({opacity: 0});
+			else
+			{
+				var p = $hidingFlags.animate({opacity: 0.0},
+					{duration: duration})
+					.promise()
+					.done(function()
+						{
+							$hidingFlags.css({display: 'none'});
+						});
+				promises.push(p);
+			}
+		}
 			
 		return $.when.apply(null, promises);
+	}
+	
+	
+	/* Lay out all of the contents within the div object. */
+	TagPoolView.prototype.layoutFlags = function(maxX, duration)
+	{
+		maxX = maxX !== undefined ? maxX : $(this.flagsContainer.node()).width();
+		
+		this._setFlagCoordinates(this.flags(), maxX, this.focusNode && this.focusNode.value);
+		return this.moveFlags(duration);
 	}
 	
 	TagPoolView.prototype.setFlagVisibles = function()
@@ -378,9 +441,11 @@ var TagPoolView = (function () {
 	TagPoolView.prototype.filterFlags = function(filterText)
 	{
 		this.setFlagVisibles();
+		var upperText = filterText.toLocaleUpperCase();
+		var filterService = upperText && this.hasNamedService(upperText);
 		
 		/* Split the filter text by word and eliminate null words. */	
-		var inputTexts = filterText.toLocaleUpperCase().split(' ')
+		var inputTexts = upperText.split(' ')
 			.filter(function(s) { return s; });
 		var prefix;
 		if (inputTexts.length == 1 &&
@@ -393,41 +458,35 @@ var TagPoolView = (function () {
 			{
 				return new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
 			});
-			
+		
+		/* Make the services that are directly implied by filterService visible. */
+		var sis = filterService && filterService.serviceImplications().map(function(si) { return si.service(); })
+			.filter(function(s) { return s != filterService && s.impliedDirectlyBy().indexOf(filterService) >= 0;});
+
 		if (inputTexts.length > 0)
 		{
 			this.flags().each(function(fs)
 				{
-					if (!fs.descriptionContains(filterText.toLocaleUpperCase(), prefix) &&
+					if (!fs.descriptionContains(upperText, prefix, filterService) &&
 						!inputRegExps.reduce(function(a, b)
 							{
 								return a && b.test(fs.description());
-							}, true))
+							}, true) &&
+						(!filterService || sis.indexOf(fs.service) < 0))
 						fs.visible = false;
 				});
 		}
+		
 	}
 	
 	TagPoolView.prototype.appendFlag = function(g)
 	{
 		g.classed('flag', true)
 			.style('opacity', 0)
-			.style('display', 'none');
-		
-		g.style('border-left-color',
-			function(d)
+			.style('display', 'none')
+			.each(function(d)
 				{
-					return d.poleColor();
-				})
-			.style('background-color',
-			function(d)
-				{
-					return d.flagColor();
-				})
-			.style('color',
-			function(d)
-				{
-					return d.fontColor();
+					PathGuides.fillNode(this, d.getColumn());
 				})
 			.text(function(d)
 				{
@@ -443,7 +502,7 @@ var TagPoolView = (function () {
 		var _this = this;
 		this.flags().remove();
 		
-		var g = this.div.selectAll('span')
+		var g = this.flagsContainer.selectAll('span')
 			.data(data)
 			.enter()
 			.append('span');
@@ -460,8 +519,8 @@ var TagPoolView = (function () {
 		var sd = data.find(function(sd) {
 				var d = sd.service;
 				return d.names().find(
-					function(d) { return d.description().toLocaleLowerCase() === compareText;}) ||
-					(d.description && d.description().toLocaleLowerCase() === compareText);
+						function(d) { return d.description().toLocaleUpperCase() === compareText;}) ||
+					(d.description && d.description().toLocaleUpperCase() === compareText);
 			});
 		return sd && sd.service;
 	}
@@ -470,7 +529,7 @@ var TagPoolView = (function () {
 	{
 		console.assert(container);
 		this.container = container;
-		this.div = container.append('div')
+		this.flagsContainer = container.append('div')
 			.classed(divClass, true);
 	}
 	
@@ -531,7 +590,7 @@ var TagSearchView = (function() {
 				duration, step, done);
 		}
 		else
-			this.layoutFlags(undefined, duration);
+			return this.layoutFlags(undefined, duration);
 	}
 	
 	TagSearchView.prototype.firstTagInputNode = function()
@@ -571,102 +630,6 @@ var TagSearchView = (function() {
 		}
 	}
 
-	TagSearchView.prototype.filterFlags = function(filterText)
-	{
-		TagPoolView.prototype.filterFlags.call(this, filterText);
-		
-		if (filterText)
-		{
-			var flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
-			var flagData = flags.data();
-			var flagDescriptions = flagData.map(function(fs) { return fs.description().toLocaleUpperCase(); });
-			
-			var flagIndexOf = function(s)
-			{
-				var min, mid, max;
-				min = 0; 
-				max = flagData.length - 1;
-				
-				var t = s;
-				while (max >= min)
-				{
-					mid = Math.floor((min + max) / 2);
-					var target = flagDescriptions[mid];
-					if (target < t)
-						min = mid + 1;
-					else if (target > t)
-						max = mid - 1;
-					else
-						return mid;
-				}
-				return -1;
-			}
-			
-			var flagIndex = flagIndexOf(filterText.toLocaleUpperCase());
-			if (flagIndex >= 0)
-			{
-				var rootService = flagData[flagIndex];
-				// Add to the visible list any item that contains the root service as a sub service.
-				this.flags().each(function(fs)
-					{
-						if (!fs.visible && fs.service.serviceImplications().find(function(subService)
-							{
-								return subService.service().id() == rootService.service.id();
-							}))
-							fs.visible = true;
-					});
-				flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
-				flagData = flags.data();
-				flagDescriptions = flagData.map(function(fs) { return fs.description().toLocaleUpperCase(); });
-			}
-			
-			var levels = {};
-			var levelCount = 1;
-			var flagServices = {};
-			
-			// Fill flagServices with all of the subServices associated with each flag that are
-			// in the set of visible flags except for the service itself.
-			flags.each(function(fs)
-			{
-				flagServices[fs.service.id()] = fs.service.serviceImplications()
-					.map(function(serviceImplication) { return serviceImplication.service(); })
-					.filter(function(s) {
-						return flagIndexOf(s.description().toLocaleUpperCase()) >= 0 && 
-										   s.id() != fs.service.id();
-					});
-			});
-			
-			for (levelCount = 1; 
-			     (Object.keys(levels).length < flagData.length &&
-				   levelCount <= 3);
-				 ++levelCount)
-			{
-				flags.each(function(fs)
-				{
-					var thisID = fs.service.id();
-					
-					if (!(thisID in levels))
-					{
-						// Add a service into the levels list if all of its visible flags 
-						// are already in the levels except for itself.
-						var f = function(s)
-							{
-								return s.id() in levels && levels[s.id()] < levelCount;
-							};
-						
-						if (flagServices[thisID].filter(f).length == flagServices[thisID].length)
-							levels[thisID] = levelCount;
-					}
-				});
-			}
-			
-			flags.each(function(fs)
-				{
-					fs.visible = fs.service.id() in levels;
-				});
-		}
-	}
-	
 	TagSearchView.prototype.constrainTagFlags = function(duration)
 	{
 		this.filterFlags(this.focusNode.value);
@@ -744,14 +707,13 @@ var TagSearchView = (function() {
 				$(this.poolSection).trigger('tagsChanged.cr');
 				this.poolSection.showTags();
 
-				var container = this.poolSection.section.select('.tags-container');
 				var _this = this;
 				
 				var node;
 				if (moveToNewInput)
 					node = null;
 				else
-					node = container
+					node = this.poolSection.tagsContainer
 						.selectAll('input.tag')
 						.filter(function(d)	
 							{ return d instanceof _this.controller.serviceLinkType() &&
@@ -762,7 +724,7 @@ var TagSearchView = (function() {
 				 */
 				if (!node)
 				{
-					var newInput = this.poolSection.appendTag(container, null);
+					var newInput = this.poolSection.appendTag(null);
 					newInput.node().focus();
 				}
 				else
@@ -794,7 +756,6 @@ var TagSearchView = (function() {
 var TagPoolSection = (function () {
 	TagPoolSection.prototype.controller = null;
 	TagPoolSection.prototype.section = null;
-	TagPoolSection.prototype.tagHelp = null;
 	TagPoolSection.prototype.searchView = null;
 	TagPoolSection.prototype.allServices = null;
 
@@ -834,28 +795,15 @@ var TagPoolSection = (function () {
 			
 			if (service)
 			{
-				pathGuide = PathGuides.data[service.getColumn()];
-		
-				d3.select(node)
-					.style('background-color', pathGuide.flagColor)
-					.style('border-color', pathGuide.poleColor)
-					.style('color', pathGuide.fontColor);
+				PathGuides.fillNode(node, service.getColumn());
 			}
 			else if (d && node.value)
 			{
-				pathGuide = PathGuides.data[PathGuides.data.length - 1];
-		
-				d3.select(node)
-					.style('background-color', pathGuide.flagColor)
-					.style('border-color', pathGuide.poleColor)
-					.style('color', pathGuide.fontColor);
+				PathGuides.fillOtherNode(node);
 			}
 			else
 			{
-				d3.select(node)
-					.style('background-color', null)
-					.style('border-color', null)
-					.style('color', null);
+				PathGuides.clearNode();
 			}
 		}
 	}
@@ -868,18 +816,27 @@ var TagPoolSection = (function () {
 		this.setTagColor(inputNode);
 	}
 	
+	TagPoolSection.prototype.checkEmptyTagInput = function(inputNode)
+	{
+		var newText = inputNode.value.trim();
+		var newService = newText && this.searchView.hasNamedService(newText.toLocaleUpperCase());
+		
+		if (!newText ||
+			(!newService && !this.controller.customServiceType()))
+			$(inputNode).remove();
+	}
+	
 	TagPoolSection.prototype.checkTagInput = function(exceptNode)
 	{
-		var tagsContainer = this.section.select('.tags-container');
 		var _this = this;
-		tagsContainer.selectAll('input.tag').each(function(d, i)
+		this.tagsContainer.selectAll('input.tag').each(function(d, i)
 			{
 				/* Skip the exceptNode */
 				if (this == exceptNode)
 					return;
 					
 				var newText = this.value.trim();
-				var newService = newText && _this.searchView.hasNamedService(newText.toLocaleLowerCase());
+				var newService = newText && _this.searchView.hasNamedService(newText.toLocaleUpperCase());
 				if (!newText ||
 					(!newService && !_this.controller.customServiceType()))
 				{
@@ -887,12 +844,14 @@ var TagPoolSection = (function () {
 					{
 						/* Remove a standard service */
 						_this.controller.removeService(d);
+						d3.select(this).datum(null);
 					}
 					else if (_this.controller.customServiceType() &&
 							 d instanceof _this.controller.customServiceType())
 					{
 						/* Remove a custom service */
 						_this.controller.removeCustomService(d);
+						d3.select(this).datum(null);
 					}
 					else if (d)
 					{
@@ -900,7 +859,10 @@ var TagPoolSection = (function () {
 						// In this case, do nothing.
 						;
 					}
-					$(this).remove();
+					if (!newText && this != document.activeElement)
+						d3.select(this).remove();
+					else
+						_this.checkInputControls(this);
 				}
 				else if (d instanceof _this.controller.serviceLinkType())
 				{
@@ -910,7 +872,7 @@ var TagPoolSection = (function () {
 						_this.controller.removeService(d);
 						var newValue = _this.controller.addService(newText);
 						d3.select(this).datum(newValue);
-						$(this).trigger('input');
+						_this.checkInputControls(this);
 					}
 					else if (newService != d.service())
 					{
@@ -918,7 +880,7 @@ var TagPoolSection = (function () {
 						d.service(newService)
 						 .description(newService.description());
 						this.value = newService.description();
-						$(this).trigger('input');
+						_this.checkInputControls(this);
 					}
 					else
 						{	/* No change */ }
@@ -934,7 +896,7 @@ var TagPoolSection = (function () {
 							d.name(newText)
 							 .description(newText);
 							this.value = newText;
-							$(this).trigger('input');
+							_this.checkInputControls(this);
 						}
 					}
 					else
@@ -944,15 +906,16 @@ var TagPoolSection = (function () {
 						var newValue = _this.controller.addService(newService);
 						d3.select(this).datum(newValue);
 						this.value = newService.description();
-						$(this).trigger('input');
+						_this.checkInputControls(this);
 					}
 				}
 				else
 				{
 					/* The blank tag. */
-					_this.controller.addService(newService || newText);
+					var newValue = _this.controller.addService(newService || newText);
+					d3.select(this).datum(newValue);
 					_this.showTags();
-					this.value = "";
+					this.value = newValue ? newValue.description() : "";
 					$(this).attr('placeholder', $(this).attr('placeholder'));
 				}
 			});
@@ -960,14 +923,52 @@ var TagPoolSection = (function () {
 		$(this).trigger('tagsChanged.cr');	
 	}
 	
-	TagPoolSection.prototype.appendTag = function(container, instance)
+	TagPoolSection.prototype.checkInputDatum = function(inputNode, instance)
+	{
+		/* If this is an empty node with no instance to remove, then don't handle here. */
+		if (!inputNode.value && !instance)
+			return false;
+		/* If this is a node whose value matches the previous value, then don't handle here. */
+		else if (instance && inputNode.value == instance.description())
+			return false;
+		else if (instance && inputNode.value != instance.description())
+		{
+			this.checkTagInput();
+			this.showAddTagButton();
+			/* Do not prevent default. */
+			return false;
+		}
+		else
+		{
+			this.checkTagInput();
+			this.showAddTagButton();
+			this.searchView.constrainTagFlags();
+			return true;
+		}
+	}
+	
+	TagPoolSection.prototype.checkInputControls = function(inputNode)
+	{
+		if (inputNode == document.activeElement)
+		{
+			if (!inputNode.value)
+				this.hideAddTagButton();
+			else
+				this.showAddTagButton();
+			this.searchView.constrainTagFlags();
+		}
+		this.setTagInputWidth(inputNode);
+	}
+	
+	TagPoolSection.prototype.appendTag = function(instance, placeholder)
 	{
 		var _this = this;
+		placeholder = placeholder !== undefined ? placeholder : "Tag";
 		
-		var input = container.insert('input', 'button')
+		var input = this.tagsContainer.insert('input', 'button')
 			.datum(instance)
 			.classed('tag', true)
-			.attr('placeholder', 'Tag')
+			.attr('placeholder', placeholder)
 			.attr('value', instance && instance.description());
 		
 		var startFocus;	
@@ -988,15 +989,8 @@ var TagPoolSection = (function () {
 		$(input.node()).on('input', function()
 			{
 				/* Check for text changes for all input boxes.  */
-				if (this == document.activeElement)
-				{
-					if (!document.activeElement.value)
-						_this.hideAddTagButton();
-					else
-						_this.showAddTagButton();
-					_this.searchView.constrainTagFlags();
-				}
-				_this.setTagInputWidth(this);
+				_this.checkInputDatum(this, d3.select(this).datum());
+				_this.checkInputControls(this);
 			})
 			.on('focusin', function()
 			{
@@ -1018,31 +1012,17 @@ var TagPoolSection = (function () {
 			.keypress(function(e) {
 				if (e.which == 13)
 				{
-					_this.hideReveal();
 					e.preventDefault();
 				}
 			})
 			.keydown( function(event) {
 				if (event.keyCode == 9) {
-					/* If this is an empty node with no instance to remove, then don't handle here. */
-					if (!input.node().value && !instance)
-						return;
-					/* If this is a node whose value matches the previous value, then don't handle here. */
-					else if (instance && input.node().value == instance.description())
-						return;
-					else if (instance && input.node().value != instance.description())
-					{
-						_this.checkTagInput();
-						_this.showAddTagButton();
-						/* Do not prevent default. */
-					}
-					else
-					{
-						_this.checkTagInput();
-						_this.showAddTagButton();
-						_this.searchView.constrainTagFlags();
+					var instance = d3.select(this).datum();
+					
+					if (_this.checkInputDatum(this, instance))
 						event.preventDefault();
-					}
+					_this.checkEmptyTagInput(this);
+					_this.showAddTagButton();
 				}
 			});
 
@@ -1057,8 +1037,7 @@ var TagPoolSection = (function () {
 		var tags = [];
 		var _this = this;
 		
-		var container = this.section.select('.tags-container');
-		var tagDivs = container.selectAll('input.tag');
+		var tagDivs = this.tagsContainer.selectAll('input.tag');
 		tags = tags.concat(this.controller.serviceLinks()
 			.filter(function(s) 
 			{
@@ -1093,7 +1072,7 @@ var TagPoolSection = (function () {
 		{
 			if (ds.indexOf(tags[i]) < 0)
 			{
-				this.appendTag(container, tags[i]);
+				this.appendTag(tags[i]);
 			}
 			else
 			{
@@ -1104,39 +1083,33 @@ var TagPoolSection = (function () {
 		}
 	}
 	
-	TagPoolSection.prototype.setTagHelp = function()
-	{
-		if (this.searchView.focusNode == this.searchView.firstTagInputNode() &&
-			!this.controller.hasPrimaryService())
-			this.tagHelp.text(this.firstTagHelp);
-		else
-			this.tagHelp.text(this.otherTagHelp);
-	}
-	
 	TagPoolSection.prototype.hideAddTagButton = function(duration)
 	{
-		var button = this.section.select('.tags-container>button');
-		if (duration === 0)
-			button.style('opacity', 0)
-				  .style('display', 'none');
-		else
+		var button = this.tagsContainer.select('button');
+		if (button.size())
 		{
-			if (button.style('display') != 'none')
+			if (duration === 0)
+				button.style('opacity', 0)
+					  .style('display', 'none');
+			else
 			{
-				button.interrupt().transition()
-					.style('opacity', 0)
-					.each('end', function()
-						{
-							button.style('display', 'none');
-						});
+				if (button.style('display') != 'none')
+				{
+					button.interrupt().transition()
+						.style('opacity', 0)
+						.each('end', function()
+							{
+								button.style('display', 'none');
+							});
+				}
 			}
 		}
 	}
 	
 	TagPoolSection.prototype.showAddTagButton = function()
 	{
-		var button = this.section.select('.tags-container>button');
-		if (button.style('display') == 'none')
+		var button = this.tagsContainer.select('button');
+		if (button.size() && button.style('display') == 'none')
 		{
 			button.style('display', null);
 			button.interrupt().transition()
@@ -1162,7 +1135,6 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.revealSearchView = function(inputNode, ensureVisible)
 	{
-		this.setTagHelp();
 		var duration = this.searchView.reveal.isVisible() ? undefined : 0;
 		this.searchView.constrainTagFlags(duration);
 		if (!inputNode.value)
@@ -1228,22 +1200,10 @@ var TagPoolSection = (function () {
 		return TagSearchView;
 	}
 	
-	function TagPoolSection(panel, controller, sectionLabel)
+	TagPoolSection.prototype.addAddTagButton = function()
 	{
-		this.controller = controller;
-		
-		this.section = panel.mainDiv.append('section')
-			.classed('cell tags custom', true);
-		var tagsTopContainer = this.section.append('div');
-		label = tagsTopContainer.append('label')
-			.text("{0}:".format(sectionLabel));
-		
-		var tagsContainer = tagsTopContainer.append('span')
-			.classed('tags-container', true);
-			
 		var _this = this;
-		tagsContainer.append('button')
-			.classed('site-active-text', true)
+		this.tagsContainer.append('button')
 			.text('Add Tag')
 			.on('click', function()
 				{
@@ -1255,16 +1215,28 @@ var TagPoolSection = (function () {
 							{
 								$(_thisButton).css('display', 'none');
 								_this.checkTagInput(null);
-								var tagInput = _this.appendTag(tagsContainer, null);
+								var tagInput = _this.appendTag(null);
 								tagInput.node().focus();
 							});
 				});
+	}
+	
+	function TagPoolSection(panel, controller, sectionLabel)
+	{
+		this.controller = controller;
 		
+		this.section = panel.mainDiv.append('section')
+			.classed('cell tags custom', true);
+		var tagsTopContainer = this.section.append('div');
+		if (sectionLabel)
+			tagsTopContainer.append('label')
+				.text("{0}:".format(sectionLabel));
+		
+		this.tagsContainer = tagsTopContainer.append('span')
+			.classed('tags-container', true);
+			
 		searchContainer = this.section.append('div');
 		
-		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
-		this.tagHelp.text(this.firstTagHelp);
-			
 		this.searchView = new (this.searchViewType())(searchContainer, this, controller);
 		/* Mark the reveal as not visible or the metrics aren't calculated. */
 		this.searchView.reveal.isVisible(false);

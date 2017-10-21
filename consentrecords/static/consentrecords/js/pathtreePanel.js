@@ -11,8 +11,6 @@ var FlagController = (function() {
 	FlagController.prototype.previousDateString = "0000-00";
 	FlagController.prototype.goalDateString = "9999-12-31";
 	
-	FlagController.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
-
 	/* Constants related to the detail text. */
 	FlagController.prototype.detailTopSpacing = "1.5em";		/* The space between lines of text in the detail box. */
 	FlagController.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
@@ -211,18 +209,6 @@ var FlagController = (function() {
 		return PathGuides.data[column].fontColor;
 	}
 	
-	FlagController.prototype.flagColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].flagColor;
-	}
-	
-	FlagController.prototype.poleColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].poleColor;
-	}
-	
 	FlagController.prototype.checkOfferingCells = function(done)
 	{
 		// Is this needed any longer?
@@ -241,9 +227,7 @@ var FlagController = (function() {
 		var _this = this;
 		var f = function()
 			{
-				var pathGuide = PathGuides.data[_this.getColumn()]
-				$(r).css({'background-color': pathGuide.flagColor,
-						  color: pathGuide.fontColor});
+				PathGuides.fillNode(r, _this.getColumn());
 			}
 		this.checkOfferingCells(f);
 	}
@@ -405,6 +389,12 @@ var PathView = (function() {
 
 	PathView.prototype.guideHSpacing = 30;
 							  
+	/* Translate coordinates for the elements of the experienceGroup within the svg */
+	PathView.prototype.experienceGroupDX = 40;
+	PathView.prototype.experienceGroupDY = 6.5; /* em */
+	PathView.prototype.loadingMessageTop = "6.5em";
+	
+	PathView.prototype.pathBackground = "white";
 	PathView.prototype.emToPX = 11;
 							  
 	PathView.prototype.handleChangedExperience = function(r, fd)
@@ -754,14 +744,14 @@ var PathView = (function() {
 				if (needLine)
 					_this.yearGroup.append('line')
 						.attr('x1', _this.yearTextX)
-						.attr('y1', _this.experienceGroupDY + (years[keyI].y - 1.3) * _this.emToPX)
+						.attr('y1', (_this.experienceGroupDY + (years[keyI].y - 1.3)) * _this.emToPX)
 						.attr('x2', _this.yearTextX2)
-						.attr('y2', _this.experienceGroupDY + (years[keyI].y - 1.3) * _this.emToPX)
+						.attr('y2', (_this.experienceGroupDY + (years[keyI].y - 1.3)) * _this.emToPX)
 						.attr('stroke', '#CCC');
 				_this.yearGroup.append('text')
 					.text(years[keyI].text)
 					.attr('x', _this.yearTextX)
-					.attr('y', _this.experienceGroupDY + years[keyI].y * _this.emToPX);
+					.attr('y', (_this.experienceGroupDY + years[keyI].y) * _this.emToPX);
 				lastText = years[keyI].text;
 				needLine = false;
 			}
@@ -918,6 +908,115 @@ var PathView = (function() {
 		return this.experienceFlags().data();
 	}
 	
+	PathView.prototype.appendPathSVG = function()
+	{
+		var container = d3.select(this.containerDiv);
+		
+		this.pathwayContainer = container.append('div')
+			.classed('pathlines', true);
+			
+		this.svg = this.pathwayContainer.append('svg')
+			.classed('pathway pathlines', true)
+			.attr('xmlns', "http://www.w3.org/2000/svg")
+			.attr('version', "1.1")
+			.on('click', function() 
+			{ 
+				d3.event.stopPropagation(); 
+			});
+		
+			
+		this.emToPX = parseFloat(this.svg.style('font-size'));
+		
+		/* bg is a rectangle that fills the background with the background color. */
+		this.bg = this.svg.append('rect')
+			.style('width', '100%')
+			.style('height', '100%')
+			.attr('fill', this.pathBackground);
+			
+		this.loadingMessage = crv.appendLoadingMessage(this.containerDiv)
+			.style('position', 'absolute')
+			.style('left', '0')
+			.style('top', this.loadingMessageTop);
+		
+		this.yearGroup = this.svg.append('g')
+			.classed('year', true);
+				
+		this.guideGroup = this.svg.append('g')
+				.classed('guide', true)
+				.attr('transform', 'translate({0}, 0)'.format(this.experienceGroupDX));
+		
+		this.experienceGroup = this.svg.append('g')
+				.classed('experiences', true)
+				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY * this.emToPX));
+			
+	}
+	
+	PathView.prototype.appendGuides = function(data)
+	{
+		var _this = this;
+		
+		var guides = this.guideGroup.selectAll('g')
+			.data(data)
+			.enter()
+			.append('g')
+			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * _this.guideHSpacing); });
+			
+		guides.append('text')
+			.classed('column-label', true)
+			.attr('x', 0)
+			.attr('y', function(d, i) { return d.labelY; })
+			.selectAll('tspan')
+			.data(function(d) { return d.name.split(' '); })
+			.enter()
+			.append('tspan')
+			.attr('x', 0)
+			.attr('dy', function(d, i) { return "{0}em".format(i); })
+			.text(function(d) { return d; });
+		guides.append('line')
+			.classed('column', true)
+			.attr('x1', 0)
+			.attr('y1', function(d) { 
+				return "{0}em".format(parseFloat(d.labelY) + 0.25 + (1 * (d.name.split(' ').length - 1))); 
+				})
+			.attr('x2', 0)
+			.attr('y2', 500)
+			.attr('stroke', function(d) { return d.color; });
+	}
+	
+	PathView.prototype.setupHeights = function()
+	{
+		var containerBounds = this.containerDiv.getBoundingClientRect();
+		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
+		var svgHeight = containerBounds.height;
+		
+		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
+		var flagHeights = (lastFlag.size() ? lastFlag.datum().y2 + this.experienceGroupDY : this.experienceGroupDY) * this.emToPX + this.bottomNavHeight;
+		if (svgHeight < flagHeights)
+			svgHeight = flagHeights;
+
+		$(this.svg.node()).height(svgHeight);
+		$(this.bg.node()).height(svgHeight);
+		this.guideGroup.selectAll('line')
+			.attr('y2', svgHeight - this.bottomNavHeight);
+	}
+		
+	/* Set up the widths of the objects based on the data. */
+	PathView.prototype.setupWidths = function()
+	{
+		var guideGroupBounds = this.guideGroup.node().getBBox();
+		var newWidth = guideGroupBounds.x + guideGroupBounds.width + this.experienceGroupDX;
+		var _this = this;
+		
+		this.experienceGroup.selectAll('g.flag').each(function (fd)
+			{
+				var w = _this.experienceGroupDX + fd.x +parseFloat(d3.select(this).selectAll('rect').attr('width'));
+				if (newWidth < w)
+					newWidth = w;
+			});
+		$(this.svg.node()).width(newWidth);
+		$(this.bg.node()).width(newWidth);
+	}
+	
 	function PathView(sitePanel, containerDiv)
 	{
 		this.containerDiv = containerDiv;
@@ -946,16 +1045,6 @@ var PathLines = (function() {
 
 	PathLines.prototype.textLeftMargin = 10;
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
-	PathLines.prototype.pathBackground = "white";
-	PathLines.prototype.showDetailIconWidth = 18;
-	PathLines.prototype.loadingMessageTop = "4.5em";
-	PathLines.prototype.promptRightMargin = 14;		/* The minimum space between the prompt and the right margin of the svg's container */
-	
-	/* Translate coordinates for the elements of the experienceGroup within the svg */
-	PathLines.prototype.experienceGroupDX = 40;
-	PathLines.prototype.experienceGroupDY = 37;
-	
-	PathLines.prototype.detailRectX = 1.5;
 	
 	PathLines.prototype.pathwayContainer = null;
 	PathLines.prototype.svg = null;
@@ -967,8 +1056,6 @@ var PathLines = (function() {
 	PathLines.prototype.guideGroup = null;
 	PathLines.prototype.experienceGroup = null;
 
-	PathLines.prototype.flagWidth = 0;
-	
 	PathLines.prototype.columnData = PathGuides.data;
 	
 	/* A flag indicating whether or not the userSet event has been triggered. */
@@ -1094,41 +1181,6 @@ var PathLines = (function() {
 			});
 	}
 	
-	PathLines.prototype.setupHeights = function()
-	{
-		var containerBounds = this.containerDiv.getBoundingClientRect();
-		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
-		//var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
-		var svgHeight = containerBounds.height;
-		
-		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
-		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
-		if (svgHeight < flagHeights)
-			svgHeight = flagHeights;
-
-		$(this.svg.node()).height(svgHeight);
-		$(this.bg.node()).height(svgHeight);
-		this.guideGroup.selectAll('line')
-			.attr('y2', svgHeight - this.bottomNavHeight);
-	}
-	
-	/* Set up the widths of the objects based on the data. */
-	PathLines.prototype.setupWidths = function()
-	{
-		var guideGroupBounds = this.guideGroup.node().getBBox();
-		var newWidth = guideGroupBounds.x + guideGroupBounds.width + this.experienceGroupDX;
-		var _this = this;
-		
-		this.experienceGroup.selectAll('g.flag').each(function (fd)
-			{
-				var w = _this.experienceGroupDX + fd.x +parseFloat(d3.select(this).selectAll('rect').attr('width'));
-				if (newWidth < w)
-					newWidth = w;
-			});
-		$(this.svg.node()).width(newWidth);
-		$(this.bg.node()).width(newWidth);
-	}
-	
 	PathLines.prototype.setUser = function(path, editable)
 	{
 		if (path.privilege() === cr.privileges.find)
@@ -1141,82 +1193,27 @@ var PathLines = (function() {
 		this.path = path;
 		this.editable = (editable !== undefined ? editable : true);
 		
-		var container = d3.select(this.containerDiv);
+		this.appendPathSVG();
 		
-		this.pathwayContainer = container.append('div')
-			.classed("pathlines", true);
-			
-		this.svg = this.pathwayContainer.append('svg')
-			.classed("pathway pathlines", true)
-			.attr('xmlns', "http://www.w3.org/2000/svg")
-			.attr('version', "1.1");
-		
-		/* bg is a rectangle that fills the background with the background color. */
-		this.bg = this.svg.append('rect')
-			.style("width", "100%")
-			.style("height", "100%")
-			.attr("fill", this.pathBackground);
-			
-		this.loadingMessage = crv.appendLoadingMessage(this.containerDiv)
-			.style("position", "absolute")
-			.style("left", "0")
-			.style("top", this.loadingMessageTop);
-		
-		this.yearGroup = this.svg.append('g')
-			.classed('year', true);
-				
-		this.guideGroup = this.svg.append('g')
-				.classed("guide", true)
-				.attr('transform', "translate({0}, 0)".format(this.experienceGroupDX));
-				
-		var guides = this.guideGroup.selectAll('g')
-			.data(PathGuides.data)
-			.enter()
-			.append('g')
-			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * _this.guideHSpacing); });
-			
-		guides.append('rect')
-			.classed('column-icon', true)
-			.attr('x', -10)
-			.attr('y', function(d) { return d.labelY - 31; })
-			.attr('height', 20)
-			.attr('width', 20)
-			.attr('stroke', function(d) { return d.color; })
-			.attr('fill', function(d) { return d.color; });
-		guides.append('text')
-			.classed('column-label', true)
-			.attr('x', 0)
-			.attr('y', function(d, i) { return d.labelY; })
-			.selectAll('tspan')
-			.data(function(d) { return d.name.split(' '); })
-			.enter()
-			.append('tspan')
-			.attr('x', 0)
-			.attr('dy', function(d, i) { return "{0}em".format(i); })
-			.text(function(d) { return d; });
-		guides.append('line')
-			.classed('column', true)
-			.attr('x1', 0)
-			.attr('y1', function(d) { 
-				return d.labelY + 3 + (9 * (d.name.split(' ').length - 1)); 
-				})
-			.attr('x2', 0)
-			.attr('y2', 500)
-			.attr('stroke', function(d) { return d.color; });
-		
-		this.experienceGroup = this.svg.append('g')
-				.classed("experiences", true)
-				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY));
-			
-		d3.select(this.containerDiv)
-			.on("click", function() 
-			{ 
-				d3.event.stopPropagation(); 
-			});
+		this.appendGuides(PathGuides.data);		
 		
 		/* setupHeights now so that the initial height of the svg and the vertical lines
 			consume the entire container. */
 		this.setupHeights();
+		
+		this.guideGroup.selectAll('g')
+			.append('rect')
+			.attr('y', function(d, i) { return "{0}em".format(parseFloat(PathGuides.data[i].labelY) - 1.6); })
+			.attr('x', -24)
+			.attr('height', function(d, i) 
+				{ return "{0}px".format(1.2*parseFloat($(this).parent().css('font-size')) + parseFloat($(this).parent().children('text').outerHeight()))
+				})
+			.attr('width', 48)
+			.attr('fill', 'transparent')
+			.on('click', function(d, i)
+				{
+					new ColumnInfoPanel(_this.sitePanel.node(), _this.path, d, unblockClick, cr.syncFail);
+				});
 		
 		$(this.sitePanel.mainDiv.node()).on("resize.cr", function()
 			{
@@ -1525,11 +1522,14 @@ var PathlinesPanel = (function () {
 				{
 					try
 					{
-						new AddOptions(_this);
+						var path = _this.pathtree.path;
+						var experienceController = new ExperienceController(path, null, false);
+						var panel = new QuickAddExperiencePanel(_this.node(), experienceController);
+						unblockClick();
 					}
 					catch(err)
 					{
-						syncFailFunction(err);
+						cr.syncFail(err);
 					}
 				}
 				d3.event.preventDefault();
@@ -1764,7 +1764,21 @@ var AddOptions = (function () {
 		addButton(div, 'More Ideas',
 			function()
 			{
-				new ExperienceIdeas(panelNode, pathlinesPanel.pathtree.path, unblockClick, cr.syncFail);
+				try
+				{
+					var path = pathlinesPanel.pathtree.path;
+					var experienceController = new ExperienceController(path, null, false);
+					var panel = new QuickAddExperiencePanel(panelNode, experienceController);
+					panel.done = function()
+						{
+							skipButton.on('click')();
+						};
+					unblockClick();
+				}
+				catch(err)
+				{
+					syncFailFunction(err);
+				}
 			});
 		
 		var cancelButton = addButton(div, 'Cancel', handleCancel);
@@ -1962,12 +1976,12 @@ var ExperienceIdeaPanel = (function() {
 					{
 						try
 						{
-							var panel = new NewExperiencePanel(experienceController);
+							var panel = new QuickAddExperiencePanel(experienceController);
 							panel.done = function()
 								{
 									skipButton.on('click')();
 								};
-							panel.showUp()
+							panel.showLeft()
 								.always(unblockClick);
 						}
 						catch(err)
@@ -2091,5 +2105,157 @@ var OtherPathPanel = (function () {
 	}
 	
 	return OtherPathPanel;
+})();
+
+var ColumnInfoPanel = (function() {
+	
+	ColumnInfoPanel.prototype.showIdeaPanel = function(done)
+	{
+		$(this.ideaPanel.node()).css('top',
+			"{0}px".format(($(this.panelNode).height() - $(this.ideaPanel.node()).outerHeight()) / 2));
+		var newLeft = "{0}px".format(($(this.panelNode).width() - $(this.ideaPanel.node()).outerWidth()) / 2);
+		$(this.ideaPanel.node()).animate({left: newLeft},
+			{done: done});
+	}
+	
+	function ColumnInfoPanel(panelNode, path, guideData, done, fail)
+	{
+		var _this = this;
+		this.panelNode = panelNode;
+		
+		var data;
+		
+		try
+		{
+			var dimmer = new Dimmer(this.panelNode);
+			dimmer.show();
+			var onCancel = function()
+			{
+				dimmer.hide();
+				_this.ideaPanel.remove();
+			}
+		
+			dimmer.mousedown(onCancel);
+			
+			this.ideaPanel = d3.select(panelNode).append('panel')
+				.classed('idea', true)
+				.style('left', '100%');
+			
+			this.ideaPanel.append('div')
+				.classed('title', true)
+				.text(guideData.name);
+		
+			var promptDiv = this.ideaPanel.append('div')
+				.classed('prompt', true)
+				.html(PathGuides.help[guideData.name]);
+		
+			var footer = this.ideaPanel.append('footer');
+		
+			var column = PathGuides.data.indexOf(guideData);
+			var filter = function(fs)
+				{
+					if (fs instanceof ServiceFlagController)
+						return fs.service.getColumn() == column;
+					else
+						return fs.getColumn() == column;
+				}
+				
+			var skipButton = footer.append('button')
+				.classed('skip', true)
+				.text("Add {0} Experience".format(guideData.name))
+				.on('click', function()
+					{
+						if (prepareClick('click', "Add {0} Experience".format(guideData.name)))
+						{
+							try
+							{
+								var controller = new ExperienceController(path, null, false);
+								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Previous', 'Current']);
+								panel.promise
+									.fail(function(err)
+									{
+										dimmer.hide();
+									})
+									.always(function()
+										{
+											var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
+											$(_this.ideaPanel.node()).animate({left: newLeft},
+												{done: function()
+													{
+														_this.ideaPanel.remove();
+														unblockClick();
+													}});
+										});
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
+					});
+		
+			var answerButton = footer.append('button')
+				.classed('answer', true)
+				.text("Add {0} Goal".format(guideData.name))
+				.on('click', function()
+					{
+						if (prepareClick('click', "Add {0} Goal".format(guideData.name)))
+						{
+							try
+							{
+								var controller = new ExperienceController(path, null, false);
+								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Goal']);
+								panel.promise
+									.fail(function(err)
+									{
+										dimmer.hide();
+										unblockClick();
+									})
+									.always(function()
+										{
+											var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
+											$(_this.ideaPanel.node()).animate({left: newLeft},
+												{done: function()
+													{
+														_this.ideaPanel.remove();
+														unblockClick();
+													}});
+										});
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
+					});
+		
+			var closeButton = this.ideaPanel.append('button')
+				.classed('close', true)
+				.on('click', onCancel);
+			var closeSpan = closeButton.append('span')
+				.text(String.fromCharCode(215)	/* 215 - unicode value for times character */);
+		
+			this.showIdeaPanel();
+		}
+		catch(err)
+		{
+			fail(err)
+		}
+	}
+	
+	return ColumnInfoPanel;
+})();
+
+var ExperienceIdeaPanel = (function() {
+	ExperienceIdeaPanel.prototype.panelNode = null;
+	ExperienceIdeaPanel.prototype.dimmer = null;
+	
+	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experienceController, getNext)
+	{
+		var _this = this;
+		this.panelNode = panelNode;
+		this.dimmer = dimmer;
+	}
+	return ExperienceIdeaPanel;
 })();
 
