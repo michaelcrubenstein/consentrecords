@@ -160,6 +160,9 @@ var QuickAddExperiencePanel = (function () {
 			.height(
 			$(this.mainDiv.node()).height() - this.panelNode.sitePanel.getBottomNavHeight()
 			);
+			
+		/* Clear the x coordinates before resetting them. */
+		this.flagRows.each(function(fs) { fs.x = undefined; });
 		this._setFlagCoordinates(this.flagRows, undefined, undefined);
 		TagPoolView.prototype.moveFlags.call(this, duration);
 	}
@@ -281,11 +284,17 @@ var QuickAddExperiencePanel = (function () {
 			
 		this.flagsContainer = this.mainDiv.append('div')
 			.classed('flags-container', true);
-			
-		$(this.mainDiv.node()).on('resize.cr', function()
+		
+		var resize = function()
 			{
 				_this.handleResize(0);
-			});
+			};
+			
+		$(window).on('resize', resize);
+		$(this.mainDiv.node()).on('remove', function()
+			{
+				$(window).off('resize', resize);
+			});	
 		
 		this.promise = $.when(_this.dimmer.show(), cr.Service.servicesPromise())
 		 .then(function(x1, services)
