@@ -545,21 +545,10 @@ var SearchPathsPanel = (function () {
 							{
 								/* Dispose of the hole. */
 								d3.select(poolFlag).classed('hole', false)
-									.style('border-left-color',
-										function(d)
-											{
-												return d.poleColor();
-											})
-									.style('background-color',
-										function(d)
-											{
-												return d.flagColor();
-											})
-									.style('color',
-										function(d)
-											{
-												return d.fontColor();
-											});
+									.each(function(d)
+										{
+											PathGuides.fillNode(this, d.getColumn());
+										});
 							});
 					
 					/* Add a query flag that is the same as the svg flag in the same position. */

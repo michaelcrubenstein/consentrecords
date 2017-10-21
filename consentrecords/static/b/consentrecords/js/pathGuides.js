@@ -38,3 +38,31 @@ PathGuides.help = {
 	"<p>For example, playing soccer, knee surgery or becoming a parent, etc.</p>",
 	"Other": "<p>Any experience or goal that does not have a standard tag that fits into one of the other categories.</p>"
 	};
+
+PathGuides.fillNode = function(node, column)
+{
+	pathGuide = PathGuides.data[column];
+
+	d3.select(node)
+		.style('background-color', pathGuide.flagColor)
+		.style('border-color', pathGuide.poleColor)
+		.style('color', pathGuide.fontColor);
+}
+
+PathGuides.fillOtherNode = function(node)
+{
+	pathGuide = PathGuides.data[PathGuides.data.length - 1];
+
+	d3.select(node)
+		.style('background-color', pathGuide.flagColor)
+		.style('border-color', pathGuide.poleColor)
+		.style('color', pathGuide.fontColor);
+}
+
+PathGuides.clearNode = function(node)
+{
+	d3.select(node)
+		.style('background-color', null)
+		.style('border-color', null)
+		.style('color', null);
+}

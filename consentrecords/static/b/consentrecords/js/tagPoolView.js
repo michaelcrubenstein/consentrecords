@@ -72,18 +72,6 @@ var ServiceFlagController = (function() {
 		return PathGuides.data[column].fontColor;
 	}
 	
-	ServiceFlagController.prototype.flagColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].flagColor;
-	}
-	
-	ServiceFlagController.prototype.poleColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].poleColor;
-	}
-	
 	ServiceFlagController.prototype.description = function()
 	{
 		return this.service ? this.service.description() : "Other";
@@ -495,22 +483,10 @@ var TagPoolView = (function () {
 	{
 		g.classed('flag', true)
 			.style('opacity', 0)
-			.style('display', 'none');
-		
-		g.style('border-left-color',
-			function(d)
+			.style('display', 'none')
+			.each(function(d)
 				{
-					return d.poleColor();
-				})
-			.style('background-color',
-			function(d)
-				{
-					return d.flagColor();
-				})
-			.style('color',
-			function(d)
-				{
-					return d.fontColor();
+					PathGuides.fillNode(this, d.getColumn());
 				})
 			.text(function(d)
 				{
@@ -823,28 +799,15 @@ var TagPoolSection = (function () {
 			
 			if (service)
 			{
-				pathGuide = PathGuides.data[service.getColumn()];
-		
-				d3.select(node)
-					.style('background-color', pathGuide.flagColor)
-					.style('border-color', pathGuide.poleColor)
-					.style('color', pathGuide.fontColor);
+				PathGuides.fillNode(node, service.getColumn());
 			}
 			else if (d && node.value)
 			{
-				pathGuide = PathGuides.data[PathGuides.data.length - 1];
-		
-				d3.select(node)
-					.style('background-color', pathGuide.flagColor)
-					.style('border-color', pathGuide.poleColor)
-					.style('color', pathGuide.fontColor);
+				PathGuides.fillOtherNode(node);
 			}
 			else
 			{
-				d3.select(node)
-					.style('background-color', null)
-					.style('border-color', null)
-					.style('color', null);
+				PathGuides.clearNode();
 			}
 		}
 	}

@@ -1683,10 +1683,7 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
 	{
 		var _this = this;
-		d3.select(inputNode)
-			.style('background-color', null)
-			.style('border-color', null)
-			.style('color', null);
+		PathGuides.clearNode(inputNode);
 			
 		var done = function()
 			{
