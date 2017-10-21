@@ -273,7 +273,6 @@ var ExperienceDatumSearchView = (function() {
 	ExperienceDatumSearchView.prototype.startSearchTimeout = function(searchText)
 	{
 		this.setupSearchTypes(searchText);
-		this.checkHelp(!this.typeName);
 		this.showSearch();
 		if (this.typeName)
 			SearchOptionsView.prototype.startSearchTimeout.call(this, searchText);
@@ -283,7 +282,6 @@ var ExperienceDatumSearchView = (function() {
 	{
 		val = val !== undefined ? val : this.inputCompareText();
 		this.setupSearchTypes(val);
-		this.checkHelp(!this.typeName);
 		this.showSearch();
 		if (this.typeName)
 			SearchOptionsView.prototype.restartSearchTimeout.call(this, val);
@@ -375,14 +373,6 @@ var ExperienceDatumSearchView = (function() {
 					_this.setupChunkerArguments(_this._foundCompareText);
 					this.checkStart(_this._foundCompareText);
 				}
-				else if (!_this.getDataChunker.hasButtons() && !_this.inputText())
-				{
-					if ("checkHelp" in _this)
-					{
-						_this.checkHelp(true);
-						_this.showSearch();
-					}
-				}
 			};
 	}
 	
@@ -472,33 +462,6 @@ var OrganizationLinkSearchView = (function() {
 		}
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.typeNames[0];
-	}
-	
-	OrganizationLinkSearchView.prototype.checkHelp = function(showHelp)
-	{
-		var helpDiv = d3.select(this.helpNode);
-
-		if (showHelp == (helpDiv.style('display') == 'block'))
-			return false;
-			
-		if (showHelp)
-		{
-			var texts = [{styles: '', text: 'The name of the organization that is providing this experience.'},
-						 ];
-			helpDiv.selectAll('p')
-				.data(texts)
-				.enter()
-				.append('p')
-				.classed('list', function(d) { return d.styles == 'list'; })
-				.text(function(d) { return d.text; });
-			helpDiv.style('display', 'block');
-		}
-		else
-		{
-			helpDiv.selectAll('p').remove();
-			helpDiv.style('display', 'none');
-		}
-		return true;
 	}
 	
 	OrganizationLinkSearchView.prototype.fillItems = function(buttons)
@@ -771,38 +734,6 @@ var SiteLinkSearchView = (function() {
 		}
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.typeNames[0];
-	}
-	
-	SiteLinkSearchView.prototype.checkHelp = function(showHelp)
-	{
-		var helpDiv = d3.select(this.helpNode);
-
-		if (showHelp == (helpDiv.style('display') == 'block'))
-			return false;
-			
-		if (showHelp)
-		{
-			var texts = [{styles: '', text: 'Examples:'}, 
-						 {styles: 'list', text: 'Blackstone Community Center\n'},
-						 {styles: 'list', text: 'Esplanade Boat House'},
-						 {styles: 'list', text: 'Jackson/Mann School'},
-						 {styles: 'list', text: 'McLean Playground'},
-						 {styles: 'list', text: '24 Beacon St., Boston, MA'},
-						 ];
-			helpDiv.selectAll('p')
-				.data(texts)
-				.enter()
-				.append('p')
-				.classed('list', function(d) { return d.styles == 'list'; })
-				.text(function(d) { return d.text; });
-			helpDiv.style('display', 'block');
-		}
-		else
-		{
-			helpDiv.selectAll('p').remove();
-			helpDiv.style('display', 'none');
-		}
-		return true;
 	}
 	
 	SiteLinkSearchView.prototype.fillItems = function(buttons)
@@ -1150,33 +1081,6 @@ var OfferingLinkSearchView = (function() {
 		}
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.typeNames[0];
-	}
-	
-	OfferingLinkSearchView.prototype.checkHelp = function(showHelp)
-	{
-		var helpDiv = d3.select(this.helpNode);
-
-		if (showHelp == (helpDiv.style('display') == 'block'))
-			return false;
-			
-		if (showHelp)
-		{
-			var texts = [{styles: '', text: 'The name of the program or service provided.'}, 
-						 ];
-			helpDiv.selectAll('p')
-				.data(texts)
-				.enter()
-				.append('p')
-				.classed('list', function(d) { return d.styles == 'list'; })
-				.text(function(d) { return d.text; });
-			helpDiv.style('display', 'block');
-		}
-		else
-		{
-			helpDiv.selectAll('p').remove();
-			helpDiv.style('display', 'none');
-		}
-		return true;
 	}
 	
 	OfferingLinkSearchView.prototype.fillItems = function(buttons)
@@ -1591,7 +1495,7 @@ var NewExperiencePanel = (function () {
 		else
 			this.siteSearchView.clearFromSite();
 	}
-		
+	
 	NewExperiencePanel.prototype.checkOfferingInput = function()
 	{
 		var newText = this.offeringSearchView.inputText();
