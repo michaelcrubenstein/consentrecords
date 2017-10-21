@@ -1662,7 +1662,11 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.checkDateAlignment = function()
 	{
-		if ($(this.optionPanel.node()).innerWidth() <
+		if (!('optionPanel' in this))
+		{
+			; /* Do nothing */
+		}
+		else if ($(this.optionPanel.node()).innerWidth() <
 			$(this.optionPanel.node()).children().map(function(e) { return $(this).outerWidth(); })
 				.toArray().reduce(function(a, b) { return a + b; }, 0))
 		{
@@ -1796,12 +1800,12 @@ var NewExperiencePanel = (function () {
 				this.appendUniqueValue(crv.buttonTexts.ended, getLocaleDateString(experience.end()));
 
 			if (experience.organization())
-				this.appendUniqueValue(crv.buttonTexts.organization, experience.organization().description())
+				this.appendUniqueValue('', experience.organization().description())
 					.classed('first', true);
 			if (experience.site())
-				this.appendUniqueValue(crv.buttonTexts.site, experience.site().description());
+				this.appendUniqueValue('', experience.site().description());
 			if (experience.offering())
-				this.appendUniqueValue(crv.buttonTexts.offering, experience.offering().description());
+				this.appendUniqueValue('', experience.offering().description());
 		}
 		else
 		{
