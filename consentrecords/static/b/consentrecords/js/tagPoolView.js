@@ -756,12 +756,8 @@ var TagSearchView = (function() {
 var TagPoolSection = (function () {
 	TagPoolSection.prototype.controller = null;
 	TagPoolSection.prototype.section = null;
-	TagPoolSection.prototype.tagHelp = null;
 	TagPoolSection.prototype.searchView = null;
 	TagPoolSection.prototype.allServices = null;
-
-	TagPoolSection.prototype.firstTagHelp = "What type of experience is this?";
-	TagPoolSection.prototype.otherTagHelp = "What other tag goes with this experience?";
 
 	TagPoolSection.prototype.getInputTextWidth = function(inputNode)
 	{
@@ -1087,15 +1083,6 @@ var TagPoolSection = (function () {
 		}
 	}
 	
-	TagPoolSection.prototype.setTagHelp = function()
-	{
-		if (this.searchView.focusNode == this.searchView.firstTagInputNode() &&
-			!this.controller.hasPrimaryService())
-			this.tagHelp.text(this.firstTagHelp);
-		else
-			this.tagHelp.text(this.otherTagHelp);
-	}
-	
 	TagPoolSection.prototype.hideAddTagButton = function(duration)
 	{
 		var button = this.tagsContainer.select('button');
@@ -1148,7 +1135,6 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.revealSearchView = function(inputNode, ensureVisible)
 	{
-		this.setTagHelp();
 		var duration = this.searchView.reveal.isVisible() ? undefined : 0;
 		this.searchView.constrainTagFlags(duration);
 		if (!inputNode.value)
@@ -1251,9 +1237,6 @@ var TagPoolSection = (function () {
 			
 		searchContainer = this.section.append('div');
 		
-		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
-		this.tagHelp.text(this.firstTagHelp);
-			
 		this.searchView = new (this.searchViewType())(searchContainer, this, controller);
 		/* Mark the reveal as not visible or the metrics aren't calculated. */
 		this.searchView.reveal.isVisible(false);
