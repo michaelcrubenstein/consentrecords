@@ -86,7 +86,7 @@ var ServiceFlagController = (function() {
 	
 	ServiceFlagController.prototype.description = function()
 	{
-		return this.service.description();
+		return this.service ? this.service.description() : "Other";
 	}
 	
 	/* Returns True if the service contains the specified text. */
