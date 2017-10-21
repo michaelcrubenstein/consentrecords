@@ -77,19 +77,14 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.textLeftMargin = 3;
 	ComparePath.prototype.textDetailRightMargin = 7; /* textRightMargin; */
-	ComparePath.prototype.pathBackground = "white";
-	ComparePath.prototype.showDetailIconWidth = 18;
-	ComparePath.prototype.loadingMessageTop = "4.5em";
-	ComparePath.prototype.promptRightMargin = 14;		/* The minimum space between the prompt and the right margin of the svg's container */
 	
 	/* Translate coordinates for the elements of the experienceGroup within the svg */
 	ComparePath.prototype.experienceGroupDX = 40;
-	ComparePath.prototype.experienceGroupDY = 37;
+	ComparePath.prototype.experienceGroupDY = 3.6; /* em */
+	ComparePath.prototype.loadingMessageTop = "3.6em";
 	
 	ComparePath.prototype.guideHSpacing = 0;
 
-	ComparePath.prototype.detailRectX = 1.5;
-	
 	ComparePath.prototype.leftPath = null;
 	ComparePath.prototype.rightPath = null;
 	ComparePath.prototype.pathwayContainer = null;
@@ -101,8 +96,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.guideGroup = null;
 	ComparePath.prototype.experienceGroup = null;
 
-	ComparePath.prototype.flagWidth = 0;
-	
 	ComparePath.prototype.columnData = [{labelY: PathGuides.labelYs[0], color: "#666"}, 
 										{labelY: PathGuides.labelYs[0], color: "#666"}];
 
@@ -327,32 +320,7 @@ var ComparePath = (function() {
 		this.columnData[0].name = this.getPathDescription(this.leftPath, this.leftAgeCalculator);
 		this.columnData[1].name = this.getPathDescription(this.rightPath, this.rightAgeCalculator);
 		
-		var guides = this.guideGroup.selectAll('g')
-			.data(this.columnData)
-			.enter()
-			.append('g');
-		
-		guides.append('rect')
-			.classed('column-icon', true)
-			.attr('x', -10)
-			.attr('y', function(d) { return d.labelY - 31; })
-			.attr('height', 20)
-			.attr('width', 20)
-			.attr('stroke', function(d) { return d.color; })
-			.attr('fill', function(d) { return d.color; });
-		guides.append('text')
-			.classed('column-label', true)
-			.attr('x', 0)
-			.attr('y', function(d, i) { return d.labelY; });
-		guides.append('line')
-			.classed('column', true)
-			.attr('x1', 0)
-			.attr('y1', function(d) { 
-				return d.labelY + 3 + (9 * (d.name.split(' ').length - 1)); 
-				})
-			.attr('x2', 0)
-			.attr('y2', 500)
-			.attr('stroke', function(d) { return d.color; });
+		this.appendGuides(this.columnData);
 	
 		var addedFunction = function(eventObject, newData)
 			{
@@ -389,44 +357,6 @@ var ComparePath = (function() {
 		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
 	}
 	
-	/* Sets the heights of objects that depend on either the layout of 
-		the scroll area
-		or the layout of the experiences
-		or the detail group. 
-	 */
-	ComparePath.prototype.setupHeights = function()
-	{
-		var containerBounds = this.containerDiv.getBoundingClientRect();
-		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
-		var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
-		
-		var _this = this;
-		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
-		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
-		if (svgHeight < flagHeights)
-			svgHeight = flagHeights;
-
-		$(this.svg.node()).height(svgHeight);
-		$(this.bg.node()).height(svgHeight);
-		this.guideGroup.selectAll('line')
-			.attr('y2', svgHeight - this.bottomNavHeight);
-	}
-	
-	ComparePath.prototype.setupWidths = function()
-	{
-		var newWidth = this.sitePanel.scrollAreaWidth();
-		var _this = this;
-		
-		this.experienceGroup.selectAll('g.flag').each(function (fd)
-			{
-				var w = _this.experienceGroupDX + fd.x +parseFloat(d3.select(this).selectAll('rect').attr('width'));
-				if (newWidth < w)
-					newWidth = w;
-			});
-		$(this.svg.node()).width(newWidth);
-		$(this.bg.node()).width(newWidth);
-	}
-	
 	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
 	{
 		if (leftPath.privilege() === cr.privileges.find)
@@ -442,44 +372,8 @@ var ComparePath = (function() {
 		this.rightPath = rightPath;
 		this.editable = (editable !== undefined ? editable : true);
 
-		var container = d3.select(this.containerDiv);
-		
-		this.pathwayContainer = container.append('div')
-			.classed("compare-paths", true);
-			
-		this.svg = this.pathwayContainer.append('svg')
-			.classed("pathway compare-paths", true)
-			.attr('xmlns', "http://www.w3.org/2000/svg")
-			.attr('version', "1.1");
-		
-		/* bg is a rectangle that fills the background with the background color. */
-		this.bg = this.svg.append('rect')
-			.style("width", "100%")
-			.style("height", "100%")
-			.attr("fill", this.pathBackground);
-			
-		this.loadingMessage = crv.appendLoadingMessage(this.containerDiv)
-			.style("position", "absolute")
-			.style("left", "0")
-			.style("top", this.loadingMessageTop);
-		
-		this.yearGroup = this.svg.append('g')
-			.classed('year', true);
-				
-		this.guideGroup = this.svg.append('g')
-				.classed("guide", true)
-				.attr('transform', "translate({0}, 0)".format(this.experienceGroupDX));
-				
-		this.experienceGroup = this.svg.append('g')
-				.classed("experiences", true)
-				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY));
-			
-		d3.select(this.containerDiv).selectAll('svg')
-			.on("click", function() 
-			{ 
-				d3.event.stopPropagation(); 
-			});
-		
+		this.appendPathSVG();
+
 		/* setupHeights now so that the initial height of the svg and the vertical lines
 			consume the entire container. */
 		this.setupHeights();

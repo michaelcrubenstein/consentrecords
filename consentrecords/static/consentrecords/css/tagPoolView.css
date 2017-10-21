@@ -100,6 +100,9 @@ section.tags button {
 	padding-right: 1.5px;
 	height: 25px;			/* Matches input-tag */
 	margin-bottom: 6px;		/* Matches input-tag */
+	color: #999;
+	border-color: transparent;
+	outline: none;
 }
 
 div.pool-container {

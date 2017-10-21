@@ -1813,6 +1813,7 @@ var OfferingPanel = (function () {
 		/* The tags section. */
 		this.tagPoolSection = new TagPoolSection(this, controller, crv.buttonTexts.tags);
 		this.tagPoolSection.section.classed('first', true);
+		this.tagPoolSection.addAddTagButton();
 
 		var tagsFocused = function(eventObject, inputNode)
 			{
@@ -2177,7 +2178,7 @@ var PickPrimaryAdministratorPanel = (function() {
 				{
 					var inputBox = _this.panelDiv.selectAll('input').node();
 					inputBox.focus();
-					inputBox.setSelectionRange(0, inputBox.value.length)
+					inputBox.setSelectionRange(0, inputBox.value.length);
 				});
 	}
 	
@@ -2515,6 +2516,7 @@ var ServicePanel = (function () {
 		/* The tags section. */
 		this.tagPoolSection = new ServiceTagPoolSection(this, controller, crv.buttonTexts.implications);
 		this.tagPoolSection.section.classed('first', true);
+		this.tagPoolSection.addAddTagButton();
 
 		var tagsFocused = function(eventObject, inputNode)
 			{
@@ -3507,6 +3509,7 @@ var ExperiencePromptPanel = (function () {
 			new ExperiencePromptServicesController(controller.newInstance()), 
 			crv.buttonTexts.tags);
 		this.tagsSection.section.classed('first', true);
+		this.tagsSection.addAddTagButton();
 
 		var tagsFocused = function(eventObject, inputNode)
 			{
@@ -3541,8 +3544,10 @@ var ExperiencePromptPanel = (function () {
 		
 		this.disqualifyingTagsSection = new TagPoolSection(this, 
 			new DisqualifyingTagsController(controller.newInstance()), 
-			crv.buttonTexts.disqualifyingTags);
-		this.disqualifyingTagsSection.section.classed('first', true);
+			crv.buttonTexts.disqualifyingTags)
+			.classed('first', true);
+			
+		this.disqualifyingTagsSection.addAddTagButton();
 
 		var disqualifyingTagsFocused = function(eventObject, inputNode)
 			{

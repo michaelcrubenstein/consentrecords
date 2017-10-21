@@ -223,7 +223,6 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.poolContainer = null;
 	SearchPathsPanel.prototype.queryTagPoolView = null;
 	
-	SearchPathsPanel.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
 	SearchPathsPanel.prototype.searchFlagHSpacing = 15;
 	SearchPathsPanel.prototype.searchFlagVSpacing = 1.0;
 	SearchPathsPanel.prototype.flagHeightEM = 2.333;
@@ -377,7 +376,7 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.getNextQueryFlagPosition = function(sourceFlag)
 	{
-		var lastChild = this.queryTagPoolView.div.selectAll('span:last-child');
+		var lastChild = this.queryTagPoolView.flagsContainer.selectAll('span:last-child');
 		if (lastChild.size() == 0)
 			return {top: 0, left:0};
 		else
@@ -475,7 +474,7 @@ var SearchPathsPanel = (function () {
 		this.poolContainer.layoutFlags();
 		
 		/* Show the help message in the query container */ 
-		this.queryTagPoolView.div.selectAll('span')
+		this.queryTagPoolView.flagsContainer.selectAll('span')
  							.interrupt().transition().duration(400)
 							.style('opacity', 1.0);
 
@@ -530,8 +529,8 @@ var SearchPathsPanel = (function () {
 			.style('background-color', null)
 			.style('color', null);
  		
- 		/* Figure out where travelSVG is going to end up relative to queryTagPoolView.div. */
- 		var newPosition = this.queryTagPoolView.div.node().getBoundingClientRect();
+ 		/* Figure out where travelSVG is going to end up relative to queryTagPoolView.flagsContainer. */
+ 		var newPosition = this.queryTagPoolView.flagsContainer.node().getBoundingClientRect();
  		var flagPosition = this.getNextQueryFlagPosition(poolFlag);
  		
  		var _this = this;
@@ -546,28 +545,17 @@ var SearchPathsPanel = (function () {
 							{
 								/* Dispose of the hole. */
 								d3.select(poolFlag).classed('hole', false)
-									.style('border-left-color',
-										function(d)
-											{
-												return d.poleColor();
-											})
-									.style('background-color',
-										function(d)
-											{
-												return d.flagColor();
-											})
-									.style('color',
-										function(d)
-											{
-												return d.fontColor();
-											});
+									.each(function(d)
+										{
+											PathGuides.fillNode(this, d.getColumn());
+										});
 							});
 					
 					/* Add a query flag that is the same as the svg flag in the same position. */
 					var newS = new ServiceFlagController(s.service);
 					newS.x = flagPosition.left;
 					newS.y = flagPosition.top / _this.emToPX;
-					var queryFlag = _this.queryTagPoolView.div.append('span')
+					var queryFlag = _this.queryTagPoolView.flagsContainer.append('span')
 						.datum(newS)
 						.on('click', function(fd) 
 							{ 
