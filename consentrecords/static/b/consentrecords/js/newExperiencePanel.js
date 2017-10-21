@@ -2188,6 +2188,7 @@ var NewExperiencePanel = (function () {
 		
 		$(this.node()).one('revealing.cr', function()
 			{
+				_this.updateInputs();
 				_this.showTags();
 				
 				if (!experienceController.newInstance().engagement())
