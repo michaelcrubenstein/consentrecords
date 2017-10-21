@@ -2143,8 +2143,9 @@ var EditItemPanel = (function () {
 	{
 		var section = this.mainDiv.append('section')
 			.classed('cell edit unique', true);
-		section.append('label')
-			.text(labelText);
+		if (labelText)
+			section.append('label')
+				.text(labelText);
 		this.appendEnumerationEditor(section, value);
 		return section;
 	}
