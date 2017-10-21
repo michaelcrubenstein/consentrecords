@@ -1743,22 +1743,31 @@ class Engagement(ChildInstance, dbmodels.Model):
                        .order_by('user__emails__text')
     
     def create(parent, data, context, newIDs={}):
+        user = _orNoneForeignKey(data, 'user', context, User)
         newItem = Engagement.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 user=_orNoneForeignKey(data, 'user', context, User),
+                                 user=user,
                                  start=_orNone(data, 'start'),
                                  end=_orNone(data, 'end'),
                                 )
         
-        offering = newItem.parent.parent
+        # When adding an inquiry, ensure that the inquiry access group of the organization 
+        # containing the inquiry can read the user.
+        organization = parent.parent.parent.parent
+        if type(organization) != Organization:
+            raise ValueError('this session is not associated with an organization')
+        
+        user.grantOrganizationDefaultGroupRead(organization, context)  
+            
+        offering = parent.parent
         Experience.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
-                                 parent= newItem.user.path,
+                                 parent=user.path,
                                  engagement=newItem,
                                  offering=offering,
                                  site=offering.parent,
-                                 organization=offering.parent.parent,
+                                 organization=organization,
                                  start=newItem.start,
                                  end=newItem.end)
                                  
@@ -1887,12 +1896,21 @@ class Enrollment(ChildInstance, dbmodels.Model):
                        .order_by('user__emails__text')
     
     def create(parent, data, context, newIDs={}):
+        user = _orNoneForeignKey(data, 'user', context, User)
         newItem = Enrollment.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
-                                 user=_orNoneForeignKey(data, 'user', context, User),
+                                 user=user,
                                 )
         
+        # When adding an inquiry, ensure that the inquiry access group of the organization 
+        # containing the inquiry can read the user.
+        organization = parent.parent.parent.parent
+        if type(organization) != Organization:
+            raise ValueError('this session is not associated with an organization')
+        
+        user.grantOrganizationDefaultGroupRead(organization, context)  
+            
         return newItem                          
         
     def buildHistory(self, context):
@@ -3133,16 +3151,8 @@ class Inquiry(ChildInstance, dbmodels.Model):
         organization = parent.parent.parent.parent
         if type(organization) != Organization:
             raise ValueError('this session is not associated with an organization')
-            
-        if organization.inquiryAccessGroup and \
-           not user.groupGrants.filter(deleteTransaction__isnull=True,
-                                       grantee=organization.inquiryAccessGroup,
-                                       privilege__in=['read', 'write', 'administer']).exists():
-            newGrant = UserGroupGrant.objects.create(transaction=context.transaction,
-                                 lastTransaction=context.transaction,
-                                 grantor_id=user.id,
-                                 grantee=organization.inquiryAccessGroup,
-                                 privilege='read')
+        
+        user.grantOrganizationDefaultGroupRead(organization, context)  
             
         return newItem                          
         
@@ -5841,6 +5851,22 @@ class User(SecureRootInstance, dbmodels.Model):
         if history:
             self.lastTransaction = context.transaction
             self.save()
+    
+    ### Grants the specified organization read access to this user.
+    def grantOrganizationDefaultGroupRead(self, organization, context):
+        print (self, str(organization.inquiryAccessGroup))
+        print (str(self.groupGrants.filter(deleteTransaction__isnull=True,
+                                       grantee=organization.inquiryAccessGroup,
+                                       privilege__in=['read', 'write', 'administer'])))
+        if organization.inquiryAccessGroup and \
+           not self.groupGrants.filter(deleteTransaction__isnull=True,
+                                       grantee=organization.inquiryAccessGroup,
+                                       privilege__in=['read', 'write', 'administer']).exists():
+            newGrant = UserGroupGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 grantor_id=self.id,
+                                 grantee=organization.inquiryAccessGroup,
+                                 privilege='read')
             
 class UserHistory(dbmodels.Model):
     id = idField()
