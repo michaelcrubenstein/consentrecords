@@ -209,18 +209,6 @@ var FlagController = (function() {
 		return PathGuides.data[column].fontColor;
 	}
 	
-	FlagController.prototype.flagColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].flagColor;
-	}
-	
-	FlagController.prototype.poleColor = function()
-	{
-		var column = this.getColumn();
-		return PathGuides.data[column].poleColor;
-	}
-	
 	FlagController.prototype.checkOfferingCells = function(done)
 	{
 		// Is this needed any longer?
@@ -239,9 +227,7 @@ var FlagController = (function() {
 		var _this = this;
 		var f = function()
 			{
-				var pathGuide = PathGuides.data[_this.getColumn()]
-				$(r).css({'background-color': pathGuide.flagColor,
-						  color: pathGuide.fontColor});
+				PathGuides.fillNode(r, _this.getColumn());
 			}
 		this.checkOfferingCells(f);
 	}

@@ -25,17 +25,21 @@ var QuickAddExperiencePanel = (function () {
 
 			this.flags().each(function(fs)
 				{
-					fs.visible = (!_this.filter || _this.filter(fs)) &&
-						(fs.service == filterService ||
-						 filterService.impliedDirectlyBy().indexOf(fs.service) >= 0 ||
-						 sis.indexOf(fs.service) >= 0);
+					if (this == _this.otherFlagRowNode)
+						fs.visible = true;
+					else
+						fs.visible = (!_this.filter || _this.filter(fs)) &&
+							(fs.service == filterService ||
+							 filterService.impliedDirectlyBy().indexOf(fs.service) >= 0 ||
+							 sis.indexOf(fs.service) >= 0);
 				});
 		}
 		else
 		{
 			var rootServices = this.flags().filter(function(fs)
 				{
-					return fs.service.serviceImplications().length <= 1 &&
+					return this != _this.otherFlagRowNode &&
+						   fs.service.serviceImplications().length <= 1 &&
 						(!_this.filter || _this.filter(fs));
 				});
 			if (rootServices.size() == 1)
@@ -47,6 +51,7 @@ var QuickAddExperiencePanel = (function () {
 			{
 				this.flags().each(function(fs) { fs.visible = false; });
 				rootServices.each(function(fs) { fs.visible = true; });
+				d3.select(this.otherFlagRowNode).datum().visible = true;
 			}
 		}
 	}
@@ -70,6 +75,14 @@ var QuickAddExperiencePanel = (function () {
 					{
 						if (fd.service == filterService)
 							flagSets[1].push(this);
+						else if (this == _this.otherFlagRowNode)
+						{
+							d3.select(_this.otherFlagNode)
+								.text("Other {0}".format(filterService.description()));
+							PathGuides.fillNode(_this.otherFlagNode, filterService.getColumn());
+							fd.x = undefined;
+							flagSets[2].push(this);
+						}
 						else if (fd.service.serviceImplications().find(function(si)
 							{
 								return si.service() == filterService;
@@ -89,6 +102,10 @@ var QuickAddExperiencePanel = (function () {
 					if (fd.visible === undefined || fd.visible)
 						flagSets[3].push(this);
 				});
+			d3.select(_this.otherFlagNode)
+				.text("Other");
+			PathGuides.fillOtherNode(_this.otherFlagNode);
+			d3.select(_this.otherFlagNode).datum().x = undefined;
 		}
 
 		flagSets.forEach(function(fs)
@@ -133,14 +150,28 @@ var QuickAddExperiencePanel = (function () {
 			});
 	}
 	
-	QuickAddExperiencePanel.prototype.addService = function(path, service, timeframe)
+	QuickAddExperiencePanel.prototype.addService = function(path, service, timeframe, isOther)
 	{
 		var controller = new ExperienceController(path, null, false);
-		controller.service(service);
+		if (service)
+			controller.service(service);
+		
+		if (isOther)
+		{
+			controller.addService("Other Tag");
+		}
 		controller.timeframe(timeframe);
 		controller.initDateRange(timeframe);
-		return new NewExperiencePanel(controller)
-				.showUp()
+		var panel = new NewExperiencePanel(controller);
+		
+			
+		return panel.showUp()
+			.then(function()
+				{
+					if (isOther)
+						panel.focusLastTag();
+				},
+				cr.chainFail);
 	}
 	
 	QuickAddExperiencePanel.prototype.hideFlagRow = function($flagRow, fd)
@@ -160,6 +191,9 @@ var QuickAddExperiencePanel = (function () {
 			.height(
 			$(this.mainDiv.node()).height() - this.panelNode.sitePanel.getBottomNavHeight()
 			);
+			
+		/* Clear the x coordinates before resetting them. */
+		this.flagRows.each(function(fs) { fs.x = undefined; });
 		this._setFlagCoordinates(this.flagRows, undefined, undefined);
 		TagPoolView.prototype.moveFlags.call(this, duration);
 	}
@@ -167,20 +201,9 @@ var QuickAddExperiencePanel = (function () {
 	QuickAddExperiencePanel.prototype.appendFlag = function(g)
 	{
 		g.classed('flag', true)
-			.style('border-left-color',
-			function(d)
+			.each(function(d)
 				{
-					return d.poleColor();
-				})
-			.style('background-color',
-			function(d)
-				{
-					return d.flagColor();
-				})
-			.style('color',
-			function(d)
-				{
-					return d.fontColor();
+					PathGuides.fillNode(this, d.getColumn());
 				})
 			.text(function(d)
 				{
@@ -214,12 +237,15 @@ var QuickAddExperiencePanel = (function () {
 				})
 			.on('click', function(d)
 				{
-					if (prepareClick('click', text + ": " + d.service.description()))
+					if (prepareClick('click', text + ": " + d.description()))
 					{
 						try
 						{
 							var $flagRow = $(this).parent();
-							_this.addService(path, d.service, timeframe)
+							var service = ($flagRow.get(0) == _this.otherFlagRowNode) 
+								? _this.currentService : d.service;
+							
+							_this.addService(path, service, timeframe, $flagRow.get(0) == _this.otherFlagRowNode)
 								.then(function() {
 										return _this.hide();
 									},
@@ -256,6 +282,8 @@ var QuickAddExperiencePanel = (function () {
 				{
 					return _this.filter(s);
 				});
+		else if (d.service == null)
+			children = [];
 		else
 			children = d.service.impliedDirectlyBy();
 		return children.length;
@@ -281,11 +309,17 @@ var QuickAddExperiencePanel = (function () {
 			
 		this.flagsContainer = this.mainDiv.append('div')
 			.classed('flags-container', true);
-			
-		$(this.mainDiv.node()).on('resize.cr', function()
+		
+		var resize = function()
 			{
 				_this.handleResize(0);
-			});
+			};
+			
+		$(window).on('resize', resize);
+		$(this.mainDiv.node()).on('remove', function()
+			{
+				$(window).off('resize', resize);
+			});	
 		
 		this.promise = $.when(_this.dimmer.show(), cr.Service.servicesPromise())
 		 .then(function(x1, services)
@@ -295,10 +329,16 @@ var QuickAddExperiencePanel = (function () {
 					var controllers = services.map(function(s) { return new ServiceFlagController(s); });
 					controllers.sort(function(a, b) { return _this.compareFlags(a, b); });
 
-					_this.flagRows = _this.flagsContainer.selectAll('span')
+					_this.flagsContainer.selectAll('span')
 						.data(controllers)
 						.enter()
-						.append('span')
+						.append('span');
+					
+					_this.otherFlagRowNode = _this.flagsContainer.append('span')
+						.datum(new ServiceFlagController(null))
+						.node();
+
+					_this.flagRows = _this.flagsContainer.selectAll('span')
 						.classed('flag-row', true)
 						.on('mousedown', function()
 							{
@@ -310,10 +350,11 @@ var QuickAddExperiencePanel = (function () {
 								/* Do not remove the panel */
 								d3.event.stopPropagation();
 							});
+					
 					var g = _this.flagRows.append('span')
 						.on('click', function(d)
 							{
-								if (prepareClick('click', d.service.description()))
+								if (prepareClick('click', d.description()))
 								{
 									try
 									{
@@ -327,7 +368,7 @@ var QuickAddExperiencePanel = (function () {
 										{
 											_this.toggleLeft(_this.expandedFlag, d3.select(_this.expandedFlag.get(0)).datum());
 										}
-										if (_this.currentService == d.service)
+										if (d.service && _this.currentService == d.service)
 										{
 											_this.toggleLeft($currentFlag, d)
 												.then(function()
@@ -369,7 +410,10 @@ var QuickAddExperiencePanel = (function () {
 									}
 								}
 							});
-					this.mouseDownElement = null;
+							
+					_this.otherFlagNode = d3.select(_this.otherFlagRowNode).select('span:first-child').node();
+					
+					_this.mouseDownElement = null;
 					if (!timeframes || timeframes.indexOf('Previous') >= 0)
 					{
 						_this.appendTimeframeButtons(experienceController.parent(), 'Previous', crv.buttonTexts.previousTimeframe)

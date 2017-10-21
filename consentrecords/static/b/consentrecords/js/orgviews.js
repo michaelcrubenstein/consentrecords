@@ -2178,7 +2178,7 @@ var PickPrimaryAdministratorPanel = (function() {
 				{
 					var inputBox = _this.panelDiv.selectAll('input').node();
 					inputBox.focus();
-					inputBox.setSelectionRange(0, inputBox.value.length)
+					inputBox.setSelectionRange(0, inputBox.value.length);
 				});
 	}
 	
