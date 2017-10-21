@@ -1749,42 +1749,11 @@ var NewExperiencePanel = (function () {
 					.text(this.previousExperienceButton.classed('pressed') ? crv.buttonTexts.ended : crv.buttonTexts.ends);
 	}
 	
-	NewExperiencePanel.prototype.completeShow = function()
+	NewExperiencePanel.prototype.focusLastTag = function()
 	{
-		var _this = this;
-		$.when(this._fillTagsPromise)
-			.then(function()
-				{
-					if (_this.controller().newInstance().experienceServices().length == 0)
-					{
-						var tagInput = _this.tagPoolSection.tagsContainer.select('input.tag');
-						tagInput.node().focus();
-					}
-					else
-						_this.ensureDateEditorVisible(_this.startHidable);
-				});
-	}
-	
-	NewExperiencePanel.prototype.showUp = function()
-	{
-		var _this = this;
-		return EditItemPanel.prototype.showUp.call(this)
-			.then(function()
-				{
-					_this.completeShow();
-				},
-				cr.chainFail);
-	}
-		
-	NewExperiencePanel.prototype.showLeft = function()
-	{
-		var _this = this;
-		return EditItemPanel.prototype.showLeft.call(this)
-			.then(function()
-				{
-					_this.completeShow();
-				},
-				cr.chainFail);
+		var tagInputNode = this.tagPoolSection.tagsContainer.select('input.tag:last-of-type').node();
+		tagInputNode.focus();
+		tagInputNode.setSelectionRange(0, tagInputNode.value.length)
 	}
 	
 	NewExperiencePanel.prototype.checkDateAlignment = function()
@@ -2253,10 +2222,6 @@ var NewExperiencePanel = (function () {
 					_this.resizeVisibleSearch(0);
 					_this.checkDateAlignment();
 				});
-				if (experienceController.newInstance().experienceServices().length == 0)
-					_this.tagPoolSection.searchView.showSearch(0);
-				else
-					_this.ensureDateEditorVisible(_this.startHidable);
 				_this.checkDateAlignment();
 			});
 	}
