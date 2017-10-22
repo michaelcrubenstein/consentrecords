@@ -322,7 +322,7 @@ var TagPoolView = (function () {
 		var hidingG = g.filter(function(fd) { return $(this).css('opacity') != "0" && 
 									   !(fd.visible === undefined || fd.visible); });
 		var $g = this.$flags();
-		$g.stop();
+		$g.stop(true, false);
 		
 		var promises = [];
 		if (duration == 0)
@@ -370,10 +370,10 @@ var TagPoolView = (function () {
 				else
 				{
 					var _thisFlag = this;
-					promises.push($(this).animate(styles, {duration: duration})
+					promises.push($(this).animate(styles, {duration: duration,
+							complete: function() { 
+								$(_thisFlag).css({display: 'none'}); }})
 							.promise()
-							.done(function() { 
-								$(_thisFlag).css({display: 'none'}); })
 						);
 				}
 			});
@@ -409,12 +409,12 @@ var TagPoolView = (function () {
 			else
 			{
 				var p = $hidingFlags.animate({opacity: 0.0},
-					{duration: duration})
-					.promise()
-					.done(function()
+					{duration: duration,
+					 complete: function()
 						{
-							$hidingFlags.css({display: 'none'});
-						});
+							$(this).css({display: 'none'});
+						}})
+					.promise();
 				promises.push(p);
 			}
 		}
@@ -990,7 +990,6 @@ var TagPoolSection = (function () {
 			{
 				/* Check for text changes for all input boxes.  */
 				_this.checkInputDatum(this, d3.select(this).datum());
-				_this.checkInputControls(this);
 			})
 			.on('focusin', function()
 			{
