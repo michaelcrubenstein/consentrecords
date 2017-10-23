@@ -5801,6 +5801,9 @@ class User(SecureRootInstance, dbmodels.Model):
         
         if 'birthday' in changes:
             _validateDate(changes, 'birthday')
+            if not 'path' in changes:
+                changes['path'] = {}
+            changes['path']['birthday'] = changes['birthday'][0:7] if changes['birthday'] else None
             
         history = None
         if 'first name' in changes and changes['first name'] != self.firstName:
