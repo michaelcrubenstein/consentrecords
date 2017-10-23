@@ -1763,7 +1763,7 @@ class Engagement(ChildInstance, dbmodels.Model):
         user.grantOrganizationDefaultGroupRead(organization, context)  
             
         offering = parent.parent
-        Experience.objects.create(transaction=context.transaction,
+        newExperience = Experience.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=user.path,
                                  engagement=newItem,
@@ -1772,6 +1772,8 @@ class Engagement(ChildInstance, dbmodels.Model):
                                  organization=organization,
                                  start=newItem.start,
                                  end=newItem.end)
+        
+        newExperience.cacheImplications()
                                  
         return newItem                          
         
@@ -2091,7 +2093,7 @@ class Experience(ChildInstance, dbmodels.Model):
             
     def checkCanWrite(self, context):
         if self.engagement and context.canWrite(self.engagement):
-        	return
+            return
 
         super(Experience, self).checkCanWrite(context)
     
@@ -2291,7 +2293,12 @@ class Experience(ChildInstance, dbmodels.Model):
             .union(Service.objects.filter(deleteTransaction__isnull=True,
             implyingService__deleteTransaction__isnull=True,
             implyingService__offeringServices__deleteTransaction__isnull=True,
-            implyingService__offeringServices__parent__experiences=self))
+            implyingService__offeringServices__parent__experiences=self))\
+            .union(Service.objects.filter(deleteTransaction__isnull=True,
+            implyingService__deleteTransaction__isnull=True,
+            implyingService__offeringServices__deleteTransaction__isnull=True,
+            implyingService__offeringServices__parent__sessions__engagements__deleteTransaction__isnull=True,
+            implyingService__offeringServices__parent__sessions__engagements__experiences=self))
 
     def cacheImplications(self):
         ExperienceImplication.objects.filter(experience=self).delete()
