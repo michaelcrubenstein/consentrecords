@@ -5832,10 +5832,6 @@ class User(SecureRootInstance, dbmodels.Model):
     
     ### Grants the specified organization read access to this user.
     def grantOrganizationDefaultGroupRead(self, organization, context):
-        print (self, str(organization.inquiryAccessGroup))
-        print (str(self.groupGrants.filter(deleteTransaction__isnull=True,
-                                       grantee=organization.inquiryAccessGroup,
-                                       privilege__in=['read', 'write', 'administer'])))
         if organization.inquiryAccessGroup and \
            not self.groupGrants.filter(deleteTransaction__isnull=True,
                                        grantee=organization.inquiryAccessGroup,
