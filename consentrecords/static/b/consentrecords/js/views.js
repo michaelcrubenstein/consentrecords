@@ -637,15 +637,6 @@ var crf = {
 	}
 }
 
-function appendLeftChevrons(buttons)
-{
-	return buttons.append("div")
-		.classed("site-left-chevron-span", true)
-		.append("img")
-		.classed("site-left-chevron", true)
-		.attr("src", leftChevronPath);
-}
-
 function appendLeftChevronSVG(container)
 {
 	var svg = container.append('svg')

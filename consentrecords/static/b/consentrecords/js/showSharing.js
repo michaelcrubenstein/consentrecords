@@ -257,7 +257,7 @@ var SharingPanel = (function() {
 				}
 				d3.event.preventDefault();
 			});
-		appendLeftChevrons(backButton).classed("site-active-text", true);
+		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
 		backButton.append("span").text(backButtonText);
 		
 		navContainer.appendTitle("Sharing");

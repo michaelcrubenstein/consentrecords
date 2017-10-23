@@ -202,7 +202,6 @@
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
-		leftChevronPath = '{% static "b/consentrecords/png/ios7-arrow-back-512px.svg" %}'
 		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}'
 		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}'
 		
@@ -511,7 +510,7 @@
 
 			var backButton = navContainer.appendLeftButton()
 				.on("click", function() { sitePanel.hideRightEvent(); });
-			appendLeftChevrons(backButton).classed("site-active-text", true);
+			appendLeftChevronSVG(backButton).classed('site-active-text chevron-left', true);
 			backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
 			var centerButton = navContainer.appendTitle(header);

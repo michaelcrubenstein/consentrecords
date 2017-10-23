@@ -88,7 +88,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				{
 					shareDiv = sitePanel.appendBottomNavContainer();
 
-					shareDiv.div.classed("share-container border-above", true);
+					shareDiv.div.classed('border-above', true);
 
 					appendFacebookButton(shareDiv, service, session);
 				}
