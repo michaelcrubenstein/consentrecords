@@ -1716,7 +1716,6 @@ var NewExperiencePanel = (function () {
 		if (experienceController.oldInstance())
 		{
 			var shareButton = this.navContainer.appendRightButton()
-				.classed('share', true)
 				.on('click', function()
 					{
 						if (prepareClick('click', 'share'))
