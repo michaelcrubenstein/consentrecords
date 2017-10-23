@@ -809,7 +809,10 @@ class api:
                     qs2 = qs2[start:end]
                 elif start > 0:
                     qs2 = qs2[start:]
-                p = [i.getData(fields, context) for i in qs2]
+                if 'none' in fields:
+                    p = [i.headData(context) for i in qs2]
+                else:
+                    p = [i.getData(fields, context) for i in qs2]
         
             results = {'data': p}
                 
