@@ -3520,7 +3520,10 @@ cr.Experience = (function() {
 		newInstance._offering = this._offering;
 		newInstance._customOffering = this._customOffering;
 		newInstance._engagement = this._engagement;
-		newInstance._timeframe = this._timeframe;
+		
+		/* Initialize previously null timeframes to reasonable values. */
+		newInstance._timeframe = this.getPhase();
+		
 		newInstance._services = this.duplicateList(this._services, duplicateForEdit);
 		newInstance._customServices = this.duplicateList(this._customServices, duplicateForEdit);
 		
