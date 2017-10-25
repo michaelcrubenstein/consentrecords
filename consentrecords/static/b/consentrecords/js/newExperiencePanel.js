@@ -1746,7 +1746,7 @@ var NewExperiencePanel = (function () {
 		var searchContainer;
 		
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, experienceController, '');
+		this.tagPoolSection = new TagPoolSection(this.mainDiv, experienceController, '');
 		this.tagPoolSection.addAddTagButton();
 				
 		var tagsChanged = function() { _this.setPlaceholders(); }

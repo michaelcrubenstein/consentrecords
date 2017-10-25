@@ -1193,12 +1193,6 @@ var TagPoolSection = (function () {
 				cr.chainFail);
 	}
 	
-	/** Returns the type of search view to be create for this tag pool section. */
-	TagPoolSection.prototype.searchViewType = function()
-	{
-		return TagSearchView;
-	}
-	
 	TagPoolSection.prototype.addAddTagButton = function()
 	{
 		var _this = this;
@@ -1220,11 +1214,14 @@ var TagPoolSection = (function () {
 				});
 	}
 	
-	function TagPoolSection(panel, controller, sectionLabel)
+	/** searchViewType is the type of search view to be create for this tag pool section. */
+	function TagPoolSection(container, controller, sectionLabel, searchViewType)
 	{
+		searchViewType = searchViewType !== undefined ? searchViewType : TagSearchView;
+		
 		this.controller = controller;
 		
-		this.section = panel.mainDiv.append('section')
+		this.section = container.append('section')
 			.classed('cell tags custom', true);
 		var tagsTopContainer = this.section.append('div');
 		if (sectionLabel)
@@ -1236,7 +1233,7 @@ var TagPoolSection = (function () {
 			
 		searchContainer = this.section.append('div');
 		
-		this.searchView = new (this.searchViewType())(searchContainer, this, controller);
+		this.searchView = new searchViewType(searchContainer, this, controller);
 		/* Mark the reveal as not visible or the metrics aren't calculated. */
 		this.searchView.reveal.isVisible(false);
 	}

@@ -1811,7 +1811,7 @@ var OfferingPanel = (function () {
 		this.appendChildrenPanelButton(crv.buttonTexts.sessions, SessionsPanel);
 
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, controller, crv.buttonTexts.tags);
+		this.tagPoolSection = new TagPoolSection(this.mainDiv, controller, crv.buttonTexts.tags);
 		this.tagPoolSection.section.classed('first', true);
 		this.tagPoolSection.addAddTagButton();
 
@@ -2438,25 +2438,6 @@ var ServiceTagSearchView = (function () {
 	return ServiceTagSearchView;
 })();
 
-var ServiceTagPoolSection = (function () {
-	ServiceTagPoolSection.prototype = Object.create(TagPoolSection.prototype);
-	ServiceTagPoolSection.prototype.constructor = ServiceTagPoolSection;
-	
-	/** Returns the type of search view to be create for this tag pool section. */
-	ServiceTagPoolSection.prototype.searchViewType = function()
-	{
-		return ServiceTagSearchView;
-	}
-	
-	function ServiceTagPoolSection(panel, controller, sectionLabel)
-	{
-		TagPoolSection.call(this, panel, controller, sectionLabel);
-	}
-	
-	return ServiceTagPoolSection;
-})();
-
-
 var ServicePanel = (function () {
 	ServicePanel.prototype = Object.create(EditItemPanel.prototype);
 	ServicePanel.prototype.constructor = ServicePanel;
@@ -2514,7 +2495,7 @@ var ServicePanel = (function () {
 		this.stageSection.classed('first', true);
 
 		/* The tags section. */
-		this.tagPoolSection = new ServiceTagPoolSection(this, controller, crv.buttonTexts.implications);
+		this.tagPoolSection = new TagPoolSection(this.mainDiv, controller, crv.buttonTexts.implications, ServiceTagSearchView);
 		this.tagPoolSection.section.classed('first', true);
 		this.tagPoolSection.addAddTagButton();
 
@@ -3505,7 +3486,7 @@ var ExperiencePromptPanel = (function () {
 									 cr.ExperiencePromptText);
 
 		/* The tags section. */
-		this.tagsSection = new TagPoolSection(this, 
+		this.tagsSection = new TagPoolSection(this.mainDiv, 
 			new ExperiencePromptServicesController(controller.newInstance()), 
 			crv.buttonTexts.tags);
 		this.tagsSection.section.classed('first', true);
@@ -3542,7 +3523,7 @@ var ExperiencePromptPanel = (function () {
 				},
 				cr.asyncFail)
 		
-		this.disqualifyingTagsSection = new TagPoolSection(this, 
+		this.disqualifyingTagsSection = new TagPoolSection(this.mainDiv, 
 			new DisqualifyingTagsController(controller.newInstance()), 
 			crv.buttonTexts.disqualifyingTags)
 			.classed('first', true);
