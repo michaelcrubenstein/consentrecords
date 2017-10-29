@@ -868,7 +868,11 @@ var TagPoolSection = (function () {
 						;
 					}
 					if (!newText && this != document.activeElement)
-						d3.select(this).remove();
+					{
+						/* Only remove this if there is an addTag button. */
+						if (_this.tagsContainer.select('button').size())
+							d3.select(this).remove();
+					}
 					else
 						_this.checkInputControls(this);
 				}
