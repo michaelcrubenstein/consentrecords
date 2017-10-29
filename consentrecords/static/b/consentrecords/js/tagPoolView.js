@@ -432,15 +432,16 @@ var TagPoolView = (function () {
 		return this.moveFlags(duration);
 	}
 	
-	TagPoolView.prototype.setFlagVisibles = function()
+	TagPoolView.prototype.setFlagVisibles = function(inputNode)
 	{
 		var g = this.flags();
 		g.each(function(fs) { fs.visible = undefined; });
 	}
 	
-	TagPoolView.prototype.filterFlags = function(filterText)
+	TagPoolView.prototype.filterFlags = function(inputNode)
 	{
-		this.setFlagVisibles();
+		this.setFlagVisibles(inputNode);
+		var filterText = inputNode.value;
 		var upperText = filterText.toLocaleUpperCase();
 		var filterService = upperText && this.hasNamedService(upperText);
 		
@@ -599,11 +600,11 @@ var TagSearchView = (function() {
 	}
 	
 	/* Set the visible flags for each of the services associated with this flags. */
-	TagSearchView.prototype.setFlagVisibles = function()
+	TagSearchView.prototype.setFlagVisibles = function(inputNode)
 	{
-		if (this.focusNode.value)
-			TagPoolView.prototype.setFlagVisibles.call(this);
-		else if (this.focusNode != this.firstTagInputNode() ||
+		if (inputNode.value)
+			TagPoolView.prototype.setFlagVisibles.call(this, inputNode);
+		else if (inputNode != this.firstTagInputNode() ||
 				 this.controller.hasPrimaryService())
 		{
 			this.flags().each(function(fs)
@@ -630,9 +631,9 @@ var TagSearchView = (function() {
 		}
 	}
 
-	TagSearchView.prototype.constrainTagFlags = function(duration)
+	TagSearchView.prototype.constrainTagFlags = function(inputNode, duration)
 	{
-		this.filterFlags(this.focusNode.value);
+		this.filterFlags(inputNode);
 		this.layoutFlags(undefined, duration);
 	}
 	
@@ -942,7 +943,7 @@ var TagPoolSection = (function () {
 		{
 			this.checkTagInput();
 			this.showAddTagButton();
-			this.searchView.constrainTagFlags();
+			this.searchView.constrainTagFlags(inputNode);
 			return true;
 		}
 	}
@@ -955,7 +956,7 @@ var TagPoolSection = (function () {
 				this.hideAddTagButton();
 			else
 				this.showAddTagButton();
-			this.searchView.constrainTagFlags();
+			this.searchView.constrainTagFlags(inputNode);
 		}
 		this.setTagInputWidth(inputNode);
 	}
@@ -1135,7 +1136,7 @@ var TagPoolSection = (function () {
 	TagPoolSection.prototype.revealSearchView = function(inputNode, ensureVisible)
 	{
 		var duration = this.searchView.reveal.isVisible() ? undefined : 0;
-		this.searchView.constrainTagFlags(duration);
+		this.searchView.constrainTagFlags(inputNode, duration);
 		if (!inputNode.value)
 			this.hideAddTagButton(duration);
 		else

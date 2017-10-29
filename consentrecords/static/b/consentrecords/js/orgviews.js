@@ -2394,14 +2394,14 @@ var ServiceTagSearchView = (function () {
 	ServiceTagSearchView.prototype = Object.create(TagSearchView.prototype);
 	ServiceTagSearchView.prototype.constructor = ServiceTagSearchView;
 	
-    ServiceTagSearchView.prototype.setFlagVisibles = function()
+    ServiceTagSearchView.prototype.setFlagVisibles = function(inputNode)
     {
-    	TagSearchView.prototype.setFlagVisibles.call(this);
+    	TagSearchView.prototype.setFlagVisibles.call(this, inputNode);
     	
     	/* If there is no text, add all of the services that are implied by a 
     		service that is already selected.
     	 */
-    	if (!this.focusNode.value)
+    	if (!inputNode.value)
     	{
     		var container = this.poolSection.section.select('.tags-container');
 			var tagDivs = container.selectAll('input.tag');

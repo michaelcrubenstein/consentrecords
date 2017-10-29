@@ -184,7 +184,7 @@ var SearchTagPoolView = (function () {
 
 	SearchTagPoolView.prototype.sitePanel = null;
 	
-	SearchTagPoolView.prototype.setFlagVisibles = function()
+	SearchTagPoolView.prototype.setFlagVisibles = function(inputNode)
 	{
 		var _this = this;
 		var queryData = this.sitePanel.queryTagPoolView.flags().data();
@@ -608,7 +608,7 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.filterPool = function()
 	{
-		this.poolContainer.filterFlags(this.searchInput.value);
+		this.poolContainer.filterFlags(this.searchInput);
 	}
 	
 	SearchPathsPanel.prototype.handleColumnClick = function(services, column)
