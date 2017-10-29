@@ -6105,6 +6105,8 @@ class Context:
     def __init__(self, languageCode, user, propertyList=None, hostURL=None):
         self.languageCode = languageCode
         self._transaction = None
+        self._privileges = {}
+        self._hostURL = hostURL
         if user:
             if type(user) == User:
                 self.user = user
@@ -6123,8 +6125,6 @@ class Context:
         else:
             self.user = None
             self.authUser = AnonymousUser()
-        self._privileges = {}
-        self._hostURL = hostURL
         
     def __str__(self):
         return "context: %s/%s" % (str(self.user), self.languageCode)
