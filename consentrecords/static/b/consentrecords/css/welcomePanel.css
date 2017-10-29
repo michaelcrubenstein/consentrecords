@@ -189,12 +189,12 @@ panel.welcome div.prompts section.tags>div:first-child {
 	width: auto;
 }
 
-div.signup {
+panel.welcome div.signup {
 	width: 100%;
 	text-align: center;
 }
 
-div.signup>div {
+panel.welcome div.signup>div {
 	margin-bottom: 1em;
 	display: inline-block;
 	max-width: 350px;
@@ -205,7 +205,13 @@ div.signup>div {
 	box-shadow: 3px 3px 10px #999;
 }
 
-div.signup>div>div:last-child {
+panel.welcome div.signup div.title {
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+
+panel.welcome div.signup>div>div:last-child {
 	text-align: right;
 	margin-top: 1em;
 }
