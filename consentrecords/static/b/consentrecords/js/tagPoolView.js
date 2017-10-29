@@ -252,6 +252,13 @@ var TagPoolView = (function () {
 					{
 						if (fd.service == filterService)
 							flagSets[1].push(this);
+						else if (this == _this.otherFlagNode)
+						{
+							d3.select(_this.otherFlagNode)
+								.text("Other {0}".format(filterService.description()));
+							PathGuides.fillNode(_this.otherFlagNode, filterService.getColumn());
+							flagSets[2].push(this);
+						}
 						else if (fd.service.serviceImplications().find(function(si)
 							{
 								return si.service() == filterService;
@@ -464,11 +471,17 @@ var TagPoolView = (function () {
 		var sis = filterService && filterService.serviceImplications().map(function(si) { return si.service(); })
 			.filter(function(s) { return s != filterService && s.impliedDirectlyBy().indexOf(filterService) >= 0;});
 
+		var _this = this;
 		if (inputTexts.length > 0)
 		{
 			this.flags().each(function(fs)
 				{
-					if (!fs.descriptionContains(upperText, prefix, filterService) &&
+					if (this == _this.otherFlagNode) {
+						if (!filterService)
+							fs.visible = false;
+					}
+					else if (this != _this.otherFlagNode &&
+						!fs.descriptionContains(upperText, prefix, filterService) &&
 						!inputRegExps.reduce(function(a, b)
 							{
 								return a && b.test(fs.description());
@@ -512,6 +525,14 @@ var TagPoolView = (function () {
 		return g;
 	}
 	
+	TagPoolView.prototype.addOtherFlagNode = function()
+	{
+		var otherFlag = this.flagsContainer.append('span')
+			.datum(new ServiceFlagController(null));
+		this.otherFlagNode = otherFlag.node();
+		this.appendFlag(otherFlag);
+	}
+	
 	TagPoolView.prototype.hasNamedService = function(compareText)
 	{
 		if (compareText.length === 0)
@@ -519,9 +540,10 @@ var TagPoolView = (function () {
 		var data = this.flags().data();
 		var sd = data.find(function(sd) {
 				var d = sd.service;
-				return d.names().find(
-						function(d) { return d.description().toLocaleUpperCase() === compareText;}) ||
-					(d.description && d.description().toLocaleUpperCase() === compareText);
+				return d && 
+						(d.names().find(
+							function(d) { return d.description().toLocaleUpperCase() === compareText;}) ||
+						 (d.description && d.description().toLocaleUpperCase() === compareText));
 			});
 		return sd && sd.service;
 	}
@@ -609,7 +631,10 @@ var TagSearchView = (function() {
 		{
 			this.flags().each(function(fs)
 				{
-					fs.visible = (fs.service.serviceImplications().length > 1) ? false : undefined;
+					if (fs.service)
+						fs.visible = (fs.service.serviceImplications().length > 1) ? false : undefined;
+					else
+						fs.visible = false;
 				});
 		}
 		else
@@ -665,8 +690,11 @@ var TagSearchView = (function() {
 			node = this.poolSection.tagsContainer
 				.selectAll('input.tag')
 				.filter(function(d)	
-					{ return d instanceof _this.controller.serviceLinkType() &&
-							 d.service() == newDatum; })
+					{
+						/* newDatum will be null if there is an Other option. */
+						return d instanceof _this.controller.serviceLinkType() &&
+							 (!newDatum || d.service() == newDatum); 
+					})
 				.node();
 		}
 		/* Node can be null if you have just selected a service that is part of
@@ -686,13 +714,18 @@ var TagSearchView = (function() {
 		{
 			try
 			{
+				var newService = d.service || 
+					(this.focusNode && this.focusNode.value.trim() && 
+					 this.hasNamedService(this.focusNode.value.trim().toLocaleUpperCase()));
+					 
 				/* If the user clicks a flag that is the same as the flag already there, then move on. 
 					If the user clicks a flag that has no sub-flags other than itself, then move on.
 					Otherwise, stay there.
 				 */	
 				var d3Focus = this.focusNode && this.focusNode.parentNode && d3.select(this.focusNode);
 				
-				var moveToNewInput = !this.hasSubService(d.service) ||
+				var moveToNewInput = !d.service ||
+				    !this.hasSubService(newService) ||
 					(this.focusNode && 
 					 this.focusNode.value.toLocaleUpperCase() == d.description().toLocaleUpperCase());
 					
@@ -704,32 +737,32 @@ var TagSearchView = (function() {
 						/* Replace the old service link with a new one. */
 						if (this.controller.serviceLinks().indexOf(oldService) >= 0)
 						{
-							oldService.service(d.service)
-							     .description(d.service.description())
+							oldService.service(newService)
+							     .description(newService.description())
 							     .id(null);
 						}
 						else
 						{
-							oldService = this.controller.addService(d.service);
+							oldService = this.controller.addService(newService);
 						}
 					}
 					else if (this.controller.customServiceType() &&
 							 oldService instanceof this.controller.customServiceType())
 					{
 						this.controller.removeCustomService(oldService);
-						oldService = this.controller.addService(d.service);
+						oldService = this.controller.addService(newService);
 					}
 					else
 					{
 						// This can occur if the datum is null, in which case it
 						// May be the datum of the parent.
-						oldService = this.controller.addService(d.service);
+						oldService = this.controller.addService(newService);
 					}
 					this.focusNode.value = d.description();
 				}
 				else
 				{
-					this.controller.addService(d.service);
+					this.controller.addService(newService);
 				}
 				
 				$(this.poolSection).trigger('tagsChanged.cr');
