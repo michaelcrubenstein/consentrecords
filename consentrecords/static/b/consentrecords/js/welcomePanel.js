@@ -692,11 +692,16 @@ var WelcomePanel = (function () {
 				else
 				{
 					var _this = this;
+					var initialData = {};
 					var experienceData = {};
-					this.promptPanels[this.currentPromptIndex].tagPoolSection.controller.appendData(experienceData);
-					experienceData.add = uuid.v4()
+					var controller = this.promptPanels[this.currentPromptIndex].tagPoolSection.controller;
+					if (controller.newInstance().experienceServices().length > 0)
+					{
+						controller.appendData(experienceData);
+						experienceData.add = uuid.v4();
+						initialData = {path: {add: uuid.v4(), experiences: [ experienceData ]}};
+					}
 
-					var initialData = {path: {add: uuid.v4(), experiences: [ experienceData ]}};
 					this.submit(this.getEmail(), this.getPassword(), 
 						initialData)
 						.then(function(data)
