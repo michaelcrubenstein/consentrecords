@@ -652,6 +652,35 @@ var TagSearchView = (function() {
 			});
 	}
 	
+	TagSearchView.prototype.transferFocusAfterClick = function(moveToNewInput, d)
+	{
+		var _this = this;
+		
+		var node;
+		if (moveToNewInput)
+			node = null;
+		else
+		{
+			var newDatum = d.service;
+			node = this.poolSection.tagsContainer
+				.selectAll('input.tag')
+				.filter(function(d)	
+					{ return d instanceof _this.controller.serviceLinkType() &&
+							 d.service() == newDatum; })
+				.node();
+		}
+		/* Node can be null if you have just selected a service that is part of
+			an offering's services.
+		 */
+		if (!node)
+		{
+			var newInput = this.poolSection.appendTag(null);
+			newInput.node().focus();
+		}
+		else
+			node.focus();
+	}
+	
 	TagSearchView.prototype.onClickButton = function(d) {
 		if (prepareClick('click', 'service: ' + d.description()))
 		{
@@ -662,7 +691,6 @@ var TagSearchView = (function() {
 					Otherwise, stay there.
 				 */	
 				var d3Focus = this.focusNode && this.focusNode.parentNode && d3.select(this.focusNode);
-				var newDatum;
 				
 				var moveToNewInput = !this.hasSubService(d.service) ||
 					(this.focusNode && 
@@ -703,33 +731,12 @@ var TagSearchView = (function() {
 				{
 					this.controller.addService(d.service);
 				}
-				newDatum = d.service;
 				
 				$(this.poolSection).trigger('tagsChanged.cr');
 				this.poolSection.showTags();
-
-				var _this = this;
 				
-				var node;
-				if (moveToNewInput)
-					node = null;
-				else
-					node = this.poolSection.tagsContainer
-						.selectAll('input.tag')
-						.filter(function(d)	
-							{ return d instanceof _this.controller.serviceLinkType() &&
-									 d.service() == newDatum; })
-						.node();
-				/* Node can be null if you have just selected a service that is part of
-					an offering's services.
-				 */
-				if (!node)
-				{
-					var newInput = this.poolSection.appendTag(null);
-					newInput.node().focus();
-				}
-				else
-					node.focus();
+				this.transferFocusAfterClick(moveToNewInput, d);
+
 				unblockClick();
 			}
 			catch(err)
