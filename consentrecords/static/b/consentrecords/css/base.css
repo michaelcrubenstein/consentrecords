@@ -259,7 +259,7 @@ button {
 	user-select: none;
 }
 
-button:hover {
+button.site-active-text:hover {
 	color: #2222FF;
 }
 
