@@ -1199,8 +1199,6 @@ var TagPoolSection = (function () {
 								else
 									d3.event.preventDefault();
 							});
-							
-					_this.showTags();
 				},
 				cr.chainFail);
 	}

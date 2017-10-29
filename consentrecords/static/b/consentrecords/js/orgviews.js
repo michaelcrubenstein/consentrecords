@@ -1837,6 +1837,7 @@ var OfferingPanel = (function () {
 		this.tagPoolSection.fillTags()
 			.then(function()
 				{
+					_this.tagPoolSection.showTags();
 					_this.tagPoolSection.checkTagInput(null);
 				},
 				cr.asyncFail)
@@ -2521,6 +2522,7 @@ var ServicePanel = (function () {
 		this.tagPoolSection.fillTags()
 			.then(function()
 				{
+					_this.tagPoolSection.showTags();
 					_this.tagPoolSection.checkTagInput(null);
 				},
 				cr.asyncFail)
@@ -3519,6 +3521,7 @@ var ExperiencePromptPanel = (function () {
 		this.tagsSection.fillTags()
 			.then(function()
 				{
+					_this.tagPoolSection.showTags();
 					_this.tagsSection.checkTagInput(null);
 				},
 				cr.asyncFail)
@@ -3556,6 +3559,7 @@ var ExperiencePromptPanel = (function () {
 		this.disqualifyingTagsSection.fillTags()
 			.then(function()
 				{
+					_this.disqualifyingTagsSection.showTags();
 					_this.disqualifyingTagsSection.checkTagInput(null);
 				},
 				cr.asyncFail)

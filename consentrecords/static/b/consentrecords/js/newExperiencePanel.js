@@ -1779,6 +1779,8 @@ var NewExperiencePanel = (function () {
 			.then(function()
 				{
 					var tagPoolSection = _this.tagPoolSection;
+					tagPoolSection.showTags();
+					
 					var tagInput = tagPoolSection.tagsContainer.select('input.tag');
 					if (tagInput.size() == 0)
 					{
