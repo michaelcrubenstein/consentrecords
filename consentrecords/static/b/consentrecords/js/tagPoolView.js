@@ -1109,20 +1109,26 @@ var TagPoolSection = (function () {
 				}));
 		}
 		
-		tagDivs.filter(function(d) { return d == null || tags.indexOf(d) < 0; } ).remove();
-		
-		var ds = tagDivs.data();
-		for (var i = 0; i < tags.length; ++i)
+		var i = 0;
+		var j = 0;
+		while (i < tags.length && j < this.tagsContainer.selectAll('input.tag').size())
 		{
-			if (ds.indexOf(tags[i]) < 0)
+			if (i == tags.length)
+				this.tagsContainer.selectAll('input.tag:nth-child({0})'.format(j+1)).remove();
+			else if (j == this.tagsContainer.selectAll('input.tag').size())
 			{
 				this.appendTag(tags[i]);
+				++i;
+				++j;
 			}
 			else
 			{
-				var input = tagDivs.filter(function(d) { return d == tags[i]; });
+				var input = this.tagsContainer.selectAll('input.tag:nth-child({0})'.format(j+1));
+				input.datum(tags[i]);
 				input.node().value = tags[i].description();
 				this.setTagInputWidth(input.node());
+				++i;
+				++j;
 			}
 		}
 	}
