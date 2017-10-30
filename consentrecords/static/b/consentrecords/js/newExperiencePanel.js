@@ -1746,7 +1746,7 @@ var NewExperiencePanel = (function () {
 		var searchContainer;
 		
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, experienceController, '');
+		this.tagPoolSection = new TagPoolSection(this.mainDiv, experienceController, '');
 		this.tagPoolSection.addAddTagButton();
 				
 		var tagsChanged = function() { _this.setPlaceholders(); }
@@ -1779,6 +1779,8 @@ var NewExperiencePanel = (function () {
 			.then(function()
 				{
 					var tagPoolSection = _this.tagPoolSection;
+					tagPoolSection.showTags();
+					
 					var tagInput = tagPoolSection.tagsContainer.select('input.tag');
 					if (tagInput.size() == 0)
 					{

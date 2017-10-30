@@ -2246,16 +2246,3 @@ var ColumnInfoPanel = (function() {
 	return ColumnInfoPanel;
 })();
 
-var ExperienceIdeaPanel = (function() {
-	ExperienceIdeaPanel.prototype.panelNode = null;
-	ExperienceIdeaPanel.prototype.dimmer = null;
-	
-	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experienceController, getNext)
-	{
-		var _this = this;
-		this.panelNode = panelNode;
-		this.dimmer = dimmer;
-	}
-	return ExperienceIdeaPanel;
-})();
-

@@ -929,7 +929,7 @@ crv.SitePanel = (function () {
 			this.hide = function()
 				{
 					return _this.hideDown()
-						.then(unblockClick);
+						.then(unblockClick, cr.syncFail);
 				};
 		}
 		else
@@ -937,7 +937,7 @@ crv.SitePanel = (function () {
 			this.hide = function()
 				{
 					return _this.hideRight()
-						.then(unblockClick);
+						.then(unblockClick, cr.syncFail);
 				};
 		}
 	}
@@ -1201,7 +1201,7 @@ crv.SitePanel = (function () {
 	SitePanel.prototype.hideDown = function(done)
 	{
 		bootstrap_alert.close();
-		$(this.node()).trigger("hiding.cr");
+		$(this.node()).trigger('hiding.cr');
 		return $(this.node()).animate({'top': "{0}px".format(window.innerHeight)})
 			.promise()
 			.done(function() {
@@ -1227,15 +1227,28 @@ crv.SitePanel = (function () {
 	SitePanel.prototype.hideRight = function(done)
 	{
 		bootstrap_alert.close();
-		return $(this.node()).trigger("hiding.cr")
-			.animate({left: "{0}px".format(window.innerWidth)})
+		$(this.node()).trigger('hiding.cr');
+		return $(this.node()).animate({left: "{0}px".format(window.innerWidth)})
 			.promise()
-			.done(function()
+			.then(function()
 				{
-					$(this).remove();
-					if (done)
-						done();
-				});
+					try
+					{
+						$(this).remove();
+						if (done)
+							done();
+						r2 = $.Deferred();
+						r2.resolve();
+						return r2;
+					}
+					catch(err)
+					{
+						r2 = $.Deferred();
+						r2.reject(err);
+						return r2;
+					}
+				},
+				cr.chainFail);
 	}
 	
 	SitePanel.prototype.hideNow = function()
