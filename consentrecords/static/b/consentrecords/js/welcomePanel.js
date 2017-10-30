@@ -857,6 +857,44 @@ var WelcomePanel = (function () {
 			this.signupButton.classed("site-disabled-text", false)
 				.classed("site-active-text", true);
 		}
+
+		if (!validateEmail($(this.emailInput).val()))
+		{
+			submitEnabled = false;
+			$(this.emailGroup).removeClass( "has-success");
+			$(this.emailOK).removeClass( "glyphicon-ok" );
+		}
+		else
+		{
+			$(this.emailGroup).addClass( "has-success");
+			$(this.emailOK).addClass( "glyphicon-ok" );
+		}
+		
+		if ($(this.passwordInput).val() &&
+			$(this.passwordInput).val().length >= 6)
+		{
+			$(this.passwordGroup).addClass( "has-success");
+			$(this.passwordOK).addClass( "glyphicon-ok" );
+		}
+		else
+		{
+			submitEnabled = false;
+			$(this.passwordGroup).removeClass( "has-success");
+			$(this.passwordOK).removeClass( "glyphicon-ok" );
+		}
+		
+		if ($(this.confirmInput).val() &&
+			$(this.passwordInput).val() == $(this.confirmInput).val())
+		{
+			$(this.confirmGroup).addClass( "has-success");
+			$(this.confirmOK).addClass( "glyphicon-ok" );
+		}
+		else
+		{
+			submitEnabled = false;
+			$(this.confirmGroup).removeClass( "has-success");
+			$(this.confirmOK).removeClass( "glyphicon-ok" );
+		}
 	}
 	
 	function WelcomePanel(onPathwayCreated) {
