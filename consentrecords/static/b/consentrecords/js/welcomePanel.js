@@ -498,7 +498,7 @@ var WelcomePanel = (function () {
 		var _this = this;
 		var $mainDiv = $(this.mainDiv.node());
 		
-		var margin = 2 * parseInt($mainDiv.css('font-size'));
+		var margin = 1.5 * parseFloat($mainDiv.css('font-size'));
 		this.onResizePrompts();
 
 		var firstChild = $(this.promptScrollArea.node()).children('panel').get(0);

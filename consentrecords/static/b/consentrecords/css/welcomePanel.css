@@ -111,6 +111,8 @@ panel.welcome div.summary {
 
 panel.welcome div.summary>div {
 	margin-top: 1.5em;
+	margin-left: 1em;
+	margin-right: 1em;
 	display: inline-block;
 	max-width: 350px;
 }
@@ -180,8 +182,17 @@ panel.welcome section.tags>div.scrollArea>panel:first-of-type {
 
 panel.welcome section.tags input.tag {
 	border: none;
-	min-width: 20em;
+	min-width: 15em;
 	border-bottom: 2px solid #222;
+}
+
+panel.welcome section.tags label {
+	margin-left: 1em;
+	margin-right: 1em;
+}
+
+panel.welcome section.tags span.tags-container {
+	margin-left: 0;
 }
 
 panel.welcome div.prompts section.tags>div:first-child {
