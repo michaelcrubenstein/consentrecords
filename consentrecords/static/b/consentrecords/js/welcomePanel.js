@@ -68,6 +68,7 @@ var PromptPanel = (function() {
 		
 		this.tagPoolSection = new TagPoolSection(this.div, controller, prompt, WelcomeTagSearchView);
 		this.tagPoolSection.appendTag(null, "");
+		this.tagPoolSection.tagsContainer.select('input.tag').attr('readonly', 'readonly');
 
 		var tagsFocused = function()
 			{
