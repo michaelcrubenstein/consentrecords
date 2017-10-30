@@ -1237,6 +1237,7 @@ var TagPoolSection = (function () {
 									_this.searchView.onClickButton(s);
 								else
 									d3.event.preventDefault();
+								d3.event.stopPropagation();
 							});
 				},
 				cr.chainFail);
