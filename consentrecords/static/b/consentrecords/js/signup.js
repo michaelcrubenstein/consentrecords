@@ -379,6 +379,10 @@ var SigninPanel = (function()
 		}
 		else
 			$(this.emailInput).focus();
+			
+		/* Force scrolling to the top for small screens. */
+		document.body.scrollTop = 0;
+		
 		this.checkenabled();
 	}
 	
