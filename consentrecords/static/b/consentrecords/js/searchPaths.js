@@ -22,21 +22,20 @@ var SearchPathsResultsView = (function () {
 		
 		buttons.each(function(d)
 			{
-				/* TODO: */
 				var leftText = d3.select(this);
 				
 				var screenName = d.name();
 				var user = d.user();
 				var userName = user && user.fullName();
 				var userDescription = user && user.description();
-				var ageCalculator = new AgeCalculator(d.birthday());
-				var ageDescription = ageCalculator.toString();			
+				var ageDescription = d.birthday() && new AgeCalculator(d.birthday()).toString();			
 				
 				if (screenName) leftText.append('div').text(screenName);
 				if (userName && userName != screenName) leftText.append('div').text(userName);
 				/* Only include the email address if there is no userName or screenName */
 				if (userDescription && !userName && !screenName) leftText.append('div').text(userDescription);
-				leftText.append('div').text(ageDescription);
+				if (d.birthday())
+					leftText.append('div').text(ageDescription);
 			});
 	}
 	
