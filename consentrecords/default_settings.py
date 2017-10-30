@@ -138,7 +138,7 @@ CR_REQ_HOST = r'http://localhost:8000/'
 
 FACEBOOK_SHOW = False
 
-JS_VERSION = '26'
+JS_VERSION = '27'
 
 from consentrecords.email_settings import *
 
