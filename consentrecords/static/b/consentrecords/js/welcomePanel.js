@@ -5,13 +5,15 @@ var WelcomeTagSearchView = (function () {
 	/* Block moveToNewInput in TagSearchView */
 	WelcomeTagSearchView.prototype.transferFocusAfterClick = function(moveToNewInput, d)
 	{
+		var sitePanel = $(this.container.node()).parents('.site-panel').get(0).sitePanel;
 		if (moveToNewInput)
 		{
-			var sitePanel = $(this.container.node()).parents('.site-panel').get(0).sitePanel;
+			sitePanel.showSignup();
 			sitePanel.emailInput.focus();
 		}
 		else
 		{
+			sitePanel.hideSignup();
 			TagSearchView.prototype.transferFocusAfterClick.call(this, false, d);
 		}
 	}
@@ -45,7 +47,10 @@ var PromptPanel = (function() {
 		PathGuides.clearNode(inputNode);
 			
 		tagPoolSection.checkTagInput(inputNode);
-		tagPoolSection.searchView.constrainTagFlags(inputNode);
+		var datum = d3.select(inputNode).datum();
+		var service = datum && datum.service();
+		if (!service || tagPoolSection.searchView.hasSubService(service))
+			tagPoolSection.searchView.constrainTagFlags(inputNode);
 	}
 	
 	PromptPanel.prototype.fillTags = function()
@@ -55,7 +60,7 @@ var PromptPanel = (function() {
 	}
 	
 
-	function PromptPanel(container, title, prompt, timeframe)
+	function PromptPanel(sitePanel, container, title, prompt, timeframe)
 	{
 		var _this = this;
 		this.div = container.append('panel');
@@ -82,11 +87,15 @@ var PromptPanel = (function() {
 				}
 			}
 		$(this.tagPoolSection).on('tagsFocused.cr', this.div, tagsFocused);
-		$(this.div).on('clearTriggers.cr remove', null, this.tagPoolSection, 
+		$(this.div.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
 			function(eventObject)
 				{
 					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
 				});
+		$(this.div.node()).on('click', function()
+					{
+						sitePanel.hideSignup();
+					});
 	}
 	
 	return PromptPanel;
@@ -170,7 +179,33 @@ var WelcomePanel = (function () {
 						_this.onResizePrompts();
 					}
 			this.summaryReveal.hide({duration: 400, step: f});
+		}
+	}
+	
+	WelcomePanel.prototype.showSignup = function()
+	{
+		var _this = this;
+		if (!this.signupReveal.isVisible())
+		{
+			var f = function()
+					{
+						_this.onResizePrompts();
+					}
+			this.summaryReveal.hide({duration: 400, step: f});
 			this.signupReveal.show({duration: 400, step: f});
+		}
+	}
+
+	WelcomePanel.prototype.hideSignup = function()
+	{
+		var _this = this;
+		if (this.signupReveal.isVisible())
+		{
+			var f = function()
+					{
+						_this.onResizePrompts();
+					}
+			this.signupReveal.hide({duration: 400, step: f});
 		}
 	}
 
@@ -189,7 +224,7 @@ var WelcomePanel = (function () {
 							if (document.activeElement == 
 								$(_this.currentPromptPanelNode()).find('input').get(0))
 								_this.hideSummary();
-							else
+							else if (_this.currentPromptPanelNode() != _this.startPromptPanelNode)
 								_this.showSummary();
 						}, 110);
 				}
@@ -209,6 +244,7 @@ var WelcomePanel = (function () {
 						{
 							var offset = d3.mouse(this);
 							offsetX = offset[0];
+							_this.startPromptPanelNode = _this.currentPromptPanelNode();
 							startScrollLeft = $(this).scrollLeft();
 							_this.didDrag = false;
 						}
@@ -219,7 +255,6 @@ var WelcomePanel = (function () {
 					})
 					.on("drag", function(){
 						_this.didDrag = true;
-						_this.showSummary();
 						$(node).scrollLeft(startScrollLeft + offsetX - d3.mouse(this)[0]);
 					})
 					.on("dragend", function(fd, i){
@@ -227,273 +262,13 @@ var WelcomePanel = (function () {
 						{
 							_this.didDrag = false;
 							$(node).scroll();
+							if (_this.currentPromptPanelNode() != _this.startPromptPanelNode)
+								_this.showSummary();
 						}
 					})
 				);
     }
     
-/*
-	WelcomePanel.prototype.handleResize = function()
-	{
-		var ol = $(this.mainDiv.node()).children('ol');
-		var li = ol.children('li');
-		var activeIndex = ol.children('li.active').index();
-		var width = this.scrollAreaWidth();
-		li.css('left', function(i)
-			{
-				return "{0}px".format(i < activeIndex ? -width :
-					   				  i == activeIndex ? 0 : width);
-			});
-		li.height($(this.mainDiv.node()).height() - this.getBottomNavHeight());
-			
-		var _this = this;
-		var subOLs = li.find('ol');
-		subOLs.each(function()
-			{
-				var subOL = $(this);
-				var subLI = subOL.children('li');
-				var subActiveIndex = ol.children('li.active').index();
-				var subWidth = _this.scrollAreaWidth();
-				subLI.css('left', function(i)
-					{
-						return "{0}px".format(i < subActiveIndex ? -subWidth :
-					   						  i == subActiveIndex ? 0 : subWidth);
-					});
-			});
-		this.mainDiv.selectAll('li svg.pathway')
-			.attr('height', function() { 
-				var height = _this.scrollAreaHeight() - $(this).position().top - _this.getBottomNavHeight() - 45;
-				if (height < 10)
-					height = 10;
-				return height;
-			});
-			
-		this.mainDiv.selectAll('div.left')
-			.style('bottom', function() {
-				return "{0}px".format(_this.getBottomNavHeight());
-			});
-		this.mainDiv.selectAll('div.right')
-			.style('bottom', function() {
-				return "{0}px".format(_this.getBottomNavHeight());
-			});
-	}
-	
-	WelcomePanel.prototype.hideLastRightButton = function()
-	{
-		var div1 = $(this.mainDiv.node()).find('div.right>div');
-		var offset = div1.children(':first-child').outerWidth(true);
-		div1.children().animate({left: "{0}px".format(-offset)});
-	}
-
-	WelcomePanel.prototype.showLastRightButton = function()
-	{
-		var div1 = $(this.mainDiv.node()).find('div.right>div');
-		var offset = div1.children(':first-child').outerWidth(true) +
-					 div1.children(':nth-child(2)').outerWidth(true);
-		div1.children().animate({left: "{0}px".format(-offset)});
-	}
-	
-	WelcomePanel.prototype.highlightLabels = function(svg, index)
-	{
-		function highlight(tspan, isBold)
-		{
-			var newWeight = isBold ? 700 : 400;
-			var newFill = isBold ? '#222222' : '#666666';
-			tspan.css({'font-weight': newWeight, 
-					   fill: newFill, 
-					   transition: '0.7s'});
-		}
-		
-		highlight(svg.find('g.labels text tspan:nth-child(1)'), index == 0);
-		highlight(svg.find('g.labels text tspan:nth-child(2)'), index == 0);
-		highlight(svg.find('g.labels text tspan:nth-child(3)'), index == 1);
-		highlight(svg.find('g.labels text tspan:nth-child(4)'), index == 2);
-		highlight(svg.find('g.labels text tspan:nth-child(5)'), index == 3);
-	}
-	
-	WelcomePanel.prototype.showPrevious = function()
-	{
-		var _this = this;
-		var ol = $(this.mainDiv.node()).children('ol');
-		
-		var curPanel = ol.children('li.active');
-		var subPanels = curPanel.find('ol');
-		if (subPanels)
-		{
-			var curSubPanel = subPanels.children('li.active');
-			if (curSubPanel.length)
-			{
-				var prevSubPanel = curSubPanel.prev('li');
-				if (prevSubPanel.length)
-				{
-					if (prepareClick('click', 'prev welcome subpanel'))
-					{
-						curSubPanel
-							.animate({left: "{0}px".format(_this.scrollAreaWidth())},
-									 700,
-									 function()
-									 {
-										d3.select(this).classed('active', false);
-									 });
-						prevSubPanel
-							.animate({left: "{0}px".format(0)},
-									 700,
-									 function()
-									 {
-										d3.select(this).classed('active', true);
-										unblockClick();
-									 });
-									 
-						var svg = curPanel.find('svg.experience-detail');
-						if (svg.length > 0)
-						{
-							var subPanelIndex = prevSubPanel.index();
-							this.highlightLabels(svg, prevSubPanel.index());
-						}			 
-
-						if (curPanel.next().length == 0 &&
-							curSubPanel.next().length == 0)
-						{
-							this.hideLastRightButton();
-						}
-						return;
-					}
-				}
-			}
-		}
-		
-		var prevPanel = curPanel.prev('li');
-		var activeIndex = curPanel.index();
-		if (curPanel.length)
-		{
-			if (prepareClick('click', 'prev welcome panel {0}'.format(activeIndex)))
-			{
-				curPanel
-					.animate({left: "{0}px".format(_this.scrollAreaWidth())},
-							 700,
-							 function()
-							 {
-								d3.select(this).classed('active', false);
-							 });
-
-				prevPanel
-					.animate({left: "{0}px".format(0)},
-							 700,
-							 function()
-							 {
-								d3.select(this).classed('active', true);
-								var isFirst = $(this).index() == 0;
-								_this.mainDiv.selectAll('div.left')
-									.style('display', isFirst ? "none" : null);
-								unblockClick();
-							 });
-							 
-				if (prevPanel.get(0) == ol.children('li:nth-child(1)').get(0))
-				{
-					var div1 = $(_this.mainDiv.node()).find('div.right>div');
-					div1.children().animate({left: "{0}px".format(0)});
-				}
-				else if (curPanel.get(0) == ol.children('li:last-child').get(0))
-				{
-					this.hideLastRightButton();
-				}
-			}
-		}
-	}
-
-	WelcomePanel.prototype.showNext = function()
-	{
-		var _this = this;
-		var ol = $(this.mainDiv.node()).children('ol');
-		
-		var curPanel = ol.children('li.active');
-		var subPanels = curPanel.find('ol');
-		if (subPanels)
-		{
-			var curSubPanel = subPanels.children('li.active');
-			if (curSubPanel.length)
-			{
-				var nextSubPanel = curSubPanel.next('li');
-				if (nextSubPanel.length)
-				{
-					if (prepareClick('click', 'next welcome subpanel'))
-					{
-						curSubPanel
-							.animate({left: "{0}px".format(-_this.scrollAreaWidth())},
-									 700,
-									 function()
-									 {
-										d3.select(this).classed('active', false);
-									 });
-						nextSubPanel
-							.animate({left: "{0}px".format(0)},
-									 700,
-									 function()
-									 {
-										d3.select(this).classed('active', true);
-										_this.mainDiv.selectAll('div.left')
-											.style('display', null);
-										unblockClick();
-									 });
-						
-						var svg = curPanel.find('svg.experience-detail');
-						if (svg.length > 0)
-						{
-							var subPanelIndex = nextSubPanel.index();
-							this.highlightLabels(svg, nextSubPanel.index());
-						}			 
-
-						if (curPanel.next().length == 0 &&
-							nextSubPanel.next().length == 0)
-						{
-							this.showLastRightButton();
-						}
-						return;
-					}
-				}
-			}
-		}
-		
-		var nextPanel = curPanel.next('li');
-		var activeIndex = curPanel.index();
-		if (nextPanel.length)
-		{
-			if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
-			{
-				curPanel
-					.animate({left: "{0}px".format(-_this.scrollAreaWidth())},
-							 700,
-							 function()
-							 {
-								d3.select(this).classed('active', false);
-							 });
-							 
-				nextPanel
-					.animate({left: "{0}px".format(0)},
-							 700,
-							 function()
-							 {
-								d3.select(this).classed('active', true);
-								_this.mainDiv.selectAll('div.left')
-									.style('display', null);
-								unblockClick();
-							 });
-				if (curPanel.get(0) == ol.children('li:nth-child(1)').get(0))
-				{
-					var div1 = $(_this.mainDiv.node()).find('div.right>div');
-					var offset = div1.children(':first-child').outerWidth(true);
-					div1.children().animate({left: "{0}px".format(-offset)});
-				}
-				else if (nextPanel.next().length == 0)
-				{
-					if (nextPanel.find('ol').length == 0)
-						this.showLastRightButton();
-				}
-			}
-		}
-	}
- */
-	
 	WelcomePanel.prototype.handleResize = function()
 	{
 		var _this = this;
@@ -580,10 +355,10 @@ var WelcomePanel = (function () {
 			.classed('scrollArea', true);
 			
 		this.promptPanels = [
-			new PromptPanel(this.promptScrollArea, "Set Life Goals and Achieve Them", "My goal is", 'Goal'),
-			new PromptPanel(this.promptScrollArea, "Discover Opportunities", "An experience I want to have", 'Goal'),
-			new PromptPanel(this.promptScrollArea, "Figure Out How to Tell Your Story", "An experience I have had", 'Previous'),
-			new PromptPanel(this.promptScrollArea, "Help Guide Others From Your Real Experiences", "An experience I have had", 'Previous'),
+			new PromptPanel(this, this.promptScrollArea, "Set a Goal and Achieve It", "My goal is", 'Goal'),
+			new PromptPanel(this, this.promptScrollArea, "Discover Opportunities", "An experience I want to have", 'Goal'),
+			new PromptPanel(this, this.promptScrollArea, "Figure Out How to Tell Your Story", "An experience I have had", 'Previous'),
+			new PromptPanel(this, this.promptScrollArea, "Help Guide Others From Your Real Experiences", "An experience I have had", 'Previous'),
 			];
 		this.currentPromptIndex = 0;
 		this.promptScrollArea.append('panel');
@@ -772,7 +547,7 @@ var WelcomePanel = (function () {
 		this.emailMessageReveal.hide();
 		
 		var passwordGroup = div.append('div')
-			.classed('form-group', true);
+			.classed('form-group has-feedback', true);
 		this.passwordGroup = passwordGroup.node();
 		var passwordLabel = passwordGroup.append('label')
 			.attr('for', 'id_newPassword')
@@ -987,7 +762,11 @@ var WelcomePanel = (function () {
 						}
 						$(_this.promptScrollArea.node()).on('scroll', _this._getLeftAlignmentFunction(function()
 							{
-							}));
+							}))
+							.on('mousedown', function()
+								{
+									_this.startPromptPanelNode = _this.currentPromptPanelNode();
+								});
 					})
 			});
 	}
