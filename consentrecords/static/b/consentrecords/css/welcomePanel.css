@@ -227,3 +227,9 @@ panel.welcome div.signup>div>div:last-child {
 	margin-top: 1em;
 }
 
+panel.welcome div.signup input {
+	border: none;
+	outline: none;
+	border-bottom: 1.5px solid #999;
+	font-size: 14px;
+}
