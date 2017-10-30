@@ -379,6 +379,7 @@ var SigninPanel = (function()
 		}
 		else
 			$(this.emailInput).focus();
+		this.checkenabled();
 	}
 	
 	SigninPanel.prototype.submitSignin = function()
@@ -570,16 +571,6 @@ var SigninPanel = (function()
 			{
 				$(_this.emailInput).val($.cookie("email"));
 				$(_this.passwordInput).val("");
-		
-				if ($(_this.emailInput).val() !== "")
-				{
-					$(_this.rememberMeCheckbox).prop("checked", true);
-					$(_this.passwordInput).focus();
-				}
-				else
-					$(_this.emailInput).focus();
-		
-				_this.checkenabled();
 			});
 	}
 
