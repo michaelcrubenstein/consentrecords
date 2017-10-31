@@ -110,7 +110,7 @@ var WelcomePanel = (function () {
 	
 	WelcomePanel.prototype.promptMargin = function()
 	{
-		return 2 * parseInt($(this.mainDiv.node()).css('font-size'));
+		return 1.5 * parseInt($(this.mainDiv.node()).css('font-size'));
 	}
 	
 	WelcomePanel.prototype.promptBottomMargin = function()
@@ -274,7 +274,7 @@ var WelcomePanel = (function () {
 		var _this = this;
 		var $mainDiv = $(this.mainDiv.node());
 		
-		var margin = 1.5 * parseFloat($mainDiv.css('font-size'));
+		var margin = this.promptMargin();
 		this.onResizePrompts();
 
 		var firstChild = $(this.promptScrollArea.node()).children('panel').get(0);
@@ -539,12 +539,6 @@ var WelcomePanel = (function () {
 		this.emailOK = emailGroup.append('span')
 			.classed("glyphicon form-control-feedback", true)
 			.node();
-		this.emailMessage = div.append('div')
-			.classed('message', true);
-		this.emailMessage.append('div')
-			.text("The email address is required.");
-		this.emailMessageReveal = new VerticalReveal(this.emailMessage.node());
-		this.emailMessageReveal.hide();
 		
 		var passwordGroup = div.append('div')
 			.classed('form-group has-feedback', true);
@@ -564,13 +558,6 @@ var WelcomePanel = (function () {
 			.classed("glyphicon form-control-feedback", true)
 			.node();
 		
-		this.passwordMessage = div.append('div')
-			.classed('message', true);
-		this.passwordMessage.append('div')
-			.text('The password is required.');
-		this.passwordMessageReveal = new VerticalReveal(this.passwordMessage.node());
-		this.passwordMessageReveal.hide();
-
 		var confirmGroup = div.append('div')
 			.classed('form-group has-feedback', true);
 		this.confirmGroup = confirmGroup.node();
@@ -596,12 +583,6 @@ var WelcomePanel = (function () {
 		this.confirmOK = confirmGroup.append('span')
 			.classed("glyphicon form-control-feedback", true)
 			.node();
-		this.confirmMessage = div.append('div')
-			.classed('message', true);
-		this.confirmMessage.append('div')
-			.text('The confirmation does not match the password.');
-		this.confirmMessageReveal = new VerticalReveal(this.confirmMessage.node());
-		this.confirmMessageReveal.hide();
 
 		this.signupButton = div.append('div').append('button')
 			.classed('signup site-active-text default-link', true)
