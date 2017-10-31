@@ -539,12 +539,6 @@ var WelcomePanel = (function () {
 		this.emailOK = emailGroup.append('span')
 			.classed("glyphicon form-control-feedback", true)
 			.node();
-		this.emailMessage = div.append('div')
-			.classed('message', true);
-		this.emailMessage.append('div')
-			.text("The email address is required.");
-		this.emailMessageReveal = new VerticalReveal(this.emailMessage.node());
-		this.emailMessageReveal.hide();
 		
 		var passwordGroup = div.append('div')
 			.classed('form-group has-feedback', true);
@@ -564,13 +558,6 @@ var WelcomePanel = (function () {
 			.classed("glyphicon form-control-feedback", true)
 			.node();
 		
-		this.passwordMessage = div.append('div')
-			.classed('message', true);
-		this.passwordMessage.append('div')
-			.text('The password is required.');
-		this.passwordMessageReveal = new VerticalReveal(this.passwordMessage.node());
-		this.passwordMessageReveal.hide();
-
 		var confirmGroup = div.append('div')
 			.classed('form-group has-feedback', true);
 		this.confirmGroup = confirmGroup.node();
@@ -596,12 +583,6 @@ var WelcomePanel = (function () {
 		this.confirmOK = confirmGroup.append('span')
 			.classed("glyphicon form-control-feedback", true)
 			.node();
-		this.confirmMessage = div.append('div')
-			.classed('message', true);
-		this.confirmMessage.append('div')
-			.text('The confirmation does not match the password.');
-		this.confirmMessageReveal = new VerticalReveal(this.confirmMessage.node());
-		this.confirmMessageReveal.hide();
 
 		this.signupButton = div.append('div').append('button')
 			.classed('signup site-active-text default-link', true)
