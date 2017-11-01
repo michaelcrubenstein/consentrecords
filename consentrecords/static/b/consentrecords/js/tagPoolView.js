@@ -1111,7 +1111,7 @@ var TagPoolSection = (function () {
 		
 		var i = 0;
 		var j = 0;
-		while (i < tags.length && j < this.tagsContainer.selectAll('input.tag').size())
+		while (i < tags.length || j < this.tagsContainer.selectAll('input.tag').size())
 		{
 			if (i == tags.length)
 				this.tagsContainer.selectAll('input.tag:nth-child({0})'.format(j+1)).remove();
