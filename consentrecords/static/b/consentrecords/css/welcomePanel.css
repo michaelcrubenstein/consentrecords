@@ -17,36 +17,10 @@ panel.welcome p.body {
 	margin-right: 10px;
 }
 
-panel.welcome div.left {
-	position: absolute;
-	bottom: 0px;
-	left: 0px;
-	padding: 12px;
-}
-
-panel.welcome div.right {
-	position: absolute;
-	bottom: 0px;
-	right: 0px;
-	padding: 12px;
-	padding-left: 0px;
-}
-
 panel.welcome svg.chevron {
 	height: 20px;
 	width: 12px;
 	fill: #2c55CC;
-}
-
-panel.welcome div.right div {
-	overflow-x: hidden;
-	white-space: nowrap;
-}
-
-panel.welcome div.right div > * {
-	position: relative;
-	white-space: nowrap;
-	padding-left: 12px;
 }
 
 panel.welcome div svg.chevron path {
