@@ -1521,11 +1521,6 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	NewExperiencePanel.prototype.checkTagInput = function(exceptNode)
-	{
-		this.tagPoolSection.checkTagInput(exceptNode);
-	}
-	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	NewExperiencePanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
@@ -1562,7 +1557,6 @@ var NewExperiencePanel = (function () {
 		else if (newReveal != this.tagPoolSection.reveal() &&
 			this.tagPoolSection.reveal().isVisible())
 		{
-			this.tagPoolSection.checkTagInput(null);
 			this.tagPoolSection.hideReveal(done);
 			return true;
 		}
@@ -1595,7 +1589,6 @@ var NewExperiencePanel = (function () {
 			};
 		if (!this.onFocusInOtherInput(_this.tagPoolSection.reveal(), done))
 		{
-			this.tagPoolSection.checkTagInput(inputNode);
 			this.tagPoolSection.revealSearchView(inputNode, false);
 		}
 	}

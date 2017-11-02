@@ -813,7 +813,7 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.setTagColor = function(node)
 	{
-		if (node == document.activeElement)
+		if (node == document.activeElement && !node.hasAttribute('readonly'))
 		{
 			d3.select(node)
 				.style('background-color', null)
@@ -864,108 +864,132 @@ var TagPoolSection = (function () {
 		
 		if (!newText ||
 			(!newService && !this.controller.customServiceType()))
-			$(inputNode).remove();
+		{
+			if (this.tagsContainer.select('button').size())
+			{
+				$(inputNode).remove();
+				this.checkAddTagButton();
+			}
+		}
 	}
 	
+	/* Checks the datum associated with this input node. d is the old datum. */
+	TagPoolSection.prototype.checkOneInput = function(inputNode, d)
+	{
+		var newText = inputNode.value.trim();
+		var newService = newText && this.searchView.hasNamedService(newText.toLocaleUpperCase());
+		var changedData = false;
+		
+		if (!newText ||
+			(!newService && !this.controller.customServiceType()))
+		{
+			if (d instanceof this.controller.serviceLinkType())
+			{
+				/* Remove a standard service */
+				this.controller.removeService(d);
+				d3.select(inputNode).datum(null);
+				changedData = true;
+			}
+			else if (this.controller.customServiceType() &&
+					 d instanceof this.controller.customServiceType())
+			{
+				/* Remove a custom service */
+				this.controller.removeCustomService(d);
+				d3.select(inputNode).datum(null);
+				changedData = true;
+			}
+			else if (d)
+			{
+				// This may be the datum associated with the container.
+				// In this case, do nothing.
+				;
+			}
+			
+			/* Now ensure that the input control properly matches the contents */
+			if (!newText && inputNode != document.activeElement)
+			{
+				/* Remove inputNode if there is an addTag button and show the addTag button. */
+				if (this.tagsContainer.select('button').size())
+				{
+					d3.select(inputNode).remove();
+					this.checkAddTagButton();
+				}
+			}
+			else
+				this.checkInputControls(inputNode);
+		}
+		else if (d instanceof this.controller.serviceLinkType())
+		{
+			if (!newService)
+			{
+				/* Replace standard service with a custom service */
+				this.controller.removeService(d);
+				var newValue = this.controller.addService(newText);
+				d3.select(inputNode).datum(newValue);
+				this.checkInputControls(inputNode);
+				changedData = true;
+			}
+			else if (newService != d.service())
+			{
+				/* Replace standard service with a different standard service */
+				d.service(newService)
+				 .description(newService.description());
+				inputNode.value = newService.description();
+				this.checkInputControls(inputNode);
+				changedData = true;
+			}
+			/* else no change */
+		}
+		else if (this.controller.customServiceType() &&
+				 d instanceof this.controller.customServiceType())
+		{
+			if (!newService)
+			{
+				if (newText != d.name())
+				{
+					/* Replace custom service with a different custom service */
+					d.name(newText)
+					 .description(newText);
+					inputNode.value = newText;	/* In case the text was trimmed */
+					this.checkInputControls(inputNode);
+					changedData = true;
+				}
+			}
+			else
+			{
+				/* Replace a custom service with a standard service */
+				this.controller.removeCustomService(d);
+				var newValue = this.controller.addService(newService);
+				d3.select(inputNode).datum(newValue);
+				inputNode.value = newService.description();
+				this.checkInputControls(inputNode);
+				changedData = true;
+			}
+		}
+		else
+		{
+			/* The blank tag. */
+			var newValue = this.controller.addService(newService || newText);
+			d3.select(inputNode).datum(newValue);
+			inputNode.value = newValue ? newValue.description() : "";
+			$(inputNode).attr('placeholder', $(inputNode).attr('placeholder'));
+			changedData = true;
+		}
+		
+		if (changedData)
+			$(this).trigger('tagsChanged.cr');	
+	}
+	
+	/* Align the contents of the controller with the HTML elements. */
 	TagPoolSection.prototype.checkTagInput = function(exceptNode)
 	{
 		var _this = this;
 		this.tagsContainer.selectAll('input.tag').each(function(d, i)
 			{
 				/* Skip the exceptNode */
-				if (this == exceptNode)
-					return;
-					
-				var newText = this.value.trim();
-				var newService = newText && _this.searchView.hasNamedService(newText.toLocaleUpperCase());
-				if (!newText ||
-					(!newService && !_this.controller.customServiceType()))
-				{
-					if (d instanceof _this.controller.serviceLinkType())
-					{
-						/* Remove a standard service */
-						_this.controller.removeService(d);
-						d3.select(this).datum(null);
-					}
-					else if (_this.controller.customServiceType() &&
-							 d instanceof _this.controller.customServiceType())
-					{
-						/* Remove a custom service */
-						_this.controller.removeCustomService(d);
-						d3.select(this).datum(null);
-					}
-					else if (d)
-					{
-						// This may be the datum associated with the container.
-						// In this case, do nothing.
-						;
-					}
-					if (!newText && this != document.activeElement)
-					{
-						/* Only remove this if there is an addTag button. */
-						if (_this.tagsContainer.select('button').size())
-							d3.select(this).remove();
-					}
-					else
-						_this.checkInputControls(this);
-				}
-				else if (d instanceof _this.controller.serviceLinkType())
-				{
-					if (!newService)
-					{
-						/* Replace standard service with a custom service */
-						_this.controller.removeService(d);
-						var newValue = _this.controller.addService(newText);
-						d3.select(this).datum(newValue);
-						_this.checkInputControls(this);
-					}
-					else if (newService != d.service())
-					{
-						/* Replace standard service with a different standard service */
-						d.service(newService)
-						 .description(newService.description());
-						this.value = newService.description();
-						_this.checkInputControls(this);
-					}
-					else
-						{	/* No change */ }
-				}
-				else if (_this.controller.customServiceType() &&
-						 d instanceof _this.controller.customServiceType())
-				{
-					if (!newService)
-					{
-						if (newText != d.name())
-						{
-							/* Replace custom service with a different custom service */
-							d.name(newText)
-							 .description(newText);
-							this.value = newText;
-							_this.checkInputControls(this);
-						}
-					}
-					else
-					{
-						/* Replace a custom service with a standard service */
-						_this.controller.removeCustomService(d);
-						var newValue = _this.controller.addService(newService);
-						d3.select(this).datum(newValue);
-						this.value = newService.description();
-						_this.checkInputControls(this);
-					}
-				}
-				else
-				{
-					/* The blank tag. */
-					var newValue = _this.controller.addService(newService || newText);
-					d3.select(this).datum(newValue);
-					_this.showTags();
-					this.value = newValue ? newValue.description() : "";
-					$(this).attr('placeholder', $(this).attr('placeholder'));
-				}
+				if (this != exceptNode)
+					_this.checkOneInput(this, d);
 			});
-		
-		$(this).trigger('tagsChanged.cr');	
 	}
 	
 	TagPoolSection.prototype.checkInputDatum = function(inputNode, instance)
@@ -976,30 +1000,46 @@ var TagPoolSection = (function () {
 		/* If this is a node whose value matches the previous value, then don't handle here. */
 		else if (instance && inputNode.value == instance.description())
 			return false;
-		else if (instance && inputNode.value != instance.description())
+		else if (instance)
 		{
-			this.checkTagInput();
+			/* Replace the current instance with the value of the inputNode */
+			this.checkOneInput(inputNode, instance);
 			this.showAddTagButton();
-			/* Do not prevent default. */
+
+			/* Do not prevent default for the Tab key. */
 			return false;
 		}
 		else
 		{
-			this.checkTagInput();
+			this.checkOneInput(inputNode, instance);
 			this.showAddTagButton();
 			this.searchView.constrainTagFlags(inputNode);
 			return true;
 		}
 	}
 	
+	TagPoolSection.prototype.checkAddTagButton = function()
+	{
+		var inputNode = null;
+		if (document.activeElement &&
+			document.activeElement.parentNode == this.tagsContainer.node())
+		{
+			inputNode = document.activeElement;
+		}
+		
+		if (!inputNode || inputNode.value)
+			this.showAddTagButton();
+		else
+			this.hideAddTagButton();
+	}
+	
+	/* Ensure that the appearance of this inputNode is correct based on its datum.
+	 */
 	TagPoolSection.prototype.checkInputControls = function(inputNode)
 	{
 		if (inputNode == document.activeElement)
 		{
-			if (!inputNode.value)
-				this.hideAddTagButton();
-			else
-				this.showAddTagButton();
+			this.checkAddTagButton();
 			this.searchView.constrainTagFlags(inputNode);
 		}
 		this.setTagInputWidth(inputNode);
@@ -1035,6 +1075,7 @@ var TagPoolSection = (function () {
 			{
 				/* Check for text changes for all input boxes.  */
 				_this.checkInputDatum(this, d3.select(this).datum());
+				_this.checkAddTagButton();
 			})
 			.on('focusin', function()
 			{
@@ -1051,7 +1092,7 @@ var TagPoolSection = (function () {
 			.on('focusout', function()
 			{
 				_this.setTagInputWidth(this);
-				$(_this).trigger('tagsChanged.cr', this);
+				_this.checkEmptyTagInput(this);
 			})
 			.keypress(function(e) {
 				if (e.which == 13)
@@ -1066,7 +1107,6 @@ var TagPoolSection = (function () {
 					if (_this.checkInputDatum(this, instance))
 						event.preventDefault();
 					_this.checkEmptyTagInput(this);
-					_this.showAddTagButton();
 				}
 			});
 
@@ -1075,6 +1115,7 @@ var TagPoolSection = (function () {
 		return input;
 	}
 	
+	/* Ensures that the HTML elements exactly correspond to the services of the associated controller. */
 	TagPoolSection.prototype.showTags = function()
 	{
 		var offeringTags = this.controller.primaryServices() || [];
@@ -1178,8 +1219,6 @@ var TagPoolSection = (function () {
 	
 	TagPoolSection.prototype.hideReveal = function(done)
 	{
-		this.checkTagInput();
-		this.showAddTagButton();
 		this.searchView.hideSearch(done);
 	}
 	
