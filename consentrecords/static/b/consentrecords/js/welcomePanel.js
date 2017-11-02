@@ -59,7 +59,38 @@ var PromptPanel = (function() {
 		this.tagPoolSection.revealSearchView(inputNode, false);
 	}
 	
-
+	PromptPanel.prototype.hideClearButton = function(duration)
+	{
+		var button = this.clearButton;
+		
+		if (duration === 0)
+			button.style('opacity', 0)
+				  .style('display', 'none');
+		else
+		{
+			if (button.style('display') != 'none')
+			{
+				button.interrupt().transition()
+					.style('opacity', 0)
+					.each('end', function()
+						{
+							button.style('display', 'none');
+						});
+			}
+		}
+	}
+	
+	PromptPanel.prototype.showClearButton = function()
+	{
+		var button = this.clearButton;
+		if (button.style('display') == 'none')
+		{
+			button.style('display', null);
+			button.interrupt().transition()
+				.style('opacity', 1);
+		}
+	}
+	
 	function PromptPanel(sitePanel, container, title, prompt, timeframe)
 	{
 		var _this = this;
@@ -73,7 +104,34 @@ var PromptPanel = (function() {
 		
 		this.tagPoolSection = new TagPoolSection(this.div, controller, prompt, WelcomeTagSearchView);
 		this.tagPoolSection.appendTag(null, "");
-		this.tagPoolSection.tagsContainer.select('input.tag').attr('readonly', 'readonly');
+		var inputTag = this.tagPoolSection.tagsContainer.select('input.tag').attr('readonly', 'readonly');
+		this.clearButton = this.tagPoolSection.tagsContainer.append('span')
+			.classed('remove-tag', true)
+			.text('\u2716')
+			.on('click', function()
+				{
+					inputTag.node().value = "";
+					$(inputTag.node()).trigger('input');
+					inputTag.node().focus();
+				});
+		this.hideClearButton(0);
+				
+		var tagsChanged = function()
+		{
+			try
+			{
+				if (inputTag.node().value)
+					_this.showClearButton();
+				else
+					_this.hideClearButton();
+			}
+			catch(err)
+			{
+				cr.asyncFail(err);
+			}
+		}
+		$(this.tagPoolSection).on('tagsChanged.cr', this.div, tagsChanged);
+		
 
 		var tagsFocused = function()
 			{
@@ -90,6 +148,7 @@ var PromptPanel = (function() {
 		$(this.div.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
 			function(eventObject)
 				{
+					$(_this.tagPoolSection).off('tagsChanged.cr', tagsChanged);
 					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
 				});
 		$(this.div.node()).on('click', function()
