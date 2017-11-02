@@ -1521,11 +1521,6 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	NewExperiencePanel.prototype.checkTagInput = function(exceptNode)
-	{
-		this.tagPoolSection.checkTagInput(exceptNode);
-	}
-	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	NewExperiencePanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
