@@ -1783,7 +1783,6 @@ var OfferingPanel = (function () {
 			.style('border-color', null)
 			.style('color', null);
 			
-		this.tagPoolSection.checkTagInput(inputNode);
 		this.tagPoolSection.revealSearchView(inputNode, false);
 	}
 	

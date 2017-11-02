@@ -1557,7 +1557,6 @@ var NewExperiencePanel = (function () {
 		else if (newReveal != this.tagPoolSection.reveal() &&
 			this.tagPoolSection.reveal().isVisible())
 		{
-			this.tagPoolSection.checkTagInput(null);
 			this.tagPoolSection.hideReveal(done);
 			return true;
 		}
@@ -1590,7 +1589,6 @@ var NewExperiencePanel = (function () {
 			};
 		if (!this.onFocusInOtherInput(_this.tagPoolSection.reveal(), done))
 		{
-			this.tagPoolSection.checkTagInput(inputNode);
 			this.tagPoolSection.revealSearchView(inputNode, false);
 		}
 	}
