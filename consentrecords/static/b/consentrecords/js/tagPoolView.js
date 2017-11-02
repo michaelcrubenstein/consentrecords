@@ -867,6 +867,7 @@ var TagPoolSection = (function () {
 			$(inputNode).remove();
 	}
 	
+	/* Align the contents of the controller with the HTML elements. */
 	TagPoolSection.prototype.checkTagInput = function(exceptNode)
 	{
 		var _this = this;
@@ -900,6 +901,8 @@ var TagPoolSection = (function () {
 						// In this case, do nothing.
 						;
 					}
+					
+					/* Now ensure that the input control properly matches the contents */
 					if (!newText && this != document.activeElement)
 					{
 						/* Only remove this if there is an addTag button. */
@@ -927,8 +930,7 @@ var TagPoolSection = (function () {
 						this.value = newService.description();
 						_this.checkInputControls(this);
 					}
-					else
-						{	/* No change */ }
+					/* else no change */
 				}
 				else if (_this.controller.customServiceType() &&
 						 d instanceof _this.controller.customServiceType())
@@ -940,7 +942,7 @@ var TagPoolSection = (function () {
 							/* Replace custom service with a different custom service */
 							d.name(newText)
 							 .description(newText);
-							this.value = newText;
+							this.value = newText;	/* In case the text was trimmed */
 							_this.checkInputControls(this);
 						}
 					}
@@ -992,6 +994,8 @@ var TagPoolSection = (function () {
 		}
 	}
 	
+	/* Ensure that the appearance of this inputNode is correct based on its datum.
+	 */
 	TagPoolSection.prototype.checkInputControls = function(inputNode)
 	{
 		if (inputNode == document.activeElement)
@@ -1075,6 +1079,7 @@ var TagPoolSection = (function () {
 		return input;
 	}
 	
+	/* Ensures that the HTML elements exactly correspond to the services of the associated controller. */
 	TagPoolSection.prototype.showTags = function()
 	{
 		var offeringTags = this.controller.primaryServices() || [];
