@@ -765,8 +765,8 @@ var TagSearchView = (function() {
 					this.controller.addService(newService);
 				}
 				
-				$(this.poolSection).trigger('tagsChanged.cr');
 				this.poolSection.showTags();
+				$(this.poolSection).trigger('tagsChanged.cr');
 				
 				this.transferFocusAfterClick(moveToNewInput, d);
 
@@ -844,7 +844,7 @@ var TagPoolSection = (function () {
 			}
 			else
 			{
-				PathGuides.clearNode();
+				PathGuides.clearNode(node);
 			}
 		}
 	}
@@ -914,6 +914,8 @@ var TagPoolSection = (function () {
 					d3.select(inputNode).remove();
 					this.checkAddTagButton();
 				}
+				else
+					this.checkInputControls(inputNode);
 			}
 			else
 				this.checkInputControls(inputNode);
@@ -1204,11 +1206,7 @@ var TagPoolSection = (function () {
 		{
 			button.style('display', null);
 			button.interrupt().transition()
-				.style('opacity', 1)
-				.each('end', function()
-					{
-						button.style('display', null);
-					});
+				.style('opacity', 1);
 		}
 	}
 	
