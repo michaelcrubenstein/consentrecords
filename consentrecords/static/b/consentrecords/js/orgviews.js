@@ -1778,10 +1778,7 @@ var OfferingPanel = (function () {
 	OfferingPanel.prototype.onFocusInTagInput = function(inputNode)
 	{
 		var _this = this;
-		d3.select(inputNode)
-			.style('background-color', null)
-			.style('border-color', null)
-			.style('color', null);
+		PathGuides.clearNode(inputNode);
 			
 		this.tagPoolSection.revealSearchView(inputNode, false);
 	}
@@ -2098,7 +2095,9 @@ var PickInquiryAccessGroupSearchView = (function () {
 			{
 				return d.description() == _this.oldDescription;
 			})
-			.insert('span', ':first-child').classed('glyphicon glyphicon-ok', true);
+			.insert('span', ':first-child')
+				.classed('checked', true)
+				.text("\u2714");
 		return items;
 	}
 	
@@ -3111,7 +3110,9 @@ var LinkSearchView = (function () {
 			{
 				return d.description() == _this.oldDescription;
 			})
-			.insert('span', ':first-child').classed('glyphicon glyphicon-ok', true);
+			.insert('span', ':first-child')
+				.classed('checked', true)
+				.text("\u2714");
 		return items;
 	}
 

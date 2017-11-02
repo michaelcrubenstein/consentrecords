@@ -158,6 +158,16 @@ panel.welcome section.tags input.tag {
 	border: none;
 	min-width: 15em;
 	border-bottom: 2px solid #222;
+	margin-right: 0.4em;
+}
+
+panel.welcome section.tags span.remove-tag {
+	font-family: verdana;
+	font-size: .75em;
+	padding: .1em .3em;
+	color: #FFF;
+	background: #999;
+	border-radius: .7em;
 }
 
 panel.welcome section.tags label {
@@ -201,7 +211,7 @@ panel.welcome div.signup>div>div:last-child {
 	margin-top: 1em;
 }
 
-panel.welcome div.signup input {
+panel.welcome div.signup input, panel.sign-in input {
 	border: none;
 	outline: none;
 	border-bottom: 1.5px solid #999;

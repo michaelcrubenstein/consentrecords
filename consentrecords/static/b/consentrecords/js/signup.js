@@ -424,18 +424,38 @@ var SigninPanel = (function()
 	{
 		this.createRoot(null, "Sign In", "sign-in", revealPanelUp);
 		var _this = this;
+		
+		var navContainer = this.appendNavContainer();
+		
+		var backButton = navContainer.appendLeftButton()
+			.on('click', function() 
+				{
+					try
+					{
+						showClickFeedback(this);
+						_this.hideRight(function()
+							{
+								$(cr.signedinUser).trigger("signinCanceled.cr");
+								unblockClick();
+							});
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
+					d3.event.preventDefault();
+					d3.event.stopPropagation();
+				});
+		backButton.append('span').text(crv.buttonTexts.cancel);
+
+		navContainer.appendTitle("Sign In to PathAdvisor");
 
 		var form = this.panelDiv.append('form')
 			.classed('form-simple form-signin', true);
 		
-		form.append('div')
-			.classed('site-title', true)
-			.text("Sign In to PathAdvisor");
-		
 		this.emailInput = form.append('input')
 				.attr('type', 'email')
 				.attr('maxlength', '254')
-				.classed('form-control', true)
 				.attr('placeholder', 'Email address')
 				.attr('required', '')
 				.attr('autofocus', '')
@@ -451,7 +471,6 @@ var SigninPanel = (function()
 		this.passwordInput = form.append('input')
 				.attr('type', 'password')
 				.attr('maxlength', '254')
-				.classed('form-control', true)
 				.attr('placeholder', 'Password')
 				.attr('required', '')
 				.on('input', function() { _this.checkenabled(); })
@@ -483,30 +502,6 @@ var SigninPanel = (function()
 		var buttonContainer = form.append('div')
 			.classed('form-group site-trio-container', true);
 			
-		buttonContainer.append('span')
-			.classed('signin-cancel-button site-trio-clipped site-active-text', true)
-			.text(crv.buttonTexts.cancel)
-			.on('click', function()
-				{
-					if (prepareClick('click', 'hide panel button'))
-					{
-						try
-						{
-							showClickFeedback(this);
-							_this.hideRight(function()
-								{
-									$(cr.signedinUser).trigger("signinCanceled.cr");
-									unblockClick();
-								});
-						}
-						catch(err)
-						{
-							cr.syncFail(err);
-						}
-					}
-					d3.event.preventDefault();
-				});
-							
 		buttonContainer.append('div')
 			.classed('site-trio-fill', true);
 		
@@ -602,16 +597,14 @@ var ForgotPasswordPanel = (function()
 			$(this.submitButton).addClass("site-disabled-text")
 							   .removeClass("site-active-text")
 							   .prop( "disabled", true );
-			$(this.emailGroup).removeClass( "has-success");
-			$(this.emailOK).removeClass( "glyphicon-ok" );
+			this.emailOK.textContent = "";
 		}
 		else
 		{
 			$(this.submitButton).removeClass("site-disabled-text")
 							   .addClass("site-active-text")
 							   .prop( "disabled", false );
-			$(this.emailGroup).addClass( "has-success");
-			$(this.emailOK).addClass( "glyphicon-ok" );
+			this.emailOK.textContent = "\u2714";
 		}
 	}
 			
@@ -635,60 +628,59 @@ var ForgotPasswordPanel = (function()
 				
 	function ForgotPasswordPanel(signinPanel)
 	{
-		this.createRoot(null, "Forgot Password", "sign-in", revealPanelUp);
+		this.createRoot(null, "Forgot Password", 'sign-in', revealPanelUp);
 		var _this = this;
 		
-		var form = this.panelDiv.append('form')
-			.classed('form-simple', true);
+		var navContainer = this.appendNavContainer();
 		
-		form.append('div')
-			.classed('site-title', true)
-			.text("Forgot your Password?");
-		
-		form.append('div')
-			.classed('help-block', true)
-			.text("Enter your email address to receive an email with a link you can click to reset your password.");
-			
-		var emailGroup = form.append('div')
-			.classed('row', true)
-			.append('div')
-			.classed('col-xs-12', true)
-			.append('div')
-			.classed('form-group has-feedback', true);
-		this.emailGroup = emailGroup.node();
-		
-		this.emailInput = emailGroup.append('input')
-			.classed('form-control feedback-control', true)
-			.attr('type', 'email')
-			.attr('placeholder', "Email Address")
-			.on("input", function() { _this.checkenabled(); })
-			.node();
-			
-		this.emailOK = emailGroup.append('span')
-			.classed("glyphicon form-control-feedback", true)
-			.node();
-		
-		var buttonContainer = form.append('div')
-			.classed('form-group site-trio-container', true);
-			
-		buttonContainer.append('span')
-			.classed('done-button site-trio-clipped site-active-text', true)
-			.text(crv.buttonTexts.cancel)
-			.on('click', function()
+		var backButton = navContainer.appendLeftButton()
+			.on('click', function() 
 				{
 					if (prepareClick('click', 'hide panel button'))
 					{
 						try
 						{
 							showClickFeedback(this);
-							_this.hideRight(unblockClick);
+							_this.hideDown(unblockClick);
 						}
 						catch(err)
 						{
 							cr.syncFail(err);
 						}
 					}
+					d3.event.preventDefault();
+					d3.event.stopPropagation();
 				});
+		backButton.append('span').text(crv.buttonTexts.cancel);
+
+		navContainer.appendTitle("Forgot Password");
+
+		var form = this.panelDiv.append('form')
+			.classed('form-simple', true);
+		
+		form.append('div')
+			.classed('help-block', true)
+			.text("Enter your email address to receive an email with a link you can click to reset your password.");
+			
+		var emailGroup = form.append('div')
+			.append('div')
+			.append('div')
+			.classed('form-group', true);
+		this.emailGroup = emailGroup.node();
+		
+		this.emailInput = emailGroup.append('input')
+			.classed('feedback-control', true)
+			.attr('type', 'email')
+			.attr('placeholder', "Email Address")
+			.on("input", function() { _this.checkenabled(); })
+			.node();
+			
+		this.emailOK = emailGroup.append('span')
+			.classed('success-feedback', true)
+			.node();
+		
+		var buttonContainer = form.append('div')
+			.classed('form-group site-trio-container', true);
 			
 		buttonContainer.append('div')
 			.classed('site-trio-fill', true);
@@ -725,12 +717,6 @@ var ForgotPasswordPanel = (function()
 				   d3.event.preventDefault();
 				});
 				
-		this.alertSuccess = form.append('div')
-			.classed('row', true)
-			.append('div')
-			.classed('col-xs-12 div-success', true)
-			.node();
-			
 		$(this.node()).on("revealing.cr", function()
 		{
 			$(_this.emailInput).val("")
@@ -738,34 +724,6 @@ var ForgotPasswordPanel = (function()
 			_this.checkenabled();
 		});
 		
-/* 
-			<form class="form-simple">
-				<div class="site-title">Forgot your Password?</div>
-				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
-
-				<div class="row">
-					<div class="alert-container col-xs-12"></div>
-				</div>
-
-			  <div class="row">
-					<div class="col-xs-12">
-						<div id="id_email_group" class="form-group has-feedback">
-							<label for="id_email"  class="control-label sr-only">Email Address</label>
-							<input id="id_email" class="form-control feedback-control" type="email" placeholder="Email"/>
-							<span id="id_emailOK" class="glyphicon form-control-feedback"></span>
-						</div>
-					</div> 
-			  </div>
-				<div class="form-group site-trio-container">
-					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
-					<div class="site-trio-fill"></div>
-					<span class="submit-button site-trio-clipped site-active-text">Send&nbsp;Email</span>
-				</div>
-				<div class="row">
-					<div id="id_alert_success" class="col-xs-12 div-success"></div>
-				</div>
-			</form>
- */
 	}
 	return ForgotPasswordPanel;
 })();
@@ -792,26 +750,22 @@ var ResetPasswordPanel = (function()
 		if (!validateEmail($(this.emailInput).val()))
 		{
 			submitEnabled = false;
-			$(this.emailGroup).removeClass( "has-success");
-			$(this.emailOK).removeClass( "glyphicon-ok" );
+			this.emailOK.textContent = "";
 		}
 		else
 		{
-			$(this.emailGroup).addClass( "has-success");
-			$(this.emailOK).addClass( "glyphicon-ok" );
+			this.emailOK.textContent = "\u2714";
 		}
 		
 		if ($(this.confirmInput).val() &&
 			$(this.passwordInput).val() == $(this.confirmInput).val())
 		{
-			$(this.confirmGroup).addClass( "has-success");
-			$(this.confirmOK).addClass( "glyphicon-ok" );
+			this.confirmOK.textContent = "";
 		}
 		else
 		{
 			submitEnabled = false;
-			$(this.confirmGroup).removeClass( "has-success");
-			$(this.confirmOK).removeClass( "glyphicon-ok" );
+			this.confirmOK.textContent = "\u2714";
 		}
 		
 		if (submitEnabled)
@@ -922,22 +876,20 @@ var ResetPasswordPanel = (function()
 			.text("Enter your email address and a new password to reset your password.");
 			
 		var emailGroup = form.append('div')
-			.classed('row', true)
 			.append('div')
-			.classed('col-xs-12', true)
 			.append('div')
-			.classed('form-group has-feedback', true);
+			.classed('form-group', true);
 		this.emailGroup = emailGroup.node();
 		
 		this.emailInput = emailGroup.append('input')
-			.classed('form-control feedback-control', true)
+			.classed('feedback-control', true)
 			.attr('type', 'email')
 			.attr('placeholder', "Email Address")
 			.on('input', function() { _this.checkenabled(); })
 			.node();
 			
 		this.emailOK = emailGroup.append('span')
-			.classed("glyphicon form-control-feedback", true)
+			.classed('success-feedback', true)
 			.node();
 		this.emailMessage = form.append('div')
 			.classed('message', true);
@@ -954,7 +906,7 @@ var ResetPasswordPanel = (function()
 			.text("New Password");
 		this.passwordInput = passwordGroup.append('input')
 			.attr('id', 'id_newPassword')
-			.classed('form-control feedback-control', true)
+			.classed('feedback-control', true)
 			.attr('type', 'password')
 			.attr('placeholder', "New password")
 			.on('input', function() { _this.checkenabled(); })
@@ -968,7 +920,7 @@ var ResetPasswordPanel = (function()
 		this.passwordMessageReveal.hide();
 
 		var confirmGroup = form.append('div')
-			.classed('form-group has-feedback', true);
+			.classed('form-group', true);
 		this.confirmGroup = confirmGroup.node();
 		var confirmLabel = confirmGroup.append('label')
 			.attr('for', 'id_confirmNewPassword')
@@ -976,7 +928,7 @@ var ResetPasswordPanel = (function()
 			.text("Confirm New Password");
 		this.confirmInput = confirmGroup.append('input')
 			.attr('id', 'id_confirmNewPassword')
-			.classed('form-control feedback-control', true)
+			.classed('feedback-control', true)
 			.attr('type', 'password')
 			.attr('placeholder', "Confirm new password")
 			.on('input', function() { _this.checkenabled(); })
@@ -990,12 +942,12 @@ var ResetPasswordPanel = (function()
 				})
 			.node();
 		this.confirmOK = emailGroup.append('span')
-			.classed("glyphicon form-control-feedback", true)
+			.classed('success-feedback', true)
 			.node();
 		this.confirmMessage = form.append('div')
 			.classed('message', true);
 		this.confirmMessage.append('div')
-			.text('The confirmation does not match the password.');
+			.text("The confirmation does not match the password.");
 		this.confirmMessageReveal = new VerticalReveal(this.confirmMessage.node());
 		this.confirmMessageReveal.hide();
 
