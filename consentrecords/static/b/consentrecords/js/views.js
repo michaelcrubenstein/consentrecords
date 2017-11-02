@@ -2364,7 +2364,9 @@ var PickFromListPanel = (function () {
 			{
 				return _this.isInitialValue(d);
 			})
-			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
+			.insert("span", ":first-child")
+				.classed('checked', true)
+				.text("\u2714");
 				
 		items.on('click', function(d, i)
 				{

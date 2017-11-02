@@ -54,18 +54,21 @@ panel.initial {
 	position: relative;
 	width: 100%;
 }
+
 .vertical-scrolling {
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: hidden;
 	-webkit-overflow-scrolling: touch;
 }
+
 .all-scrolling {
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: scroll;
 	-webkit-overflow-scrolling: touch;
 }
+
 .no-scrolling {
 	overflow-y: hidden;
 	overflow-x: hidden;
@@ -450,22 +453,6 @@ li > .row-button {
 	text-align: left;
 }
 
-li > .row-button > .glyphicon-ok {
-	margin-right: 0.3em;
-}
-
-li>span.glyphicon:first-child {
-	padding-left: 12px;
-	padding-right: 27px;
-}
-
-li>span.glyphicon.glyphicon-ok:first-child {
-	padding-left: 12px;
-	padding-right: 12px;
-	align-self: center;
-	-webkit-align-self: center;
-}
-
 .cell.unique>ol {
 	flex-grow: 100;
 }
@@ -601,6 +588,24 @@ div.add-value>div {
 	outline: none;
 }
 
+.success-feedback {
+	font-size: 1.3em;
+	color: #3c763d;
+	margin-left: .3em;
+	pointer-events: none;
+}
+
+span.checked {
+	margin-left: 1em;
+	padding-top: 0.4em;
+	padding-right: 0.3em;
+	background: transparent;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+}
+
 .glyphicon-minus-sign {
 	position: relative;
 	color: red;
@@ -637,12 +642,12 @@ ol.cell-items>li>.growable {
 
 /* If the growable is the first item, give it a left margin of 12 pixels. */
 ol.cell-items>li>.growable:first-child {
-	margin-left: 12px;
+	margin-left: 1em;
 }
 
 /* If the growable is the last item, give it a right margin of 12 pixels. */
 ol.cell-items>li>.growable:last-child {
-	padding-right: 12px;
+	padding-right: 1em;
 }
 
 ol.cell-items>li>.unselectable {

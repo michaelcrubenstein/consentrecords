@@ -44,7 +44,7 @@ var PromptPanel = (function() {
 	
 	PromptPanel.prototype.onFocusInTagInput = function(tagPoolSection, inputNode)
 	{
-		PathGuides.clearNode(inputNode);
+		tagPoolSection.setTagColor(inputNode);
 			
 		tagPoolSection.checkTagInput(inputNode);
 		var datum = d3.select(inputNode).datum();
@@ -526,22 +526,21 @@ var WelcomePanel = (function () {
 			.classed('title', true)
 			.text('Create a PathAdvisor Account');
 			
-		var emailGroup = div.append('div')
-			.classed('form-group has-feedback', true);
+		var emailGroup = div.append('div');
 		this.emailGroup = emailGroup.node();
 		
 		this.emailInput = emailGroup.append('input')
 			.classed('email feedback-control', true)
 			.attr('placeholder', "Email Address")
-			.on('input', function() { _this.checkenabled(); })
 			.node();
+			
+		$(this.emailInput).on('input', function() { _this.checkenabled(); });
 		
 		this.emailOK = emailGroup.append('span')
-			.classed("glyphicon form-control-feedback", true)
+			.classed('success-feedback', true)
 			.node();
 		
-		var passwordGroup = div.append('div')
-			.classed('form-group has-feedback', true);
+		var passwordGroup = div.append('div');
 		this.passwordGroup = passwordGroup.node();
 		var passwordLabel = passwordGroup.append('label')
 			.attr('for', 'id_newPassword')
@@ -555,11 +554,10 @@ var WelcomePanel = (function () {
 			.on('input', function() { _this.checkenabled(); })
 			.node();
 		this.passwordOK = passwordGroup.append('span')
-			.classed("glyphicon form-control-feedback", true)
+			.classed("success-feedback", true)
 			.node();
 		
-		var confirmGroup = div.append('div')
-			.classed('form-group has-feedback', true);
+		var confirmGroup = div.append('div');
 		this.confirmGroup = confirmGroup.node();
 		var confirmLabel = confirmGroup.append('label')
 			.attr('for', 'id_confirmNewPassword')
@@ -581,7 +579,7 @@ var WelcomePanel = (function () {
 				})
 			.node();
 		this.confirmOK = confirmGroup.append('span')
-			.classed("glyphicon form-control-feedback", true)
+			.classed("success-feedback", true)
 			.node();
 
 		this.signupButton = div.append('div').append('button')
@@ -618,39 +616,33 @@ var WelcomePanel = (function () {
 		if (!validateEmail($(this.emailInput).val()))
 		{
 			submitEnabled = false;
-			$(this.emailGroup).removeClass( "has-success");
-			$(this.emailOK).removeClass( "glyphicon-ok" );
+			this.emailOK.textContent = "";
 		}
 		else
 		{
-			$(this.emailGroup).addClass( "has-success");
-			$(this.emailOK).addClass( "glyphicon-ok" );
+			this.emailOK.textContent = "\u2714";
 		}
 		
 		if ($(this.passwordInput).val() &&
 			$(this.passwordInput).val().length >= 6)
 		{
-			$(this.passwordGroup).addClass( "has-success");
-			$(this.passwordOK).addClass( "glyphicon-ok" );
+			$(this.passwordOK).text("\u2714");
 		}
 		else
 		{
 			submitEnabled = false;
-			$(this.passwordGroup).removeClass( "has-success");
-			$(this.passwordOK).removeClass( "glyphicon-ok" );
+			$(this.passwordOK).text("");
 		}
 		
 		if ($(this.confirmInput).val() &&
 			$(this.passwordInput).val() == $(this.confirmInput).val())
 		{
-			$(this.confirmGroup).addClass( "has-success");
-			$(this.confirmOK).addClass( "glyphicon-ok" );
+			$(this.confirmOK).text("\u2714");
 		}
 		else
 		{
 			submitEnabled = false;
-			$(this.confirmGroup).removeClass( "has-success");
-			$(this.confirmOK).removeClass( "glyphicon-ok" );
+			$(this.confirmOK).text("");
 		}
 	}
 	
