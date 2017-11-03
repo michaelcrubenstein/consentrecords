@@ -6,21 +6,14 @@
 	box-sizing: border-box;
 }
 
-/* Fix for scrolling problems from stackoverflow. 
-	https://stackoverflow.com/questions/9807620/ipad-safari-scrolling-causes-html-elements-to-disappear-and-reappear-with-a-dela
- */
-*:not(html) {
-    -webkit-transform: translate3d(0, 0, 0);
-}
-
 html {
 	height: 100%;
 	width: 100%;
 }
 body {
-  font-size: medium;
-  overflow-y: hidden;
-  overflow-x: hidden;
+	font-size: medium;
+	overflow-y: hidden;
+	overflow-x: hidden;
 	height: 100%;
 	width: 100%;
 }

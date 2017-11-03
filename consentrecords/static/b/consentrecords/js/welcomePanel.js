@@ -763,6 +763,7 @@ var WelcomePanel = (function () {
 			.append('span').text('Sign In');
 			
 		var panel2Div = this.appendScrollArea();
+		panel2Div.classed('vertical-scrolling', false);
 		
 		this.appendSummarySection();
 		
