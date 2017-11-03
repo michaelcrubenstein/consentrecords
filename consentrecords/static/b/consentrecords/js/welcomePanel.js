@@ -742,13 +742,20 @@ var WelcomePanel = (function () {
 							cr.syncFail(new Error(crv.buttonTexts.cookiesRequired));
 						else
 						{
-							var signinPanel = new SigninPanel();
-							signinPanel.showLeft().then(
-								function()
-								{
-									signinPanel.initializeFocus();
-									unblockClick();
-								});
+							try
+							{
+								var signinPanel = new SigninPanel();
+								signinPanel.showLeft().then(
+									function()
+									{
+										signinPanel.initializeFocus();
+										unblockClick();
+									});
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
 						}
 					}
 					d3.event.preventDefault();
