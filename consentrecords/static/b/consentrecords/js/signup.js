@@ -554,8 +554,20 @@ var SigninPanel = (function()
 				{
 					try
 					{
-						new ForgotPasswordPanel(_this.node())
-							.showUp()
+						var panel = new ForgotPasswordPanel(_this.node());
+						
+						$(panel.node()).on('hiding.cr', function()
+							{
+								$(_this.emailInput).css('display', '');
+								$(_this.passwordInput).css('display', '');
+							});
+						panel.showUp()
+							.then(function()
+							{
+								$(_this.emailInput).css('display', 'none');
+								$(_this.passwordInput).css('display', 'none');
+							},
+							cr.asyncFail)
 							.always(unblockClick);
 					}
 					catch(err)
