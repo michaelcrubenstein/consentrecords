@@ -578,9 +578,9 @@ var SigninPanel = (function()
 				d3.event.preventDefault();
 			});
 
-		$(this.node()).on("revealing.cr", function()
+		$(this.node()).on('revealing.cr', function()
 			{
-				$(_this.emailInput).val($.cookie("email"));
+				$(_this.emailInput).val($.cookie('email'));
 				$(_this.passwordInput).val("");
 			});
 	}
@@ -637,6 +637,22 @@ var ForgotPasswordPanel = (function()
 			cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
 		  });
 	}
+	
+	/* After showUp is completed, set the focus. */
+	ForgotPasswordPanel.prototype.showUp = function()
+	{
+		var _this = this;
+		
+		return crv.SitePanel.prototype.showUp.call(this)
+			.then(function()
+				{
+					_this.emailInput.value = '';
+					_this.emailInput.focus();
+					
+					_this.checkenabled();
+				},
+				cr.chainFail);
+	}
 				
 	function ForgotPasswordPanel(signinPanel)
 	{
@@ -684,9 +700,14 @@ var ForgotPasswordPanel = (function()
 			.classed('feedback-control', true)
 			.attr('type', 'email')
 			.attr('placeholder', "Email Address")
-			.on("input", function() { _this.checkenabled(); })
+			.attr('required', '')
+			.attr('autofocus', '')
+			.on('input', function() { _this.checkenabled(); })
 			.node();
 			
+		/* Force scrolling to the top for small screens. */
+		document.body.scrollTop = 0;
+
 		this.emailOK = emailGroup.append('span')
 			.classed('success-feedback', true)
 			.node();
@@ -727,15 +748,9 @@ var ForgotPasswordPanel = (function()
 					}
 				   //stop form submission
 				   d3.event.preventDefault();
-				});
-				
-		$(this.node()).on("revealing.cr", function()
-		{
-			$(_this.emailInput).val("")
-				.focus();
-			_this.checkenabled();
-		});
-		
+				})
+				.node();
+
 	}
 	return ForgotPasswordPanel;
 })();
