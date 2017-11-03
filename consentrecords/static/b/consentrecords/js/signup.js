@@ -685,7 +685,7 @@ var ForgotPasswordPanel = (function()
 		buttonContainer.append('div')
 			.classed('site-trio-fill', true);
 		
-		buttonContainer.append('span')
+		this.submitButton = buttonContainer.append('span')
 			.classed('submit-button site-trio-clipped site-active-text', true)
 			.text("Send Email")
 			.on('click', function()
