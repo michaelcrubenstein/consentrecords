@@ -480,14 +480,30 @@ var TagPoolView = (function () {
 						if (!filterService)
 							fs.visible = false;
 					}
-					else if (this != _this.otherFlagNode &&
-						!fs.descriptionContains(upperText, prefix, filterService) &&
-						!inputRegExps.reduce(function(a, b)
+					else if (filterService) 
+					{
+						if (filterService == fs.service ||
+							filterService.impliedDirectlyBy().indexOf(fs.service) >= 0 ||
+							sis.indexOf(fs.service) >= 0)
+						{
+							/* Do nothing */
+						}
+						else
+							fs.visible = false;
+					}
+					else
+					{
+						if (fs.descriptionContains(upperText, prefix, null) ||
+							inputRegExps.reduce(function(a, b)
 							{
 								return a && b.test(fs.description());
-							}, true) &&
-						(!filterService || sis.indexOf(fs.service) < 0))
-						fs.visible = false;
+							}, true))
+						{
+							/* Do nothing */
+						}
+						else
+							fs.visible = false;
+					}
 				});
 		}
 		
