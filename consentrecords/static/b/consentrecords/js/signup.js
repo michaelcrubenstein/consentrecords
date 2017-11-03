@@ -604,7 +604,7 @@ var ForgotPasswordPanel = (function()
 			$(this.submitButton).removeClass("site-disabled-text")
 							   .addClass("site-active-text")
 							   .prop( "disabled", false );
-			this.emailOK.textContent = "\u2714";
+			this.emailOK.textContent = crv.buttonTexts.checkmark;
 		}
 	}
 			
@@ -754,7 +754,7 @@ var ResetPasswordPanel = (function()
 		}
 		else
 		{
-			this.emailOK.textContent = "\u2714";
+			this.emailOK.textContent = crv.buttonTexts.checkmark;
 		}
 		
 		if ($(this.confirmInput).val() &&
@@ -765,7 +765,7 @@ var ResetPasswordPanel = (function()
 		else
 		{
 			submitEnabled = false;
-			this.confirmOK.textContent = "\u2714";
+			this.confirmOK.textContent = crv.buttonTexts.checkmark;
 		}
 		
 		if (submitEnabled)

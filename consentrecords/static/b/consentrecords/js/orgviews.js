@@ -2097,7 +2097,7 @@ var PickInquiryAccessGroupSearchView = (function () {
 			})
 			.insert('span', ':first-child')
 				.classed('checked', true)
-				.text("\u2714");
+				.text(crv.buttonTexts.checkmark);
 		return items;
 	}
 	
@@ -3112,7 +3112,7 @@ var LinkSearchView = (function () {
 			})
 			.insert('span', ':first-child')
 				.classed('checked', true)
-				.text("\u2714");
+				.text(crv.buttonTexts.checkmark);
 		return items;
 	}
 

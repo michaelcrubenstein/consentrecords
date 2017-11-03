@@ -71,11 +71,13 @@ var crv = {
 		canRegister: "Can Register",
 		changeEmail: "Change Email",
 		changePassword: "Change Password",
+		checkmark: "\u2714\uFE0E",
 		city: "City",
 		cookiesRequired:
 			"this operation requires cookies to be enabled. Please enable cookies for this browser and reload this page.",
 		currentTimeframe: "Something I'm Doing Now",
 		currentTimeframeShort: "Doing Now",
+		deletemark: "\u2716\uFE0E",
 		disqualifyingTags: "Disqualifying Tags",
 		domain: "Domain",
 		done: "Done",
@@ -2366,7 +2368,7 @@ var PickFromListPanel = (function () {
 			})
 			.insert("span", ":first-child")
 				.classed('checked', true)
-				.text("\u2714");
+				.text(crv.buttonTexts.checkmark);
 				
 		items.on('click', function(d, i)
 				{
