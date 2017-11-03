@@ -214,6 +214,7 @@ panel.welcome div.signup>div>div:last-child {
 panel.welcome div.signup input, panel.sign-in input {
 	border: none;
 	outline: none;
-	border-bottom: 1.5px solid #999;
+	border-bottom: 1.5px solid #222;
+	border-radius: 0px;
 	font-size: 14px;
 }
