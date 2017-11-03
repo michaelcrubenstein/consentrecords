@@ -107,7 +107,7 @@ var PromptPanel = (function() {
 		var inputTag = this.tagPoolSection.tagsContainer.select('input.tag').attr('readonly', 'readonly');
 		this.clearButton = this.tagPoolSection.tagsContainer.append('span')
 			.classed('remove-tag', true)
-			.text('\u2716')
+			.text(crv.buttonTexts.deletemark)
 			.on('click', function()
 				{
 					inputTag.node().value = "";
@@ -679,29 +679,29 @@ var WelcomePanel = (function () {
 		}
 		else
 		{
-			this.emailOK.textContent = "\u2714";
+			this.emailOK.textContent = crv.buttonTexts.checkmark;
 		}
 		
 		if ($(this.passwordInput).val() &&
 			$(this.passwordInput).val().length >= 6)
 		{
-			$(this.passwordOK).text("\u2714");
+			this.passwordOK.textContent = crv.buttonTexts.checkmark;
 		}
 		else
 		{
 			submitEnabled = false;
-			$(this.passwordOK).text("");
+			this.passwordOK.textContent = "";
 		}
 		
 		if ($(this.confirmInput).val() &&
 			$(this.passwordInput).val() == $(this.confirmInput).val())
 		{
-			$(this.confirmOK).text("\u2714");
+			this.confirmOK.textContent = crv.buttonTexts.checkmark;
 		}
 		else
 		{
 			submitEnabled = false;
-			$(this.confirmOK).text("");
+			this.confirmOK.textContent = "";
 		}
 	}
 	
