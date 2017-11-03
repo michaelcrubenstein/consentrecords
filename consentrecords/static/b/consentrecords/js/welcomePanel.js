@@ -456,7 +456,24 @@ var WelcomePanel = (function () {
 							promises.push(_this.promptPanels[i].tagPoolSection.fillTags());
 						}
 					}
-					return $.when.apply(null, promises);
+					return $.when.apply(null, promises)
+						.then(function()
+							{
+								try
+								{
+								for (var i = 0; i < _this.promptPanels.length; ++i)
+								{
+									var tagPoolSection = _this.promptPanels[i].tagPoolSection;
+									var inputNode = tagPoolSection.tagsContainer.select('input.tag').node();
+									tagPoolSection.searchView.constrainTagFlags(inputNode);
+								}
+								}
+								catch (err)
+								{
+									cr.asyncFail(err);
+								}
+							},
+							cr.asyncFail);
 				},
 				cr.asyncFail);
 				
