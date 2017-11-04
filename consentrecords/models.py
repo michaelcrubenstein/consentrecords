@@ -1356,7 +1356,7 @@ class Comment(ChildInstance, dbmodels.Model):
         askerPath = _orNoneForeignKey(data, 'asker', context, Path)
         
         if not (askerPath and question and context.user and askerPath == context.user.path and context.canRead(parent)):
-            self.checkCanWrite(context)
+            parent.checkCanWrite(context)
         
         newItem = Comment.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
