@@ -364,7 +364,11 @@
 			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			return cr.submitSignout();
+			return cr.submitSignout()
+				.then(function()
+					{
+						ServiceFlagController.clearPromises();
+					});
 		}
 		
 		function hide_organizations()
