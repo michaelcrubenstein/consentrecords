@@ -242,26 +242,10 @@ cr.updatePassword = function(username, oldPassword, newPassword)
 		return $.post(cr.urls.updatePassword, {username: username,
 										oldPassword: oldPassword,
 										newPassword: newPassword })
-				.fail(cr.thenFail);
-	}
-
-cr.share = function(userPath, path, resultType, privilegeID, done, fail)
-	{
-		var url = cr.urls.acceptFollower;
-		if (userPath)
-			url += userPath + "/";
-		$.post(url, {follower: path,
-					 privilege: privilegeID
-					})
-		.done(function(json){
-				var newValue = new resultType();
-				newValue.setData(json.object);
-				done(newValue);
-		})
-		.fail(function(jqXHR, textStatus, errorThrown)
-		{
-			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-		});
+				.then(function()
+					{
+					},
+					cr.thenFail);
 	}
 
 cr.requestAccess = function(follower, followingPath, done, fail)
