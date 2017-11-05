@@ -97,12 +97,36 @@ var ServiceFlagController = (function() {
 			.text(this.description())
 	}
 
+    ServiceFlagController.controllersPromise = function()
+    {
+        if (ServiceFlagController._controllersPromise)
+        	return ServiceFlagController._controllersPromise;
+        
+        ServiceFlagController._controllersPromise = cr.Service.servicesPromise()
+        	.then(function(services)
+        		{
+        			var controllers = services.map(function(s) { return new ServiceFlagController(s); });
+        			result = $.Deferred();
+        			result.resolve(services, controllers);
+        			return result;
+        		},
+        		cr.chainFail);
+        		
+        return ServiceFlagController._controllersPromise;
+    }
+    
 	function ServiceFlagController(dataObject) {
 		this.service = dataObject;
 	}
 	
 	return ServiceFlagController;
 })();
+ServiceFlagController._controllersPromise = null;
+
+ServiceFlagController.clearPromises = function()
+{
+	ServiceFlagController._controllersPromise = null;
+}
 
 var VerticalReveal = (function() {
 	VerticalReveal.prototype.node = null;
@@ -251,23 +275,23 @@ var TagPoolView = (function () {
 					if (fd.visible === undefined || fd.visible)
 					{
 						if (fd.service == filterService)
-							flagSets[1].push(this);
+							flagSets[1].push(fd);
 						else if (this == _this.otherFlagNode)
 						{
 							d3.select(_this.otherFlagNode)
 								.text("Other {0}".format(filterService.description()));
 							PathGuides.fillNode(_this.otherFlagNode, filterService.getColumn());
-							flagSets[2].push(this);
+							flagSets[2].push(fd);
 						}
 						else if (fd.service.serviceImplications().find(function(si)
 							{
 								return si.service() == filterService;
 							}))
-							flagSets[2].push(this);
+							flagSets[2].push(fd);
 						else if (fd.service.impliedDirectlyBy().indexOf(filterService) >= 0)
-							flagSets[0].push(this);
+							flagSets[0].push(fd);
 						else
-							flagSets[3].push(this);
+							flagSets[3].push(fd);
 					}
 				});
 		}
@@ -276,7 +300,7 @@ var TagPoolView = (function () {
 			g.each(function(fd)
 				{
 					if (fd.visible === undefined || fd.visible)
-						flagSets[3].push(this);
+						flagSets[3].push(fd);
 				});
 		}
 		
@@ -289,10 +313,9 @@ var TagPoolView = (function () {
 			{
 				if (fs.length)
 				{
-					fs.forEach(function(gNode)
+					fs.forEach(function(fd)
 						{
-							var fd = d3.select(gNode).datum();
-							var thisSpacing = $(gNode).outerWidth();
+							var thisSpacing = fd.outerWidth;
 							fd.x = nextX;
 							nextX += thisSpacing;
 							if (nextX >= maxX && fd.x > startX)
@@ -332,13 +355,19 @@ var TagPoolView = (function () {
 		$g.stop(true, false);
 		
 		var promises = [];
-		if (duration == 0)
-			$(this.flagsContainer.node()).scrollTop(0);
-		else if ($(this.flagsContainer.node()).scrollTop() > 0)
-			promises.push($(this.flagsContainer.node()).animate({scrollTop: 0}, {duration: duration})
-				.promise());
+		if ($(this.flagsContainer.node()).scrollTop() > 0)
+		{
+			if (duration == 0)
+				$(this.flagsContainer.node()).scrollTop(0);
+			else if ($(this.flagsContainer.node()).scrollTop() > 0)
+				promises.push($(this.flagsContainer.node()).animate({scrollTop: 0}, {duration: duration})
+					.promise());
+		}
 		
-		var showingFlags = [];		
+		var bottomEdge = $(this.flagsContainer.node()).height();
+
+		var showingFlags = [];
+		var settingFlags = [];	
 		hiddenG.each(function(fd)
 			{
 				var showing = fd.visible === undefined || fd.visible;
@@ -356,15 +385,29 @@ var TagPoolView = (function () {
 				else if (duration == 0)
 				{
 					styles.display = showing ? '' : 'none';
-					$(this).css(styles);
+					settingFlags.push({flag: this, styles: styles});
 				}
 				else if (showing)
 				{
 					
-					if ($(this).css('opacity') == "0")
+					if (fd.y * fd.emToPX > bottomEdge &&
+						parseFloat($(this).css('top')) > bottomEdge)
 					{
-						$(this).css({display: '', left: fd.x, top: fd.y * fd.emToPX});
-						showingFlags.push(this);
+						styles.display = '';
+						settingFlags.push({flag: this, styles: styles});
+					}
+					else if ($(this).css('opacity') == "0")
+					{
+						if (fd.y * fd.emToPX > bottomEdge)
+						{
+							styles.display = '';
+							settingFlags.push({flag: this, styles: styles});
+						}
+						else
+						{
+							$(this).css({display: '', left: fd.x, top: fd.y * fd.emToPX});
+							showingFlags.push(this);
+						}
 					}
 					else
 					{
@@ -388,15 +431,18 @@ var TagPoolView = (function () {
 		if (showingFlags.length)
 			promises.push($(showingFlags).animate({opacity: 1}, {duration: duration})
 						   .promise());
-			
+		
 		movingG.each(function(fd)
 			{
 				var styles = {left: fd.x, top: fd.y * fd.emToPX};
 				if ($(this).css('opacity') != "1")
 					styles.opacity = 1;
 					
-				if (duration == 0)
-					$(this).css(styles);
+				if (fd.y * fd.emToPX > bottomEdge &&
+					parseFloat($(this).css('top')) > bottomEdge)
+					settingFlags.push({flag: this, styles: styles});
+				else if (duration == 0)
+					settingFlags.push({flag: this, styles: styles});
 				else
 					promises.push($(this).animate(styles,
 						{duration: duration})
@@ -426,7 +472,14 @@ var TagPoolView = (function () {
 			}
 		}
 			
-		return $.when.apply(null, promises);
+		return $.when.apply(null, promises)
+			.done(function()
+				{
+					for (var i = 0; i < settingFlags.length; ++i)
+					{
+						$(settingFlags[i].flag).css(settingFlags[i].styles);
+					}
+				});
 	}
 	
 	
@@ -514,13 +567,15 @@ var TagPoolView = (function () {
 		g.classed('flag', true)
 			.style('opacity', 0)
 			.style('display', 'none')
-			.each(function(d)
-				{
-					PathGuides.fillNode(this, d.getColumn());
-				})
 			.text(function(d)
 				{
 					return d.description();
+				})
+			.each(function(d)
+				{
+					PathGuides.fillNode(this, d.getColumn());
+					if (d.outerWidth === undefined)
+						d.outerWidth = $(this).outerWidth();
 				});
 	}
 	
@@ -1278,11 +1333,10 @@ var TagPoolSection = (function () {
 	TagPoolSection.prototype.fillTags = function()
 	{
 		var _this = this;
-		return cr.Service.servicesPromise()
-			.then(function(services)
+		return ServiceFlagController.controllersPromise()
+			.then(function(services, controllers)
 				{
 					_this.allServices = services;
-					var controllers = services.map(function(s) { return new ServiceFlagController(s); });
 					_this.searchView.appendFlags(controllers)
 						.on('click', function(s)
 							{

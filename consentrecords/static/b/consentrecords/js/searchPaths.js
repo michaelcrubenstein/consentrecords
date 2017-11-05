@@ -625,7 +625,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleSchoolClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 1);
@@ -635,7 +635,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleInterestsClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 2);
@@ -645,7 +645,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleCareerClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 3);
@@ -655,7 +655,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.skillsClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 4);
@@ -665,7 +665,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.givingBackClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 5);
@@ -675,7 +675,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.housingClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 0);
@@ -685,7 +685,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.wellnessClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 6);
@@ -879,12 +879,10 @@ var SearchPathsPanel = (function () {
 
 				_this.searchPathsResultsView = new SearchPathsResultsView(_this);
 				
-				cr.Service.servicesPromise()
-					.done(function(services)
+				ServiceFlagController.controllersPromise()
+					.done(function(services, controllers)
 						{
-							var s = services.map(function(e) { return new ServiceFlagController(e); });
-			
-							_this.poolContainer.appendFlags(s)
+							_this.poolContainer.appendFlags(controllers)
 								 .on('click', function(s)
 									{
 										if (s.visible === undefined || s.visible)

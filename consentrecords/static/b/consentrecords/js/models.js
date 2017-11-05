@@ -218,6 +218,7 @@ cr.submitSignout = function()
 	{
 		return $.post(cr.urls.submitSignout, { })
 			.then(function(json) {
+					cr.signedinUser.clear();
 					crp.clear();
 					cr.Service.clearPromises();
 				},

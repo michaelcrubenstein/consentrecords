@@ -830,7 +830,7 @@
 			return cr.submitSignout()
 				.then(function()
 					{
-						cr.signedinUser.clear();
+						ServiceFlagController.clearPromises();
 						var sitePanels = $("panel.site-panel");
 						var panel = new WelcomePanel();
 						panel.showNow();

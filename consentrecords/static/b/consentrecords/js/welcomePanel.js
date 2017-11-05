@@ -774,6 +774,8 @@ var WelcomePanel = (function () {
 		this.handleResize();
 		
 		var signedIn = function(eventObject) {
+			ServiceFlagController.clearPromises();
+			
 			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
 			pathwayPanel.setupSearchPanel();
 			cr.signedinUser.promiseData(['path'])
