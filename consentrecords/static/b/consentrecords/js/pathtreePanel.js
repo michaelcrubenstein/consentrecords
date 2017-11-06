@@ -1327,6 +1327,7 @@ var SettingsButton = (function() {
 
 	SettingsButton.prototype.onClick = function()
 	{
+		var searchPanel = this.pathtreePanel.searchPanel;
 		if (prepareClick('click', "Settings"))
 		{
 			try
@@ -1334,7 +1335,14 @@ var SettingsButton = (function() {
 				var controller = new UserController(this.user, true);
 				controller.oldInstance(this.user);
 				var panel = new Settings(controller, revealPanelUp);
-				panel.showUp().always(unblockClick);
+				
+				$(panel.node()).on('hiding.cr', function()
+					{
+						searchPanel.revealInput();
+					});
+				$.when(panel.showUp(),
+					   searchPanel.hideInput())
+					.always(unblockClick);
 			}
 			catch(err)
 			{
@@ -1367,9 +1375,10 @@ var SettingsButton = (function() {
 				});
 	}
 	
-	function SettingsButton(button, user)
+	function SettingsButton(button, user, pathtreePanel)
 	{
 		AlertButton.call(this, button, user);
+		this.pathtreePanel = pathtreePanel;
 	}
 	
 	return SettingsButton;
@@ -1651,7 +1660,7 @@ var PathlinesPanel = (function () {
 			{
 				_this.setupAddExperienceButton(user, addExperienceButton);
 				
-				_this.settingsAlertButton = new SettingsButton(settingsButton, user);
+				_this.settingsAlertButton = new SettingsButton(settingsButton, user, _this);
 				_this.settingsAlertButton.setup();
 				if (notificationsButton)
 				{
