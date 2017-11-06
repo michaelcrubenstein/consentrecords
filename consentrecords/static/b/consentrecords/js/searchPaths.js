@@ -240,6 +240,21 @@ var SearchPathsPanel = (function () {
 		$(this.searchInput).hide(0).show(0);
 	}
 	
+	SearchPathsPanel.prototype.hideInput = function(duration)
+	{
+		var newTop = $(window).height();
+		var _this = this;
+		return $(this.node()).animate({top: newTop},
+								   	  {duration: duration})
+			.promise()
+			.then(function()
+				{
+					$(_this.searchInput).css('display', 'none');
+				},
+				cr.chainFail);
+
+	}
+	
 	SearchPathsPanel.prototype.revealInput = function(duration)
 	{
 		var newTop = $(window).height() 
@@ -266,7 +281,8 @@ var SearchPathsPanel = (function () {
 		
 		this.mainDiv.classed('vertical-scrolling', false)
 			.classed('no-scrolling', true);
-			
+		$(this.searchInput).css('display', '');
+		
 		return $.when(
 			$(this.node()).animate({top: newTop,
 									height: $(this.topBox).outerHeight(true)},
@@ -281,7 +297,11 @@ var SearchPathsPanel = (function () {
 										 }),
 			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
 										  opacity: 0.0},
-								   {duration: duration})
+								   {duration: duration,
+								   complete: function()
+								   	{
+								   		$(_this.cancelButton).css('display', 'none');
+								   	}})
 			);
 	}
 	
@@ -302,6 +322,8 @@ var SearchPathsPanel = (function () {
 						 + inputMarginRight
 						 - $(this.cancelButton).outerWidth(true);
 						 
+		$(this.searchInput).css('display', '');
+		$(this.cancelButton).css('display', '');
 		$(this.node()).animate({top: 0},
 							   {duration: duration});
 		$(this.searchInput).animate({width: inputWidth,
@@ -729,7 +751,8 @@ var SearchPathsPanel = (function () {
 			
 		this.cancelButton = topBox.append('button')
 			.classed('cancel', true)
-			.text('Cancel')
+			.text(crv.buttonTexts.cancel)
+			.style('display', 'none')
 			.node();
 			
 		$(this.searchInput).focusin(function(event)
