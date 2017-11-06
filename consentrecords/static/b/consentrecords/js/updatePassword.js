@@ -4,26 +4,30 @@ var UpdatePasswordPanel = (function () {
 
 	UpdatePasswordPanel.prototype.submitNewPassword = function(oldPassword, newPassword, confirmPassword)
 	{
-		var _this = this;
-		var username = cr.signedinUser.emails()[0].text();
-		if (newPassword.length == 0)
-			syncFailFunction("The new password can not be blank.");
-		else if (newPassword != confirmPassword)
-			syncFailFunction("The confirm password does not match the new password.");
-		else
+		if (prepareClick('click', 'Change'))
 		{
-			cr.updatePassword(username, oldPassword, newPassword)
-				.then(function()
-					  {
-						_this.hideRight(
-							function()
-							{
-								bootstrap_alert.show(null, "Password Changed", 'alert-info');
-								unblockClick();
-							});
-					  },
-					  syncFailFunction);
+			var _this = this;
+			var username = cr.signedinUser.emails()[0].text();
+			if (newPassword.length == 0)
+				syncFailFunction("The new password can not be blank.");
+			else if (newPassword != confirmPassword)
+				syncFailFunction("The confirm password does not match the new password.");
+			else
+			{
+				cr.updatePassword(username, oldPassword, newPassword)
+					.then(function()
+						  {
+							_this.hideRight(
+								function()
+								{
+									bootstrap_alert.show(null, "Password Changed", 'alert-info');
+									unblockClick();
+								});
+						  },
+						  syncFailFunction);
+			}
 		}
+		d3.event.preventDefault();
 	}
 	
 	function UpdatePasswordPanel() {
@@ -46,15 +50,11 @@ var UpdatePasswordPanel = (function () {
 		navContainer.appendTitle("Password");
 	
 		var addButton = navContainer.appendRightButton()
-			.on("click", function()
+			.on('click', function()
 			{
-				if (prepareClick('click', 'Change'))
-				{
-					_this.submitNewPassword(currentPasswordInput.property('value'),
-						newPasswordInput.property('value'),
-						confirmPasswordInput.property('value'));
-				}
-				d3.event.preventDefault();
+				_this.submitNewPassword(currentPasswordInput.property('value'),
+					newPasswordInput.property('value'),
+					confirmPasswordInput.property('value'));
 			});
 		addButton.append('span')
 			.classed('default-link', true)
@@ -95,7 +95,6 @@ var UpdatePasswordPanel = (function () {
 						_this.submitNewPassword(currentPasswordInput.property('value'),
 							newPasswordInput.property('value'),
 							confirmPasswordInput.property('value'));
-						d3.event.preventDefault();
 					}
 				})
 ;
