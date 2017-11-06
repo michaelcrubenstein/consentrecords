@@ -141,6 +141,7 @@ var QuickAddExperiencePanel = (function () {
 	{
 		this.dimmer.hide();
 		var _this = this;
+		$(this.mainDiv.node()).trigger('hiding.cr');
 		return this.$flags().animate({left: $(this.mainDiv.node()).innerWidth()},
 			{duration: 200})
 			.promise()
@@ -188,9 +189,7 @@ var QuickAddExperiencePanel = (function () {
 		var newLeft = $(this.mainDiv.node()).innerWidth()
 			 - $flagRow.children('span:first-child').outerWidth(true);
 		$(this.flagsContainer.node()).width($flagRow.outerWidth(true) + newLeft)
-			.height(
-			$(this.mainDiv.node()).height() - this.panelNode.sitePanel.getBottomNavHeight()
-			);
+			.height($(this.mainDiv.node()).height());
 			
 		/* Clear the x coordinates before resetting them. */
 		this.flagRows.each(function(fs) { fs.x = undefined; });
