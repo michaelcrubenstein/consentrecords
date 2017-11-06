@@ -1534,7 +1534,14 @@ var PathlinesPanel = (function () {
 						var path = _this.pathtree.path;
 						var experienceController = new ExperienceController(path, null, false);
 						var panel = new QuickAddExperiencePanel(_this.node(), experienceController);
-						unblockClick();
+						$(panel.mainDiv.node()).on('hiding.cr',
+							function()
+							{
+								_this.searchPanel.revealInput();
+							});
+						$.when(panel.promise,
+							   _this.searchPanel.hideInput())
+							.always(unblockClick);
 					}
 					catch(err)
 					{
