@@ -239,10 +239,9 @@ var SharingPanel = (function() {
 		}
 	}
 
-	function SharingPanel(user, backButtonText, showFunction)
+	function SharingPanel(user, backButtonText)
 	{
-		showFunction = (showFunction !== undefined) ? showFunction : revealPanelUp;
-		this.createRoot(null, "Sharing", "edit sharing", showFunction);
+		this.createRoot(null, "Sharing", "edit sharing", revealPanelLeft);
 		this.user = user;
 		var _this = this;
 		

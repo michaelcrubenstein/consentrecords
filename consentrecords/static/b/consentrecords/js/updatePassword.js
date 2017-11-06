@@ -30,8 +30,8 @@ var UpdatePasswordPanel = (function () {
 		d3.event.preventDefault();
 	}
 	
-	function UpdatePasswordPanel() {
-		this.createRoot(null, "Password", 'view change-password sign-in', revealPanelUp);
+	function UpdatePasswordPanel(backButtonText) {
+		this.createRoot(null, "Password", 'view change-password sign-in', revealPanelLeft);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -45,7 +45,8 @@ var UpdatePasswordPanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append('span').text(crv.buttonTexts.cancel);
+		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		backButton.append("span").text(backButtonText);
 	
 		navContainer.appendTitle("Password");
 	
@@ -116,8 +117,8 @@ var UpdateUsernamePanel = (function () {
 	UpdateUsernamePanel.prototype = Object.create(crv.SitePanel.prototype);
 	UpdateUsernamePanel.prototype.constructor = UpdateUsernamePanel;
 
-	function UpdateUsernamePanel(user) {
-		this.createRoot(null, "Username", 'sign-in', revealPanelUp);
+	function UpdateUsernamePanel(user, backButtonText) {
+		this.createRoot(null, "Username", 'sign-in', revealPanelLeft);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -131,7 +132,8 @@ var UpdateUsernamePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text(crv.buttonTexts.cancel);
+		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		backButton.append("span").text(backButtonText);
 	
 		function onChange()
 			{

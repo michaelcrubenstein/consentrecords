@@ -243,7 +243,7 @@ var FollowingPanel = (function() {
 	function FollowingPanel(user) {
 		var header = "Following";
 		this.user = user;
-		this.createRoot(null, header, "edit following", revealPanelUp);
+		this.createRoot(null, header, "edit following", revealPanelLeft);
 		var navContainer = this.appendNavContainer();
 		
 		var backButton = navContainer.appendLeftButton()
