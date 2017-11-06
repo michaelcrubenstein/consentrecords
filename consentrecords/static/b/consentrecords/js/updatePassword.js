@@ -83,6 +83,9 @@ var UpdatePasswordPanel = (function () {
 			.attr('required', '1')
 			.classed('form-control', true);
 			
+		/* Force scrolling to the top for small screens. */
+		document.body.scrollTop = 0;
+
 		$(this.node()).on("revealing.cr", function()
 			{
 				currentPasswordInput.node().focus();
@@ -183,6 +186,9 @@ var UpdateUsernamePanel = (function () {
 				}
 			});
 			
+		/* Force scrolling to the top for small screens. */
+		document.body.scrollTop = 0;
+
 		$(this.node()).on("revealing.cr", function()
 			{
 				newUsernameInput.node().focus();
