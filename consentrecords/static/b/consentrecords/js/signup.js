@@ -681,6 +681,35 @@ var ForgotPasswordPanel = (function()
 				});
 		backButton.append('span').text(crv.buttonTexts.cancel);
 
+		var submitFunction = function()
+			{
+				if (_this.canSubmit())
+				{
+					if (prepareClick('click', 'forgot password submit'))
+					{
+						try
+						{
+							var successFunction = function()
+							{
+								$(signinPanel).hide("slide", {direction: "right"}, 0);
+								_this.hideRight(unblockClick);
+							}
+							_this.submit(successFunction, cr.syncFail);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+				}
+				else
+				{
+					bootstrap_alert.warning('The email address is invalid.');
+				}
+			   //stop form submission
+			   d3.event.preventDefault();
+			}
+				
 		navContainer.appendTitle("Forgot Password");
 
 		var form = this.panelDiv.append('form')
@@ -703,6 +732,13 @@ var ForgotPasswordPanel = (function()
 			.attr('required', '')
 			.attr('autofocus', '')
 			.on('input', function() { _this.checkenabled(); })
+			.on('keypress', function()
+				{
+					if (d3.event.which == 13)
+					{
+						submitFunction();
+					}
+				})
 			.node();
 			
 		/* Force scrolling to the top for small screens. */
@@ -719,36 +755,9 @@ var ForgotPasswordPanel = (function()
 			.classed('site-trio-fill', true);
 		
 		this.submitButton = buttonContainer.append('span')
-			.classed('submit-button site-trio-clipped site-active-text', true)
+			.classed('submit-button site-trio-clipped site-active-text default-link', true)
 			.text("Send Email")
-			.on('click', function()
-				{
-					if (_this.canSubmit())
-					{
-						if (prepareClick('click', 'forgot password submit'))
-						{
-							try
-							{
-								var successFunction = function()
-								{
-									$(signinPanel).hide("slide", {direction: "right"}, 0);
-									_this.hideRight(unblockClick);
-								}
-								_this.submit(successFunction, cr.syncFail);
-							}
-							catch(err)
-							{
-								cr.syncFail(err);
-							}
-						}
-					}
-					else
-					{
-						bootstrap_alert.warning('The email address is invalid.');
-					}
-				   //stop form submission
-				   d3.event.preventDefault();
-				})
+			.on('click', submitFunction)
 				.node();
 
 	}
