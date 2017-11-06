@@ -2,14 +2,42 @@ var UpdatePasswordPanel = (function () {
 	UpdatePasswordPanel.prototype = Object.create(crv.SitePanel.prototype);
 	UpdatePasswordPanel.prototype.constructor = UpdatePasswordPanel;
 
-	function UpdatePasswordPanel() {
-		this.createRoot(null, "Password", "view change-password", revealPanelUp);
+	UpdatePasswordPanel.prototype.submitNewPassword = function(oldPassword, newPassword, confirmPassword)
+	{
+		if (prepareClick('click', 'Change'))
+		{
+			var _this = this;
+			var username = cr.signedinUser.emails()[0].text();
+			if (newPassword.length == 0)
+				syncFailFunction("The new password can not be blank.");
+			else if (newPassword != confirmPassword)
+				syncFailFunction("The confirm password does not match the new password.");
+			else
+			{
+				cr.updatePassword(username, oldPassword, newPassword)
+					.then(function()
+						  {
+							_this.hideRight(
+								function()
+								{
+									bootstrap_alert.show(null, "Password Changed", 'alert-info');
+									unblockClick();
+								});
+						  },
+						  syncFailFunction);
+			}
+		}
+		d3.event.preventDefault();
+	}
+	
+	function UpdatePasswordPanel(backButtonText) {
+		this.createRoot(null, "Password", 'view change-password sign-in', revealPanelLeft);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
+			.on('click', function()
 			{
 				if (prepareClick('click', 'Cancel'))
 				{
@@ -17,40 +45,21 @@ var UpdatePasswordPanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append('span').text(crv.buttonTexts.cancel);
+		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		backButton.append("span").text(backButtonText);
 	
-		navContainer.appendTitle('Password');
+		navContainer.appendTitle("Password");
 	
 		var addButton = navContainer.appendRightButton()
-			.on("click", function()
+			.on('click', function()
 			{
-				if (prepareClick('click', 'Change'))
-				{
-					username = cr.signedinUser.emails()[0].text();
-					if (newPasswordInput.property('value').length == 0)
-						syncFailFunction("The new password can not be blank.");
-					else if (newPasswordInput.property('value') != confirmPasswordInput.property('value'))
-						syncFailFunction("The confirm password does not match the new password.");
-					else
-					{
-						cr.updatePassword(username, 
-										  currentPasswordInput.property('value'),
-										  newPasswordInput.property('value'))
-							.then(function()
-								  {
-									_this.hideRight(
-										function()
-										{
-											bootstrap_alert.show($('.alert-container'), "Password Changed", "alert-info");
-											unblockClick();
-										});
-								  },
-								  syncFailFunction);
-					}
-				}
-				d3.event.preventDefault();
+				_this.submitNewPassword(currentPasswordInput.property('value'),
+					newPasswordInput.property('value'),
+					confirmPasswordInput.property('value'));
 			});
-		addButton.append('span').text('Change');
+		addButton.append('span')
+			.classed('default-link', true)
+			.text('Change');
 	
 		var panel2Div = this.appendFillArea();
 			
@@ -63,7 +72,7 @@ var UpdatePasswordPanel = (function () {
 			.attr('name', 'currentpassword')
 			.attr('placeholder', 'Current password')
 			.attr('required', '1')
-			.classed('form-control', true);
+			.attr('autofocus', '');
 		
 		form.append('label').attr('for', 'id_newpassword').attr('class', 'sr-only').text('New Password');
 		var newPasswordInput = form.append('input')
@@ -71,8 +80,7 @@ var UpdatePasswordPanel = (function () {
 			.attr('id', 'id_newpassword')
 			.attr('name', 'newpassword')
 			.attr('placeholder', 'New password')
-			.attr('required', '1')
-			.classed('form-control', true);
+			.attr('required', '1');
 			
 		form.append('label').attr('for', 'id_confirmpassword').attr('class', 'sr-only').text('Confirm Password');
 		var confirmPasswordInput = form.append('input')
@@ -81,7 +89,16 @@ var UpdatePasswordPanel = (function () {
 			.attr('name', 'confirmpassword')
 			.attr('placeholder', 'Confirm password')
 			.attr('required', '1')
-			.classed('form-control', true);
+			.on('keypress', function()
+				{
+					if (d3.event.which == 13)
+					{
+						_this.submitNewPassword(currentPasswordInput.property('value'),
+							newPasswordInput.property('value'),
+							confirmPasswordInput.property('value'));
+					}
+				})
+;
 			
 		/* Force scrolling to the top for small screens. */
 		document.body.scrollTop = 0;
@@ -100,8 +117,8 @@ var UpdateUsernamePanel = (function () {
 	UpdateUsernamePanel.prototype = Object.create(crv.SitePanel.prototype);
 	UpdateUsernamePanel.prototype.constructor = UpdateUsernamePanel;
 
-	function UpdateUsernamePanel(user) {
-		this.createRoot(null, "Username", "view", revealPanelUp);
+	function UpdateUsernamePanel(user, backButtonText) {
+		this.createRoot(null, "Username", 'sign-in', revealPanelLeft);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -115,7 +132,8 @@ var UpdateUsernamePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text(crv.buttonTexts.cancel);
+		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		backButton.append("span").text(backButtonText);
 	
 		function onChange()
 			{
@@ -145,7 +163,7 @@ var UpdateUsernamePanel = (function () {
 		navContainer.appendTitle('Email');
 	
 		var addButton = navContainer.appendRightButton()
-			.on("click", function()
+			.on('click', function()
 				{
 					onChange();
 					d3.event.preventDefault();
@@ -167,7 +185,7 @@ var UpdateUsernamePanel = (function () {
 			.attr('name', 'newUsername')
 			.attr('placeholder', 'New Email')
 			.attr('required', '1')
-			.classed('form-control', true);
+			.attr('autofocus', '');
 			
 		form.append('label').attr('for', 'id_currentpassword').attr('class', 'sr-only').text('Password');
 		var currentPasswordInput = form.append('input')
@@ -175,8 +193,7 @@ var UpdateUsernamePanel = (function () {
 			.attr('id', 'id_currentpassword')
 			.attr('name', 'currentpassword')
 			.attr('placeholder', 'Password')
-			.attr('required', '1')
-			.classed('form-control', true);
+			.attr('required', '1');
 
 			$(currentPasswordInput.node()).keypress(function(e) {
 				if (e.which == 13)

@@ -92,25 +92,28 @@ var Settings = (function () {
 		{
 			if (oldUser == cr.signedinUser)
 			{
-				_this.appendActionButton(crv.buttonTexts.changeEmail, function() {
+				var childrenButton;
+				childrenButton = _this.appendActionButton(crv.buttonTexts.changeEmail, function() {
 						if (prepareClick('click', 'Change Email'))
 						{
 							showClickFeedback(this);
-							new UpdateUsernamePanel(oldUser)
-								.showUp()
+							new UpdateUsernamePanel(oldUser, Settings.prototype.panelTitle)
+								.showLeft()
 								.always(unblockClick);
 						}
 					});
-		
-				_this.appendActionButton(crv.buttonTexts.changePassword, function() {
+				crf.appendRightChevrons(childrenButton.selectAll('li'));
+				
+				childrenButton = _this.appendActionButton(crv.buttonTexts.changePassword, function() {
 						if (prepareClick('click', 'Change Password'))
 						{
 							showClickFeedback(this);
-							new UpdatePasswordPanel()
-								.showUp()
+							new UpdatePasswordPanel(Settings.prototype.panelTitle)
+								.showLeft()
 								.always(unblockClick);
 						}
 					});
+				crf.appendRightChevrons(childrenButton.selectAll('li'));
 
 				_this.appendActionButton('Sign Out', function() {
 						if (prepareClick('click', 'Sign Out'))
@@ -248,13 +251,15 @@ var Settings = (function () {
 								if (prepareClick('click', 'Sharing'))
 								{
 									new SharingPanel(controller.oldInstance(), Settings.prototype.panelTitle)
-										.showUp()
+										.showLeft()
 										.always(unblockClick);
 								}
 							});
 
 						})
 						.classed('first', true);
+					crf.appendRightChevrons(sharingDiv.selectAll('li'));
+
 					var sharingButton = sharingDiv.select('ol>li>div');
 					sharingButton.append('span')
 						.classed('badge', true);
@@ -263,7 +268,7 @@ var Settings = (function () {
 					setupOnViewEventHandler(controller.oldInstance(), "userGrantRequestDeleted.cr userGrantRequestAdded.cr", 
 						sharingButton.node(), checkSharingBadge);
 				
-					_this.appendActionButton('Following', function(d)
+					var childrenButton = _this.appendActionButton('Following', function(d)
 						{
 							showClickFeedback(this);
 							checkBirthday(d, function(d)
@@ -271,11 +276,13 @@ var Settings = (function () {
 									if (prepareClick('click', 'Following'))
 									{
 										new FollowingPanel(oldUser)
-											.showUp()
+											.showLeft()
 											.always(unblockClick);
 									}
 								});
 						});
+					crf.appendRightChevrons(childrenButton.selectAll('li'));
+
 				
 					appendUserActions();
 				});
