@@ -1696,6 +1696,7 @@ var NewExperiencePanel = (function () {
 			
 		this.createRoot(this.title, showFunction);
 		this.panelDiv.classed("experience new-experience-panel", true);
+		this.mainDiv.classed("vertical-scrolling", false);
 		
 		var hidePanel = function() { 
 				_this.hide()

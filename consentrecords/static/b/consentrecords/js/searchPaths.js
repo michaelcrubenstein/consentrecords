@@ -109,7 +109,7 @@ var SearchPathsResultsView = (function () {
 	
 	SearchPathsResultsView.prototype.noResultString = function()
 	{
-		return "";
+		return "No Results";
 	}
 	
 	SearchPathsResultsView.prototype.textCleared = function()
