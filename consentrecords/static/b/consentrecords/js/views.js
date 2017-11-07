@@ -2156,9 +2156,39 @@ var EditItemPanel = (function () {
 		return section;
 	}
 	
+	EditItemPanel.prototype.hideInputs = function()
+	{
+		this.mainDiv.selectAll('input').style('display', 'none');
+	}
+	
+	EditItemPanel.prototype.showInputs = function()
+	{
+		this.mainDiv.selectAll('input').style('display', null);
+	}
+	
+	/* Hide the inputs when revealing a sub-panel so that the inputs are removed from
+		the tab ordering of the child panel.
+	 */
+	EditItemPanel.prototype.revealSubPanel = function(panel)
+	{
+		var _this = this;
+		$(panel.node()).on('hiding.cr', function()
+			{
+				_this.showInputs();
+			});
+		panel.showLeft()
+			.then(function()
+				{
+					_this.hideInputs();
+				},
+				cr.chainFail)
+			.always(unblockClick);
+	}
+	
 	/** Appends an enumeration that is associated with a picker panel for picking new values. */
 	EditItemPanel.prototype.appendEnumerationPickerSection = function(instance, instanceProperty, labelText, pickPanelType)
 	{
+		var _this = this;
 		var initialDescription = pickPanelType.prototype.getDescription(instanceProperty.call(instance));
 		var section = this.appendUniqueValue(labelText, initialDescription)
 			.datum(instance)
@@ -2170,8 +2200,8 @@ var EditItemPanel = (function () {
 						{
 							var panel = new pickPanelType();
 							var textContainer = d3.select(this).selectAll('div.description-text');
-							panel.createRoot(d, instanceProperty.call(instance))
-								 .showLeft().then(unblockClick);
+							panel.createRoot(d, instanceProperty.call(instance));
+							_this.revealSubPanel(panel);
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newValue)
 								{

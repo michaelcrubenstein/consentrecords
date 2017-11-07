@@ -30,6 +30,32 @@ var Settings = (function () {
 			return false;
 	}
 	
+	Settings.prototype.hideInputs = function()
+	{
+		this.mainDiv.selectAll('input').style('display', 'none');
+	}
+	
+	Settings.prototype.showInputs = function()
+	{
+		this.mainDiv.selectAll('input').style('display', null);
+	}
+	
+	Settings.prototype.revealSubPanel = function(panel)
+	{
+		var _this = this;
+		$(panel.node()).on('hiding.cr', function()
+			{
+				_this.showInputs();
+			});
+		panel.showLeft()
+			.then(function()
+				{
+					_this.hideInputs();
+				},
+				cr.chainFail)
+			.always(unblockClick);
+	}
+	
 	function Settings(controller, onShow) {
 		var _this = this;
 		EditItemPanel.call(this, controller);
@@ -97,9 +123,8 @@ var Settings = (function () {
 						if (prepareClick('click', 'Change Email'))
 						{
 							showClickFeedback(this);
-							new UpdateUsernamePanel(oldUser, Settings.prototype.panelTitle)
-								.showLeft()
-								.always(unblockClick);
+							var panel = new UpdateUsernamePanel(oldUser, Settings.prototype.panelTitle);
+							_this.revealSubPanel(panel);
 						}
 					});
 				crf.appendRightChevrons(childrenButton.selectAll('li'));
@@ -108,9 +133,8 @@ var Settings = (function () {
 						if (prepareClick('click', 'Change Password'))
 						{
 							showClickFeedback(this);
-							new UpdatePasswordPanel(Settings.prototype.panelTitle)
-								.showLeft()
-								.always(unblockClick);
+							var panel = new UpdatePasswordPanel(Settings.prototype.panelTitle);
+							_this.revealSubPanel(panel);
 						}
 					});
 				crf.appendRightChevrons(childrenButton.selectAll('li'));
@@ -250,9 +274,8 @@ var Settings = (function () {
 							{
 								if (prepareClick('click', 'Sharing'))
 								{
-									new SharingPanel(controller.oldInstance(), Settings.prototype.panelTitle)
-										.showLeft()
-										.always(unblockClick);
+									var panel = new SharingPanel(controller.oldInstance(), Settings.prototype.panelTitle);
+									_this.revealSubPanel(panel);
 								}
 							});
 
@@ -275,9 +298,8 @@ var Settings = (function () {
 								{
 									if (prepareClick('click', 'Following'))
 									{
-										new FollowingPanel(oldUser)
-											.showLeft()
-											.always(unblockClick);
+										var panel = new FollowingPanel(oldUser);
+										_this.revealSubPanel(panel);
 									}
 								});
 						});
