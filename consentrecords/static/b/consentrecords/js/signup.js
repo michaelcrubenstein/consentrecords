@@ -793,15 +793,26 @@ var ResetPasswordPanel = (function()
 			this.emailOK.textContent = crv.buttonTexts.checkmark;
 		}
 		
-		if ($(this.confirmInput).val() &&
-			$(this.passwordInput).val() == $(this.confirmInput).val())
+		if (this.passwordInput.value &&
+			this.passwordInput.value.length >= 6)
 		{
-			this.confirmOK.textContent = "";
+			this.passwordOK.textContent = crv.buttonTexts.checkmark;
 		}
 		else
 		{
 			submitEnabled = false;
+			this.passwordOK.textContent = "";
+		}
+		
+		if (this.confirmInput.value &&
+			this.passwordInput.value == this.confirmInput.value)
+		{
 			this.confirmOK.textContent = crv.buttonTexts.checkmark;
+		}
+		else
+		{
+			submitEnabled = false;
+			this.confirmOK.textContent = "";
 		}
 		
 		if (submitEnabled)
@@ -947,6 +958,9 @@ var ResetPasswordPanel = (function()
 			.attr('placeholder', "New password")
 			.on('input', function() { _this.checkenabled(); })
 			.node();
+		this.passwordOK = passwordGroup.append('span')
+			.classed('success-feedback', true)
+			.node();
 		
 		this.passwordMessage = form.append('div')
 			.classed('message', true);
@@ -977,7 +991,7 @@ var ResetPasswordPanel = (function()
 					}
 				})
 			.node();
-		this.confirmOK = emailGroup.append('span')
+		this.confirmOK = confirmGroup.append('span')
 			.classed('success-feedback', true)
 			.node();
 		this.confirmMessage = form.append('div')
