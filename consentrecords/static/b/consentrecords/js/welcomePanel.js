@@ -699,8 +699,8 @@ var WelcomePanel = (function () {
 			this.emailOK.textContent = crv.buttonTexts.checkmark;
 		}
 		
-		if ($(this.passwordInput).val() &&
-			$(this.passwordInput).val().length >= 6)
+		if (this.passwordInput.value &&
+			this.passwordInput.value.length >= 6)
 		{
 			this.passwordOK.textContent = crv.buttonTexts.checkmark;
 		}
@@ -710,8 +710,8 @@ var WelcomePanel = (function () {
 			this.passwordOK.textContent = "";
 		}
 		
-		if ($(this.confirmInput).val() &&
-			$(this.passwordInput).val() == $(this.confirmInput).val())
+		if (this.confirmInput.value &&
+			this.passwordInput.value == this.confirmInput.value)
 		{
 			this.confirmOK.textContent = crv.buttonTexts.checkmark;
 		}
