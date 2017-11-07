@@ -22,21 +22,20 @@ var SearchPathsResultsView = (function () {
 		
 		buttons.each(function(d)
 			{
-				/* TODO: */
 				var leftText = d3.select(this);
 				
 				var screenName = d.name();
 				var user = d.user();
 				var userName = user && user.fullName();
 				var userDescription = user && user.description();
-				var ageCalculator = new AgeCalculator(d.birthday());
-				var ageDescription = ageCalculator.toString();			
+				var ageDescription = d.birthday() && new AgeCalculator(d.birthday()).toString();			
 				
 				if (screenName) leftText.append('div').text(screenName);
 				if (userName && userName != screenName) leftText.append('div').text(userName);
 				/* Only include the email address if there is no userName or screenName */
 				if (userDescription && !userName && !screenName) leftText.append('div').text(userDescription);
-				leftText.append('div').text(ageDescription);
+				if (d.birthday())
+					leftText.append('div').text(ageDescription);
 			});
 	}
 	
@@ -110,7 +109,7 @@ var SearchPathsResultsView = (function () {
 	
 	SearchPathsResultsView.prototype.noResultString = function()
 	{
-		return "";
+		return "No Results";
 	}
 	
 	SearchPathsResultsView.prototype.textCleared = function()
@@ -184,7 +183,7 @@ var SearchTagPoolView = (function () {
 
 	SearchTagPoolView.prototype.sitePanel = null;
 	
-	SearchTagPoolView.prototype.setFlagVisibles = function()
+	SearchTagPoolView.prototype.setFlagVisibles = function(inputNode)
 	{
 		var _this = this;
 		var queryData = this.sitePanel.queryTagPoolView.flags().data();
@@ -241,6 +240,21 @@ var SearchPathsPanel = (function () {
 		$(this.searchInput).hide(0).show(0);
 	}
 	
+	SearchPathsPanel.prototype.hideInput = function(duration)
+	{
+		var newTop = $(window).height();
+		var _this = this;
+		return $(this.node()).animate({top: newTop},
+								   	  {duration: duration})
+			.promise()
+			.then(function()
+				{
+					$(_this.searchInput).css('display', 'none');
+				},
+				cr.chainFail);
+
+	}
+	
 	SearchPathsPanel.prototype.revealInput = function(duration)
 	{
 		var newTop = $(window).height() 
@@ -267,7 +281,8 @@ var SearchPathsPanel = (function () {
 		
 		this.mainDiv.classed('vertical-scrolling', false)
 			.classed('no-scrolling', true);
-			
+		$(this.searchInput).css('display', '');
+		
 		return $.when(
 			$(this.node()).animate({top: newTop,
 									height: $(this.topBox).outerHeight(true)},
@@ -282,7 +297,11 @@ var SearchPathsPanel = (function () {
 										 }),
 			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
 										  opacity: 0.0},
-								   {duration: duration})
+								   {duration: duration,
+								   complete: function()
+								   	{
+								   		$(_this.cancelButton).css('display', 'none');
+								   	}})
 			);
 	}
 	
@@ -303,6 +322,8 @@ var SearchPathsPanel = (function () {
 						 + inputMarginRight
 						 - $(this.cancelButton).outerWidth(true);
 						 
+		$(this.searchInput).css('display', '');
+		$(this.cancelButton).css('display', '');
 		$(this.node()).animate({top: 0},
 							   {duration: duration});
 		$(this.searchInput).animate({width: inputWidth,
@@ -608,7 +629,7 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.filterPool = function()
 	{
-		this.poolContainer.filterFlags(this.searchInput.value);
+		this.poolContainer.filterFlags(this.searchInput);
 	}
 	
 	SearchPathsPanel.prototype.handleColumnClick = function(services, column)
@@ -626,7 +647,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleSchoolClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 1);
@@ -636,7 +657,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleInterestsClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 2);
@@ -646,7 +667,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.handleCareerClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 3);
@@ -656,7 +677,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.skillsClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 4);
@@ -666,7 +687,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.givingBackClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 5);
@@ -676,7 +697,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.housingClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 0);
@@ -686,7 +707,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.wellnessClick = function()
 	{
 		var _this = this;
-		cr.Service.servicesPromise()
+		ServiceFlagController.controllersPromise()
 			.done(function(services)
 				{
 					_this.handleColumnClick(services, 6);
@@ -730,7 +751,8 @@ var SearchPathsPanel = (function () {
 			
 		this.cancelButton = topBox.append('button')
 			.classed('cancel', true)
-			.text('Cancel')
+			.text(crv.buttonTexts.cancel)
+			.style('display', 'none')
 			.node();
 			
 		$(this.searchInput).focusin(function(event)
@@ -880,12 +902,10 @@ var SearchPathsPanel = (function () {
 
 				_this.searchPathsResultsView = new SearchPathsResultsView(_this);
 				
-				cr.Service.servicesPromise()
-					.done(function(services)
+				ServiceFlagController.controllersPromise()
+					.done(function(services, controllers)
 						{
-							var s = services.map(function(e) { return new ServiceFlagController(e); });
-			
-							_this.poolContainer.appendFlags(s)
+							_this.poolContainer.appendFlags(controllers)
 								 .on('click', function(s)
 									{
 										if (s.visible === undefined || s.visible)

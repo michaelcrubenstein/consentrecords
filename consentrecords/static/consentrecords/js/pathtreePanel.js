@@ -1327,6 +1327,7 @@ var SettingsButton = (function() {
 
 	SettingsButton.prototype.onClick = function()
 	{
+		var searchPanel = this.pathtreePanel.searchPanel;
 		if (prepareClick('click', "Settings"))
 		{
 			try
@@ -1334,7 +1335,14 @@ var SettingsButton = (function() {
 				var controller = new UserController(this.user, true);
 				controller.oldInstance(this.user);
 				var panel = new Settings(controller, revealPanelUp);
-				panel.showUp().always(unblockClick);
+				
+				$(panel.node()).on('hiding.cr', function()
+					{
+						searchPanel.revealInput();
+					});
+				$.when(panel.showUp(),
+					   searchPanel.hideInput())
+					.always(unblockClick);
 			}
 			catch(err)
 			{
@@ -1367,9 +1375,10 @@ var SettingsButton = (function() {
 				});
 	}
 	
-	function SettingsButton(button, user)
+	function SettingsButton(button, user, pathtreePanel)
 	{
 		AlertButton.call(this, button, user);
+		this.pathtreePanel = pathtreePanel;
 	}
 	
 	return SettingsButton;
@@ -1525,7 +1534,14 @@ var PathlinesPanel = (function () {
 						var path = _this.pathtree.path;
 						var experienceController = new ExperienceController(path, null, false);
 						var panel = new QuickAddExperiencePanel(_this.node(), experienceController);
-						unblockClick();
+						$(panel.mainDiv.node()).on('hiding.cr',
+							function()
+							{
+								_this.searchPanel.revealInput();
+							});
+						$.when(panel.promise,
+							   _this.searchPanel.hideInput())
+							.always(unblockClick);
 					}
 					catch(err)
 					{
@@ -1651,7 +1667,7 @@ var PathlinesPanel = (function () {
 			{
 				_this.setupAddExperienceButton(user, addExperienceButton);
 				
-				_this.settingsAlertButton = new SettingsButton(settingsButton, user);
+				_this.settingsAlertButton = new SettingsButton(settingsButton, user, _this);
 				_this.settingsAlertButton.setup();
 				if (notificationsButton)
 				{
@@ -2244,18 +2260,5 @@ var ColumnInfoPanel = (function() {
 	}
 	
 	return ColumnInfoPanel;
-})();
-
-var ExperienceIdeaPanel = (function() {
-	ExperienceIdeaPanel.prototype.panelNode = null;
-	ExperienceIdeaPanel.prototype.dimmer = null;
-	
-	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experienceController, getNext)
-	{
-		var _this = this;
-		this.panelNode = panelNode;
-		this.dimmer = dimmer;
-	}
-	return ExperienceIdeaPanel;
 })();
 

@@ -71,11 +71,13 @@ var crv = {
 		canRegister: "Can Register",
 		changeEmail: "Change Email",
 		changePassword: "Change Password",
+		checkmark: "\u2714\uFE0E",
 		city: "City",
 		cookiesRequired:
 			"this operation requires cookies to be enabled. Please enable cookies for this browser and reload this page.",
 		currentTimeframe: "Something I'm Doing Now",
 		currentTimeframeShort: "Doing Now",
+		deletemark: "\u2716\uFE0E",
 		disqualifyingTags: "Disqualifying Tags",
 		domain: "Domain",
 		done: "Done",
@@ -637,15 +639,6 @@ var crf = {
 	}
 }
 
-function appendLeftChevrons(buttons)
-{
-	return buttons.append("div")
-		.classed("site-left-chevron-span", true)
-		.append("img")
-		.classed("site-left-chevron", true)
-		.attr("src", leftChevronPath);
-}
-
 function appendLeftChevronSVG(container)
 {
 	var svg = container.append('svg')
@@ -938,7 +931,7 @@ crv.SitePanel = (function () {
 			this.hide = function()
 				{
 					return _this.hideDown()
-						.then(unblockClick);
+						.then(unblockClick, cr.syncFail);
 				};
 		}
 		else
@@ -946,7 +939,7 @@ crv.SitePanel = (function () {
 			this.hide = function()
 				{
 					return _this.hideRight()
-						.then(unblockClick);
+						.then(unblockClick, cr.syncFail);
 				};
 		}
 	}
@@ -1210,7 +1203,7 @@ crv.SitePanel = (function () {
 	SitePanel.prototype.hideDown = function(done)
 	{
 		bootstrap_alert.close();
-		$(this.node()).trigger("hiding.cr");
+		$(this.node()).trigger('hiding.cr');
 		return $(this.node()).animate({'top': "{0}px".format(window.innerHeight)})
 			.promise()
 			.done(function() {
@@ -1236,15 +1229,28 @@ crv.SitePanel = (function () {
 	SitePanel.prototype.hideRight = function(done)
 	{
 		bootstrap_alert.close();
-		return $(this.node()).trigger("hiding.cr")
-			.animate({left: "{0}px".format(window.innerWidth)})
+		$(this.node()).trigger('hiding.cr');
+		return $(this.node()).animate({left: "{0}px".format(window.innerWidth)})
 			.promise()
-			.done(function()
+			.then(function()
 				{
-					$(this).remove();
-					if (done)
-						done();
-				});
+					try
+					{
+						$(this).remove();
+						if (done)
+							done();
+						r2 = $.Deferred();
+						r2.resolve();
+						return r2;
+					}
+					catch(err)
+					{
+						r2 = $.Deferred();
+						r2.reject(err);
+						return r2;
+					}
+				},
+				cr.chainFail);
 	}
 	
 	SitePanel.prototype.hideNow = function()
@@ -2150,9 +2156,39 @@ var EditItemPanel = (function () {
 		return section;
 	}
 	
+	EditItemPanel.prototype.hideInputs = function()
+	{
+		this.mainDiv.selectAll('input').style('display', 'none');
+	}
+	
+	EditItemPanel.prototype.showInputs = function()
+	{
+		this.mainDiv.selectAll('input').style('display', null);
+	}
+	
+	/* Hide the inputs when revealing a sub-panel so that the inputs are removed from
+		the tab ordering of the child panel.
+	 */
+	EditItemPanel.prototype.revealSubPanel = function(panel)
+	{
+		var _this = this;
+		$(panel.node()).on('hiding.cr', function()
+			{
+				_this.showInputs();
+			});
+		panel.showLeft()
+			.then(function()
+				{
+					_this.hideInputs();
+				},
+				cr.chainFail)
+			.always(unblockClick);
+	}
+	
 	/** Appends an enumeration that is associated with a picker panel for picking new values. */
 	EditItemPanel.prototype.appendEnumerationPickerSection = function(instance, instanceProperty, labelText, pickPanelType)
 	{
+		var _this = this;
 		var initialDescription = pickPanelType.prototype.getDescription(instanceProperty.call(instance));
 		var section = this.appendUniqueValue(labelText, initialDescription)
 			.datum(instance)
@@ -2164,8 +2200,8 @@ var EditItemPanel = (function () {
 						{
 							var panel = new pickPanelType();
 							var textContainer = d3.select(this).selectAll('div.description-text');
-							panel.createRoot(d, instanceProperty.call(instance))
-								 .showLeft().then(unblockClick);
+							panel.createRoot(d, instanceProperty.call(instance));
+							_this.revealSubPanel(panel);
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newValue)
 								{
@@ -2360,7 +2396,9 @@ var PickFromListPanel = (function () {
 			{
 				return _this.isInitialValue(d);
 			})
-			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
+			.insert("span", ":first-child")
+				.classed('checked', true)
+				.text(crv.buttonTexts.checkmark);
 				
 		items.on('click', function(d, i)
 				{

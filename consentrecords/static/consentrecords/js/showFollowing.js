@@ -243,7 +243,7 @@ var FollowingPanel = (function() {
 	function FollowingPanel(user) {
 		var header = "Following";
 		this.user = user;
-		this.createRoot(null, header, "edit following", revealPanelUp);
+		this.createRoot(null, header, "edit following", revealPanelLeft);
 		var navContainer = this.appendNavContainer();
 		
 		var backButton = navContainer.appendLeftButton()
@@ -255,7 +255,7 @@ var FollowingPanel = (function() {
 				}
 				d3.event.preventDefault();
 			});
-		appendLeftChevrons(backButton).classed("site-active-text", true);
+		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
 		backButton.append("span").text("Settings");
 		
 		navContainer.appendTitle(header);

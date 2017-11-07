@@ -1521,11 +1521,6 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	NewExperiencePanel.prototype.checkTagInput = function(exceptNode)
-	{
-		this.tagPoolSection.checkTagInput(exceptNode);
-	}
-	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	NewExperiencePanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
@@ -1562,7 +1557,6 @@ var NewExperiencePanel = (function () {
 		else if (newReveal != this.tagPoolSection.reveal() &&
 			this.tagPoolSection.reveal().isVisible())
 		{
-			this.tagPoolSection.checkTagInput(null);
 			this.tagPoolSection.hideReveal(done);
 			return true;
 		}
@@ -1595,7 +1589,6 @@ var NewExperiencePanel = (function () {
 			};
 		if (!this.onFocusInOtherInput(_this.tagPoolSection.reveal(), done))
 		{
-			this.tagPoolSection.checkTagInput(inputNode);
 			this.tagPoolSection.revealSearchView(inputNode, false);
 		}
 	}
@@ -1703,6 +1696,7 @@ var NewExperiencePanel = (function () {
 			
 		this.createRoot(this.title, showFunction);
 		this.panelDiv.classed("experience new-experience-panel", true);
+		this.mainDiv.classed("vertical-scrolling", false);
 		
 		var hidePanel = function() { 
 				_this.hide()
@@ -1716,7 +1710,6 @@ var NewExperiencePanel = (function () {
 		if (experienceController.oldInstance())
 		{
 			var shareButton = this.navContainer.appendRightButton()
-				.classed('share', true)
 				.on('click', function()
 					{
 						if (prepareClick('click', 'share'))
@@ -1747,7 +1740,7 @@ var NewExperiencePanel = (function () {
 		var searchContainer;
 		
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, experienceController, '');
+		this.tagPoolSection = new TagPoolSection(this.mainDiv, experienceController, '');
 		this.tagPoolSection.addAddTagButton();
 				
 		var tagsChanged = function() { _this.setPlaceholders(); }
@@ -1780,6 +1773,8 @@ var NewExperiencePanel = (function () {
 			.then(function()
 				{
 					var tagPoolSection = _this.tagPoolSection;
+					tagPoolSection.showTags();
+					
 					var tagInput = tagPoolSection.tagsContainer.select('input.tag');
 					if (tagInput.size() == 0)
 					{

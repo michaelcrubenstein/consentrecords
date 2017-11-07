@@ -5,14 +5,15 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 }
+
 html {
 	height: 100%;
 	width: 100%;
 }
 body {
-  font-size: medium;
-  overflow-y: hidden;
-  overflow-x: hidden;
+	font-size: medium;
+	overflow-y: hidden;
+	overflow-x: hidden;
 	height: 100%;
 	width: 100%;
 }
@@ -46,18 +47,21 @@ panel.initial {
 	position: relative;
 	width: 100%;
 }
+
 .vertical-scrolling {
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: hidden;
 	-webkit-overflow-scrolling: touch;
 }
+
 .all-scrolling {
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: scroll;
 	-webkit-overflow-scrolling: touch;
 }
+
 .no-scrolling {
 	overflow-y: hidden;
 	overflow-x: hidden;
@@ -101,8 +105,9 @@ panel.edit {
 .site-title {
 	font-size: medium;
 	min-height: 40px;
-	padding-top: 9px;
-	padding-bottom: 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	flex-grow: 100;
 	flex-shrink: 100;
 	overflow-x: hidden;
@@ -121,17 +126,16 @@ panel.edit {
 panel>nav .left-link {
 	max-width: calc(100% - 48px);	/* Subtract 48 pixels to ensure it doesn't run into the right link */
 	text-align: left;
-	white-space: nowrap;
-	display: inline-block;
-	min-height: 40px;
-	padding-left: 15px;
-	padding-right: 15px;
 }
 panel>nav .right-link {
 	max-width: 100%;
 	text-align: right;
+}
+
+panel>nav .right-link, panel>nav .left-link {
 	white-space: nowrap;
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
 	min-height: 40px;
 	padding-left: 15px;
 	padding-right: 15px;
@@ -142,10 +146,6 @@ panel>nav .right-link {
 }
 
 /* Links go on the right or left over titles. */
-.site-navbar-link {
-	padding-top: 9px;
-	padding-bottom: 2px;
-}
 
 nav .site-left-chevron {
 	height: 18px;
@@ -186,7 +186,7 @@ nav .site-left-chevron {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	text-align: left;
-	margin-left: 10px;	/* Same as the width of the .site-left-chevron-span, above. */
+	margin-left: .3em;
 } 
 
 nav.transparentTop {
@@ -263,7 +263,7 @@ button {
 	user-select: none;
 }
 
-button:hover {
+button.site-active-text:hover {
 	color: #2222FF;
 }
 
@@ -446,22 +446,6 @@ li > .row-button {
 	text-align: left;
 }
 
-li > .row-button > .glyphicon-ok {
-	margin-right: 0.3em;
-}
-
-li>span.glyphicon:first-child {
-	padding-left: 12px;
-	padding-right: 27px;
-}
-
-li>span.glyphicon.glyphicon-ok:first-child {
-	padding-left: 12px;
-	padding-right: 12px;
-	align-self: center;
-	-webkit-align-self: center;
-}
-
 .cell.unique>ol {
 	flex-grow: 100;
 }
@@ -597,6 +581,24 @@ div.add-value>div {
 	outline: none;
 }
 
+.success-feedback {
+	font-size: 1.3em;
+	color: #3c763d;
+	margin-left: .3em;
+	pointer-events: none;
+}
+
+span.checked {
+	margin-left: 1em;
+	padding-top: 0.4em;
+	padding-right: 0.3em;
+	background: transparent;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+}
+
 .glyphicon-minus-sign {
 	position: relative;
 	color: red;
@@ -633,12 +635,12 @@ ol.cell-items>li>.growable {
 
 /* If the growable is the first item, give it a left margin of 12 pixels. */
 ol.cell-items>li>.growable:first-child {
-	margin-left: 12px;
+	margin-left: 1em;
 }
 
 /* If the growable is the last item, give it a right margin of 12 pixels. */
 ol.cell-items>li>.growable:last-child {
-	padding-right: 12px;
+	padding-right: 1em;
 }
 
 ol.cell-items>li>.unselectable {
