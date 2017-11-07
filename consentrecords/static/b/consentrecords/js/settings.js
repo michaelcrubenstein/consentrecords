@@ -30,32 +30,6 @@ var Settings = (function () {
 			return false;
 	}
 	
-	Settings.prototype.hideInputs = function()
-	{
-		this.mainDiv.selectAll('input').style('display', 'none');
-	}
-	
-	Settings.prototype.showInputs = function()
-	{
-		this.mainDiv.selectAll('input').style('display', null);
-	}
-	
-	Settings.prototype.revealSubPanel = function(panel)
-	{
-		var _this = this;
-		$(panel.node()).on('hiding.cr', function()
-			{
-				_this.showInputs();
-			});
-		panel.showLeft()
-			.then(function()
-				{
-					_this.hideInputs();
-				},
-				cr.chainFail)
-			.always(unblockClick);
-	}
-	
 	function Settings(controller, onShow) {
 		var _this = this;
 		EditItemPanel.call(this, controller);
