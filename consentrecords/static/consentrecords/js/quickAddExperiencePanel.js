@@ -12,7 +12,7 @@ var QuickAddExperiencePanel = (function () {
 	QuickAddExperiencePanel.prototype.currentFlag = null;
 
 	/* Set the visible flags for each of the services associated with this flags. */
-	QuickAddExperiencePanel.prototype.filterFlags = function()
+	QuickAddExperiencePanel.prototype._filterFlags = function()
 	{
 		var _this = this;
 		if (this.currentService)
@@ -45,7 +45,7 @@ var QuickAddExperiencePanel = (function () {
 			if (rootServices.size() == 1)
 			{
 				this.currentService = rootServices.datum().service;
-				this.filterFlags();
+				this._filterFlags();
 			}
 			else
 			{
@@ -141,6 +141,7 @@ var QuickAddExperiencePanel = (function () {
 	{
 		this.dimmer.hide();
 		var _this = this;
+		$(this.mainDiv.node()).trigger('hiding.cr');
 		return this.$flags().animate({left: $(this.mainDiv.node()).innerWidth()},
 			{duration: 200})
 			.promise()
@@ -188,9 +189,7 @@ var QuickAddExperiencePanel = (function () {
 		var newLeft = $(this.mainDiv.node()).innerWidth()
 			 - $flagRow.children('span:first-child').outerWidth(true);
 		$(this.flagsContainer.node()).width($flagRow.outerWidth(true) + newLeft)
-			.height(
-			$(this.mainDiv.node()).height() - this.panelNode.sitePanel.getBottomNavHeight()
-			);
+			.height($(this.mainDiv.node()).height());
 			
 		/* Clear the x coordinates before resetting them. */
 		this.flagRows.each(function(fs) { fs.x = undefined; });
@@ -376,7 +375,7 @@ var QuickAddExperiencePanel = (function () {
 														if (!d.expanded && d.service.serviceImplications().length <= 1)
 														{
 															_this.currentService = null;
-															_this.filterFlags();
+															_this._filterFlags();
 															_this._setFlagCoordinates(_this.flagRows, undefined, undefined);
 															TagPoolView.prototype.moveFlags.call(_this, undefined)
 																.then(unblockClick, cr.syncFail);
@@ -393,7 +392,7 @@ var QuickAddExperiencePanel = (function () {
 										else
 										{
 											_this.currentService = d.service;
-											_this.filterFlags();
+											_this._filterFlags();
 											_this._setFlagCoordinates(_this.flagRows, undefined, undefined);
 											TagPoolView.prototype.moveFlags.call(_this, undefined)
 												.then(function()
@@ -429,7 +428,7 @@ var QuickAddExperiencePanel = (function () {
 		
 					_this.appendFlag(g);
 					
-					_this.filterFlags();
+					_this._filterFlags();
 					_this.$flags().css({opacity: 0, display: 'none'});
 
 					_this.handleResize(undefined);

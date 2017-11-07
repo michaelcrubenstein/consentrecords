@@ -513,7 +513,6 @@ var ExperienceCommentsPanel = (function() {
 		}
 
 		var shareButton = navContainer.appendRightButton()
-			.classed("share", true)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'share'))

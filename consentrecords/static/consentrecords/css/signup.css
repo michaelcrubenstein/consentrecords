@@ -164,7 +164,11 @@
     	display: inline-block;
     }
     
-	.feedback-control {
+    panel.sign-in input {
+    	width: 100%;
+    }
+    
+	panel.welcome input.feedback-control, panel.sign-in input.feedback-control {
 		width: calc(100% - 30px);
 	}
 	
@@ -178,10 +182,11 @@
 		border: 0;
 		border-top: 1px solid #ccc
 	}
-
-	panel.sign-in .form-signin-heading {
-	  margin-bottom: 10px;
+	
+	panel.sign-in form {
+		padding-top: 1.5em;
 	}
+
 	panel.sign-in .checkbox {
 		margin: 0;
 		font-weight: normal;
@@ -207,17 +212,6 @@
 	}
 	panel.sign-in .form-control:focus {
 	  z-index: 2;
-	}
-	panel.sign-in input[type="email"] {
-	  margin-bottom: -1px;
-	  border-bottom-right-radius: 0;
-	  border-bottom-left-radius: 0;
-	  margin-bottom: 6px;
-	}
-	panel.sign-in input[type="password"] {
-	  margin-bottom: 6px;
-	  border-top-left-radius: 0;
-	  border-top-right-radius: 0;
 	}
 	
 	panel.sign-in div.message {

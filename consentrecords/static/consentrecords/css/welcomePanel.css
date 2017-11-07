@@ -1,20 +1,12 @@
-panel.welcome ol li {
-	display: block;
-	position: absolute;
-	width: 100%;
+panel.welcome img.logo {
+	height: 3em;
+	margin: .5em 0em;
 }
 
-panel.welcome div.panel-fill > ol > li {
-	height: 100%;
-	background: white;
-}
-
-/* Center a div to be a maximum width of 400 pixels so that it
-	looks OK on a large screen.
- */
-panel.welcome ol li > div {
-	max-width: 400px;
-	margin: auto;
+panel.welcome div.panel-fill {
+	display: flex;
+	flex-direction: column;
+	background-color: #CDEAFC;
 }
 
 panel.welcome p.body {
@@ -25,50 +17,10 @@ panel.welcome p.body {
 	margin-right: 10px;
 }
 
-panel.welcome ol li p.path-description-link {
-	text-decoration: underline;
-}
-
-panel.welcome ol li span.about-organizations {
-	position: absolute;
-	bottom: 0px;
-	vertical-align: middle;
-	line-height: 40px;
-	font-size: 0.9em;
-	left: 1.0417em;
-	text-decoration: underline;
-}
-
-panel.welcome div.left {
-	position: absolute;
-	bottom: 0px;
-	left: 0px;
-	padding: 12px;
-}
-
-panel.welcome div.right {
-	position: absolute;
-	bottom: 0px;
-	right: 0px;
-	padding: 12px;
-	padding-left: 0px;
-}
-
 panel.welcome svg.chevron {
 	height: 20px;
 	width: 12px;
 	fill: #2c55CC;
-}
-
-panel.welcome div.right div {
-	overflow-x: hidden;
-	white-space: nowrap;
-}
-
-panel.welcome div.right div > * {
-	position: relative;
-	white-space: nowrap;
-	padding-left: 12px;
 }
 
 panel.welcome div svg.chevron path {
@@ -80,6 +32,7 @@ panel.welcome-info {
 	background: white;
 }
 
+/*
 panel.welcome p {
 	margin-top: 10px;
 	margin-left: 10px;
@@ -122,4 +75,146 @@ panel.welcome p.indent4 {
 panel.welcome p.indent5 {
 	margin-left: 70px;
 }
+*/
 
+panel.welcome div.summary {
+	width: 100%;
+	text-align: center;
+	font-family: verdana;
+}
+
+panel.welcome div.summary>div {
+	margin-top: 1.5em;
+	margin-left: 1em;
+	margin-right: 1em;
+	display: inline-block;
+	max-width: 350px;
+}
+
+panel.welcome div.summary>div>p:first-child {
+	text-align: center;
+}
+
+panel.welcome div.summary>div>p:nth-child(2) {
+	text-align: center;
+}
+
+panel.welcome div.summary>div>p:last-child {
+	text-align: right;
+	font-weight: 600;
+}
+
+panel.welcome div.prompts {
+	width: 100%;
+	flex-grow: 100;
+	position: relative;
+}
+
+panel.welcome div.prompts>div.scrollArea {
+	display: inline-block;
+	margin-bottom: 0px;
+	overflow-x: scroll;
+	overflow-y: hidden;
+	width: 100%;
+	position: relative;
+	height: calc(100% - 3em);
+}
+
+panel.welcome div.prompts>div.scrollArea>panel {
+	position: absolute;
+	display: inline-flex;
+	flex-direction: column;
+	padding: 0.7em;
+	height: calc(100% - 1em);
+	margin: 7px 0px;
+	background-color: white;
+	box-shadow: 3px 3px 10px #999;
+	text-align: center;
+}
+
+panel.welcome div.prompts>div.scrollArea>panel:last-child {
+	border: none;
+	box-shadow: none;
+	background-color: transparent;
+}
+
+panel.welcome div.prompts section.tags {
+	flex-grow: 100;
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+}
+
+panel.welcome div.prompts section.tags.custom>div:last-of-type {
+	flex-grow: 100;
+}
+
+panel.welcome section.tags>div.scrollArea>panel:first-of-type {
+	width: auto;
+	display: inline-block;
+}
+
+panel.welcome section.tags input.tag {
+	border: none;
+	min-width: 15em;
+	border-bottom: 2px solid #222;
+	margin-right: 0.4em;
+}
+
+panel.welcome section.tags span.remove-tag {
+	font-family: verdana;
+	font-size: .75em;
+	padding: .1em .3em;
+	color: #FFF;
+	background: #999;
+	border-radius: .7em;
+}
+
+panel.welcome section.tags label {
+	margin-left: 1em;
+	margin-right: 1em;
+}
+
+panel.welcome section.tags span.tags-container {
+	margin-left: 0;
+}
+
+panel.welcome div.prompts section.tags>div:first-child {
+	display: inline-block;
+	width: auto;
+}
+
+panel.welcome div.signup {
+	width: 100%;
+	text-align: center;
+}
+
+panel.welcome div.signup>div {
+	margin-bottom: 1em;
+	display: inline-block;
+	max-width: 350px;
+	padding: 0.5em 1em;
+	width: 100%;
+	text-align: left;
+	background-color: white;
+	box-shadow: 3px 3px 10px #999;
+}
+
+panel.welcome div.signup div.title {
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+
+panel.welcome div.signup>div>div:last-child {
+	text-align: right;
+	margin-top: 1em;
+}
+
+panel.welcome div.signup input, panel.sign-in input {
+	border: none;
+	outline: none;
+	border-bottom: 1.5px solid #222;
+	border-radius: 0px;
+	font-size: 14px;
+}

@@ -1778,12 +1778,8 @@ var OfferingPanel = (function () {
 	OfferingPanel.prototype.onFocusInTagInput = function(inputNode)
 	{
 		var _this = this;
-		d3.select(inputNode)
-			.style('background-color', null)
-			.style('border-color', null)
-			.style('color', null);
+		PathGuides.clearNode(inputNode);
 			
-		this.tagPoolSection.checkTagInput(inputNode);
 		this.tagPoolSection.revealSearchView(inputNode, false);
 	}
 	
@@ -1811,7 +1807,7 @@ var OfferingPanel = (function () {
 		this.appendChildrenPanelButton(crv.buttonTexts.sessions, SessionsPanel);
 
 		/* The tags section. */
-		this.tagPoolSection = new TagPoolSection(this, controller, crv.buttonTexts.tags);
+		this.tagPoolSection = new TagPoolSection(this.mainDiv, controller, crv.buttonTexts.tags);
 		this.tagPoolSection.section.classed('first', true);
 		this.tagPoolSection.addAddTagButton();
 
@@ -1837,6 +1833,7 @@ var OfferingPanel = (function () {
 		this.tagPoolSection.fillTags()
 			.then(function()
 				{
+					_this.tagPoolSection.showTags();
 					_this.tagPoolSection.checkTagInput(null);
 				},
 				cr.asyncFail)
@@ -2098,7 +2095,9 @@ var PickInquiryAccessGroupSearchView = (function () {
 			{
 				return d.description() == _this.oldDescription;
 			})
-			.insert('span', ':first-child').classed('glyphicon glyphicon-ok', true);
+			.insert('span', ':first-child')
+				.classed('checked', true)
+				.text(crv.buttonTexts.checkmark);
 		return items;
 	}
 	
@@ -2394,14 +2393,14 @@ var ServiceTagSearchView = (function () {
 	ServiceTagSearchView.prototype = Object.create(TagSearchView.prototype);
 	ServiceTagSearchView.prototype.constructor = ServiceTagSearchView;
 	
-    ServiceTagSearchView.prototype.setFlagVisibles = function()
+    ServiceTagSearchView.prototype.setFlagVisibles = function(inputNode)
     {
-    	TagSearchView.prototype.setFlagVisibles.call(this);
+    	TagSearchView.prototype.setFlagVisibles.call(this, inputNode);
     	
     	/* If there is no text, add all of the services that are implied by a 
     		service that is already selected.
     	 */
-    	if (!this.focusNode.value)
+    	if (!inputNode.value)
     	{
     		var container = this.poolSection.section.select('.tags-container');
 			var tagDivs = container.selectAll('input.tag');
@@ -2437,25 +2436,6 @@ var ServiceTagSearchView = (function () {
 	
 	return ServiceTagSearchView;
 })();
-
-var ServiceTagPoolSection = (function () {
-	ServiceTagPoolSection.prototype = Object.create(TagPoolSection.prototype);
-	ServiceTagPoolSection.prototype.constructor = ServiceTagPoolSection;
-	
-	/** Returns the type of search view to be create for this tag pool section. */
-	ServiceTagPoolSection.prototype.searchViewType = function()
-	{
-		return ServiceTagSearchView;
-	}
-	
-	function ServiceTagPoolSection(panel, controller, sectionLabel)
-	{
-		TagPoolSection.call(this, panel, controller, sectionLabel);
-	}
-	
-	return ServiceTagPoolSection;
-})();
-
 
 var ServicePanel = (function () {
 	ServicePanel.prototype = Object.create(EditItemPanel.prototype);
@@ -2514,7 +2494,7 @@ var ServicePanel = (function () {
 		this.stageSection.classed('first', true);
 
 		/* The tags section. */
-		this.tagPoolSection = new ServiceTagPoolSection(this, controller, crv.buttonTexts.implications);
+		this.tagPoolSection = new TagPoolSection(this.mainDiv, controller, crv.buttonTexts.implications, ServiceTagSearchView);
 		this.tagPoolSection.section.classed('first', true);
 		this.tagPoolSection.addAddTagButton();
 
@@ -2540,6 +2520,7 @@ var ServicePanel = (function () {
 		this.tagPoolSection.fillTags()
 			.then(function()
 				{
+					_this.tagPoolSection.showTags();
 					_this.tagPoolSection.checkTagInput(null);
 				},
 				cr.asyncFail)
@@ -3129,7 +3110,9 @@ var LinkSearchView = (function () {
 			{
 				return d.description() == _this.oldDescription;
 			})
-			.insert('span', ':first-child').classed('glyphicon glyphicon-ok', true);
+			.insert('span', ':first-child')
+				.classed('checked', true)
+				.text(crv.buttonTexts.checkmark);
 		return items;
 	}
 
@@ -3505,7 +3488,7 @@ var ExperiencePromptPanel = (function () {
 									 cr.ExperiencePromptText);
 
 		/* The tags section. */
-		this.tagsSection = new TagPoolSection(this, 
+		this.tagsSection = new TagPoolSection(this.mainDiv, 
 			new ExperiencePromptServicesController(controller.newInstance()), 
 			crv.buttonTexts.tags);
 		this.tagsSection.section.classed('first', true);
@@ -3538,11 +3521,12 @@ var ExperiencePromptPanel = (function () {
 		this.tagsSection.fillTags()
 			.then(function()
 				{
+					_this.tagPoolSection.showTags();
 					_this.tagsSection.checkTagInput(null);
 				},
 				cr.asyncFail)
 		
-		this.disqualifyingTagsSection = new TagPoolSection(this, 
+		this.disqualifyingTagsSection = new TagPoolSection(this.mainDiv, 
 			new DisqualifyingTagsController(controller.newInstance()), 
 			crv.buttonTexts.disqualifyingTags)
 			.classed('first', true);
@@ -3575,6 +3559,7 @@ var ExperiencePromptPanel = (function () {
 		this.disqualifyingTagsSection.fillTags()
 			.then(function()
 				{
+					_this.disqualifyingTagsSection.showTags();
 					_this.disqualifyingTagsSection.checkTagInput(null);
 				},
 				cr.asyncFail)

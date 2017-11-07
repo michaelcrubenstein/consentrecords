@@ -351,14 +351,127 @@ var EngagementController = (function() {
 	return EngagementController;
 })();
 
-var ExperienceController = (function() {
-	ExperienceController.prototype = Object.create(ChildController.prototype);
-	ExperienceController.prototype.constructor = ExperienceController;
+var ExperienceControllerBase = (function() {
+	ExperienceControllerBase.prototype = Object.create(ChildController.prototype);
+	ExperienceControllerBase.prototype.constructor = ExperienceControllerBase;
+
+	ExperienceControllerBase.prototype.addingMessage = "Adding Experience...";
+	ExperienceControllerBase.prototype.savingMessage = "Saving Experience...";
+	ExperienceControllerBase.prototype.groupKey = 'experiences';
+	ExperienceControllerBase.prototype.addEventType = 'experienceAdded.cr';
 	
-	ExperienceController.prototype.addingMessage = "Adding Experience...";
-	ExperienceController.prototype.savingMessage = "Saving Experience...";
-	ExperienceController.prototype.groupKey = 'experiences';
-	ExperienceController.prototype.addEventType = 'experienceAdded.cr';
+	ExperienceControllerBase.prototype.experienceServices = function(newValue)
+	{
+		var value = this.newInstance().experienceServices(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	ExperienceControllerBase.prototype.customServices = function(newValue)
+	{
+		var value = this.newInstance().customServices(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	ExperienceControllerBase.prototype.serviceLinks = function()
+	{
+		return this.experienceServices();
+	}
+	
+	ExperienceControllerBase.prototype.serviceLinkType = function()
+	{
+		return cr.ExperienceService;
+	}
+	
+	ExperienceControllerBase.prototype.customServiceType = function()
+	{
+		return cr.ExperienceCustomService;
+	}
+	
+	/* Args can either be a cr.Service or a string. */
+	ExperienceControllerBase.prototype.addService = function(args)
+	{
+		if (args instanceof cr.Service)
+		{
+			var i = new cr.ExperienceService();
+			i.description(args.description())
+			 .parent(this.newInstance())
+			 .service(args)
+			 .position(this.experienceServices().length
+			           ? parseInt(this.experienceServices()[this.experienceServices().length - 1].position()) + 1
+			           : 0);
+			this.experienceServices().push(i);
+			return i;
+		}
+		else if (typeof(args) == "string")
+		{
+			var i = new cr.ExperienceCustomService();
+			i.description(args)
+			 .parent(this.newInstance())
+			 .name(args)
+			 .position(this.customServices().length
+			           ? parseInt(this.customServices()[this.customServices().length - 1].position()) + 1
+			           : 0);
+			this.customServices().push(i);
+			return i;
+		}
+		else
+			throw new Error("Invalid arguments to addService");
+	}
+	
+	ExperienceControllerBase.prototype.removeService = function(service)
+	{
+		cr.removeElement(this.newInstance().experienceServices(), service);
+	}
+	
+	ExperienceControllerBase.prototype.removeCustomService = function(service)
+	{
+		cr.removeElement(this.newInstance().customServices(), service);
+	}
+	
+	ExperienceControllerBase.prototype.distinctExperienceServices = function()
+	{
+	    return this.newInstance().distinctExperienceServices();
+	}
+	
+	ExperienceControllerBase.prototype.getServiceByName = function(name)
+	{
+		for (i = 0; i < this.experienceServices().length; ++i)
+		{
+			if (this.experienceServices()[i].description() == name)
+				return this.experienceServices()[i].service();
+		}
+		return null;
+	}
+	
+	ExperienceControllerBase.prototype.start = function(newValue)
+	{
+		var value = this.newInstance().start(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	ExperienceControllerBase.prototype.end = function(newValue)
+	{
+		var value = this.newInstance().end(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	ExperienceControllerBase.prototype.timeframe = function(newValue)
+	{
+		var value = this.newInstance().timeframe(newValue);
+		return newValue === undefined ? value : this;
+	}
+
+	function ExperienceControllerBase(parent, source, duplicateForEdit)
+	{
+		ChildController.call(this, parent, source, duplicateForEdit);
+	}
+	
+	return ExperienceControllerBase;
+})();
+
+var ExperienceController = (function() {
+	ExperienceController.prototype = Object.create(ExperienceControllerBase.prototype);
+	ExperienceController.prototype.constructor = ExperienceController;
 	
 	ExperienceController.prototype._domain = null;
 	ExperienceController.prototype._stage = null;
@@ -457,36 +570,6 @@ var ExperienceController = (function() {
 		return newValue === undefined ? value : this;
 	}
 
-	ExperienceController.prototype.experienceServices = function(newValue)
-	{
-		var value = this.newInstance().experienceServices(newValue);
-		return newValue === undefined ? value : this;
-	}
-
-	ExperienceController.prototype.customServices = function(newValue)
-	{
-		var value = this.newInstance().customServices(newValue);
-		return newValue === undefined ? value : this;
-	}
-
-	ExperienceController.prototype.start = function(newValue)
-	{
-		var value = this.newInstance().start(newValue);
-		return newValue === undefined ? value : this;
-	}
-
-	ExperienceController.prototype.end = function(newValue)
-	{
-		var value = this.newInstance().end(newValue);
-		return newValue === undefined ? value : this;
-	}
-
-	ExperienceController.prototype.timeframe = function(newValue)
-	{
-		var value = this.newInstance().timeframe(newValue);
-		return newValue === undefined ? value : this;
-	}
-
 	ExperienceController.prototype.clearOrganization = function()
 	{
 		this.newInstance().organization(null)
@@ -558,62 +641,6 @@ var ExperienceController = (function() {
 		this.newInstance().offering(null)
 						  .customOffering(null);
 		return this;
-	}
-	
-	/* Args can either be a cr.Service or a string. */
-	ExperienceController.prototype.addService = function(args)
-	{
-		if (args instanceof cr.Service)
-		{
-			var i = new cr.ExperienceService();
-			i.description(args.description())
-			 .parent(this.newInstance())
-			 .service(args)
-			 .position(this.experienceServices().length
-			           ? parseInt(this.experienceServices()[this.experienceServices().length - 1].position()) + 1
-			           : 0);
-			this.experienceServices().push(i);
-			return i;
-		}
-		else if (typeof(args) == "string")
-		{
-			var i = new cr.ExperienceCustomService();
-			i.description(args)
-			 .parent(this.newInstance())
-			 .name(args)
-			 .position(this.customServices().length
-			           ? parseInt(this.customServices()[this.customServices().length - 1].position()) + 1
-			           : 0);
-			this.customServices().push(i);
-			return i;
-		}
-		else
-			throw new Error("Invalid arguments to addService");
-	}
-	
-	ExperienceController.prototype.removeService = function(service)
-	{
-		cr.removeElement(this.newInstance().experienceServices(), service);
-	}
-	
-	ExperienceController.prototype.removeCustomService = function(service)
-	{
-		cr.removeElement(this.newInstance().customServices(), service);
-	}
-	
-	ExperienceController.prototype.distinctExperienceServices = function()
-	{
-	    return this.newInstance().distinctExperienceServices();
-	}
-	
-	ExperienceController.prototype.getServiceByName = function(name)
-	{
-		for (i = 0; i < this.experienceServices().length; ++i)
-		{
-			if (this.experienceServices()[i].description() == name)
-				return this.experienceServices()[i].service();
-		}
-		return null;
 	}
 	
 	ExperienceController.prototype.getTagList = function()
@@ -797,30 +824,46 @@ var ExperienceController = (function() {
 			return [];
 	}
 	
-	ExperienceController.prototype.serviceLinks = function()
-	{
-		return this.experienceServices();
-	}
-	
-	ExperienceController.prototype.serviceLinkType = function()
-	{
-		return cr.ExperienceService;
-	}
-	
-	ExperienceController.prototype.customServiceType = function()
-	{
-		return cr.ExperienceCustomService;
-	}
-	
 	function ExperienceController(path, source, duplicateForEdit)
 	{
 		console.assert(path instanceof cr.Path);
 			
-		ChildController.call(this, path, source || cr.Experience, duplicateForEdit);
+		ExperienceControllerBase.call(this, path, source || cr.Experience, duplicateForEdit);
 	}
 	
 	return ExperienceController;
 })();
+
+var FirstExperienceController = (function() {
+	FirstExperienceController.prototype = Object.create(ExperienceControllerBase.prototype);
+	FirstExperienceController.prototype.constructor = FirstExperienceController;
+	
+	FirstExperienceController.prototype.setupPrivilege = function()
+	{
+		this.newInstance().privilege("write");
+	}
+	
+	/** Returns True if this controller has a service that overrides the importance of
+		the first service directly associated with this controller's new instance.
+	 */
+	FirstExperienceController.prototype.hasPrimaryService = function()
+	{
+		return false;
+	}
+	
+	FirstExperienceController.prototype.primaryServices = function()
+	{
+		return [];
+	}
+	
+	function FirstExperienceController()
+	{
+		ExperienceControllerBase.call(this, null, cr.Experience, false);
+	}
+	
+	return FirstExperienceController;
+})();
+
 
 var ExperiencePromptServicesController = (function() {
 	ExperiencePromptServicesController.prototype = Object.create(ServiceLinkController.prototype);

@@ -54,6 +54,9 @@ panel.search-paths button.cancel {
 	position: absolute;
 }
 
+/* horizontal-overflow is for the panel at the top of the searchPanel that contains
+	the buttons for different path columns. 
+ */
 panel.search-paths .horizontal-overflow {
 	width: 100%;
 	height: 62px;
@@ -69,6 +72,7 @@ panel.search-paths .horizontal-overflow>div {
 	width: 480px;
 	height: 62px;
 }
+
 panel.search-paths .horizontal-overflow >div>svg {
 	position: relative;
 	width: 60px;
