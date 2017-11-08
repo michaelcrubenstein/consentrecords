@@ -335,12 +335,49 @@ var TagPoolView = (function () {
 		
 		return (nextY + this.flagHeightEM) * this.emToPX;
 	}
-	
+		
 	TagPoolView.prototype.moveFlags = function(duration)
 	{
 		duration = duration !== undefined ? duration : 700;
 		var g = this.flags();
 		
+		function getTopEdge($flag)
+		{
+			var s = $flag.css('top');
+			if (!s)
+				return 0;
+			else
+				return parseFloat(s);
+		}
+		
+		var startDate = new Date();
+		function moveFlag(flag, fd)
+		{
+			var position = $(flag).position();
+			var endX = fd.x;
+			var endY = fd.y * fd.emToPX;
+			
+			var id = setInterval(frame, duration / 100);
+			var r2 = $.Deferred();
+			function frame()
+			{
+				var deltaTime = startDate.getElapsed();
+				if (deltaTime >= duration)
+				{
+					clearInterval(id);
+					$(flag).css({left: endX, top: endY});
+					r2.resolve();
+				}
+				else
+				{
+					$(flag).css({left: position.left + ((endX - position.left) * deltaTime / duration),
+								 top: position.top + ((endY - position.top) * deltaTime / duration)});
+				}
+			}
+			
+			return r2;
+		}
+
 		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
 		/* If it was visible and it is still visible, animate its position. */
 		/* If it was visible and is not visible, animate opacity to 0 */
@@ -391,12 +428,12 @@ var TagPoolView = (function () {
 				{
 					
 					if (fd.y * fd.emToPX > bottomEdge &&
-						parseFloat($(this).css('top')) > bottomEdge)
+						getTopEdge($(this)) > bottomEdge)
 					{
 						styles.display = '';
 						settingFlags.push({flag: this, styles: styles});
 					}
-					else if ($(this).css('opacity') == "0")
+					else if ($(this).css('opacity') == '0')
 					{
 						if (fd.y * fd.emToPX > bottomEdge)
 						{
@@ -432,6 +469,7 @@ var TagPoolView = (function () {
 			promises.push($(showingFlags).animate({opacity: 1}, {duration: duration})
 						   .promise());
 		
+		movingFlags = [];
 		movingG.each(function(fd)
 			{
 				var styles = {left: fd.x, top: fd.y * fd.emToPX};
@@ -439,26 +477,31 @@ var TagPoolView = (function () {
 					styles.opacity = 1;
 					
 				if (fd.y * fd.emToPX > bottomEdge &&
-					parseFloat($(this).css('top')) > bottomEdge)
+					getTopEdge($(this)) > bottomEdge)
 					settingFlags.push({flag: this, styles: styles});
 				else if (duration == 0)
 					settingFlags.push({flag: this, styles: styles});
 				else
-					promises.push($(this).animate(styles,
-						{duration: duration})
-							.promise());
+				{
+					if ($(this).css('opacity') != '1')
+						$(this).css('opacity', 1);
+					movingFlags.push({flag: this, fd: fd});
+				}
 			});
 		
 		var hidingFlags = [];
 		hidingG.each(function(fd)
 			{
-				hidingFlags.push(this);
+				if (getTopEdge($(this)) > bottomEdge)
+					settingFlags.push({flag: this, styles: {opacity: 0.0, display: 'none'}});
+				else
+					hidingFlags.push(this);
 			});
 		if (hidingFlags.length)
 		{
 			var $hidingFlags = $(hidingFlags);
 			if (duration == 0)
-				$hidingFlags.css({opacity: 0});
+				$hidingFlags.css({opacity: 0, display: 'none'});
 			else
 			{
 				var p = $hidingFlags.animate({opacity: 0.0},
@@ -471,7 +514,12 @@ var TagPoolView = (function () {
 				promises.push(p);
 			}
 		}
-			
+		
+		promises = promises.concat(movingFlags.map(function(d)
+				{
+					return moveFlag(d.flag, d.fd);
+				}));
+		
 		return $.when.apply(null, promises)
 			.done(function()
 				{
