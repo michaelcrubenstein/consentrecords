@@ -6121,7 +6121,7 @@ class Context:
                     else:
                         self.user = self.createUserInstance(propertyList)
                     if not self.user.paths.filter(deleteTransaction__isnull=True).exists():
-                        Path.create(self.user, {}, context)
+                        Path.create(self.user, {}, self)
         else:
             self.user = None
             self.authUser = AnonymousUser()
