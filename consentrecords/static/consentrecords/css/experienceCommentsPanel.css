@@ -63,6 +63,7 @@ panel.comments svg line {
 
 section.comments ol.cell-items>li {
 	font-size: 0.8em;
+    cursor: default;
 }
 
 section.comments ol.cell-items>li:hover {
@@ -136,6 +137,12 @@ section.comments textarea.answer {
 
 section.comments textarea.no-answer {
 	color: #777;
+}
+
+section.comments button.reply {
+	font-size: 0.9em;
+	padding: .5em .5em .5em .2em;
+	border: 1px transparent solid;
 }
 
 section.new-comment {
