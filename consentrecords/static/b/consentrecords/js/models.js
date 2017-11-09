@@ -522,7 +522,7 @@ cr.IInstance = (function() {
 		if (this.privilege() == cr.privileges.find)
 		{
 			var result = $.Deferred();
-			result.reject("You do not have permission to see information about {0}".format(this.description()));
+			result.reject(new Error("You do not have permission to see information about {0}".format(this.description())));
 			return result.promise();
 		}
 		else
@@ -534,7 +534,7 @@ cr.IInstance = (function() {
 		if (this.privilege() != cr.privileges.administer)
 		{
 			var result = $.Deferred();
-			result.reject("You do not have permission to administer {0}".format(this.description()));
+			result.reject(new Error("You do not have permission to administer {0}".format(this.description())));
 			return result.promise();
 		}
 		else
