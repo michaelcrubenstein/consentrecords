@@ -46,13 +46,43 @@ var ExperienceCommentsPanel = (function() {
 			.classed('answer', true)
 			.text(function(d) { 
 					return (d && d.text()); 
-				})
-			.attr('placeholder', 'No Answer');
+				});
+		
+		if (this.fd.experience.canWrite())
+		{
+			var replyButtons = divs.append('button')
+				.classed('reply site-active-text', true)
+				.text("Answer")
+				.style('display', function(d)
+					{
+						return (!d || !d.text()) ? null : 'none';
+					})
+				.on('click', function()
+					{
+						if (prepareClick('click', 'Edit Experience Comments'))
+						{
+							try
+							{
+								_this.startEditing();
+								$(this.parentNode).children('.answer').focus();
+								unblockClick();
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
+					});
+		}
+			
 				
 		var checkSize = function(eventObject) {
 			this.style.height = 0;
 			this.style.height = (this.scrollHeight) + 'px';
-			this.style.display = (this.value || this.getAttribute('placeholder')) ? 'inline-block' : 'none';
+			this.style.display = (this.value || 
+								  this.getAttribute('placeholder') || 
+								  (_this.inEditMode && $(this).hasClass('answer')))
+								   ? 'inline-block' : 'none';
 			eventObject.stopPropagation();
 		}
 			
@@ -176,10 +206,14 @@ var ExperienceCommentsPanel = (function() {
 			crf.showDeleteControls(dials);
 			this.inEditMode = true;
 			commentList.classed('edit', true);
+			commentList.selectAll('textarea.answer')
+				.style('display', null);
 			commentList.selectAll('textarea')
 				.attr('readonly', null)
 				.classed('fixed fixed-immediate', false)
 				.classed('editable', true);
+			commentList.selectAll('button.reply')
+				.style('display', 'none');
 			
 			/* position the edit chevron as appropriate. 
 				12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
@@ -470,11 +504,20 @@ var ExperienceCommentsPanel = (function() {
 											crf.hideDeleteControls(dials);
 											_this.inEditMode = false;
 											commentList.classed('edit', false);
+											commentList.selectAll('textarea.answer')
+												.style('display', function() {
+														return this.value ? null : 'none';
+													});
 											commentList.selectAll('textarea')
 												.attr('readonly', 'readonly')
 												.classed('editable', false)
 												.classed('fixed-immediate', false)
 												.classed('fixed', true);
+											commentList.selectAll('button.reply')
+												.style('display', function(d)
+													{
+														return (!d || !d.text()) ? null : 'none';
+													});
 
 											unblockClick();
 										}
