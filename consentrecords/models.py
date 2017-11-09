@@ -4250,7 +4250,7 @@ class Path(IInstance, dbmodels.Model):
     
     def privilegedQuerySet(qs, user, prefix, privileges):
         if prefix: prefix += '__'
-        inClause = prefix + 'publicAccess'
+        inClause = prefix + 'publicAccess__in'
         userPublicAccessClause = prefix + 'parent__publicAccess__in'
         userPrimaryAdministratorClause = prefix + 'parent__primaryAdministrator'
         userInClause = prefix + 'parent_id__in'
