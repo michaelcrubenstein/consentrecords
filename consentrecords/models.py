@@ -1990,6 +1990,14 @@ class Experience(ChildInstance, dbmodels.Model):
             return IInstance.getName(self.currentNamesQuerySet, languageCode)
         elif self.customOffering:
             return self.customOffering
+        elif 'currentServices' in self.__dict__ and len(self.currentServices) > 0:
+            return str(self.currentServices[0].service)
+        elif 'currentCustomServices' in self.__dict__ and len(self.currentCustomServices) > 0:
+        	return str(self.currentCustomServices[0])
+        elif len(self.services.all()) > 0:
+            return str(self.services.all()[0].service)
+        elif len(self.customServices.all()) > 0:
+        	return str(self.customServices.all()[0])
         else:
             return 'Unnamed Experience'
     
