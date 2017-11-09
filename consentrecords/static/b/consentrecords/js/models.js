@@ -5484,6 +5484,14 @@ cr.Path = (function() {
 	
     Path.prototype.promiseUser = function()
     {
+    	/* If we only have find privileges, then just let the child deal with this. */
+		if (this.privilege() == cr.privileges.find)
+		{
+			var result = $.Deferred();
+			result.resolve();
+			return result.promise();
+		}
+
     	p = this.readCheckPromise();
     	if (p) return p;
 
