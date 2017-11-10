@@ -1298,13 +1298,6 @@ var RootItemsPanel = (function () {
 		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
 
 		var _this = this;
-		var backButton = this.navContainer.appendLeftButton()
-			.on('click', function()
-			{
-				_this.hide();
-			});
-		appendLeftChevronSVG(backButton).classed('chevron-left', true);
-		backButton.append('span').text("Back");
 		
 		this.navContainer.appendTitle(header);
 
