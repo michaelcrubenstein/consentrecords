@@ -91,16 +91,11 @@ panel.welcome div.summary>div {
 	max-width: 350px;
 }
 
-panel.welcome div.summary>div>p:first-child {
-	text-align: center;
-}
-
-panel.welcome div.summary>div>p:nth-child(2) {
+panel.welcome div.summary>div>p {
 	text-align: center;
 }
 
 panel.welcome div.summary>div>p:last-child {
-	text-align: right;
 	font-weight: 600;
 }
 
