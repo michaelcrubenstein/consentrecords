@@ -33,6 +33,23 @@ var WelcomeTagSearchView = (function () {
 	return WelcomeTagSearchView;
 })();
 
+var WelcomeTagPoolSection = (function() {
+	WelcomeTagPoolSection.prototype = Object.create(TagPoolSection.prototype);
+	WelcomeTagPoolSection.prototype.constructor = WelcomeTagPoolSection;
+	
+	WelcomeTagPoolSection.prototype.setTagInputWidth = function(inputNode)
+	{
+		this.setTagColor(inputNode);
+	}
+	
+	function WelcomeTagPoolSection()
+	{
+		TagPoolSection.apply(this, arguments);
+	}
+	
+	return WelcomeTagPoolSection;
+})();
+
 var PromptPanel = (function() {
 	PromptPanel.prototype.tagPoolSection = null;
 	
@@ -91,7 +108,7 @@ var PromptPanel = (function() {
 		}
 	}
 	
-	function PromptPanel(sitePanel, container, title, prompt, timeframe)
+	function PromptPanel(sitePanel, container, title, placeholder, timeframe)
 	{
 		var _this = this;
 		this.div = container.append('panel');
@@ -102,8 +119,8 @@ var PromptPanel = (function() {
 		var controller = new FirstExperienceController();
 		controller.newInstance().timeframe(timeframe);
 		
-		this.tagPoolSection = new TagPoolSection(this.div, controller, prompt, WelcomeTagSearchView);
-		this.tagPoolSection.appendTag(null, "");
+		this.tagPoolSection = new WelcomeTagPoolSection(this.div, controller, "", WelcomeTagSearchView);
+		this.tagPoolSection.appendTag(null, placeholder);
 		var inputTag = this.tagPoolSection.tagsContainer.select('input.tag').attr('readonly', 'readonly');
 		this.clearButton = this.tagPoolSection.tagsContainer.append('span')
 			.classed('remove-tag', true)
@@ -414,10 +431,10 @@ var WelcomePanel = (function () {
 			.classed('scrollArea', true);
 			
 		this.promptPanels = [
-			new PromptPanel(this, this.promptScrollArea, "Set a Goal and Achieve It", "My goal is", 'Goal'),
-			new PromptPanel(this, this.promptScrollArea, "Discover Opportunities", "An experience I want to have", 'Goal'),
-			new PromptPanel(this, this.promptScrollArea, "Figure Out How to Tell Your Story", "An experience I have had", 'Previous'),
-			new PromptPanel(this, this.promptScrollArea, "Help Guide Others From Your Real Experiences", "An experience I have had", 'Previous'),
+			new PromptPanel(this, this.promptScrollArea, "What is Your Goal?", "My goal is...", 'Goal'),
+			new PromptPanel(this, this.promptScrollArea, "What Opportunity Do You Need?", "An experience I want is...", 'Goal'),
+			new PromptPanel(this, this.promptScrollArea, "What is Your Story?", "An experience I have had is...", 'Previous'),
+			new PromptPanel(this, this.promptScrollArea, "What Could Others Learn from Your Experiences?", "An experience I have had is...", 'Previous'),
 			];
 		this.currentPromptIndex = 0;
 		this.promptScrollArea.append('panel');
