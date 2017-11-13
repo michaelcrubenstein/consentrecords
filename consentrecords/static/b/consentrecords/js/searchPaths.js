@@ -221,6 +221,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.topHandle = null;
 	SearchPathsPanel.prototype.poolContainer = null;
 	SearchPathsPanel.prototype.queryTagPoolView = null;
+	SearchPathsPanel.prototype.mode = 'revealInput';
 	
 	SearchPathsPanel.prototype.searchFlagHSpacing = 15;
 	SearchPathsPanel.prototype.searchFlagVSpacing = 1.0;
@@ -244,6 +245,7 @@ var SearchPathsPanel = (function () {
 	{
 		var newTop = $(window).height();
 		var _this = this;
+		this.mode = 'hideInput';
 		return $(this.node()).animate({top: newTop},
 								   	  {duration: duration})
 			.promise()
@@ -279,6 +281,7 @@ var SearchPathsPanel = (function () {
 			
 		var _this = this;
 		
+		this.mode = 'revealInput';
 		this.mainDiv.classed('vertical-scrolling', false)
 			.classed('no-scrolling', true);
 		$(this.searchInput).css('display', '');
@@ -371,6 +374,7 @@ var SearchPathsPanel = (function () {
 			resultsHeight >= queryBottom)
 			$(this.resultContainerNode).height(queryBottom);
 		
+		this.mode = 'revealPanel';
 		return $.when($poolContainer.animate(
 					{width: poolWidth, 
 					 height: poolHeight},
@@ -728,13 +732,11 @@ var SearchPathsPanel = (function () {
 		
 		$(window).resize(function()
 			{
-				if ($(_this.node()).position().top == 0)
-				{
-					resizeContents();
-				}
+				handleResize();
 			});
 			
 		this.createRoot(null, "Search Paths", "search-paths");
+		this.mode = 'revealInput';
 		
 		var mainDiv = this.appendScrollArea();
 		
@@ -882,17 +884,17 @@ var SearchPathsPanel = (function () {
 				event.stopPropagation();
 			});
 			
-		function resizeContents()
+		function handleResize()
 		{
-			if ($(_this.node()).position().top == 0)
-			{
+			if (_this.mode == 'revealPanel')
 				_this.revealPanel(0);
-			}
-			else
+			else if (_this.mode == 'revealInput')
 				_this.revealInput(0);
+			else
+				_this.hideInput(0);
 		}
 		
-		$(mainDiv.node()).on("resize.cr", resizeContents);
+		$(mainDiv.node()).on("resize.cr", handleResize);
 		
 		setTimeout(function()
 			{
