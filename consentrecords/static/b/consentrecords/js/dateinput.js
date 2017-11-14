@@ -357,6 +357,9 @@ var DateWheel = (function () {
 						if (_this.didDrag)
 						{
 							_this.didDrag = false;
+							/* Set isClear to false here so that scrolling always
+								leads to item being selected. */
+							_this.isClear = false;
 							$(this).scroll();
 						}
 					})
@@ -411,7 +414,6 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
-					_this.isClear = false;
 					_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
 					_this._onYearChanged();
 					$(_this).trigger('change');
@@ -424,7 +426,6 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
-					_this.isClear = false;
 					_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
 					_this._onMonthChanged();
 					$(_this).trigger('change');
@@ -438,7 +439,6 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
-					_this.isClear = false;
 					_this.oldDay = _this._getSelectedIndex(_this.dayNode);
 					_this.onChange(); 
 					$(_this).trigger('change');
