@@ -989,7 +989,7 @@ var ExperienceCommentsPanel = (function() {
 		
 		var comments = fd.experience.comments();
 		var commentsDiv = panel2Div.append('section')
-			.classed('multiple comments', true);
+			.classed('multiple edit comments', true);
 		this.commentsSection = commentsDiv.node();
 		var commentList = crf.appendItemList(commentsDiv)
 			.classed('deletable-items', true);
@@ -1013,7 +1013,6 @@ var ExperienceCommentsPanel = (function() {
 					if (prepareClick('click', 'Add Comment'))
 					{
 						$(_this.newCommentInputNode).css('display', '');
-						$(_this.postButtonNode).css('display', '');
 						$(_this.newCommentButtonNode).css('display', 'none');
 						$(_this.newCommentInputNode).trigger('input');
 						$(_this.newCommentInputNode).focus();
@@ -1033,6 +1032,10 @@ var ExperienceCommentsPanel = (function() {
 				this.style.height = 0;
 				this.style.height = (this.scrollHeight) + 'px';
 				_this.resizeCommentsSection();
+				if (this.value)
+					$(_this.postButtonNode).css('display', '');
+				else
+					$(_this.postButtonNode).css('display', 'none');
 				if (eventObject)
 					eventObject.stopPropagation();
 			});
@@ -1056,6 +1059,9 @@ var ExperienceCommentsPanel = (function() {
 											{
 												_this.newCommentInputNode.value = '';
 												$(_this.newCommentInputNode).trigger('input');
+												$(_this.newCommentInputNode).css('display', 'none');
+												$(_this.postButtonNode).css('display', 'none');
+												$(_this.newCommentButtonNode).css('display', '');
 												_this.showLastComment();
 												unblockClick();
 											},
