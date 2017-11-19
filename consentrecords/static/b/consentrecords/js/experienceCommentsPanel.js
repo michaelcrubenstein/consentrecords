@@ -560,7 +560,7 @@ var ExperienceCommentsPanel = (function() {
 				{
 					if (prepareClick('click', 'share'))
 					{
-						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.path());
+						new ExperienceShareOptions(fd.experience, fd.experience.path());
 					}
 				});
 		shareButton.append("img")

@@ -341,95 +341,60 @@ var PickUserAccessPanel = (function () {
 })();
 
 var ShareOptions = (function () {
+	ShareOptions.prototype = ConfirmPanel.prototype;
+	ShareOptions.prototype.constructor = ShareOptions;
 
 	function ShareOptions(panelNode, user)
 	{
-		var dimmer = new Dimmer(panelNode);
-		var panel = d3.select(panelNode).append('panel')
-			.classed("confirm", true);
-
-		function onCancel(e)
-		{
-			if (prepareClick('click', 'Cancel'))
-			{
-				try
-				{
-					$(confirmButton.node()).off('blur');
-					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-						$(panel.node()).remove();
-						unblockClick();
-					});
-					clipboard.destroy();
-					dimmer.hide();
-				}
-				catch(err)
-				{
-					syncFailFunction(err);
-				}
-			}
-			e.preventDefault();
-		}
+		ConfirmPanel.call(this);
 		
-		var div = panel.append('div');
-		$(div.node()).click(onCancel);
-		
-		var copyButton = div.append('button')
+		var _this = this;
+		var copyButton = this.appendButton()
 			.text("Copy Path")
-			.classed("site-active-text copy", true)
+			.classed('copy', true)
 			.attr('data-clipboard-text', 
 			      '{0}/for/{1}'.format(window.location.origin, user.emails()[0].text()));
 		
 		var clipboard = new Clipboard(copyButton.node());
+		$(this.panel.node()).on('remove', function() { clipboard.destroy(); });
 			
 		clipboard.on('error', function(e) {
-			cr.asyncFail('Press Ctrl+C to copy');
+			cr.asyncFail("Press Ctrl+C to copy");
 		});
 			
-		var confirmButton = div.append('button')
-			.text("Share Via Mail")
-			.classed("site-active-text", true)
-			.on("click", function()
-				{
-					/* Test case: Email Pathway Link. */
-					if (prepareClick('click', "Email Pathway Link"))
-					{
-						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-							$(panel.node()).remove();
-							if (user.id() == cr.signedinUser.id())
-							{
-								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-											.format(window.location.origin, user.emails()[0].text());
-							}
-							else
-							{
-								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(user.caption(), window.location.origin, user.emails()[0].text());
-							}
-							unblockClick();
-						});
-						dimmer.hide();
-					}
-				});
-				
-		$(confirmButton.node()).on('blur', onCancel);
-		var cancelButton = div.append('button')
-			.text(crv.buttonTexts.cancel)
-			.classed("site-active-text", true);
+		var confirmButton = this.appendButton()
+			.text("Share Via Mail");
 		
-		$(cancelButton.node()).click(onCancel);
-		
-		dimmer.show();
-		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
-		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
-			function() {
-				$(confirmButton.node()).focus();
-				unblockClick();
-			}});
-		dimmer.mousedown(onCancel);
-		$(panel.node()).mousedown(function(e)
+		$(confirmButton.node()).on('click', function(e)
 			{
-				e.preventDefault();
+				e.stopPropagation();
+				/* Test case: Email Pathway Link. */
+				if (prepareClick('click', "Email Pathway Link"))
+				{
+					_this.hideDown()
+						.then(function()
+							{
+								if (user.id() == cr.signedinUser.id())
+								{
+									window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
+												.format(window.location.origin, user.emails()[0].text());
+								}
+								else
+								{
+									window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
+												.format(user.caption(), window.location.origin, user.emails()[0].text());
+								}
+								unblockClick();
+							},
+							cr.syncFail);
+				}
 			});
+				
+		var cancelButton = this.appendButton()
+			.text(crv.buttonTexts.cancel);
+		
+		$(cancelButton.node()).click(function(e) { _this.onCancel(e); });
+		
 	}
 	
 	return ShareOptions;
