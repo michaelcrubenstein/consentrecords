@@ -280,6 +280,7 @@ var TagPoolView = (function () {
 						{
 							d3.select(_this.otherFlagNode)
 								.text("Other {0}".format(filterService.description()));
+							fd.outerWidth = $(_this.otherFlagNode).outerWidth();
 							PathGuides.fillNode(_this.otherFlagNode, filterService.getColumn());
 							flagSets[2].push(fd);
 						}
