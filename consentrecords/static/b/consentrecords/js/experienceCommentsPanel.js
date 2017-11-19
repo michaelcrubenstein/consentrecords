@@ -1,5 +1,402 @@
 /* experienceCommentsPanel.js */
 
+var ZoomPanel = (function () {
+	ZoomPanel.prototype = Object.create(crv.SitePanel.prototype);
+	ZoomPanel.prototype.constructor = ZoomPanel;
+
+	ZoomPanel.prototype.mode = 'revealInput';
+	ZoomPanel.prototype.topBox = null;
+	ZoomPanel.prototype.inputNode = null;
+	ZoomPanel.prototype.cancelButton = null;
+	ZoomPanel.prototype.topHandle = null;
+	
+	ZoomPanel.prototype.clearInput = function()
+	{
+		$(this.inputNode).val('');
+											
+		/* Hide and show the input so that the placeholder
+			re-appears properly in safari 10 and earlier. */
+		$(this.inputNode).hide(0).show(0);
+	}
+	
+	ZoomPanel.prototype.hideInput = function(duration)
+	{
+		var newTop = $(window).height();
+		var _this = this;
+		this.mode = 'hideInput';
+		return $(this.node()).animate({top: newTop},
+								   	  {duration: duration})
+			.promise()
+			.then(function()
+				{
+					$(_this.inputNode).css('display', 'none');
+				},
+				cr.chainFail);
+
+	}
+	
+	ZoomPanel.prototype.inputHeight = function()
+	{
+		return $(this.inputNode).outerHeight(true)
+		     + $(this.topHandle).outerHeight(true);
+	}
+	
+	ZoomPanel.prototype.revealInput = function(duration)
+	{
+		$(this.inputNode).attr('rows', 1);
+		var newTop = $(window).height() - this.inputHeight();
+		
+		/* Reset the right margin to the same as the left margin. */
+		var inputMarginLeft = parseInt($(this.inputNode).css('margin-left'));
+		var inputMarginRight = parseInt($(this.inputNode).css('margin-right'));
+
+		var inputWidth = $(this.inputNode.parentNode).width()
+						 - inputMarginLeft + inputMarginRight
+						 - $(this.inputNode).outerWidth(true) + $(this.inputNode).outerWidth(false);
+
+			
+		var _this = this;
+		
+		this.mode = 'revealInput';
+		$(this.inputNode).css('display', '');
+		
+		return $.when(
+			$(this.node()).animate({'background-color': 'rgba(0, 0, 0, 0)'},
+								   {duration: duration}),
+			$(this.mainDiv.node()).animate({top: newTop},
+										   {duration: duration}),
+			$(this.inputNode).animate({width: inputWidth,
+									   'margin-right': inputMarginLeft,
+									   'border-width': '0px'},
+										{duration: duration,
+										 done: function()
+											{
+												_this.clearInput();
+											}
+										 }),
+			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
+										  opacity: 0.0},
+								   {duration: duration,
+								   complete: function()
+								   	{
+								   		$(_this.cancelButton).css('display', 'none');
+								   	}})
+			)
+			.then(function()
+			{
+				$(_this.node()).css({top: newTop,
+									 height: $(_this.topBox).outerHeight(true)}),
+				$(_this.mainDiv.node()).css('top', 0);
+			});
+	}
+	
+	/* Returns the top of the revealed panel. */
+	ZoomPanel.prototype.revealedTop = function()
+	{
+		return 0;
+	}
+	
+	ZoomPanel.prototype.checkInputNodeSize = function()
+	{
+		this.inputNode.style.height = 0;
+		this.inputNode.style.height = (this.inputNode.scrollHeight) + 'px';
+		var fillSection = $(this.mainDiv.node()).children('section.fill');
+		fillSection.height(fillSection.getFillHeight());
+	}
+	
+	ZoomPanel.prototype.revealPanel = function(duration)
+	{
+		/* Ensure the height of the node and the mainNode are correct. */
+		var parentHeight = $(window).height();
+		$(this.node()).height(parentHeight);
+		$(this.mainDiv.node()).height(parentHeight - this.revealedTop());
+		
+		this.checkInputNodeSize();
+		
+		var fillSection = $(this.mainDiv.node()).children('section.fill');
+		fillSection.height(fillSection.getFillHeight());
+
+		/* Set the right margin of the search input to 0 and account for this in the inputWidth */
+		var parentWidth = $(this.inputNode.parentNode).width();
+		var inputMarginLeft = parseInt($(this.inputNode).css('margin-left'));
+		var inputMarginRight = parseInt($(this.inputNode).css('margin-right'));
+		
+		var inputWidth = parentWidth 
+						 - $(this.inputNode).outerWidth(true) + $(this.inputNode).outerWidth(false)
+						 + inputMarginRight
+						 - $(this.cancelButton).outerWidth(true);
+						 
+		$(this.inputNode).css('display', '');
+		$(this.cancelButton).css('display', '');
+							   
+		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
+		
+		var _this = this;
+
+		this.mode = 'revealPanel';
+		var oldTop = $(this.node()).css('top');
+		$(this.node()).css('top', 0);
+		$(this.mainDiv.node()).css('top', oldTop);
+		
+		return $.when(/* Scroll the parentNode top to 0 so that the inputNode is sure to appear.
+						This is important on iPhones where the soft keyboard appears and forces scrolling. */
+					$(this.node().parentNode)
+						.animate({scrollTop: 0},
+								 {duration: duration})
+						.promise(),
+					$(this.node()).animate({'background-color': 'rgba(0, 0, 0, 0.3)'},
+										   {duration: duration}),
+					$(this.mainDiv.node())
+						.animate({top: this.revealedTop()},
+								 {duration: duration})
+						 .promise(),
+					$(this.inputNode).animate({width: inputWidth,
+											   'margin-right': 0,
+											   'border-width': '1px',
+											   },
+										   {duration: duration}),
+					$(this.cancelButton).animate({left: inputWidth + inputMarginLeft,
+												  opacity: 1.0},
+										   {duration: duration}));
+	}
+	
+	ZoomPanel.prototype.onRevealPanel = function()
+	{
+		unblockClick();
+	}
+	
+	ZoomPanel.prototype.onCancel = function()
+	{
+		return this.revealInput();
+	}
+	
+	ZoomPanel.prototype.appendInputNode = function(topBox)
+	{
+		return topBox.append('textarea')
+			.attr('placeholder', 'What do you want to ask?')
+			.attr('rows', 1)
+			.node();
+	}
+	
+	ZoomPanel.prototype.createRoot = function()
+	{
+		var _this = this;
+		crv.SitePanel.prototype.createRoot.apply(this, arguments);
+		
+		this.mode = 'revealInput';
+		
+		var mainDiv = this.appendScrollArea();
+		
+		$(window).resize(function()
+			{
+				handleResize();
+			});
+			
+		function handleResize()
+		{
+			if (_this.mode == 'revealPanel')
+				_this.revealPanel(0);
+			else if (_this.mode == 'revealInput')
+				_this.revealInput(0);
+			else
+				_this.hideInput(0);
+		}
+		
+		$(this.mainDiv.node()).on('resize.cr', handleResize);
+		
+		var topBox = mainDiv.append('div');
+		this.topBox = topBox.node();
+		
+		var topHandle = topBox.append('div')
+			.classed('handle', true);
+		this.topHandle = topHandle.node();
+		
+		topHandle.append('span');
+			
+		var topSVG = topHandle.append('svg')
+			.classed('handle', true);
+		this.topSVG = topSVG.node();
+		
+		topSVG.append('path')
+			.attr('d', 'M 4 4 l 18 7 l 18 -7');
+			
+		topHandle.append('span');
+
+		this.inputNode = this.appendInputNode(topBox);
+			
+		this.cancelButton = topBox.append('button')
+			.classed('cancel', true)
+			.text(crv.buttonTexts.cancel)
+			.style('display', 'none')
+			.node();
+			
+		$(this.inputNode).focusin(function(event)
+			{
+				if (_this.mode != 'revealPanel')
+				{
+					if (prepareClick('focusin', 'inputNode'))
+					{
+						_this.revealPanel()
+							.then(function()
+								{
+									_this.onRevealPanel();
+								});
+					}
+				}
+			})
+			.on('input', function(event)
+			{
+				_this.checkInputNodeSize();
+				if (event)
+					event.stopPropagation();
+			})
+			.click(function(event)
+			{
+				if ($(_this.node()).position().top == 0)
+					event.stopPropagation();
+			});
+			
+		$(this.topBox).click(function(event)
+			{
+				if ($(_this.node()).position().top == 0)
+				{
+					_this.clearInput();
+					_this.checkInputNodeSize();
+					_this.parentPanel.resizeCommentsSection();
+					_this.revealInput();
+				}
+				else
+				{
+					$(_this.inputNode).focus();
+				}
+				event.stopPropagation();
+			});
+			
+		$(this.cancelButton).click(function(event)
+			{
+				_this.onCancel();
+				
+				event.stopPropagation();
+			});
+			
+	}
+	
+	function ZoomPanel()
+	{
+		crv.SitePanel.apply(this, []);
+	}
+	
+	return ZoomPanel;
+})();
+
+var AskQuestionPanel = (function () {
+	AskQuestionPanel.prototype = Object.create(ZoomPanel.prototype);
+	AskQuestionPanel.prototype.constructor = ZoomPanel;
+
+	AskQuestionPanel.prototype.askQuestion = function(newText)
+	{
+		/* Test case: add a comment to an experience that has had a comment */
+		var experience = this.fd.experience;
+		return cr.signedinUser.promiseData(['path'])
+			.then(function()
+				{
+					return experience.postComment({asker: cr.signedinUser.path().urlPath(),
+												   question: newText});
+				},
+				cr.chainFail);
+	}
+	
+	AskQuestionPanel.prototype.onCancel = function()
+	{
+		var _this = this;
+		var newQuestion = _this.inputNode.value;
+		if (newQuestion)
+		{
+			if (prepareClick('click', 'Ask Question'))
+			{
+				try
+				{
+					showClickFeedback(this.cancelButton);
+					bootstrap_alert.success("Sending email (this may take a few minutes)...");
+					_this.askQuestion(newQuestion)
+						.then(function()
+							{
+								_this.clearInput();
+								_this.checkInputNodeSize();
+								_this.parentPanel.resizeCommentsSection();
+								_this.revealInput();
+								_this.parentPanel.showLastComment();
+								bootstrap_alert.close();
+								unblockClick();
+							},
+							cr.syncFail);
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
+			}
+		}
+	}
+	
+	/* Returns the top of the revealed panel. */
+	AskQuestionPanel.prototype.revealedTop = function()
+	{
+		return this.parentPanel.childPanelTop();
+	}
+	
+	function AskQuestionPanel(parentPanel, fd)
+	{
+		var _this = this;
+		ZoomPanel.apply(this, []);
+		this.parentPanel = parentPanel;
+		this.fd = fd;
+		
+		this.createRoot(null, "Ask Question", 'zoom question');
+		
+		this.cancelButton.textContent = "Ask";
+
+		var commentPromptsDiv = this.mainDiv.append('section')
+			.classed('comment-prompts', true);
+		
+		crp.promise({path:  'comment prompt',
+					 resultType: cr.CommentPrompt})
+		.then(function(prompts)
+			{
+				commentPromptsDiv.selectAll('div')
+					.data(prompts)
+					.enter()
+					.append('div')
+					.append('span')
+					.classed('site-active-text', true)
+					.text(function(d) 
+						{ return d.description(); })
+					.on('click', function(d)
+						{
+							_this.inputNode.value = '';
+							_this.inputNode.value = d.description();
+							_this.inputNode.focus();
+							var textWidth = _this.inputNode.value.length;
+							_this.inputNode.setSelectionRange(textWidth, textWidth)
+						});
+/*				resizeQuestionBoxes(); */
+			}, cr.asyncFail);
+			
+		this.mainDiv.append('section')
+			.classed('fill', true);	
+
+		setTimeout(function()
+			{
+				_this.panelDiv.style('top', "{0}px".format($(window).height()));
+				_this.panelDiv.style('display', 'block');
+				_this.revealInput();
+			});
+			
+	}
+	
+	return AskQuestionPanel;
+})();
+
 var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype = Object.create(crv.SitePanel.prototype);
 	ExperienceCommentsPanel.prototype.constructor = ExperienceCommentsPanel;
@@ -55,7 +452,10 @@ var ExperienceCommentsPanel = (function() {
 				.text("Answer")
 				.style('display', function(d)
 					{
-						return (!d || !d.text()) ? null : 'none';
+						if (_this.inEditMode)
+							return 'none';
+						else
+							return (!d || !d.text()) ? null : 'none';
 					})
 				.on('click', function()
 					{
@@ -83,7 +483,8 @@ var ExperienceCommentsPanel = (function() {
 								  this.getAttribute('placeholder') || 
 								  (_this.inEditMode && $(this).hasClass('answer')))
 								   ? 'inline-block' : 'none';
-			eventObject.stopPropagation();
+			if (eventObject)
+				eventObject.stopPropagation();
 		}
 			
 		divs.selectAll('textarea.question')
@@ -97,6 +498,7 @@ var ExperienceCommentsPanel = (function() {
 					this.style.display = this.value ? 'inline-block' : 'none';
 					$(this).on('input', checkSize);
 					$(this).on('resize.cr', checkSize);
+					checkSize.call(this, null);
 				});
 				
 		divs.selectAll('textarea.answer')
@@ -110,6 +512,7 @@ var ExperienceCommentsPanel = (function() {
 					this.style.display = 'inline-block';
 					$(this).on('input', checkSize);
 					$(this).on('resize.cr', checkSize);
+					checkSize.call(this, null);
 				});
 	}
 	
@@ -141,19 +544,6 @@ var ExperienceCommentsPanel = (function() {
 			});
 		
 		this.checkDeleteControlVisibility(items);
-	}
-	
-	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
-	{
-		/* Test case: add a comment to an experience that has had a comment */
-		var experience = this.fd.experience;
-		return cr.signedinUser.promiseData(['path'])
-			.then(function()
-				{
-					return experience.postComment({asker: cr.signedinUser.path().urlPath(),
-												   question: newText});
-				},
-				cr.chainFail);
 	}
 	
 	/**
@@ -211,7 +601,8 @@ var ExperienceCommentsPanel = (function() {
 			commentList.selectAll('textarea')
 				.attr('readonly', null)
 				.classed('fixed fixed-immediate', false)
-				.classed('editable', true);
+				.classed('editable', true)
+				.each(function() { $(this).trigger('resize.cr'); });
 			commentList.selectAll('button.reply')
 				.style('display', 'none');
 			
@@ -334,52 +725,26 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
+	ExperienceCommentsPanel.prototype.childPanelTop = function()
+	{
+		return $(this.navContainer.nav.node()).outerHeight(true) +
+			   $(this.detailGroup.node()).outerHeight(true);
+	}
+	
 	ExperienceCommentsPanel.prototype.setupAsk = function()
 	{
 		var _this = this;
 		var canBeAsked = this.fd.experience.path().canAnswerExperience();
 		if (cr.signedinUser.id() && canBeAsked != "no")
 		{
-			var newQuestionDiv = this.mainDiv.append('section')
-				.classed('new-comment', true);
-			var newQuestionInput = newQuestionDiv.append('textarea')
-				.attr('rows', 3);
-			newQuestionInput.attr('placeholder', "New Question");
-
-			var askButton = newQuestionDiv.append('button')
-				.classed('post site-active-div', true)
-				.text("Ask")
-				.on('click', function()
-					{
-						var newQuestion = newQuestionInput.node().value;
-						if (newQuestion)
-						{
-							if (prepareClick('click', 'Ask Question'))
-							{
-								try
-								{
-									showClickFeedback(this);
-									bootstrap_alert.success("Sending email (this may take a few minutes)...");
-									_this.askQuestion(newQuestion)
-										.then(function()
-											{
-												newQuestionInput.node().value = '';
-												bootstrap_alert.close();
-												unblockClick();
-											},
-											cr.syncFail);
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
-						}
-					});
+			this.askPanel = new AskQuestionPanel(this, this.fd);
 			
-			var commentPromptsDiv = this.mainDiv.append('section')
-				.classed('comment-prompts', true);
-			
+			$(this.node()).on('hiding.cr', function()
+				{
+					_this.askPanel.hideRight();
+				});
+			this.resizeCommentsSection();
+/* 
 			var resizeQuestionBoxes = function()
 				{
 					var newQuestionHMargin = ($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width())
@@ -393,32 +758,27 @@ var ExperienceCommentsPanel = (function() {
 					commentPromptsDiv
 						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
 				}
-			
-			crp.promise({path:  'comment prompt',
-			             resultType: cr.CommentPrompt})
-			.then(function(prompts)
-				{
-					commentPromptsDiv.selectAll('div')
-						.data(prompts)
-						.enter()
-						.append('div')
-						.append('span')
-						.classed('site-active-text', true)
-						.text(function(d) 
-							{ return d.description(); })
-						.on('click', function(d)
-							{
-								newQuestionInput.node().value = '';
-								newQuestionInput.node().value = d.description();
-								newQuestionInput.node().focus();
-								var textWidth = newQuestionInput.node().value.length;
-								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
-							});
-					resizeQuestionBoxes();
-				}, cr.asyncFail)		
-							
+						
 			$(this.mainDiv.node()).on('resize.cr', resizeQuestionBoxes);
+ */
+			
 		}
+	}
+	
+	ExperienceCommentsPanel.prototype.resizeCommentsSection = function()
+	{
+		var $commentsDiv = $(this.commentsSection);
+		var askHeight = this.askPanel ? this.askPanel.inputHeight() : 0;
+		$commentsDiv.height($commentsDiv.getFillHeight() - askHeight);
+	}
+	
+	ExperienceCommentsPanel.prototype.showLastComment = function()
+	{
+		var $commentsDiv = $(this.commentsSection);
+		var $lastChild = $commentsDiv.children(':last-child');
+		
+		var newTop = $lastChild.outerHeight() - $commentsDiv.innerHeight();
+		$commentsDiv.animate({scrollTop: newTop});
 	}
 	
 	function ExperienceCommentsPanel(fd, backText)
@@ -568,11 +928,13 @@ var ExperienceCommentsPanel = (function() {
 
 		var panel2Div = this.appendScrollArea();
 
+		this.mainDiv.classed('vertical-scrolling', false)
+			.classed('no-scrolling', true);
+
 		this.detailGroup = panel2Div.append('div')
 			.classed('detail', true)
 			.datum(fd);
 		this.detailTextGroup = this.detailGroup.append('div');
-		fd.colorHTMLElement(this.detailGroup.node());
 		
 		function resizeDetail()
 		{
@@ -591,14 +953,18 @@ var ExperienceCommentsPanel = (function() {
 					(_this.inEditMode ? 0 : $(_this.editChevronContainer.node()).outerWidth(true)));
 			}
 		}
-		setTimeout(resizeDetail);
+		
+		function changeEventHandler(eventObject, newValue)
+		{
+			fd.colorHTMLElement(_this.detailGroup.node());
+			fd.colorHTMLElement(navContainer.nav.node());
+			resizeDetail();
+		}
+		
+		setTimeout(changeEventHandler);
 		
 		/* Update the contents of the top banner if the contents of the experience are changed. */
-		fd.setupChangeEventHandler(this.mainDiv.node(), function(eventObject, newValue)
-			{
-				fd.colorHTMLElement(_this.detailGroup.node());
-				resizeDetail();
-			});
+		fd.setupChangeEventHandler(this.mainDiv.node(), changeEventHandler);
 		
 		/* Hide this panel if the experience is deleted */
 		setupOneViewEventHandler(fd.experience, "deleted.cr", this.node(), function(eventObject)
@@ -624,6 +990,7 @@ var ExperienceCommentsPanel = (function() {
 		var comments = fd.experience.comments();
 		var commentsDiv = panel2Div.append('section')
 			.classed('multiple comments', true);
+		this.commentsSection = commentsDiv.node();
 		var commentList = crf.appendItemList(commentsDiv)
 			.classed('deletable-items', true);
 		commentList.classed('edit', this.inEditMode);
@@ -638,16 +1005,45 @@ var ExperienceCommentsPanel = (function() {
 		{
 			var newCommentDiv = panel2Div.append('section')
 				.classed('new-comment', true);
+			var newCommentButton = newCommentDiv.append('button')
+				.classed('site-active-text add-comment', true)
+				.text("Add Comment")
+				.on('click', function()
+				{
+					if (prepareClick('click', 'Add Comment'))
+					{
+						$(_this.newCommentInputNode).css('display', '');
+						$(_this.postButtonNode).css('display', '');
+						$(_this.newCommentButtonNode).css('display', 'none');
+						$(_this.newCommentInputNode).trigger('input');
+						$(_this.newCommentInputNode).focus();
+						unblockClick();
+					};
+				});
+			this.newCommentButtonNode = newCommentButton.node();
+				
 			var newCommentInput = newCommentDiv.append('textarea')
-				.attr('rows', 3);
-			newCommentInput.attr('placeholder', 'New Comment');
+				.attr('rows', 3)
+				.style('display', 'none');
+			newCommentInput.attr('placeholder', "New Comment");
+			this.newCommentInputNode = newCommentInput.node();
+			
+			$(this.newCommentInputNode).on('input', function(eventObject)
+			{
+				this.style.height = 0;
+				this.style.height = (this.scrollHeight) + 'px';
+				_this.resizeCommentsSection();
+				if (eventObject)
+					eventObject.stopPropagation();
+			});
 
 			this.postButtonNode = newCommentDiv.append('button')
 				.classed('post site-active-div', true)
-				.text('Post')
+				.text("Post")
+				.style('display', 'none')
 				.on('click', function()
 					{
-						var newComment = newCommentInput.node().value;
+						var newComment = _this.newCommentInputNode.value;
 						if (newComment)
 						{
 							if (prepareClick('click', 'Post Comment'))
@@ -658,7 +1054,9 @@ var ExperienceCommentsPanel = (function() {
 									_this.fd.experience.postComment({text: newComment})
 										.then(function()
 											{
-												newCommentInput.node().value = '';
+												_this.newCommentInputNode.value = '';
+												$(_this.newCommentInputNode).trigger('input');
+												_this.showLastComment();
 												unblockClick();
 											},
 											cr.syncFail);
@@ -674,7 +1072,7 @@ var ExperienceCommentsPanel = (function() {
 
 			$(panel2Div.node()).on('resize.cr', function()
 				{
-					$(newCommentInput.node()).width(
+					$(_this.newCommentInputNode).width(
 						$(newCommentDiv.node()).width() - 
 						$(_this.postButtonNode).outerWidth(true) -
 						($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
@@ -707,20 +1105,40 @@ var ExperienceCommentsPanel = (function() {
 			this.promise.resolve();
 		}
 
+		$(panel2Div.node()).on('resize.cr', function()
+			{
+				_this.resizeCommentsSection();
+			});
+			
+		$(_this.node()).on('revealing.cr', function()
+			{
+				_this.resizeCommentsSection();
+			});
+			
 		this.promise = this.promise
 			.then(function()
 				{
-					$(panel2Div.node()).on('resize.cr', resizeDetail);	
+					try
+					{
+						$(panel2Div.node()).on('resize.cr', resizeDetail);	
 			
-					$(panel2Div.node()).on('resize.cr', function()
-						{
-							commentList.selectAll('textarea')
-								.each(function()
-									{
-										$(this).trigger('resize.cr');
-									});
-						});	
-					_this.setupAsk();
+						var f = function()
+							{
+								commentList.selectAll('textarea')
+									.each(function()
+										{
+											$(this).trigger('resize.cr');
+										});
+							};
+							
+						$(panel2Div.node()).on('resize.cr', f);	
+						_this.setupAsk();
+						f();
+					}
+					catch(err)
+					{
+						cr.asyncFail(err);
+					}
 				});
 	}
 		
