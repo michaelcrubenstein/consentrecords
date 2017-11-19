@@ -951,7 +951,8 @@ crv.SitePanel = (function () {
     
     SitePanel.prototype.appendNavContainer = function()
     {
-		return new SiteNavContainer(this);
+    	this.navContainer = new SiteNavContainer(this);
+		return this.navContainer;
     }
     
     SitePanel.prototype.appendBottomNavContainer = function()
@@ -1182,7 +1183,7 @@ crv.SitePanel = (function () {
 		var $panelNode = $(this.node());
 		window.scrollTo(0, 0);
 		
-		$panelNode.trigger("revealing.cr");
+		$panelNode.trigger('revealing.cr');
 		return $panelNode.animate({'top': 0})
 			.promise();
 	}
@@ -1194,8 +1195,8 @@ crv.SitePanel = (function () {
 
 		window.scrollTo(0, 0);
 		$panelNode.css({top: 0,
-						left: "{0}px".format(window.innerWidth)});
-		$panelNode.trigger("revealing.cr");
+						left: '{0}px'.format(window.innerWidth)});
+		$panelNode.trigger('revealing.cr');
 		return $panelNode.animate({left: 0})
 			.promise();
 	}
@@ -1204,7 +1205,7 @@ crv.SitePanel = (function () {
 	{
 		bootstrap_alert.close();
 		$(this.node()).trigger('hiding.cr');
-		return $(this.node()).animate({'top': "{0}px".format(window.innerHeight)})
+		return $(this.node()).animate({'top': '{0}px'.format(window.innerHeight)})
 			.promise()
 			.done(function() {
 				$(this).remove();
