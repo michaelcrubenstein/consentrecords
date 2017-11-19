@@ -91,16 +91,11 @@ panel.welcome div.summary>div {
 	max-width: 350px;
 }
 
-panel.welcome div.summary>div>p:first-child {
-	text-align: center;
-}
-
-panel.welcome div.summary>div>p:nth-child(2) {
+panel.welcome div.summary>div>p {
 	text-align: center;
 }
 
 panel.welcome div.summary>div>p:last-child {
-	text-align: right;
 	font-weight: 600;
 }
 
@@ -154,34 +149,40 @@ panel.welcome section.tags>div.scrollArea>panel:first-of-type {
 	display: inline-block;
 }
 
+panel.welcome section.tags span.tags-container {
+	margin-left: 0;
+	display: inline-flex;
+}
+
 panel.welcome section.tags input.tag {
 	border: none;
-	min-width: 15em;
-	border-bottom: 2px solid #222;
-	margin-right: 0.4em;
+	border-bottom: 3px solid #999;
+	padding-left: .4em;
+	margin-right: 0em;
+	flex-grow: 100;
+	flex-shrink: 100;
+	font-size: .75em;
 }
 
 panel.welcome section.tags span.remove-tag {
 	font-family: verdana;
 	font-size: .75em;
 	padding: .1em .3em;
+	margin-top: .2em;
+	margin-left: 0.4em;
+	height: 1.5em;
+	width: 1.5em;
+	text-align: center;
+	line-height: 1.25em;
 	color: #FFF;
 	background: #999;
 	border-radius: .7em;
 }
 
-panel.welcome section.tags label {
-	margin-left: 1em;
-	margin-right: 1em;
-}
-
-panel.welcome section.tags span.tags-container {
-	margin-left: 0;
-}
-
 panel.welcome div.prompts section.tags>div:first-child {
-	display: inline-block;
+	display: inline-flex;
 	width: auto;
+	white-space: nowrap;
 }
 
 panel.welcome div.signup {

@@ -1140,158 +1140,94 @@ var OfferingLinkSearchView = (function() {
 	This panel can specify a search domain or, with typing, pick a service, offering, organization or site.
 	One can also specify a custom service or a custom organization. */
 var ConfirmDeleteAlert = (function () {
+	ConfirmDeleteAlert.prototype = ConfirmPanel.prototype;
+	ConfirmDeleteAlert.prototype.constructor = ConfirmDeleteAlert;
 
 	function ConfirmDeleteAlert(panelNode, confirmText, done, cancel)
 	{
-		var dimmer = new Dimmer(panelNode);
-		var panel = d3.select(panelNode).append('panel')
-			.classed("confirm", true);
-		var div = panel.append('div');
-		var confirmButton = div.append('button')
+		ConfirmPanel.call(this);
+	
+		var _this = this;
+		var confirmButton = this.appendButton()
 			.text(confirmText)
-			.classed("text-danger", true)
-			.on("click", function()
+			.classed('text-danger', true)
+			.classed('site-active-text', false);
+			
+		$(confirmButton.node()).on('click', function(e)
+			{
+				if (prepareClick('click', confirmText))
 				{
-					if (prepareClick('click', confirmText))
-					{
-						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-							panel.remove();
-							done();
-						});
-						dimmer.hide();
-					}
-				});
+					_this.hideDown()
+						.then(done, cr.syncFail);
+				}
+				e.stopPropagation();
+			});
 				
-		var onCancel = function()
-			{
-				if (prepareClick('click', 'Cancel'))
-				{
-					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-						panel.remove();
-						cancel();
-					});
-					dimmer.hide();
-				}
-			}
-			
-		div.append('button')
-			.text(crv.buttonTexts.cancel)
-			.on("click", onCancel);
+		var cancelButton = this.appendButton()
+			.text(crv.buttonTexts.cancel);
 		
-		dimmer.show();
-		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
-		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
-			function() {
-				$(confirmButton.node()).focus();
-				unblockClick();
-			}});
-		$(confirmButton.node()).on('blur', function()
-			{
-				if (prepareClick('blur', confirmText))
-				{
-					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-						panel.remove();
-						cancel();
-					});
-				}
-			});
-			
-		dimmer.mousedown(onCancel);
-		$(panel.node()).mousedown(function(e)
-			{
-				e.preventDefault();
-			});
+		$(cancelButton.node()).click(function(e) { _this.onCancel(e); });
 	}
 	
 	return ConfirmDeleteAlert;
 })();
 
 var ExperienceShareOptions = (function () {
+	ExperienceShareOptions.prototype = ConfirmPanel.prototype;
+	ExperienceShareOptions.prototype.constructor = ExperienceShareOptions;
 
-	function ExperienceShareOptions(panelNode, experience, path)
+	function ExperienceShareOptions(experience, path)
 	{
-		var dimmer = new Dimmer(panelNode);
-		var panel = d3.select(panelNode).append('panel')
-			.classed("confirm", true);
-		var div = panel.append('div');
-		function onCancel(e)
-		{
-			if (prepareClick('click', 'Cancel'))
-			{
-				$(emailAddExperienceButton.node()).off('blur');
-				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-					panel.remove();
-					unblockClick();
-				});
-				dimmer.hide();
-			}
-			e.preventDefault();
-		}
-		
+		ConfirmPanel.call(this);
+
+		var _this = this;		
 		if (cr.signedinUser)
 		{
 			var duplicateText = (path == cr.signedinUser.path()) ? "Duplicate Experience" : "Add to My Pathway";
 		
-			var addToMyPathwayButton = div.append('button')
-				.text(duplicateText)
-				.classed("site-active-text", true)
-				.on("click", function()
+			var addToMyPathwayButton = this.appendButton()
+				.text(duplicateText);
+			
+			$(addToMyPathwayButton.node()).on('click', function(e)
+				{
+					if (prepareClick('click', duplicateText))
 					{
-						if (prepareClick('click', duplicateText))
-						{
-							var experienceController = new ExperienceController(cr.signedinUser.path(), experience, false);
-							var newPanel = new NewExperiencePanel(experienceController);
-							newPanel.showUp()
-								.done(function()
-									{
-										$(emailAddExperienceButton.node()).off('blur');
-										panel.remove();
-										dimmer.remove();
-									})
-								.always(unblockClick);
-						}
-					});
-				
-			$(addToMyPathwayButton.node()).on('blur', onCancel);
+						var experienceController = new ExperienceController(cr.signedinUser.path(), experience, false);
+						var newPanel = new NewExperiencePanel(experienceController);
+						newPanel.showUp()
+							.done(function()
+								{
+									_this.panel.remove();
+								})
+							.always(unblockClick);
+					}
+					e.stopPropagation();
+				});
 		}
 		
-		var emailAddExperienceButton = div.append('button')
-			.text("Mail Add Experience Link")
-			.classed("site-active-text", true)
-			.on("click", function()
+		var emailAddExperienceButton = this.appendButton()
+			.text("Mail Add Experience Link");
+			
+		$(emailAddExperienceButton.node()).on('click', function(e)
+			{
+				if (prepareClick('click', "Mail Add Experience Link"))
 				{
-					if (prepareClick('click', "Mail Add Experience Link"))
-					{
-						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-							panel.remove();
+					_this.hideDown()
+						.then(function()
+						{
 							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}/.'
 										.format(window.location.origin, experience.id());
 							unblockClick();
-						});
-						dimmer.hide();
-					}
-				});
-				
-		$(emailAddExperienceButton.node()).on('blur', onCancel);
-		
-		var cancelButton = div.append('button')
-			.text(crv.buttonTexts.cancel)
-			.classed("site-active-text", true);
-		
-		$(cancelButton.node()).click(onCancel);
-		
-		dimmer.show();
-		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
-		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
-			function() {
-				$(emailAddExperienceButton.node()).focus();
-				unblockClick();
-			}});
-		dimmer.mousedown(onCancel);
-		$(panel.node()).mousedown(function(e)
-			{
-				e.preventDefault();
+						},
+						cr.syncFail);
+				}
+				e.stopPropagation();
 			});
+				
+		var cancelButton = this.appendButton()
+			.text(crv.buttonTexts.cancel);
+		
+		$(cancelButton.node()).click(function(e) { _this.onCancel(e); });
 	}
 	
 	return ExperienceShareOptions;
@@ -1714,7 +1650,7 @@ var NewExperiencePanel = (function () {
 					{
 						if (prepareClick('click', 'share'))
 						{
-							new ExperienceShareOptions(_this.node(), experienceController.oldInstance(), experienceController.parent());
+							new ExperienceShareOptions(experienceController.oldInstance(), experienceController.parent());
 						}
 					});
 			shareButton.append('img')

@@ -735,15 +735,8 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.initDateRange = function(phase)
 	{
-		if (phase === 'Goal')
-			this.initGoalDateRange();
-		else if (phase === 'Current')
-			this.initCurrentDateRange();
-		else
-		{
-			phase = 'Previous';
-			this.initPreviousDateRange();
-		}
+		this.newInstance().start("");
+		this.newInstance().end("");
 		this.timeframe(phase);
 		return this;
 	}

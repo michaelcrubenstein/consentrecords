@@ -26,8 +26,7 @@ body>panel {
 }
 panel.site-panel>nav {
 	background: #F8F8F8; /* #D1E1FF; */
-	border: 1px solid #eeeeee;
-	border-color: #e7e7e7;
+	border: 1px solid #e7e7e7;
 	border-radius:0px;
 	margin-bottom: 0px;
 }
@@ -864,3 +863,102 @@ panel.site-panel > div.dimmer {
 	opacity: 0;
 	background-color: black;
 }
+
+panel.zoom svg.handle { /* top handle */
+	height: 15px;
+	width: 44px;
+}
+
+panel.zoom svg.handle path {
+	stroke: #CCC;
+	stroke-width: 4px;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	fill: none;
+}
+
+panel.zoom > div.panel-fill > div:first-child {	/* top box */
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+	border-top: 1px solid #CCC;
+	width: 100%;
+	overflow-x: hidden;	/* So the cancel button slides in from the right. */
+}
+
+panel.zoom div.handle {
+	display: flex;
+	width: 100%;
+	margin: 4px auto;
+}
+
+panel.zoom div.handle > span {
+	flex-grow: 100;
+}
+
+panel.zoom input, panel.zoom textarea {
+	display: inline-block;
+	width: calc(100% - 12px);
+	padding: 3px 6px;
+	margin: 0px 6px 6px 6px;
+	border: none;
+/* 
+	background: #D3D3D3;
+	font-size: 0.9em;
+	border-radius: 4px;
+ */
+}
+
+panel.zoom input:focus, panel.zoom textarea:focus {
+	outline: none;
+}
+
+panel.zoom button.cancel {
+	padding: 2px 9px;
+	position: absolute;
+}
+
+panel.confirm {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+}
+
+panel.confirm >div {
+	position: relative;
+	padding: 12px;
+	background-color: transparent;
+	border: none;
+	text-align: center;
+}
+
+panel.confirm >div>button {
+	position: relative;
+	display: block;
+	max-width: 21em;
+	width: 100%;
+	margin-top: 12px;
+	margin-left: auto;
+	margin-right: auto;
+	padding: 10px;
+	background: #F8F8F8;
+	border: 1px solid #e7e7e7;
+	border-radius: 8px;
+	font-size: larger;
+}
+panel.confirm >div>button:first-child {
+	margin-top: 0px;
+}
+
+panel.confirm >div>button.butted-down {
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+}
+panel.confirm >div>button.butted-down+button {
+	margin-top: 0px;
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
+}
+panel.confirm > div>button:focus {
+	outline: none;
+}
+

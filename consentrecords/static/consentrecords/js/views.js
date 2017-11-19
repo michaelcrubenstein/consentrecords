@@ -951,7 +951,8 @@ crv.SitePanel = (function () {
     
     SitePanel.prototype.appendNavContainer = function()
     {
-		return new SiteNavContainer(this);
+    	this.navContainer = new SiteNavContainer(this);
+		return this.navContainer;
     }
     
     SitePanel.prototype.appendBottomNavContainer = function()
@@ -1182,7 +1183,7 @@ crv.SitePanel = (function () {
 		var $panelNode = $(this.node());
 		window.scrollTo(0, 0);
 		
-		$panelNode.trigger("revealing.cr");
+		$panelNode.trigger('revealing.cr');
 		return $panelNode.animate({'top': 0})
 			.promise();
 	}
@@ -1194,8 +1195,8 @@ crv.SitePanel = (function () {
 
 		window.scrollTo(0, 0);
 		$panelNode.css({top: 0,
-						left: "{0}px".format(window.innerWidth)});
-		$panelNode.trigger("revealing.cr");
+						left: '{0}px'.format(window.innerWidth)});
+		$panelNode.trigger('revealing.cr');
 		return $panelNode.animate({left: 0})
 			.promise();
 	}
@@ -1204,7 +1205,7 @@ crv.SitePanel = (function () {
 	{
 		bootstrap_alert.close();
 		$(this.node()).trigger('hiding.cr');
-		return $(this.node()).animate({'top': "{0}px".format(window.innerHeight)})
+		return $(this.node()).animate({'top': '{0}px'.format(window.innerHeight)})
 			.promise()
 			.done(function() {
 				$(this).remove();
@@ -2430,3 +2431,67 @@ var PickFromListPanel = (function () {
 
 })();
 
+var ConfirmPanel = (function() {
+	ConfirmPanel.prototype.panel = null;
+	ConfirmPanel.prototype.div = null;
+	
+	ConfirmPanel.prototype.showUp = function()
+	{
+		return $.when(
+			$(this.div.node()).animate({'top': $(this.panel.node()).height() - $(this.div.node()).outerHeight(true)})
+				.promise(),
+			$(this.panel.node()).animate({'background-color': 'rgba(0, 0, 0, 0.3)'}).promise());
+	}
+
+	ConfirmPanel.prototype.hideDown = function()
+	{
+		var _this = this;
+		return $.when($(this.panel.node()).animate({'background-color': 'rgba(0, 0, 0, 0)'},
+										   {duration: 400}).promise(),
+				   $(this.div.node()).animate({top: $(this.panel.node()).height()},
+										 {duration: 400}).promise())
+				.then(function()
+					{
+						_this.panel.remove();
+					});
+	}
+	
+	ConfirmPanel.prototype.onCancel = function(e)
+	{
+		e.preventDefault();
+		e.stopPropagation();
+
+		var _this = this;
+		if (prepareClick('click', 'Cancel'))
+		{
+			this.hideDown()
+				.then(unblockClick, cr.syncFail);
+		}
+	}
+	
+	ConfirmPanel.prototype.appendButton = function()
+	{
+		return this.div.append('button')
+				.classed("site-active-text", true);
+	}
+	
+	function ConfirmPanel() {
+		this.panel = d3.select(document.body).append('panel')
+			.classed('confirm', true)
+			.style('background-color', 'rgba(0, 0, 0, 0)');
+		this.div = this.panel.append('div');
+		
+		var _this = this;
+		$(this.panel.node()).click(function(e) { _this.onCancel(e); });
+		
+		$(this.div.node()).css('top', $(this.panel.node()).height());
+		
+		setTimeout(function()
+			{
+				_this.showUp()
+					.then(unblockClick, cr.syncFail);
+			});
+	}
+	
+	return ConfirmPanel;
+})();

@@ -486,7 +486,19 @@ var PathView = (function() {
 						.style('fill-opacity', 0.4);
 				}
 				var newPanel = new ExperienceCommentsPanel(fd, this.sitePanel.headerText);
-				newPanel.showLeft()
+				
+				var searchPanel = this.sitePanel.searchPanel;
+				
+				if (searchPanel)
+				{
+					$(newPanel.node()).on('hiding.cr', function()
+						{
+							searchPanel.revealInput();
+						});
+				}
+				
+				$.when(newPanel.showLeft(),
+					   searchPanel && searchPanel.hideInput())
 					.always(function()
 						{
 							if (!fd.selected())
@@ -1687,135 +1699,6 @@ var PathlinesPanel = (function () {
 	return PathlinesPanel;
 })();
 
-var AddOptions = (function () {
-	AddOptions.prototype.addPreviousExperienceLabel = "Add Experience You Have Done";
-	AddOptions.prototype.addCurrentExperienceLabel = "Add Experience You Are Doing";
-	AddOptions.prototype.addGoalLabel = "Add Goal";
-	
-	function AddOptions(pathlinesPanel)
-	{
-		var panelNode = pathlinesPanel.node();
-		var dimmer = new Dimmer(panelNode, 200);
-		var panel = d3.select(panelNode).append('panel')
-			.classed("confirm", true);
-		
-		function handleCancel(done)
-		{
-			$(confirmButton.node()).off('blur');
-			$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-				$(panel.node()).remove();
-				if (done) done();
-			});
-		}
-		function onCancel(e)
-		{
-			try
-			{
-				handleCancel();
-				dimmer.hide();
-			}
-			catch(err)
-			{
-				asyncFailFunction(err);
-			}
-			e.preventDefault();
-		}
-		
-		function addButton(div, name, clickFunction)
-		{
-			var button = div.append('button')
-				.text(name)
-				.classed('site-active-text', true)
-				.on('click', function()
-					{
-						/* Test case: Add Experience You Have Done. */
-						/* Test case: Add Experience You Are Doing. */
-						/* Test case: Add Experience Goal. */
-						if (prepareClick('click', name))
-						{
-							try
-							{
-								$.when(dimmer.hide(), 
-									   $(panel.node()).hide("slide", {direction: "down"}, 200))
-								 .then(function()
-									{
-										$(panel.node()).remove();
-										clickFunction(unblockClick);
-									});
-							}
-							catch (err)
-							{
-								cr.syncFail(err);
-							}
-						}
-					});
-			return button;
-		}
-		
-		var div = panel.append('div')
-			.style('margin-bottom', '{0}px'.format(pathlinesPanel.getBottomNavHeight()));
-		$(div.node()).click(onCancel);
-		
-		var confirmButton = addButton(div, this.addPreviousExperienceLabel, 
-			function(done)
-			{
-				pathlinesPanel.startNewExperience('Previous', done, cr.syncFail);
-			})
-			.classed('butted-down', true);
-		$(confirmButton.node()).on('blur', onCancel);
-		
-		addButton(div, this.addCurrentExperienceLabel, 
-			function(done)
-			{
-				pathlinesPanel.startNewExperience('Current', done, cr.syncFail);
-			})
-			.classed('butted-down', true);
-		
-		addButton(div, this.addGoalLabel, 
-			function()
-			{
-				pathlinesPanel.startNewExperience('Goal', unblockClick, cr.syncFail);
-			});
-			
-		addButton(div, 'More Ideas',
-			function()
-			{
-				try
-				{
-					var path = pathlinesPanel.pathtree.path;
-					var experienceController = new ExperienceController(path, null, false);
-					var panel = new QuickAddExperiencePanel(panelNode, experienceController);
-					panel.done = function()
-						{
-							skipButton.on('click')();
-						};
-					unblockClick();
-				}
-				catch(err)
-				{
-					syncFailFunction(err);
-				}
-			});
-		
-		var cancelButton = addButton(div, 'Cancel', handleCancel);
-		
-		dimmer.show();
-		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
-		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
-			function() {
-				$(confirmButton.node()).focus();
-				unblockClick();
-			}});
-		dimmer.mousedown(onCancel);
-		$(panel.node()).mousedown(function(e)
-			{
-				e.preventDefault();
-			});
-	}
-	
-	return AddOptions;
-})();
-
 var ExperienceIdeas = (function() {
 	
 	function ExperienceIdeas(panelNode, path, done, fail)
@@ -2132,6 +2015,7 @@ var ColumnInfoPanel = (function() {
 		var newLeft = "{0}px".format(($(this.panelNode).width() - $(this.ideaPanel.node()).outerWidth()) / 2);
 		$(this.ideaPanel.node()).animate({left: newLeft},
 			{done: done});
+		this.panelNode.sitePanel.searchPanel.hideInput();
 	}
 	
 	function ColumnInfoPanel(panelNode, path, guideData, done, fail)
@@ -2149,6 +2033,7 @@ var ColumnInfoPanel = (function() {
 			{
 				dimmer.hide();
 				_this.ideaPanel.remove();
+				_this.panelNode.sitePanel.searchPanel.revealInput();
 			}
 		
 			dimmer.mousedown(onCancel);
@@ -2187,7 +2072,13 @@ var ColumnInfoPanel = (function() {
 							{
 								var controller = new ExperienceController(path, null, false);
 								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Previous', 'Current']);
-								panel.promise
+								$(panel.mainDiv.node()).on('hiding.cr',
+									function()
+									{
+										_this.panelNode.sitePanel.searchPanel.revealInput();
+									});
+								$.when(panel.promise,
+									   _this.panelNode.sitePanel.searchPanel.hideInput())
 									.fail(function(err)
 									{
 										dimmer.hide();
@@ -2221,11 +2112,16 @@ var ColumnInfoPanel = (function() {
 							{
 								var controller = new ExperienceController(path, null, false);
 								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Goal']);
-								panel.promise
+								$(panel.mainDiv.node()).on('hiding.cr',
+									function()
+									{
+										_this.panelNode.sitePanel.searchPanel.revealInput();
+									});
+								$.when(panel.promise,
+									   _this.panelNode.sitePanel.searchPanel.hideInput())
 									.fail(function(err)
 									{
 										dimmer.hide();
-										unblockClick();
 									})
 									.always(function()
 										{
