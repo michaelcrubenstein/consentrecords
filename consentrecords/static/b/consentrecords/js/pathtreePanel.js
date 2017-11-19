@@ -486,7 +486,19 @@ var PathView = (function() {
 						.style('fill-opacity', 0.4);
 				}
 				var newPanel = new ExperienceCommentsPanel(fd, this.sitePanel.headerText);
-				newPanel.showLeft()
+				
+				var searchPanel = this.sitePanel.searchPanel;
+				
+				if (searchPanel)
+				{
+					$(newPanel.node()).on('hiding.cr', function()
+						{
+							searchPanel.revealInput();
+						});
+				}
+				
+				$.when(newPanel.showLeft(),
+					   searchPanel && searchPanel.hideInput())
 					.always(function()
 						{
 							if (!fd.selected())
