@@ -215,13 +215,13 @@ var SearchPathsPanel = (function () {
 
 	SearchPathsPanel.prototype.selectedPool = null;
 	
+	SearchPathsPanel.prototype.mode = 'revealInput';
 	SearchPathsPanel.prototype.topBox = null;
 	SearchPathsPanel.prototype.searchInput = null;
 	SearchPathsPanel.prototype.cancelButton = null;
 	SearchPathsPanel.prototype.topHandle = null;
 	SearchPathsPanel.prototype.poolContainer = null;
 	SearchPathsPanel.prototype.queryTagPoolView = null;
-	SearchPathsPanel.prototype.mode = 'revealInput';
 	
 	SearchPathsPanel.prototype.searchFlagHSpacing = 15;
 	SearchPathsPanel.prototype.searchFlagVSpacing = 1.0;

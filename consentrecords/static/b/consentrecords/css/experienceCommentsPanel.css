@@ -1,3 +1,8 @@
+/* Remove the border so that it blends into the first item. */
+panel.site-panel.comments>nav {
+	border: none;
+}
+
 /* Set the minimum width of this button so that the buttons don't shift when changing
 	the text from Edit to Done */
 panel.comments > nav div.edit {
@@ -20,6 +25,7 @@ panel.comments div.detail {
 	-ms-user-select: none;
 	-o-user-select: none;
 	cursor: default;
+	border-bottom: 1px solid #e7e7e7;
 }
 
 panel.comments div.detail > div {
@@ -59,6 +65,13 @@ panel.comments .flag-label {
 
 panel.comments svg line {
 	stroke-opacity: 0.3;
+}
+
+section.comments {
+	position: relative;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
 }
 
 section.comments ol.cell-items>li {
@@ -140,7 +153,6 @@ section.comments textarea.no-answer {
 }
 
 section.comments button.reply {
-	font-size: 0.9em;
 	padding: .5em .5em .5em .2em;
 	border: 1px transparent solid;
 }
@@ -149,10 +161,18 @@ section.new-comment {
 	position: relative;
 }
 
+section.new-comment button.add-comment {
+	margin-left: 12px;
+	padding: 6px 3px 6px 0px;
+	outline: none;
+	font-size: 0.8em;
+}
+
 section.new-comment textarea {
 	margin-left: 12px;
 	padding: 2px;
 	margin-top: 6px;
+	font-family: SF-UI, Helvetica Neue, Arial, Helvetica, sans-serif;
 	font-size: 0.8em;
 	resize: none;
 	border: solid 1px #ddd;
@@ -179,3 +199,18 @@ section.comment-prompts div>span {
 	display: inline-block;
 }
 
+panel.question {
+	box-shadow: 3px 3px 10px #999;
+}
+
+panel.question> .panel-fill>* {
+	background-color: white;
+}
+
+panel.question textarea {
+	font-family: SF-UI, Helvetica Neue, Arial, Helvetica, sans-serif;
+	font-size: 0.8em;
+	resize: none;
+	border: solid 0px #ddd;
+	outline: none;
+}
