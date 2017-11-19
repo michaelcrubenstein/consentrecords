@@ -486,7 +486,19 @@ var PathView = (function() {
 						.style('fill-opacity', 0.4);
 				}
 				var newPanel = new ExperienceCommentsPanel(fd, this.sitePanel.headerText);
-				newPanel.showLeft()
+				
+				var searchPanel = this.sitePanel.searchPanel;
+				
+				if (searchPanel)
+				{
+					$(newPanel.node()).on('hiding.cr', function()
+						{
+							searchPanel.revealInput();
+						});
+				}
+				
+				$.when(newPanel.showLeft(),
+					   searchPanel && searchPanel.hideInput())
 					.always(function()
 						{
 							if (!fd.selected())
@@ -2003,6 +2015,7 @@ var ColumnInfoPanel = (function() {
 		var newLeft = "{0}px".format(($(this.panelNode).width() - $(this.ideaPanel.node()).outerWidth()) / 2);
 		$(this.ideaPanel.node()).animate({left: newLeft},
 			{done: done});
+		this.panelNode.sitePanel.searchPanel.hideInput();
 	}
 	
 	function ColumnInfoPanel(panelNode, path, guideData, done, fail)
@@ -2020,6 +2033,7 @@ var ColumnInfoPanel = (function() {
 			{
 				dimmer.hide();
 				_this.ideaPanel.remove();
+				_this.panelNode.sitePanel.searchPanel.revealInput();
 			}
 		
 			dimmer.mousedown(onCancel);
@@ -2058,7 +2072,13 @@ var ColumnInfoPanel = (function() {
 							{
 								var controller = new ExperienceController(path, null, false);
 								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Previous', 'Current']);
-								panel.promise
+								$(panel.mainDiv.node()).on('hiding.cr',
+									function()
+									{
+										_this.panelNode.sitePanel.searchPanel.revealInput();
+									});
+								$.when(panel.promise,
+									   _this.panelNode.sitePanel.searchPanel.hideInput())
 									.fail(function(err)
 									{
 										dimmer.hide();
@@ -2092,11 +2112,16 @@ var ColumnInfoPanel = (function() {
 							{
 								var controller = new ExperienceController(path, null, false);
 								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Goal']);
-								panel.promise
+								$(panel.mainDiv.node()).on('hiding.cr',
+									function()
+									{
+										_this.panelNode.sitePanel.searchPanel.revealInput();
+									});
+								$.when(panel.promise,
+									   _this.panelNode.sitePanel.searchPanel.hideInput())
 									.fail(function(err)
 									{
 										dimmer.hide();
-										unblockClick();
 									})
 									.always(function()
 										{
