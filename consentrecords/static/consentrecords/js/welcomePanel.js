@@ -373,11 +373,6 @@ var WelcomePanel = (function () {
 			.outerWidth(margin);
 	}
  	
-	WelcomePanel.prototype.getBottomNavHeight = function()
-	{
-		return this.searchPanel ? $(this.searchPanel.topBox).outerHeight(false) : 0;
-	}
-		
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	WelcomePanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
@@ -793,8 +788,7 @@ var WelcomePanel = (function () {
 		var signedIn = function(eventObject) {
 			ServiceFlagController.clearPromises();
 			
-			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
-			pathwayPanel.setupSearchPanel();
+			var pathwayPanel = new HomePanel(cr.signedinUser, false);
 			cr.signedinUser.promiseData(['path'])
 				.then(function()
 					{

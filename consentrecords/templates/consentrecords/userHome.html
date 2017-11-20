@@ -220,8 +220,7 @@
 				var onSignin = function(eventObject)
 				{
 					this.off("signinCanceled.cr", onSigninCanceled);
-					var firstPanel = new PathlinesPanel(cr.signedinUser, false);
-					firstPanel.setupSearchPanel();
+					var firstPanel = new HomePanel(cr.signedinUser, false);
 					firstPanel.pathtree.setUser(cr.signedinUser.path(), true)
 						.then(function()
 							{
@@ -749,8 +748,7 @@
 						try
 						{
 							console.assert(cr.signedinUser.path());
-							firstPanel = new PathlinesPanel(cr.signedinUser, false);
-							firstPanel.setupSearchPanel();
+							firstPanel = new HomePanel(cr.signedinUser, false);
 							firstPanel.showNow();
 							firstPanel.pathtree.setUser(cr.signedinUser.path(), true)
 							.then(function()

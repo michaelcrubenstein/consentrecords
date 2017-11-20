@@ -487,18 +487,13 @@ var PathView = (function() {
 				}
 				var newPanel = new ExperienceCommentsPanel(fd, this.sitePanel.headerText);
 				
-				var searchPanel = this.sitePanel.searchPanel;
-				
-				if (searchPanel)
-				{
-					$(newPanel.node()).on('hiding.cr', function()
-						{
-							searchPanel.revealInput();
-						});
-				}
+				$(newPanel.node()).on('hiding.cr', function()
+					{
+						_this.sitePanel.onHidingChild();
+					});
 				
 				$.when(newPanel.showLeft(),
-					   searchPanel && searchPanel.hideInput())
+					   this.sitePanel.onShowingChild())
 					.always(function()
 						{
 							if (!fd.selected())
@@ -1339,7 +1334,7 @@ var SettingsButton = (function() {
 
 	SettingsButton.prototype.onClick = function()
 	{
-		var searchPanel = this.pathtreePanel.searchPanel;
+		var _this = this;
 		if (prepareClick('click', "Settings"))
 		{
 			try
@@ -1350,10 +1345,10 @@ var SettingsButton = (function() {
 				
 				$(panel.node()).on('hiding.cr', function()
 					{
-						searchPanel.revealInput();
+						_this.pathtreePanel.onHidingChild();
 					});
 				$.when(panel.showUp(),
-					   searchPanel.hideInput())
+					   _this.pathtreePanel.onShowingChild())
 					.always(unblockClick);
 			}
 			catch(err)
@@ -1549,10 +1544,10 @@ var PathlinesPanel = (function () {
 						$(panel.mainDiv.node()).on('hiding.cr',
 							function()
 							{
-								_this.searchPanel.revealInput();
+								_this.onHidingChild();
 							});
 						$.when(panel.promise,
-							   _this.searchPanel.hideInput())
+							   _this.onShowingChild())
 							.always(unblockClick);
 					}
 					catch(err)
@@ -1585,12 +1580,7 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.getBottomNavHeight = function()
 	{
-		return this.searchPanel ? $(this.searchPanel.topBox).outerHeight(false) : 0;
-	}
-	
-	PathlinesPanel.prototype.setupSearchPanel = function()
-	{
-		this.searchPanel = new SearchPathsPanel();
+		return 0;
 	}
 	
 	/** Returns the FlagController whose experience matches the specified id. */
@@ -1612,6 +1602,16 @@ var PathlinesPanel = (function () {
 		var newPanel = new ExperienceCommentsPanel(this.getFlagData(id), this.user.caption());
 		newPanel.showLeft();
 		return newPanel;
+	}
+	
+	PathlinesPanel.prototype.onShowingChild = function()
+	{
+		return null;
+	}
+	
+	PathlinesPanel.prototype.onHidingChild = function()
+	{
+		return null;
 	}
 	
 	function PathlinesPanel(user, done) {
@@ -1697,6 +1697,35 @@ var PathlinesPanel = (function () {
 	}
 	
 	return PathlinesPanel;
+})();
+
+var HomePanel = (function () {
+	HomePanel.prototype = Object.create(PathlinesPanel.prototype);
+	HomePanel.prototype.constructor = HomePanel;
+	
+	HomePanel.prototype.getBottomNavHeight = function()
+	{
+		return $(this.searchPanel.topBox).outerHeight(false);
+	}
+	
+	HomePanel.prototype.onShowingChild = function()
+	{
+		return this.searchPanel.hideInput();
+	}
+	
+	HomePanel.prototype.onHidingChild = function()
+	{
+		return this.searchPanel.revealInput();
+	}
+	
+	function HomePanel()
+	{
+		PathlinesPanel.apply(this, arguments);
+		
+		this.searchPanel = new SearchPathsPanel();
+	}
+	
+	return HomePanel;
 })();
 
 var ExperienceIdeas = (function() {
@@ -2015,7 +2044,7 @@ var ColumnInfoPanel = (function() {
 		var newLeft = "{0}px".format(($(this.panelNode).width() - $(this.ideaPanel.node()).outerWidth()) / 2);
 		$(this.ideaPanel.node()).animate({left: newLeft},
 			{done: done});
-		this.panelNode.sitePanel.searchPanel.hideInput();
+		this.panelNode.sitePanel.onShowingChild();
 	}
 	
 	function ColumnInfoPanel(panelNode, path, guideData, done, fail)
@@ -2033,7 +2062,7 @@ var ColumnInfoPanel = (function() {
 			{
 				dimmer.hide();
 				_this.ideaPanel.remove();
-				_this.panelNode.sitePanel.searchPanel.revealInput();
+				_this.panelNode.sitePanel.onHidingChild();
 			}
 		
 			dimmer.mousedown(onCancel);
@@ -2075,10 +2104,10 @@ var ColumnInfoPanel = (function() {
 								$(panel.mainDiv.node()).on('hiding.cr',
 									function()
 									{
-										_this.panelNode.sitePanel.searchPanel.revealInput();
+										_this.panelNode.sitePanel.onHidingChild();
 									});
 								$.when(panel.promise,
-									   _this.panelNode.sitePanel.searchPanel.hideInput())
+									   _this.panelNode.sitePanel.onShowingChild())
 									.fail(function(err)
 									{
 										dimmer.hide();
@@ -2115,10 +2144,10 @@ var ColumnInfoPanel = (function() {
 								$(panel.mainDiv.node()).on('hiding.cr',
 									function()
 									{
-										_this.panelNode.sitePanel.searchPanel.revealInput();
+										_this.panelNode.sitePanel.onHidingChild();
 									});
 								$.when(panel.promise,
-									   _this.panelNode.sitePanel.searchPanel.hideInput())
+									   _this.panelNode.sitePanel.onShowingChild())
 									.fail(function(err)
 									{
 										dimmer.hide();
