@@ -1753,6 +1753,13 @@ var NewExperiencePanel = (function () {
 		
 			this.optionPanel.append('label')
 				.text(this.timeframeLabel);
+				
+			function completeTimeframeButtonClick()
+			{
+				$(startDateWheel).trigger('change');
+				_this.setDateRangeLabels();
+				_this.checkTimeframe();
+			}
 
 			var buttonDiv = this.optionPanel.append('div');
 			this.previousExperienceButton = buttonDiv.append('button')
@@ -1764,9 +1771,7 @@ var NewExperiencePanel = (function () {
 						_this.previousExperienceButton.classed('pressed', true);
 					
 						startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
-						$(startDateWheel).trigger('change');
-						_this.setDateRangeLabels();
-						_this.checkTimeframe();
+						completeTimeframeButtonClick();
 					})
 				.text(this.previousExperienceLabel);
 		
@@ -1779,9 +1784,7 @@ var NewExperiencePanel = (function () {
 						_this.currentExperienceButton.classed('pressed', true);
 					
 						startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
-						$(startDateWheel).trigger('change');
-						_this.setDateRangeLabels();
-						_this.checkTimeframe();
+						completeTimeframeButtonClick();
 					})
 				.text(this.currentExperienceLabel);
 		
@@ -1794,9 +1797,7 @@ var NewExperiencePanel = (function () {
 						_this.goalButton.classed('pressed', true);
 					
 						setGoalStartDateRange();
-						$(startDateWheel).trigger('change');
-						_this.setDateRangeLabels();
-						_this.checkTimeframe();
+						completeTimeframeButtonClick();
 					})
 				.text(this.goalLabel);
 			
