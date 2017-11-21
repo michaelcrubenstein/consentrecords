@@ -202,6 +202,27 @@
 		cursor: pointer;
 	}
 	
+	panel.new-experience-panel section.cell.comment {
+		background-color: white;
+		margin-top: 12px;
+	}
+	
+	panel.new-experience-panel section.comment textarea {
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		appearance: none;
+		background-color: white;
+		border: none;
+		outline: none;
+		resize: none;
+		font-size: 0.9em;
+		width: calc(100% - 24px);
+		margin-left: 12px;
+		margin-right: 12px;
+		padding-top: 6px;
+		padding-bottom: 6px;
+	}
+	
     .dots ~ panel {
     	height: calc(100% - 50px);
     	width: 100%;

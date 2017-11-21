@@ -20,6 +20,7 @@ var DateWheel = (function () {
 	DateWheel.prototype.oldDay = 0;
 	DateWheel.prototype.minDate = null;
 	DateWheel.prototype.maxDate = null;
+	DateWheel.prototype.blockClear = false;
 	DateWheel.prototype.isClear = false;
 	DateWheel.prototype.didDrag = false;
 	
@@ -80,7 +81,13 @@ var DateWheel = (function () {
 							newScrollTop = itemHeight * newIndex;
 						}
 						
-						$(node).animate({"scrollTop": newScrollTop}, 200, 'swing', done);
+						_this.blockClear = true;
+						$(node).animate({"scrollTop": newScrollTop}, 200, 'swing', 
+							function()
+							{
+								done.call(this);
+								_this.blockClear = false;
+							});
 					}, 110);
 			}
 	}
@@ -414,6 +421,8 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
+					if (!_this.blockClear)
+						_this.isClear = false;
 					_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
 					_this._onYearChanged();
 					$(_this).trigger('change');
@@ -426,6 +435,8 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
+					if (!_this.blockClear)
+						_this.isClear = false;
 					_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
 					_this._onMonthChanged();
 					$(_this).trigger('change');
@@ -439,6 +450,8 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
+					if (!_this.blockClear)
+						_this.isClear = false;
 					_this.oldDay = _this._getSelectedIndex(_this.dayNode);
 					_this.onChange(); 
 					$(_this).trigger('change');
