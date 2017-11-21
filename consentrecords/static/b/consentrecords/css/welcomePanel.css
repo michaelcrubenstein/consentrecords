@@ -17,65 +17,9 @@ panel.welcome p.body {
 	margin-right: 10px;
 }
 
-panel.welcome svg.chevron {
-	height: 20px;
-	width: 12px;
-	fill: #2c55CC;
-}
-
-panel.welcome div svg.chevron path {
-	fill: transparent;
-	stroke-width: 3px;
-}
-
 panel.welcome-info {
 	background: white;
 }
-
-/*
-panel.welcome p {
-	margin-top: 10px;
-	margin-left: 10px;
-	margin-right: 10px;
-}
-
-panel.welcome p.heading1 {
-	font-weight: bold;
-}
-
-panel.welcome p.title {
-	font-weight: bold;
-	font-size: 1.4em;
-	text-align: center;
-	padding-top: 0.5em;
-	padding-bottom: 0.2em;
-}
-
-panel.welcome p.center {
-	text-align: center;
-}
-
-panel.welcome p.indent1 {
-	margin-left: 30px;
-}
-
-panel.welcome p.indent2 {
-	margin-left: 40px;
-	font-size: 0.9em;
-}
-
-panel.welcome p.indent3 {
-	margin-left: 50px;
-}
-
-panel.welcome p.indent4 {
-	margin-left: 60px;
-}
-
-panel.welcome p.indent5 {
-	margin-left: 70px;
-}
-*/
 
 panel.welcome div.summary {
 	width: 100%;
@@ -131,6 +75,22 @@ panel.welcome div.prompts>div.scrollArea>panel:last-child {
 	border: none;
 	box-shadow: none;
 	background-color: transparent;
+}
+
+div.startup {
+	position: absolute;
+	top: 20%;
+	bottom: 0px;
+	width: calc(100% - 2.8em);
+	margin-left: 0.7em;
+	overflow-x: hidden;
+	overflow-y: hidden;
+}
+
+div.startup > img {
+	position: relative;
+	max-width: 60%;
+	max-height: 60%;
 }
 
 panel.welcome div.prompts section.tags {
