@@ -1457,6 +1457,32 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
+	NewExperiencePanel.prototype.checkCommentInput = function()
+	{
+		if (!this.controller().oldInstance())
+		{
+			var text = this.commentInputNode.value;
+			var comments = this.controller().newInstance().comments();
+			if (text)
+			{
+				if (comments.length == 0)
+				{
+					var newComment = new cr.Comment();
+					newComment.text(text);
+					comments.push(newComment);
+				}
+				else
+				{
+					comments[0].text(text);
+				}
+			}
+			else if (this.controller.newInstance().comments().length > 0)
+			{
+				comments[0].deleteData();
+			}
+		}
+	}
+	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
 	NewExperiencePanel.prototype.onFocusInOtherInput = function(newReveal, done)
 	{
@@ -1509,6 +1535,11 @@ var NewExperiencePanel = (function () {
 		{
 			this.endHidable.hideWheel(done);
 			return true;
+		}
+		else if (document.activeElement == this.commentInputNode)
+		{
+			this.checkCommentInput();
+			return false;
 		}
 		else
 			return false;
@@ -1753,6 +1784,13 @@ var NewExperiencePanel = (function () {
 		
 			this.optionPanel.append('label')
 				.text(this.timeframeLabel);
+				
+			function completeTimeframeButtonClick()
+			{
+				$(startDateWheel).trigger('change');
+				_this.setDateRangeLabels();
+				_this.checkTimeframe();
+			}
 
 			var buttonDiv = this.optionPanel.append('div');
 			this.previousExperienceButton = buttonDiv.append('button')
@@ -1764,9 +1802,7 @@ var NewExperiencePanel = (function () {
 						_this.previousExperienceButton.classed('pressed', true);
 					
 						startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
-						$(startDateWheel).trigger('change');
-						_this.setDateRangeLabels();
-						_this.checkTimeframe();
+						completeTimeframeButtonClick();
 					})
 				.text(this.previousExperienceLabel);
 		
@@ -1779,9 +1815,7 @@ var NewExperiencePanel = (function () {
 						_this.currentExperienceButton.classed('pressed', true);
 					
 						startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
-						$(startDateWheel).trigger('change');
-						_this.setDateRangeLabels();
-						_this.checkTimeframe();
+						completeTimeframeButtonClick();
 					})
 				.text(this.currentExperienceLabel);
 		
@@ -1794,9 +1828,7 @@ var NewExperiencePanel = (function () {
 						_this.goalButton.classed('pressed', true);
 					
 						setGoalStartDateRange();
-						$(startDateWheel).trigger('change');
-						_this.setDateRangeLabels();
-						_this.checkTimeframe();
+						completeTimeframeButtonClick();
 					})
 				.text(this.goalLabel);
 			
@@ -2012,10 +2044,35 @@ var NewExperiencePanel = (function () {
 			.append('div');
 		label = tagsTopContainer.append('label')
 			.append('span')
-			.text('Offering Tags:');
+			.text("Offering Tags:");
 		
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
+			
+		/* The initial comment section. */
+		if (!experienceController.oldInstance())
+		{
+			commentContainer = panel2Div.append('section')
+				.classed('cell comment', true);
+				
+			this.commentInputNode = commentContainer.append('textarea')
+				.attr('placeholder', "Comment")
+				.node();
+			
+			$(this.commentInputNode).on('input', function(eventObject)
+				{
+					this.style.height = 0;
+					this.style.height = (this.scrollHeight) + 'px';
+					this.parentNode.style.height = this.style.height;
+					if (eventObject)
+						eventObject.stopPropagation();
+				})
+				.on('focusout', function(eventObject)
+				{
+					_this.checkCommentInput();
+				});
+			$(this.commentInputNode).trigger('input');
+		}
 		
 		function setGoalStartDateRange()
 		{
