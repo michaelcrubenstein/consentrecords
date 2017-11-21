@@ -108,20 +108,23 @@ var PromptPanel = (function() {
 		}
 	}
 	
-	function PromptPanel(sitePanel, container, title, placeholder, timeframe)
+	PromptPanel.prototype.appendTagPoolSection = function()
 	{
+		var controller = new FirstExperienceController();
+		controller.newInstance().timeframe(this.timeframe);
+		
 		var _this = this;
-		this.div = container.append('panel');
 		this.titleDiv = this.div.append('div')
 			.classed('title', true)
-			.text(title);
-		
-		var controller = new FirstExperienceController();
-		controller.newInstance().timeframe(timeframe);
+			.text(this.title)
+			.style('opacity', 0);
+		$(this.titleDiv.node()).animate({opacity: 1}, {duration: 700});
 		
 		this.tagPoolSection = new WelcomeTagPoolSection(this.div, controller, "", WelcomeTagSearchView);
-		this.tagPoolSection.appendTag(null, placeholder);
+		this.tagPoolSection.appendTag(null, this.placeholder);
 		var inputTag = this.tagPoolSection.tagsContainer.select('input.tag').attr('readonly', 'readonly');
+		inputTag.style('opacity', 0);
+		$(inputTag.node()).animate({opacity: 1}, {duration: 700});
 		this.clearButton = this.tagPoolSection.tagsContainer.append('span')
 			.classed('remove-tag', true)
 			.text(crv.buttonTexts.deletemark)
@@ -149,7 +152,6 @@ var PromptPanel = (function() {
 		}
 		$(this.tagPoolSection).on('tagsChanged.cr', this.div, tagsChanged);
 		
-
 		var tagsFocused = function()
 			{
 				try
@@ -168,6 +170,33 @@ var PromptPanel = (function() {
 					$(_this.tagPoolSection).off('tagsChanged.cr', tagsChanged);
 					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
 				});
+		
+		var startupImageNode = this.startupImage.node();
+		return $.when(this.tagPoolSection.fillTags(),
+					  $(startupImageNode).animate({top: $(startupImageNode.parentNode).innerHeight()},
+					  							  {duration: 700})
+					  	  .promise()
+					  	  .then(function()
+					  			{
+					  				$(startupImageNode.parentNode).remove();
+					  			})
+					  );
+	}
+	
+	function PromptPanel(sitePanel, container, title, placeholder, timeframe)
+	{
+		var _this = this;
+		this.div = container.append('panel');
+		this.title = title;
+		this.placeholder = placeholder;
+		this.timeframe = timeframe;
+		
+		var startupContainer = this.div.append('div')
+			.classed('startup', true);
+		this.startupImage = startupContainer.append('img')
+			.classed('startup', true)
+			.attr('src', logoPath);
+
 		$(this.div.node()).on('click', function()
 					{
 						sitePanel.hideSignup();
@@ -366,7 +395,8 @@ var WelcomePanel = (function () {
 			
 		this.promptPanels.forEach(function(pp)
 			{
-				pp.tagPoolSection.searchView.layoutFlags(undefined, 0);
+				if (pp.tagPoolSection)
+					pp.tagPoolSection.searchView.layoutFlags(undefined, 0);
 			});
 			
 		$(lastChild)
@@ -434,39 +464,37 @@ var WelcomePanel = (function () {
 		this.currentPromptIndex = 0;
 		this.promptScrollArea.append('panel');
 		
-		var expandPromptPanel = function()
-			{
-				_this.hideSummary();
-			}
-		
-		this.promptPanels.forEach(function(pp)
-			{
-				var $div = $(pp.div.node());
-				$div.on('click', function()
-				{
-					if (this != _this.currentPromptPanelNode())
-					{
-						var newLeft = parseInt($(this).css('left')) - 2 * _this.promptMargin();
-						_this.showSummary();
-						$(_this.promptScrollArea.node()).animate({scrollLeft: newLeft},
-							{duration: 400}).promise();
-					}
-				});
-				
-				$(pp.tagPoolSection).on('tagsFocused.cr', expandPromptPanel);
-			});
-		
 		var currentPromptPanel = this.promptPanels[this.currentPromptIndex];
-		currentPromptPanel.tagPoolSection.fillTags()
+		
+		ServiceFlagController.controllersPromise()
 			.then(function()
 				{
 					promises = [];
+					
+					var expandPromptPanel = function()
+						{
+							_this.hideSummary();
+						}
+		
 					for (var i = 0; i < _this.promptPanels.length; ++i)
 					{
-						if (i != _this.currentPromptIndex)
+						var pp = _this.promptPanels[i];
+						
+						var $div = $(pp.div.node());
+						$div.on('click', function()
 						{
-							promises.push(_this.promptPanels[i].tagPoolSection.fillTags());
-						}
+							if (this != _this.currentPromptPanelNode())
+							{
+								var newLeft = parseInt($(this).css('left')) - 2 * _this.promptMargin();
+								_this.showSummary();
+								$(_this.promptScrollArea.node()).animate({scrollLeft: newLeft},
+									{duration: 400}).promise();
+							}
+						});
+				
+						$(pp.tagPoolSection).on('tagsFocused.cr', expandPromptPanel);
+						
+						promises.push(pp.appendTagPoolSection());
 					}
 					return $.when.apply(null, promises)
 						.then(function()
@@ -821,23 +849,13 @@ var WelcomePanel = (function () {
 			
 		$(this.node()).one('revealing.cr', function()
 			{
-				/* Set up scrolling in a timeout after the scrolling caused by the
-					above code is handled. 
-				 */
-				setTimeout(function()
+				$(_this.promptScrollArea.node()).on('scroll', _this._getLeftAlignmentFunction(function()
 					{
-						for (i = 0; i < _this.promptPanels.length; ++i)
+					}))
+					.on('mousedown', function()
 						{
-							_this.promptPanels[i].fillTags();
-						}
-						$(_this.promptScrollArea.node()).on('scroll', _this._getLeftAlignmentFunction(function()
-							{
-							}))
-							.on('mousedown', function()
-								{
-									_this.startPromptPanelNode = _this.currentPromptPanelNode();
-								});
-					})
+							_this.startPromptPanelNode = _this.currentPromptPanelNode();
+						});
 			});
 	}
 	
