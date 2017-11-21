@@ -293,6 +293,8 @@ var TagPoolView = (function () {
 							flagSets[0].push(fd);
 						else
 							flagSets[3].push(fd);
+						if (fd.outerWidth === undefined)
+							fd.outerWidth = $(this).outerWidth();
 					}
 				});
 		}
@@ -301,7 +303,11 @@ var TagPoolView = (function () {
 			g.each(function(fd)
 				{
 					if (fd.visible === undefined || fd.visible)
+					{
 						flagSets[3].push(fd);
+						if (fd.outerWidth === undefined)
+							fd.outerWidth = $(this).outerWidth();
+					}
 				});
 		}
 		
@@ -623,8 +629,6 @@ var TagPoolView = (function () {
 			.each(function(d)
 				{
 					PathGuides.fillNode(this, d.getColumn());
-					if (d.outerWidth === undefined)
-						d.outerWidth = $(this).outerWidth();
 				});
 	}
 	
