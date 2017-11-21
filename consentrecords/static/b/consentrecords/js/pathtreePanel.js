@@ -474,6 +474,7 @@ var PathView = (function() {
 	
 	PathView.prototype.showCommentsPanel = function(flag, fd)
 	{
+		var _this = this;
 		if (prepareClick('click', 'show experience comments: ' + fd.getDescription()))
 		{
 			try
