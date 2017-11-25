@@ -125,6 +125,7 @@ var PromptPanel = (function() {
 		var inputTag = this.tagPoolSection.tagsContainer.select('input.tag').attr('readonly', 'readonly');
 		inputTag.style('opacity', 0);
 		$(inputTag.node()).animate({opacity: 1}, {duration: 700});
+		
 		this.clearButton = this.tagPoolSection.tagsContainer.append('span')
 			.classed('remove-tag', true)
 			.text(crv.buttonTexts.deletemark)
@@ -171,14 +172,13 @@ var PromptPanel = (function() {
 					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
 				});
 		
-		var startupImageNode = this.startupImage.node();
 		return $.when(this.tagPoolSection.fillTags(),
-					  $(startupImageNode).animate({top: $(startupImageNode.parentNode).innerHeight()},
+					  $(this.startupImageNode).animate({top: $(this.startupImageNode.parentNode).innerHeight()},
 					  							  {duration: 700})
 					  	  .promise()
 					  	  .then(function()
 					  			{
-					  				$(startupImageNode.parentNode).remove();
+					  				$(_this.startupImageNode.parentNode).remove();
 					  			})
 					  );
 	}
@@ -193,10 +193,20 @@ var PromptPanel = (function() {
 		
 		var startupContainer = this.div.append('div')
 			.classed('startup', true);
-		this.startupImage = startupContainer.append('img')
-			.classed('startup', true)
-			.attr('src', logoPath);
-
+			
+		setTimeout(function()
+			{
+				var logoPath = staticPath + 'consentrecords/svg/logoface.svg';
+				xhr = new XMLHttpRequest();
+				xhr.open("GET",logoPath,false);
+				// Following line is just to be on the safe side;
+				// not needed if your server delivers SVG with correct MIME type
+				xhr.overrideMimeType("image/svg+xml");
+				xhr.send("");
+				_this.startupImageNode = startupContainer.node()
+				  .appendChild(xhr.responseXML.documentElement);
+		  });
+		
 		$(this.div.node()).on('click', function()
 					{
 						sitePanel.hideSignup();
