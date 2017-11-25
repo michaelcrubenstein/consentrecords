@@ -87,10 +87,37 @@ div.startup {
 	overflow-y: hidden;
 }
 
-div.startup > img {
+div.startup > svg {
 	position: relative;
 	max-width: 60%;
 	max-height: 60%;
+}
+
+@-moz-keyframes roll-eyes {
+  0%  {-moz-transform: translateY(-25px)}
+  25%  {-moz-transform: translate(5px, -20px)}
+  75%  {-moz-transform: translate(5px, -5px)}
+  100% {-moz-transform: translateY(0)}
+}
+
+@-webkit-keyframes roll-eyes {
+  0%  {-webkit-transform: translateY(-25px)}
+  25%  {-webkit-transform: translate(5px, -20px)}
+  75%  {-webkit-transform: translate(5px, -5px)}
+  100% {-webkit-transform: translateY(0)}
+}
+
+@keyframes roll-eyes {
+  0%  {transform: translateY(-25px)}
+  25%  {transform: translate(5px, -20px)}
+  75%  {transform: translate(5px, -5px)}
+  100% {transform: translateY(0)}
+}
+
+div.startup > svg circle {
+  -moz-animation: roll-eyes 1s linear;
+  -webkit-animation: roll-eyes 1s linear;
+  animation: roll-eyes 1s linear;
 }
 
 panel.welcome div.prompts section.tags {
