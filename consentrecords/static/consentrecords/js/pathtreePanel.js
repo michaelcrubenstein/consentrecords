@@ -752,14 +752,14 @@ var PathView = (function() {
 				if (needLine)
 					_this.yearGroup.append('line')
 						.attr('x1', _this.yearTextX)
-						.attr('y1', (_this.experienceGroupDY + (years[keyI].y - 1.3)) * _this.emToPX)
+						.attr('y1', "{0}em".format(_this.experienceGroupDY + (years[keyI].y - 1.3)))
 						.attr('x2', _this.yearTextX2)
-						.attr('y2', (_this.experienceGroupDY + (years[keyI].y - 1.3)) * _this.emToPX)
+						.attr('y2', "{0}em".format(_this.experienceGroupDY + (years[keyI].y - 1.3)))
 						.attr('stroke', '#CCC');
 				_this.yearGroup.append('text')
 					.text(years[keyI].text)
 					.attr('x', _this.yearTextX)
-					.attr('y', (_this.experienceGroupDY + years[keyI].y) * _this.emToPX);
+					.attr('y', "{0}em".format(_this.experienceGroupDY + years[keyI].y));
 				lastText = years[keyI].text;
 				needLine = false;
 			}
