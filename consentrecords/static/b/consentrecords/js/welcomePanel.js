@@ -838,10 +838,6 @@ var WelcomePanel = (function () {
 									onPathwayCreated(pathwayPanel);
 							});
 						return promise;
-					})
-				.then(function()
-					{
-						pathwayPanel.checkShowIdeas();
 					});
 			
 		};
