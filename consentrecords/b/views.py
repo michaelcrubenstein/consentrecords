@@ -181,11 +181,6 @@ def showCommentPrompts(request):
     return showRootItems(request, language, 'Comment Prompts', 'CommentPromptsPanel')
 
 @ensure_csrf_cookie
-def showExperiencePrompts(request):
-    language = request.GET.get('language', 'en')
-    return showRootItems(request, language, 'Experience Prompts', 'ExperiencePromptsPanel')
-
-@ensure_csrf_cookie
 def showOrganizations(request):
     language = request.GET.get('language', 'en')
     return showRootItems(request, language, 'Organizations', 'OrganizationsPanel')

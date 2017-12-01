@@ -198,11 +198,6 @@ def showCommentPrompts(request):
     return showRootItems(request, language, 'Comment Prompts', 'CommentPromptsPanel')
 
 @ensure_csrf_cookie
-def showExperiencePrompts(request):
-    language = request.GET.get('language', 'en')
-    return showRootItems(request, language, 'Experience Prompts', 'ExperiencePromptsPanel')
-
-@ensure_csrf_cookie
 def showOrganizations(request):
     language = request.GET.get('language', 'en')
     return showRootItems(request, language, 'Organizations', 'OrganizationsPanel')
@@ -761,13 +756,6 @@ class api:
                     newIDs = {}
                     for d in changes['comment prompts']:
                         RootInstance.parseUpdateData(d, CommentPrompt, context, newIDs)
-                    results = {'new IDs': newIDs}
-                elif 'experience prompts' in changes:
-                    if not context.is_administrator:
-                        raise PermissionDenied("write permission failed")
-                    newIDs = {}
-                    for d in changes['experience prompts']:
-                        RootInstance.parseUpdateData(d, ExperiencePrompt, context, newIDs)
                     results = {'new IDs': newIDs}
                 else:
                     raise ValueError('root object changes are unrecognized: %s' % str(changes))
