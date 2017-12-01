@@ -1915,6 +1915,7 @@ class Experience(ChildInstance, dbmodels.Model):
     start = dbmodels.CharField(max_length=10, db_index=True, null=True)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    era = dbmodels.IntegerField(null=True)
     
     fieldMap = {'custom organization': 'customOrganization',
                 'custom site': 'customSite',
@@ -1946,11 +1947,11 @@ class Experience(ChildInstance, dbmodels.Model):
         elif 'currentServices' in self.__dict__ and len(self.currentServices) > 0:
             return str(self.currentServices[0].service)
         elif 'currentCustomServices' in self.__dict__ and len(self.currentCustomServices) > 0:
-        	return str(self.currentCustomServices[0])
+            return str(self.currentCustomServices[0])
         elif len(self.services.all()) > 0:
             return str(self.services.all()[0].service)
         elif len(self.customServices.all()) > 0:
-        	return str(self.customServices.all()[0])
+            return str(self.customServices.all()[0])
         else:
             return 'Unnamed Experience'
     
@@ -2103,6 +2104,12 @@ class Experience(ChildInstance, dbmodels.Model):
                                  start = _orNone(data, 'start'),
                                  end = _orNone(data, 'end'),
                                 )
+        
+        if newItem.timeframe:
+            newItem.era = 1 if newItem.timeframe == 'Previous' \
+                     else 2 if newItem.timeframe == 'Current' \
+                     else 3 if newItem.timeframe == 'Goal' else None
+            newItem.save()
         if newItem.engagement and newItem.engagement.parent.parent != newItem.offering:
             newItem.offering = newItem.engagement.parent.parent
             newItem.save()
@@ -2149,7 +2156,8 @@ class Experience(ChildInstance, dbmodels.Model):
                                              engagement=self.engagement,
                                              start=self.start,
                                              end=self.end,
-                                             timeframe=self.timeframe)
+                                             timeframe=self.timeframe,
+                                             era = self.era)
         
     def revert(self, h):
         self.organization = h.organization 
@@ -2162,6 +2170,7 @@ class Experience(ChildInstance, dbmodels.Model):
         self.start = h.start 
         self.end = h.end 
         self.timeframe = h.timeframe 
+        self.era = h.era 
     
     @property
     def dataString(self):
@@ -2238,6 +2247,9 @@ class Experience(ChildInstance, dbmodels.Model):
             if 'timeframe' in changes and changes['timeframe'] != self.timeframe:
                 history = history or self.buildHistory(context)
                 self.timeframe = changes['timeframe']
+                self.era = 1 if self.timeframe == 'Previous' \
+                      else 2 if self.timeframe == 'Current' \
+                      else 3 if self.timeframe == 'Goal' else None
         
             self.updateChildren(changes, 'services', context, ExperienceService, self.services, newIDs)
             self.updateChildren(changes, 'custom services', context, ExperienceCustomService, self.customServices, newIDs)
@@ -2285,6 +2297,7 @@ class ExperienceHistory(dbmodels.Model):
     start = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    era = dbmodels.IntegerField(null=True, editable=False)
 
     @property
     def dataString(self):
