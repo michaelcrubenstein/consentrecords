@@ -39,7 +39,6 @@ urlpatterns = [
     url(r'^user/passwordreset/([A-Fa-f0-9]{32})/', views.passwordReset),
 
     url(r'^commentprompts/', views.showCommentPrompts),
-    url(r'^experienceprompts/', views.showExperiencePrompts),
     url(r'^organizations/', views.showOrganizations),
     url(r'^services/', views.showServices),
     url(r'^users/', views.showUsers),

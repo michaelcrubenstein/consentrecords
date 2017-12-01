@@ -45,7 +45,6 @@ urlpatterns = [
     url(r'^experience/([^/]+)/', views.showExperience),
 
     url(r'^commentprompts/', views.showCommentPrompts),
-    url(r'^experienceprompts/', views.showExperiencePrompts),
     url(r'^organizations/', views.showOrganizations),
     url(r'^services/', views.showServices),
     url(r'^users/', views.showUsers),

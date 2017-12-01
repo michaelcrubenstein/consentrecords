@@ -263,31 +263,6 @@ class CommentPromptTextAdmin(ModelAdmin):
         
 admin.site.register(CommentPromptText, CommentPromptTextAdmin)
 
-class DisqualifyingTagHistoryInline(TabularInline):
-    model = DisqualifyingTagHistory
-    list_display = ('id', 't_creationTime', 'service')
-    fieldsets = (
-        (None, {'fields': ('id', 't_creationTime', 'service')}),
-    )
-    readonly_fields = ('id', 't_creationTime', 'service')
-
-    ordering = ['transaction__creation_time']
-    show_change_link = True
-    fk_name = 'instance'
-
-class DisqualifyingTagAdmin(ModelAdmin):
-    list_display = ('id', 'parent', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('parent', 'parent_id', 'id', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
-    )
-    readonly_fields = ('parent', 'parent_id', 'id', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'service', 'service__id', 'service__names__text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
-
-    ordering = ['service__names__text', 'transaction__creation_time']
-    inlines = [DisqualifyingTagHistoryInline]
-        
-admin.site.register(DisqualifyingTag, DisqualifyingTagAdmin)
-
 class EngagementHistoryInline(TabularInline):
     model = EngagementHistory
     list_display = ('id', 't_creationTime', 'user', 'start', 'end')
@@ -398,109 +373,6 @@ class ExperienceAdmin(ModelAdmin):
     inlines = [ExperienceHistoryInline, ExperienceServiceInline, ExperienceCustomServiceInline, CommentInline]
         
 admin.site.register(Experience, ExperienceAdmin)
-
-class ExperiencePromptHistoryInline(TabularInline):
-    model = ExperiencePromptHistory
-    list_display = ('id', 't_creationTime', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe')
-    fieldsets = (
-        (None, {'fields': ('id', 't_creationTime', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe')}),
-    )
-    readonly_fields = ('id', 't_creationTime', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe')
-
-    ordering = ['transaction__creation_time']
-    show_change_link = True
-    fk_name = 'instance'
-
-class DisqualifyingTagInline(TabularInline):
-    model = DisqualifyingTag
-    list_display = ('id', 'service', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'service', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'service', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['transaction__creation_time']
-    show_change_link = True
-    fk_name = 'parent'
-    
-class ExperiencePromptServiceInline(TabularInline):
-    model = ExperiencePromptService
-    list_display = ('id', 'service', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'service', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'service', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['transaction__creation_time']
-    show_change_link = True
-    fk_name = 'parent'
-    
-class ExperiencePromptTextInline(NameInline):
-    model = ExperiencePromptText
-    
-class ExperiencePromptAdmin(ModelAdmin):
-    list_display = ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'name', 'organization__id', 'organization__names__text', 
-                     'site__id', 'site__names__text', 'offering__id', 'offering__names__text', 
-                     'domain__id', 'domain__names__text', 'stage', 'timeframe', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
-
-    ordering = ['name', 'transaction__creation_time']
-    inlines = [ExperiencePromptHistoryInline, DisqualifyingTagInline, ExperiencePromptServiceInline, ExperiencePromptTextInline]
-        
-admin.site.register(ExperiencePrompt, ExperiencePromptAdmin)
-
-class ExperiencePromptServiceHistoryInline(TabularInline):
-    model = ExperiencePromptServiceHistory
-    list_display = ('id', 't_creationTime', 'service')
-    fieldsets = (
-        (None, {'fields': ('id', 't_creationTime', 'service')}),
-    )
-    readonly_fields = ('id', 't_creationTime', 'service')
-
-    ordering = ['transaction__creation_time']
-    show_change_link = True
-    fk_name = 'instance'
-
-class ExperiencePromptServiceAdmin(ModelAdmin):
-    list_display = ('id', 'parent', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('parent', 'parent_id', 'id', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
-    )
-    readonly_fields = ('parent', 'parent_id', 'id', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'service', 'service__id', 'service__names__text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
-
-    ordering = ['service__names__text', 'transaction__creation_time']
-    inlines = [ExperiencePromptServiceHistoryInline]
-        
-admin.site.register(ExperiencePromptService, ExperiencePromptServiceAdmin)
-
-class ExperiencePromptTextHistoryInline(TabularInline):
-    model = ExperiencePromptTextHistory
-    list_display = ('id', 'languageCode', 't_creationTime', 'text')
-    fieldsets = (
-        (None, {'fields': ('id', 'languageCode', 't_creationTime', 'text')}),
-    )
-    readonly_fields = ('id', 'languageCode', 't_creationTime', 'text')
-
-    ordering = ['languageCode', 'transaction__creation_time']
-    show_change_link = True
-    fk_name = 'instance'
-
-class ExperiencePromptTextAdmin(ModelAdmin):
-    list_display = ('id', 'languageCode', 'text', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
-    )
-    readonly_fields = ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
-
-    inlines = [ExperiencePromptTextHistoryInline]
-        
-admin.site.register(ExperiencePromptText, ExperiencePromptTextAdmin)
 
 class ExperienceCustomServiceHistoryInline(TabularInline):
     model = ExperienceCustomServiceHistory
@@ -1799,97 +1671,6 @@ class TransactionPeriodHistoryInline(PeriodHistoryInline):
     verbose_name = 'Period History'
     verbose_name_plural = 'Period Histories'
 
-class LastModifiedExperiencePromptInline(TabularInline):
-    model = ExperiencePrompt
-    list_display = ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'name', 'organization__id', 'organization__names__text', 
-                     'site__id', 'site__names__text', 'offering__id', 'offering__names__text', 
-                     'domain__id', 'domain__names__text', 'stage', 'timeframe', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
-
-    fk_name = 'lastTransaction'
-    verbose_name = 'Last Modified Experience Prompt'
-    verbose_name_plural = 'Last Modified Experience Prompts'
-    ordering = ['name', 'transaction__creation_time']
-        
-class CreatedExperiencePromptInline(LastModifiedExperiencePromptInline):
-    fk_name = 'transaction'
-    verbose_name = 'Created Experience Prompt'
-    verbose_name_plural = 'Created Experience Prompts'
-
-class DeletedExperiencePromptInline(LastModifiedExperiencePromptInline):
-    fk_name = 'deleteTransaction'
-    verbose_name = 'Deleted Experience Prompt'
-    verbose_name_plural = 'Deleted Experience Prompts'
-
-class TransactionExperiencePromptHistoryInline(ExperiencePromptHistoryInline):
-    fk_name = 'transaction'
-    verbose_name = 'Experience Prompt History'
-    verbose_name_plural = 'Experience Prompt Histories'
-
-class CreatedExperiencePromptTextInline(ExperiencePromptTextInline):
-    fk_name = 'transaction'
-    verbose_name = 'Created Experience Prompt Text'
-    verbose_name_plural = 'Created Experience Prompt Texts'
-
-class LastModifiedExperiencePromptTextInline(ExperiencePromptTextInline):
-    fk_name = 'lastTransaction'
-    verbose_name = 'Last Modified Experience Prompt Text'
-    verbose_name_plural = 'Last Modified Experience Prompt Texts'
-
-class DeletedExperiencePromptTextInline(ExperiencePromptTextInline):
-    fk_name = 'deleteTransaction'
-    verbose_name = 'Deleted Experience Prompt Text'
-    verbose_name_plural = 'Deleted Experience Prompt Texts'
-
-class TransactionExperiencePromptTextHistoryInline(ExperiencePromptTextHistoryInline):
-    fk_name = 'transaction'
-    verbose_name = 'Experience Prompt Text History'
-    verbose_name_plural = 'Experience Prompt Text Histories'
-
-class CreatedExperiencePromptServiceInline(ExperiencePromptServiceInline):
-    fk_name = 'transaction'
-    verbose_name = 'Created Experience Prompt Service'
-    verbose_name_plural = 'Created Experience Prompt Services'
-
-class LastModifiedExperiencePromptServiceInline(ExperiencePromptServiceInline):
-    fk_name = 'lastTransaction'
-    verbose_name = 'Last Modified Experience Prompt Service'
-    verbose_name_plural = 'Last Modified Experience Prompt Services'
-
-class DeletedExperiencePromptServiceInline(ExperiencePromptServiceInline):
-    fk_name = 'deleteTransaction'
-    verbose_name = 'Deleted Experience Prompt Service'
-    verbose_name_plural = 'Deleted Experience Prompt Services'
-
-class TransactionExperiencePromptServiceHistoryInline(ExperiencePromptServiceHistoryInline):
-    fk_name = 'transaction'
-    verbose_name = 'Experience Prompt Service History'
-    verbose_name_plural = 'Experience Prompt Service Histories'
-
-class CreatedDisqualifyingTagInline(DisqualifyingTagInline):
-    fk_name = 'transaction'
-    verbose_name = 'Created Disqualifying Tag'
-    verbose_name_plural = 'Created Disqualifying Tags'
-
-class LastModifiedDisqualifyingTagInline(DisqualifyingTagInline):
-    fk_name = 'lastTransaction'
-    verbose_name = 'Last Modified Disqualifying Tag'
-    verbose_name_plural = 'Last Modified Disqualifying Tags'
-
-class DeletedDisqualifyingTagInline(DisqualifyingTagInline):
-    fk_name = 'deleteTransaction'
-    verbose_name = 'Deleted Disqualifying Tag'
-    verbose_name_plural = 'Deleted Disqualifying Tags'
-
-class TransactionDisqualifyingTagHistoryInline(DisqualifyingTagHistoryInline):
-    fk_name = 'transaction'
-    verbose_name = 'Disqualifying Tag History'
-    verbose_name_plural = 'Disqualifying Tag Histories'
-
 class LastModifiedUserInline(TabularInline):
     model = User
 
@@ -2174,10 +1955,6 @@ class TransactionAdmin(admin.ModelAdmin):
                DeletedEnrollmentInline, 
                DeletedInquiryInline, 
                DeletedPeriodInline, 
-               DeletedExperiencePromptInline, 
-               DeletedExperiencePromptTextInline, 
-               DeletedExperiencePromptServiceInline, 
-               DeletedDisqualifyingTagInline, 
                DeletedUserInline, 
                DeletedUserEmailInline, 
                DeletedUserUserGrantRequestInline, 
@@ -2216,10 +1993,6 @@ class TransactionAdmin(admin.ModelAdmin):
                CreatedEnrollmentInline, LastModifiedEnrollmentInline, TransactionEnrollmentHistoryInline,
                CreatedInquiryInline, LastModifiedInquiryInline, TransactionInquiryHistoryInline,
                CreatedPeriodInline, LastModifiedPeriodInline, TransactionPeriodHistoryInline,
-               CreatedExperiencePromptInline, LastModifiedExperiencePromptInline, TransactionExperiencePromptHistoryInline,
-               CreatedExperiencePromptTextInline, LastModifiedExperiencePromptTextInline, TransactionExperiencePromptTextHistoryInline,
-               CreatedExperiencePromptServiceInline, LastModifiedExperiencePromptServiceInline, TransactionExperiencePromptServiceHistoryInline,
-               CreatedDisqualifyingTagInline, LastModifiedDisqualifyingTagInline, TransactionDisqualifyingTagHistoryInline,
                CreatedUserInline, LastModifiedUserInline, TransactionUserHistoryInline,
                CreatedUserEmailInline, LastModifiedUserEmailInline, TransactionUserEmailHistoryInline,
                CreatedUserUserGrantRequestInline, LastModifiedUserUserGrantRequestInline, TransactionUserUserGrantRequestHistoryInline,
