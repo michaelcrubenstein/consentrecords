@@ -152,6 +152,16 @@ class Migration(migrations.Migration):
             model_name='experienceprompttexthistory',
             name='transaction',
         ),
+        migrations.AddField(
+            model_name='experience',
+            name='era',
+            field=models.IntegerField(null=True),
+        ),
+        migrations.AddField(
+            model_name='experiencehistory',
+            name='era',
+            field=models.IntegerField(editable=False, null=True),
+        ),
         migrations.DeleteModel(
             name='DisqualifyingTag',
         ),
