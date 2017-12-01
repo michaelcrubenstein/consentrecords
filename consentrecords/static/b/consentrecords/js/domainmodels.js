@@ -8,4 +8,5 @@
 cr.urls.getData = '/api/';
 cr.urls.getUserID = '/local/getuserid/';
 cr.urls.updateValues = '/local/updatevalues/';
+cr.urls.serviceCounts='/servicecounts/';
 	
