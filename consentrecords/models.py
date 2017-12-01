@@ -2123,10 +2123,14 @@ class Experience(ChildInstance, dbmodels.Model):
             
         super(Experience, self).markDeleted(context)
     
+    def validateTimeframe(data, key):
+        validValues = ['Previous', 'Current', 'Goal']
+        _validateEnumeration(data, key, validValues)
+    
     def create(parent, data, context, newIDs={}):
         parent.checkCanWrite(context)
         
-        ExperiencePrompt.validateTimeframe(data, 'timeframe')
+        Experience.validateTimeframe(data, 'timeframe')
         _validateDate(data, 'start')
         _validateDate(data, 'end')
         if 'start' in data and 'end' in data and data['start'] > data['end']:
@@ -2228,7 +2232,7 @@ class Experience(ChildInstance, dbmodels.Model):
         history = None
 
         if context.canWrite(self):
-            ExperiencePrompt.validateTimeframe(changes, 'timeframe')
+            Experience.validateTimeframe(changes, 'timeframe')
             _validateDate(changes, 'start')
             _validateDate(changes, 'end')
             testStart = changes['start'] if 'start' in changes and changes['start'] else (self.start or "0000-00-00")
@@ -2655,10 +2659,6 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
             i.markDeleted(context)
         super(ExperiencePrompt, self).markDeleted(context)
 
-    def validateTimeframe(data, key):
-        validValues = ['Previous', 'Current', 'Goal']
-        _validateEnumeration(data, key, validValues)
-    
     def create(data, context, newIDs={}):
         if not context.is_administrator:
            raise PermissionDenied("write permission failed")
@@ -2666,7 +2666,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
         if 'name' not in data or not data['name']:
             raise ValueError('name of experience prompt is not specified')
         Service.validateStage(data, 'stage')
-        ExperiencePrompt.validateTimeframe(data, 'timeframe')
+        Experience.validateTimeframe(data, 'timeframe')
              
         newItem = ExperiencePrompt.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -2722,7 +2722,7 @@ class ExperiencePrompt(RootInstance, PublicInstance, dbmodels.Model):
         self.checkCanWrite(context)
         
         Service.validateStage(changes, 'stage')
-        ExperiencePrompt.validateTimeframe(changes, 'timeframe')
+        Experience.validateTimeframe(changes, 'timeframe')
 
         history = None
         if 'name' in changes and changes['name']:

@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import transaction, connection
-from django.db.models import F, Q, Prefetch
+from django.db.models import F, Q, Prefetch, Count
 from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render, redirect, render_to_response
 from django.template import RequestContext, loader
@@ -361,6 +361,39 @@ def userSettings(request):
     args['state'] = 'settings/'
         
     return HttpResponse(template.render(args))
+
+@ensure_csrf_cookie
+def wordclouds(request):
+    LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
+    
+    try:
+        template = loader.get_template(templateDirectory + 'wordclouds.html')
+        args = {
+            'user': request.user,
+            'urlprefix': urlPrefix,
+            'jsversion': settings.JS_VERSION,
+            'cdn_url': settings.CDN_URL,
+        }
+    
+        language = request.GET.get('language', 'en')
+        context = Context(language, request.user)
+    
+        if request.user.is_authenticated:
+            user = context.user
+            if not user:
+                return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+            args['userID'] = user.id.hex
+        
+        if settings.FACEBOOK_SHOW:
+            args['facebookIntegration'] = True
+    
+        args['state'] = 'wordclouds/'
+    
+        return HttpResponse(template.render(args))
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponseBadRequest(reason=str(e))
 
 @ensure_csrf_cookie
 def signup(request, email=None):

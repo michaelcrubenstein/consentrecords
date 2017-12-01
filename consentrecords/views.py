@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.db import transaction, connection
-from django.db.models import F, Q, Prefetch
+from django.db.models import F, Q, Prefetch, Count, Subquery, OuterRef, IntegerField
 from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render, redirect, render_to_response
 from django.template import RequestContext, loader
@@ -825,6 +825,63 @@ class api:
         
         return JsonResponse(results)
         
+    def serviceCounts(user, path, data):
+        try:
+            context = Context(data.get('language', 'en'), user)
+            
+            tokens = cssparser.tokenizeHTML(path or 'path')
+            qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+            if qs.count() == 0:
+                p = []
+            else:                            
+                ss = ExperienceImplication.objects.filter(experience__parent__in=qs)\
+                    .values('service')\
+                    .annotate(weight=Count('experience__parent', distinct=True))
+            
+                p = list(map(lambda s:{'id': s['service'].hex, 'weight': s['weight']}, ss))
+        
+            results = {'words': p}
+                
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("%s" % traceback.format_exc())
+            logger.error("serviceCounts path:%s" % str(path))
+            return HttpResponseBadRequest(reason=str(e))
+        
+        return JsonResponse(results)
+        
+    def followingCounts(user, path, servicePath, data):
+        try:
+            context = Context(data.get('language', 'en'), user)
+            
+            tokens = cssparser.tokenizeHTML(path or 'path')
+            qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+            if qs.count() == 0:
+                p = []
+            else:
+                tokens = cssparser.tokenizeHTML(servicePath)
+                serviceQS, tokens, serviceType, serviceAccessType = RootInstance.parse(tokens, context.user)
+                
+#                 startExperiences = \
+#                     ExperienceImplication.objects.filter(experience__parent__in=qs,
+#                         service__in=serviceQS)
+                        
+                ss = ExperienceImplication.objects.filter(experience__parent__in=qs)\
+                    .values('service')\
+                    .annotate(weight=Count('experience__parent', distinct=True))
+            
+                p = list(map(lambda s:{'id': s['service'].hex, 'weight': s['weight']}, ss))
+        
+            results = {'words': p}
+                
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("%s" % traceback.format_exc())
+            logger.error("serviceCounts path:%s" % str(path))
+            return HttpResponseBadRequest(reason=str(e))
+        
+        return JsonResponse(results)
+        
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
     def delete(user, path, data):
@@ -864,6 +921,9 @@ def getUserID(request):
     
     return api.getUserID(request.user, request.GET)
 
+def handleServiceCounts(request, urlPath=None):
+    return api.serviceCounts(request.user, urlPath, request.GET)
+    
 def handleURL(request, urlPath=None):
     if request.method == 'GET':
         return api.getData(request.user, urlPath, request.GET)

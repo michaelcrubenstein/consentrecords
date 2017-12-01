@@ -193,6 +193,27 @@ cr.getData = function(args)
 				cr.thenFail);
 	}
 
+cr.getServiceCounts = function(constraintPath)
+{
+	constraintPath = constraintPath !== undefined ? constraintPath : 'path';
+	
+	return $.getJSON(cr.urls.getData + constraintPath + '/servicecounts/')
+		.then(function(json)
+			{
+				try
+				{
+					return json.words;
+				}
+				catch(err)
+				{
+					var result = $.Deferred();
+					result.reject(err);
+					return result;
+				}
+			},
+			cr.thenFail);
+}
+
 /* Loads all of the elements of the specified cell within the specified object.
 	If the cellName is the name of an objectCell, fieldNames determines the sub-cells that
 	are also loaded at the same time.

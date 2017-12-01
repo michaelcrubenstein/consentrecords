@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="https://www.facebook.com/2008/fbml">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-title" content="PathAdvisor">
+
+	{% if fbURL %}
+    <meta property="og:url" content="{{fbURL}}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{fbTitle}}">
+    <meta property="og:description" content="{{fbDescription}}">
+    {% endif %}
+
+    <title>PathAdvisor</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+
+	<link href="{% static "jqcloud2/dist/jqcloud.min.css" %}?v={{jsversion}}" rel="stylesheet">
+	
+    <!-- Custom styles for this page -->
+    <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showFollowing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showSharing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/signup.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/welcomePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    
+    <link href="{% static "custom_user/css/formsimple.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
+
+    <style>
+    	.button-section {
+    		float: bottom;
+    	}
+    	.level-2-panel {
+    		top: 0;
+    		z-index: 2;
+    	}
+    	.level-3-panel {
+    		top: 0;
+    		z-index: 3;
+    	}
+    	.level-4-panel {
+    		top: 0;
+    		z-index: 4;
+    	}
+    	.centered-right-glyph {
+			position: absolute;
+			top: 50%;
+			-moz-transform: translateY(-50%);
+			-webkit-transform: translateY(-50%);
+			transform: translateY(-50%);
+			float: right;
+			right: 12px;
+	   	}
+	   	.centered-right-2 {	/* To the left of a centered-right-glyph */
+			width: auto;
+			float: right;
+			margin-right: 24px;
+			text-align: right;
+	   	}
+    	.option-label {
+    		margin-top: 15px;
+    		margin-left: 15px;
+    	}
+    	.option-item {
+    		margin-top: 15px;
+    		margin-left: 45px;
+    	}
+    	panel.session {
+    		background: white;
+    	}
+    	panel.session header {
+			width: 100%;
+			padding: 6px 12px;
+			text-align: left;
+			font-weight: bold;
+    	}
+    	panel.session .organization {
+    		margin-left: 12px;
+    		padding-bottom: 5px;
+    		border-bottom: 1px solid #eee;
+    	}
+    	panel.session .organization>label {
+    		font-weight: normal;
+    	}
+    	panel.session .address-line {
+    		margin-left: 0px;
+    		font-size: smaller;
+    	}
+    	panel.session .more-info {
+			overflow: hidden;
+			width: auto;
+			display: block;
+    		font-size: smaller;
+    		padding: 6px 12px;
+    	}
+    </style>
+	</head>
+	
+  	<body class="site-body">
+		{% if facebookIntegration %}
+  		<div id="fb-root"></div>
+		<script>
+		  window.fbAsyncInit = function() {
+			FB.init({
+			  appId      : '1503871976607590',
+			  status     : true,
+			  cookie     : true,
+			  xfbml      : true,
+			  version    : 'v2.5'
+			});
+		  };
+
+		  (function(d, s, id){
+			 var js, fjs = d.getElementsByTagName(s)[0];
+			 if (d.getElementById(id)) {return;}
+			 js = d.createElement(s); js.id = id;
+			 js.src = "//connect.facebook.net/en_US/sdk.js";
+			 fjs.parentNode.insertBefore(js, fjs);
+		   }(document, 'script', 'facebook-jssdk'));
+		</script>
+		{% endif %}
+		
+  		<panel id="wordcloud_panel" >
+		</panel>
+		
+<!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}?v={{jsversion}}"></script>
+  	</body>
+
+	<script src="{{cdn_url}}jquery/3.1.1/jquery.min.js"></script>
+	<script src="{{cdn_url}}spin.js/2.3.2/spin.min.js"></script>
+	<script src="{{cdn_url}}hammer.js/2.0.8/hammer.min.js"></script>
+	<script src="{{cdn_url}}jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="{{cdn_url}}twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="{{cdn_url}}jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="{{cdn_url}}d3/3.5.17/d3.min.js"></script>
+	<script src="{{cdn_url}}datejs/1.0/date.min.js"></script>
+	<script src="{{cdn_url}}clipboard.js/1.7.1/clipboard.min.js"></script>
+	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+	<script src="{% static "datejs/time.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "jqcloud2/dist/jqcloud.min.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/models.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/controllers.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/views.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/dateinput.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/dotsnavigator.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/findExperience.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/quickAddExperiencePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/searchPaths.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/comparePathsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/showFollowing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/showSharing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/signup.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/settings.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/welcomeOrganization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/welcomePanel.js" %}?v={{jsversion}}"></script>
+	
+	<!-- Scripts for this web page -->
+	<script type="text/JavaScript">
+		staticPath = '{% static "b/" %}';
+		jsVersionPathSuffix = '?v={{jsversion}}';
+		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}' + jsVersionPathSuffix;
+		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
+		notificationsImagePath = '{% static "b/consentrecords/png/notifications.png" %}' + jsVersionPathSuffix;
+		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
+		myPathwayImagePath = '{% static "b/consentrecords/png/mypathway.svg" %}' + jsVersionPathSuffix;
+		compareImagePath = '{% static "b/consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
+		inquiryImagePath = '{% static "b/consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
+		logoPath = '{% static "b/consentrecords/png/LOGO 1.png" %}' + jsVersionPathSuffix;
+		
+		function csrfSafeMethod(method) {
+			// these HTTP methods do not require CSRF protection
+			return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+		}
+		$.ajaxSetup({
+			beforeSend: function(xhr, settings) {
+				if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+					xhr.setRequestHeader("X-CSRFToken", $.cookie("csrftoken"));
+				}
+			}
+		});
+
+		window.onbeforeunload = function(event) {
+			event = event || window.event;
+			
+			if (event)
+				event.returnValue = "Leaving this page will leave the PathAdvisor web application.";
+			
+			// For Safari
+			return "Leaving this page will leave the PathAdvisor web application.";
+		};
+
+		function checkSignin(handleState)
+		{
+			if (prepareClick('checkSignin'))
+			{
+				var onSignin = function(eventObject)
+				{
+					this.off("signinCanceled.cr", onSigninCanceled);
+					var firstPanel = new HomePanel(cr.signedinUser, false);
+					firstPanel.pathtree.setUser(cr.signedinUser.path(), true)
+						.then(function()
+							{
+								handleState(firstPanel)
+							});
+					firstPanel.showUp();
+				};
+			
+				var onSigninCanceled = function(eventObject)
+				{
+					this.off("signin.cr", onSignin);
+					var firstPanel = new WelcomePanel();
+					firstPanel.showLeft();
+				}
+			
+				cr.signedinUser.one("signin.cr", null, onSignin);
+				cr.signedinUser.one("signinCanceled.cr", null, onSigninCanceled);
+			
+				var panel = new SigninPanel();
+				panel.showLeft().then(function()
+							{
+								panel.initializeFocus();
+								unblockClick();
+							});
+			}
+		}
+		
+		function decodeEntities(encodedString) {
+			var textArea = document.createElement('textarea');
+			textArea.innerHTML = encodedString;
+			return textArea.value;
+		}
+
+		function addToPathway(pathwayPanel)
+		{
+			var pathway = pathwayPanel.pathtree;
+			{% if organization %}var organizationName = decodeEntities("{{organization}}");
+			{% else %}var organizationName = null;
+			{% endif %}
+			{% if site %}var siteName = decodeEntities("{{site}}");
+			{% else %}var siteName = null;
+			{% endif %}
+			{% if offering %}var offeringName = decodeEntities("{{offering}}");
+			{% else %}var offeringName = null;
+			{% endif %}
+			{% if service %}var serviceName = decodeEntities("{{service}}");
+			var service;
+			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+				service = crp.getInstance(serviceName);
+			else
+				service = null;
+			{% else %}var serviceName = null;
+			{% endif %}
+	
+			var controller = pathwayPanel.createExperience();
+			var done = function(service)
+			{
+				var panel;
+				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
+				{
+					crp.promise({path: "offering/" + offeringName, 
+								 fields: ["parents"],
+								 resultType: cr.Offering}) 
+						.done(function(offerings)
+							{
+								if (offerings.length > 0)
+								{
+									if (offerings[0] instanceof cr.Offering)
+									{
+										controller.createFromOffering(offerings[0], [service]);
+										var panel = new NewExperiencePanel(controller);
+										panel.showUp();
+									}
+									else
+										cr.asyncFail("The specified offering does not appear to be an offering.");
+								}
+								else
+									cr.asyncFail("The specified offering does not exist or you do not have permission to view it.");
+							})
+						.fail(cr.asyncFail);
+				}
+				else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
+				{
+					crp.promise({path: "site/" + siteName, 
+								 fields: ["parents"],
+								 resultType: cr.Site})
+						.done(function(sites)
+							{
+								if (sites.length > 0)
+								{
+									if (sites[0] instanceof cr.Site)
+									{
+										controller.createFromSite(sites[0], [service]);
+										var panel = new NewExperiencePanel(controller);
+										panel.showUp();
+									}
+									else
+										cr.asyncFail("The specified site does not appear to be a site.");
+								}
+								else
+								{
+									cr.asyncFail("The specified site does not exist or you do not have permission to view it.");
+								}
+							})
+						.fail(cr.asyncFail);
+				}
+				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
+				{
+					crp.promise({path: "organization/" + organizationName, 
+					             fields: ["parents"],
+					             resultType: cr.Organization})
+						.done(function(organizations)
+							{
+								if (organizations.length > 0)
+								{
+									console.assert(organizations[0] instanceof cr.Organization);
+									controller.newInstance()
+										.organization(organizations[0])
+										.customSite(siteName)
+										.customOffering(offeringName);
+									controller.initPreviousDateRange()
+									if (serviceName)
+										controller.addService(service || serviceName);
+									var panel = new NewExperiencePanel(controller);
+									panel.showUp();
+								}
+								else
+									cr.asyncFail("The specified organization does not exist or you do not have permission to view it.");
+							})
+					.fail(cr.asyncFail);
+				}
+				else if (organizationName || siteName || offeringName)
+				{
+					controller
+						.customOrganization(organizationName)
+						.customSite(siteName)
+						.customOffering(offeringName)
+						.initPreviousDateRange();
+					if (serviceName)
+					    controller.addService(service || serviceName);
+					var panel = new NewExperiencePanel(controller);
+					panel.showUp();
+				}
+				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+				{
+					controller.createFromService(crp.getInstance(serviceName));
+					new NewExperiencePanel(controller).showUp();
+				}
+				else if (serviceName)
+				{
+					controller.addService(serviceName);
+					controller.initPreviousDateRange();
+
+					new NewExperiencePanel(controller, revealPanelUp)
+						.showUp();
+				}
+				else
+				{
+					controller.initPreviousDateRange();
+					new NewExperiencePanel(controller, revealPanelUp)
+						.showUp();
+				}
+			}
+			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+			{
+				crp.promise({path: "service/" + serviceName, fields: ["parents"],
+							 resultType: cr.Service})
+					.done(function(services)
+						{
+							if (services.length == 0)
+								cr.asyncFail(new Error("The specified tag does not exist or you do not have permission to view it."));
+							else
+							{
+								console.assert(services[0] instanceof cr.Service);
+								done(services[0]);
+							}
+						})
+					.fail(cr.asyncFail);
+			}
+			else if (serviceName)
+				done(serviceName);
+			else
+				done();
+		}
+		
+		function showWords(words, update)
+		{
+			words.forEach(function(w)
+				{
+					var service = crp.getInstance(w.id);
+					w.text = service.description();
+					w.color = service.getColor();
+					w.handlers = {click: filterPaths};
+					w.html={serviceID: w.id}
+				});
+			if (update)
+				{
+					$('#wordcloud_panel').jQCloud('update', words);
+				}
+			else
+			{
+				$('#wordcloud_panel').jQCloud(words,
+					{autoResize: true});
+			}
+		}
+		
+		function updateWords(words)
+		{
+			return showWords(words, true);
+		}
+		
+		function filterPaths()
+		{
+			return cr.getServiceCounts('path[experience>implication>service={0}]'.format(this.getAttribute('serviceID')))
+				.then(updateWords, cr.asyncFail);
+		}
+		
+		$(document).ready (function(e) {						
+			var firstPanel;
+			
+			cr.Service.servicesPromise()
+				.then(function(services)
+					{
+						return cr.getServiceCounts('path')
+							.then(showWords, cr.asyncFail);
+					},
+					cr.asyncFail);
+			
+			return;
+			
+			/* handleState is an asynchronous function called when the setup is ready to process it. */
+			/* needsSignin is a flag that determines if handling the state requires signin. */
+			var handleState = null;
+			var needsSignin = false;
+			{% if state %}
+			var stateString = "{{state}}"
+			if (stateString.startsWith("findNewExperience"))
+			{
+				stateString = stateString.substring("findNewExperience".length);
+				var serviceValueID = null;
+				var offeringString = null;
+				if (stateString.length > 0)
+				{
+					serviceValueID = stateString.substring(0, 32);
+					stateString = stateString.substring(32);
+					offeringString = stateString.substring(0, 32);
+					stateString = stateString.substring(32);
+				}
+				handleState = function()
+				{
+					new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString)
+						.showLeft();
+				}
+				stateString = "";	/* So it only happens once. */
+			}
+			else if (stateString.startsWith('user/'))
+			{
+				stateString = stateString.substring('user/'.length);
+				if (stateString.length > 0)
+				{
+					var pathwayID = stateString;
+					handleState = function()
+					{
+						crp.promise({path: 'user/' + pathwayID,
+									 fields: ['path'], 
+									 resultType: cr.User})
+							.done(function(users)
+								{
+									if (users.length > 0)
+									{
+										var done;
+										var panel;
+										if (cr.signedinUser.id())
+										{
+											panel = new PathlinesPanel(users[0], true);
+										}	
+										else
+										{
+											done = function()
+												{
+													firstPanel = new WelcomePanel();
+													firstPanel.showNow();
+												};
+											panel = new PathlinesPanel(users[0], done);
+										}
+										panel.pathtree.setUser(users[0].path(), true);
+										panel.showLeft();
+									}
+									else
+									{
+										if (!cr.signedinUser.id())
+										{
+											firstPanel = new WelcomePanel();
+											firstPanel.showNow();
+										}
+										cr.asyncFail("The specified user does not exist or you do not have permission to view them.");
+									}
+								})
+							.fail(cr.asyncFail);
+					}
+				}
+				stateString = "";
+			}
+			else if (stateString.startsWith('addExperience/'))
+			{
+				// Test case: respond to an sent email to add experience.
+				stateString = stateString.substring('addExperience/'.length);
+				if (stateString.length > 0)
+				{
+					var experienceID = stateString;
+					handleState = function(pathwayPanel)
+					{
+						var pathway = pathwayPanel.pathtree;
+						var experiencesPath = cr.signedinUser.path();
+						cr.getData({path: 'experience/' + experienceID, 
+									fields: ['services', 'custom services', 'offering', 'offering/services'],
+									resultType: cr.Experience})
+							.then(function(experiences)
+							{
+								if (experiences.length > 0)
+								{
+									console.assert (experiences[0] instanceof cr.Experience);
+
+									var experienceController = new ExperienceController(cr.signedinUser.path(), experiences[0], false);
+									var newPanel = new NewExperiencePanel(experienceController);
+									newPanel.showUp();
+								}
+								else
+								{
+									cr.asyncFail("The specified experience does not exist or you do not have permission to view it.");
+								}
+							},
+							cr.asyncFail);
+					}
+				}
+				needsSignin = true;
+				stateString = "";
+			}
+			else if (stateString.startsWith("addToPathway"))
+			{
+				/* Add an experience specified in the URL to this pathway. */
+				handleState = function(pathwayPanel)
+				{
+					addToPathway(pathwayPanel);
+				}
+				needsSignin = true;
+			}
+			else if (stateString.startsWith('accept'))
+			{
+				/* Accept the specified follower */
+				handleState = function(pathwayPanel)
+				{
+					function clearAccessRequests(user)
+					{
+						var d = cr.signedinUser.userGrantRequests().find(function(d) 
+							{
+								return d.grantee().id() == user.id();
+							});
+						if (d)
+							d.triggerDeleted();
+					}
+					
+					var path = '{{follower}}'
+					cr.signedinUser.postUserGrant('{{privilege}}', path)
+						.then(function(changes, newIDs)
+							{
+								return cr.getData({path: 'user grant/' + newIDs['1'], resultType: cr.UserGrant, fields: ['none']})
+							})
+						.then(function(newValues)
+						{
+							// Remove any access request with this name.
+							var newValue = newValues[0].grantee();
+							clearAccessRequests(newValue);
+							bootstrap_alert.success("{0} is now following you.".format(newValue.description()), '.alert-container');
+						}, cr.asyncFail);
+				}
+				needsSignin = true;
+			}
+			else if (stateString.startsWith('ignore'))
+			{
+				/* Ignore the specified follower */
+				handleState = function(pathwayPanel)
+				{
+					var path = '{{follower}}'
+					cr.getData({path: path, resultType: cr.User, fields: ['none']})
+						.then(function(users)
+						{
+							if (users.length > 0)
+							{
+								var user = users[0];
+								var data = cr.signedinUser.userGrantRequests();
+								var v = data.find(function(d) { return d.grantee().id() === user.id(); });
+								if (v)
+								{
+									v.deleteData()
+										.then(function()
+											{
+												bootstrap_alert.success("Access request from {0} has been denied.".format(v.description()), '.alert-container');
+											},
+										cr.asyncFail);
+								}
+								else
+									bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
+							}
+							else
+							{
+								bootstrap_alert.warning("The user requesting access is not available.", '.alert-container');
+							}
+						});
+				}
+				needsSignin = true;
+			}
+			else if (stateString.startsWith("settings/"))
+			{
+				/* Ignore the specified follower */
+				handleState = function(pathwayPanel)
+				{
+					try
+					{
+						var controller = new UserController(cr.signedinUser, true);
+						controller.oldInstance(cr.signedinUser);
+						new Settings(controller, revealPanelUp)
+							.showUp();
+					}
+					catch(err)
+					{
+						cr.asyncFail(err);
+					}
+				}
+				needsSignin = true;
+			}
+			else if (stateString.startsWith("signup/"))
+			{
+				stateString = stateString.substring("signup/".length);
+				
+				var handleState = function()
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+					if (!navigator.cookieEnabled)
+						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+					else
+					{
+						var signUp = new Signup(firstPanel.node(), {email: stateString});
+						signUp.showUp();
+					}
+				}
+				needsSignin = false;
+			}
+			else if (stateString.startsWith("experience/"))
+			{
+				stateString = stateString.substring("experience/".length);
+				var experienceID = stateString.substring(0, stateString.indexOf("/"));
+				stateString = stateString.substring(stateString.indexOf("/")+1);
+				
+				handleState = function(pathwayPanel)
+				{
+					var f = function(pathwayPanel)
+						{
+							/* Show the specified experience. 
+								Typically, this pathwayPanel will be the same as the
+								pathwayPanel passed into handleState, but it won't
+								be the same if the incorrect user is signed in.
+							 */
+							
+							try
+							{
+								var commentsPanel = pathwayPanel.showCommentsPanelAsync(experienceID);
+								
+								if (stateString.startsWith("comment/"))
+								{
+									stateString = stateString.substring("comment/".length);
+									var commentID = stateString.substring(0, stateString.indexOf("/"));
+									stateString = stateString.substring(stateString.indexOf("/")+1);
+									if (commentsPanel)
+									{
+										/* Turn on editing */
+										commentsPanel.startEditing();
+										/* Edit the comment with the specified id. */
+										commentsPanel.promise = commentsPanel.promise
+											.then(function()
+												{
+													commentsPanel.focusOnComment(commentID);
+												});									
+									}
+								}
+									
+							}
+							catch(err)
+							{
+								cr.asyncFail(err);
+							}
+						}
+						
+					if (pathwayPanel.pathtree.isUserSet)
+					{
+						if (pathwayPanel.pathtree.path.experiences().find(function(e)
+							{
+								return e.id() == experienceID;
+							}))
+						{
+							f(pathwayPanel);
+						}
+						else
+						{
+							sign_out()
+								.then(function()
+									{
+										checkSignin(f);
+									},
+									cr.asyncFail);
+						}
+					}
+					else
+						$(pathwayPanel.pathtree).on('userSet.cr', function()
+							{
+								f(pathwayPanel);
+							});
+				}
+				needsSignin = true;
+			}
+			else if (stateString == "resetPassword")
+			{
+				var handleState = function()
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+					if (!navigator.cookieEnabled)
+						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+					else
+					{
+						var signUp = new ResetPasswordPanel("{{resetkey}}");
+						signUp.showUp();
+					}
+				}
+				needsSignin = false;
+			}
+			else if (stateString.startsWith("me"))
+			{
+				var handleState = function(pathwayPanel)
+				{
+				}
+				needsSignin = true;
+			}
+			{% endif %}
+
+			{% if userID %}
+			if (!navigator.cookieEnabled)
+			{
+				firstPanel = new WelcomePanel();
+				firstPanel.showNow();
+				cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+			}
+			else
+			{
+				cr.createSignedinUser("{{userID}}")
+					.fail(function(err)
+						{
+							cr.signedinUser.clear();
+							firstPanel = new WelcomePanel();
+							firstPanel.showNow();
+							cr.asyncFail(err);
+						});
+					
+				cr.signedinUser.one("signin.cr", null, function(eventObject)
+					{
+						try
+						{
+							console.assert(cr.signedinUser.path());
+							firstPanel = new HomePanel(cr.signedinUser, false);
+							firstPanel.showNow();
+							firstPanel.pathtree.setUser(cr.signedinUser.path(), true)
+							.then(function()
+								{
+									if (handleState)
+										handleState(firstPanel);
+									else
+										firstPanel.checkShowIdeas();
+								})
+							.fail(cr.asyncFail);	/* Catch errors in any previous promise in the chain. */
+						}
+						catch(err)
+						{
+							cr.asyncFail(err);
+						}
+					});
+			}
+			{% endif %}
+			
+			/* Initialize all of the objects that are dependent on whether or not the user is
+				signed in.
+			 */
+			if (!cr.signedinUser.id())
+			{
+				if (needsSignin)
+				{
+					if (!navigator.cookieEnabled)
+					{
+						firstPanel = new WelcomePanel();
+						firstPanel.showNow();
+						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+					}
+					else
+					{
+						firstPanel = null;
+						checkSignin(handleState);
+					}
+				}
+				else if (handleState)
+					handleState();
+				else
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+				}
+			}
+		});
+		
+		function getFilter(node)
+		{
+			return function()
+			{
+				var val = this.value.toLocaleLowerCase();
+				if (val.length == 0)
+				{
+					/* Show all of the items. */
+					d3.select(node).selectAll("div")
+						.style("display", null);
+				}
+				else
+				{
+					/* Show the items whose description is this.value */
+					d3.select(node).selectAll("div")
+						.style("display", function(d)
+							{
+								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+									return null;
+								else
+									return "none";
+							});
+				}
+			}
+		}
+		
+		function sign_out() {
+			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
+			return cr.submitSignout()
+				.then(function()
+					{
+						ServiceFlagController.clearPromises();
+						var sitePanels = $("panel.site-panel");
+						var panel = new WelcomePanel();
+						panel.showNow();
+						sitePanels.trigger("hiding.cr");
+						return $(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
+							function() {
+								sitePanels.remove();
+								bootstrap_alert.close();
+							}).promise();
+					});
+		}
+		
+		function setMetaProperties(session, targetHRef)
+		{
+			var headDiv = d3.select("head");
+			headDiv.selectAll("meta").each(function()
+			{
+				var metaObj = d3.select(this);
+				if (metaObj.attr("property") &&
+					metaObj.attr("property").startsWith("og:"))
+					metaObj.remove();
+			});
+			var offering = session.offering();
+			var organization = session.organization();
+			var a = [{property: "og:url", content: targetHRef},
+					 {property: "og:type", content: "website" },
+					 {property: "og:title", content: offering.description()},
+					 {property: "og:description", content: session.description() + "\n" + organization.description()}];
+			for (var i = 0; i < a.length; i++)
+			{
+				if (a[i].content)
+					headDiv.append("meta")
+						.attr("property", a[i].property)
+						.attr("content", a[i].content);
+			}
+		}
+		
+		function appendFacebookButton(shareDiv, service, session)
+		{
+			var targetHRef = window.location.origin+"/find/"+service.id()+"/"+session.id();
+
+			setMetaProperties(session, targetHRef);
+			var fbDiv = shareDiv.div.append("div")
+				.classed("fb-share-button", true)
+				.attr("data-href", targetHRef)
+				.attr("data-layout", "button_count");
+			var fbImage = fbDiv.append("img")
+				.attr("src", "{% static "b/consentrecords/png/fb.png" %}")
+				.style("height", "22px")
+				.style("weight", "22px");
+			{% if facebookIntegration %}
+			fbDiv.on("click", function() {
+				FB.ui({
+					  method     : 'share',
+					  href       : targetHRef
+					  }, function(response){});
+				d3.event.preventDefault();
+			});
+			{% endif %}
+		}
+		
+		function validateEmail(email) 
+		{
+			var re = /\S+@\S+\.\S\S+/;
+			return re.test(email);
+		}
+		
+	</script>
+		
+</html>
+
