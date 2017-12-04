@@ -22,6 +22,8 @@
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 
+	<link href="{% static "jqcloud2/dist/jqcloud.min.css" %}?v={{jsversion}}" rel="stylesheet">
+	
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -133,7 +135,7 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="initial" >
+  		<panel id="wordcloud_panel" >
 		</panel>
 		
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
@@ -152,6 +154,7 @@
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "datejs/time.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "jqcloud2/dist/jqcloud.min.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/controllers.js" %}?v={{jsversion}}"></script>
@@ -177,7 +180,7 @@
 	<script src="{% static "consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/welcomeOrganization.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/welcomePanel.js" %}?v={{jsversion}}"></script>
-
+	
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		staticPath = '{% static "" %}';
@@ -406,8 +409,50 @@
 				done();
 		}
 		
+		function showWords(words, update)
+		{
+			words.forEach(function(w)
+				{
+					var service = crp.getInstance(w.id);
+					w.text = service.description();
+					w.color = service.getColor();
+					w.handlers = {click: filterPaths};
+					w.html={serviceID: w.id}
+				});
+			if (update)
+				{
+					$('#wordcloud_panel').jQCloud('update', words);
+				}
+			else
+			{
+				$('#wordcloud_panel').jQCloud(words,
+					{autoResize: true});
+			}
+		}
+		
+		function updateWords(words)
+		{
+			return showWords(words, true);
+		}
+		
+		function filterPaths()
+		{
+			return cr.getServiceCounts('path[experience>implication>service={0}]'.format(this.getAttribute('serviceID')))
+				.then(updateWords, cr.asyncFail);
+		}
+		
 		$(document).ready (function(e) {						
 			var firstPanel;
+			
+			cr.Service.servicesPromise()
+				.then(function(services)
+					{
+						return cr.getServiceCounts('path')
+							.then(showWords, cr.asyncFail);
+					},
+					cr.asyncFail);
+			
+			return;
 			
 			/* handleState is an asynchronous function called when the setup is ready to process it. */
 			/* needsSignin is a flag that determines if handling the state requires signin. */
