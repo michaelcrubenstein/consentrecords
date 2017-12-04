@@ -722,10 +722,7 @@ crn.ExperienceSuggestion = (function() {
 		var service = new cr.Service();
 		service.setData(d[1]);
 		
-		var comment = new cr.Comment();
-		comment.setData(d[2]);
-		
-		return [path, experience, comment];
+		return [path, service];
 	}
 	
 	ExperienceSuggestion.prototype.appendDescription = function(buttonNode, q)
