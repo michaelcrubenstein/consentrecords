@@ -173,13 +173,19 @@ var PromptPanel = (function() {
 				});
 		
 		return $.when(this.tagPoolSection.fillTags(),
-					  $(this.startupImageNode).animate({top: $(this.startupImageNode.parentNode).innerHeight()},
-					  							  {duration: 700})
-					  	  .promise()
-					  	  .then(function()
-					  			{
-					  				$(_this.startupImageNode.parentNode).remove();
-					  			})
+					  this.startupImageNode ? 
+						  $(this.startupImageNode).animate({top: $(this.startupImageNode.parentNode).innerHeight()},
+													  {duration: 700})
+							  .promise()
+							  .then(function()
+									{
+										$(_this.startupImageNode.parentNode).remove();
+										_this.startupImageNode = null;
+									}) :
+							function() { 
+								_this.canShowStartupImage = false; 
+								return null;
+							}()
 					  );
 	}
 	
@@ -193,18 +199,29 @@ var PromptPanel = (function() {
 		
 		var startupContainer = this.div.append('div')
 			.classed('startup', true);
-			
+		
+		this.canShowStartupImage = true;
+		this.startupImageNode = null;
+		
 		setTimeout(function()
 			{
 				var logoPath = staticPath + 'consentrecords/svg/logoface.svg';
-				xhr = new XMLHttpRequest();
-				xhr.open("GET",logoPath,false);
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET",logoPath, true);
+				xhr.onreadystatechange = function () {
+					if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+						if (_this.canShowStartupImage)
+						{
+							_this.startupImageNode = startupContainer.node()
+								.appendChild(xhr.responseXML.documentElement);
+						}
+					}
+				};
+
 				// Following line is just to be on the safe side;
 				// not needed if your server delivers SVG with correct MIME type
 				xhr.overrideMimeType("image/svg+xml");
 				xhr.send("");
-				_this.startupImageNode = startupContainer.node()
-				  .appendChild(xhr.responseXML.documentElement);
 		  });
 		
 		$(this.div.node()).on('click', function()
