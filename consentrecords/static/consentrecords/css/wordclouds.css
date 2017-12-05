@@ -1,0 +1,9 @@
+panel.wordcloud > .panel-fill {
+	display: flex;
+	flex-direction: column;
+}
+
+section.wordcloud {
+	position: relative;
+	flex-grow: 100;
+}
