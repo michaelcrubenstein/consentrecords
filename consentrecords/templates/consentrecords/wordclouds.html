@@ -437,7 +437,7 @@
 		
 		function filterPaths()
 		{
-			return cr.getServiceCounts('path[experience>implication>service={0}]'.format(this.getAttribute('serviceID')))
+			return cr.getFollowingCounts('path', 'service/{0}'.format(this.getAttribute('serviceID')))
 				.then(updateWords, cr.asyncFail);
 		}
 		
