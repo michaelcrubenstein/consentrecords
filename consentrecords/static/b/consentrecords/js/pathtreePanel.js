@@ -1769,6 +1769,16 @@ var OtherPathPanel = (function () {
 		return 0;
 	}
 	
+	OtherPathPanel.prototype.onShowingChild = function()
+	{
+		return null;
+	}
+	
+	OtherPathPanel.prototype.onHidingChild = function()
+	{
+		return null;
+	}
+	
 	function OtherPathPanel(path, done) {
 		var _this = this;
 		this.path = path;
