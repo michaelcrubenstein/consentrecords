@@ -21,6 +21,7 @@
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+	<link href="{% static "jqcloud2/dist/jqcloud.min.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -179,6 +180,7 @@
 	<script src="{{cdn_url}}datejs/1.0/date.min.js"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "jqcloud2/dist/jqcloud.min.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/models.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/controllers.js" %}?v={{jsversion}}"></script>
@@ -199,6 +201,7 @@
 	<script src="{% static "b/consentrecords/js/signup.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/settings.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/wordclouds.js" %}?v={{jsversion}}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
@@ -493,6 +496,17 @@
 						if (prepareClick('click', 'Manage Sessions'))
 						{
 							manage_session(organization, sitePanel.node());
+						}
+					})
+					.classed('first', true);
+
+				sitePanel.appendActionButton(
+					"Show Offering Wordcloud",
+					function(organization)
+					{
+						if (prepareClick('click', 'Show Offering Wordcloud'))
+						{
+							showOfferingWordcloud(organization, sitePanel.node());
 						}
 					})
 					.classed('first', true);
@@ -875,30 +889,35 @@
 			pick_site(organization, panelDiv, pickSiteSuccess);
 		}
 		
-		function pickSessionFromOrganization(organization, previousPanelNode, sessionSuccess)
+		function pickOfferingFromOrganization(organization, previousPanelNode, offeringSuccess)
 		{
 			function pickSiteSuccess(site, pickSitePanel)
 			{
-				var pickOfferingSuccess = function(offering, pickOfferingPanel)
-				{
-					function pickSessionSuccess(session, previousPanel)
-					{
-						session.promiseData()
-							.then(function()
-								{
-									try
-									{
-										sessionSuccess(session, previousPanel);
-									}
-									catch(err) { cr.syncFail(err); }
-								},
-								cr.syncFail);
-					}
-					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
-				}
-				pick_offering(site, pickSitePanel, pickOfferingSuccess);
+				pick_offering(site, pickSitePanel, offeringSuccess);
 			}
 			pick_site(organization, previousPanelNode, pickSiteSuccess);
+		}
+		
+		function pickSessionFromOrganization(organization, previousPanelNode, sessionSuccess)
+		{
+			var pickOfferingSuccess = function(offering, pickOfferingPanel)
+			{
+				function pickSessionSuccess(session, previousPanel)
+				{
+					session.promiseData()
+						.then(function()
+							{
+								try
+								{
+									sessionSuccess(session, previousPanel);
+								}
+								catch(err) { cr.syncFail(err); }
+							},
+							cr.syncFail);
+				}
+				pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+			}
+			pickOfferingFromOrganization(organization, previousPanelNode, pickOfferingSuccess);
 		}
 		
 		function manage_session(organization, panelDiv)
@@ -979,6 +998,16 @@
 				}
 			}
 			enrollment.promiseData().then(checkSuccessFunction, syncFailFunction);
+		}
+		
+		function showOfferingWordcloud(organization, panelDiv)
+		{
+			pickOfferingFromOrganization(organization, panelDiv, 
+				function(offering, previousPanel)
+				{
+				    var panel = new OfferingWordcloudPanel(offering, revealPanelLeft);
+				    revealPanelLeft(panel.node());
+				});
 		}
 		
 	</script>
