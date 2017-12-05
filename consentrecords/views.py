@@ -822,7 +822,8 @@ class api:
             if qs.count() == 0:
                 p = []
             else:                            
-                ss = ExperienceImplication.objects.filter(experience__parent__in=qs)\
+                ss = ExperienceImplication.objects.filter(experience__parent__in=qs,
+                		service__deleteTransaction__isnull=True)\
                     .values('service')\
                     .annotate(weight=Count('experience__parent', distinct=True))
             
@@ -850,14 +851,21 @@ class api:
                 tokens = cssparser.tokenizeHTML(servicePath)
                 serviceQS, tokens, serviceType, serviceAccessType = RootInstance.parse(tokens, context.user)
                 
-#                 startExperiences = \
-#                     ExperienceImplication.objects.filter(experience__parent__in=qs,
-#                         service__in=serviceQS)
-                        
-                ss = ExperienceImplication.objects.filter(experience__parent__in=qs)\
+                s0 = Experience.objects.filter(deleteTransaction__isnull=True, 
+                    experienceImplications__service__in=serviceQS)
+                s1 = s0.filter(parent=OuterRef('parent')).order_by('era', 'end')
+                s2 = Experience.objects.filter(deleteTransaction__isnull=True, 
+                        parent__in=qs)\
+                        .filter((Q(era__gt=Subquery(s1.values('era')[:1]))|
+                                 Q(end__gt=Subquery(s1.values('end')[:1])))&
+                                ~Q(start__lte=Subquery(s1.values('start')[:1])))
+                for e in s2: print(e)
+
+                ss = ExperienceImplication.objects.filter(experience__in=s2)\
                     .values('service')\
                     .annotate(weight=Count('experience__parent', distinct=True))
-            
+                for e in ss: print(Service.objects.get(pk=e['service']))
+                
                 p = list(map(lambda s:{'id': s['service'].hex, 'weight': s['weight']}, ss))
         
             results = {'words': p}
@@ -911,6 +919,9 @@ def getUserID(request):
 
 def handleServiceCounts(request, urlPath=None):
     return api.serviceCounts(request.user, urlPath, request.GET)
+    
+def handleFollowingCounts(request, urlPath=None, servicePath=None):
+    return api.followingCounts(request.user, urlPath, servicePath, request.GET)
     
 def handleURL(request, urlPath=None):
     if request.method == 'GET':
