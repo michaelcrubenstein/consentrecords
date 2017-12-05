@@ -64,7 +64,7 @@ var WordcloudPathsResultsView = (function () {
 						{
 							return s.service().serviceImplications().findIndex(function(s2)
 								{
-									return qs.service.id() == s2.service().id();
+									return qs.id() == s2.service().id();
 								}) >= 0;
 						}) >= 0;
 					}) >= 0)
