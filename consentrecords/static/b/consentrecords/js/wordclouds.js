@@ -242,7 +242,7 @@ var OfferingWordcloudPanel = (function()
 				if (prepareClick('click', 'Paths'))
 				{
 					if (_this.serviceID)
-						_this.showPaths(_this.path + '[experience>service={0}]'.format(_this.serviceID));
+						_this.showPaths(_this.path + '[experience>implication>service={0}]'.format(_this.serviceID));
 					else
 						_this.showPaths(_this.path);
 				}
