@@ -164,11 +164,6 @@ var WordcloudPathsPanel = (function () {
 		this.path = path;
 		this.queryServices = queryServices;
 		
-		$(window).resize(function()
-			{
-				handleResize();
-			});
-			
 		this.createRoot(null, title, "view wordcloud-paths");
 
 		var navContainer = this.appendNavContainer();
