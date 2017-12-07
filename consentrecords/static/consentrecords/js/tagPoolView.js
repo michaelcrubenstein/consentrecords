@@ -11,26 +11,9 @@ var ServiceFlagController = (function() {
 		return service && service.id() && crp.getInstance(service.id()).stage()
 	}
 
-	ServiceFlagController.prototype.stageColumns = {
-		Housing: 0,
-		Studying: 1,
-		Certificate: 1,
-		Training: 2,
-		Whatever: 2,
-		Working: 3,
-		Teaching: 3,
-		Expert: 3,
-		Skills: 4,
-		Mentoring: 5,
-		Tutoring: 5,
-		Coaching: 5,
-		Volunteering: 5,
-		Wellness: 6,
-	};
-	
 	ServiceFlagController.prototype.getStageDescription = function(stage)
 	{
-		return stage in this.stageColumns && stage;
+		return stage in cr.Service.stageColumns && stage;
 	}
 	
 	ServiceFlagController.prototype.getColumn = function()
@@ -38,7 +21,7 @@ var ServiceFlagController = (function() {
 		var stage = this._getStage();
 		var stageDescription = this.getStageDescription(stage);
 		if (stageDescription)
-			return this.stageColumns[stageDescription];
+			return cr.Service.stageColumns[stageDescription];
 		var _this = this;
 			
 		if (this.service && this.service.id())
@@ -51,7 +34,7 @@ var ServiceFlagController = (function() {
 					return _this.getStageDescription(stage);
 				});
 			if (s)
-				return this.stageColumns[
+				return cr.Service.stageColumns[
 					this.getStageDescription(s.service().stage())
 				];
 		}

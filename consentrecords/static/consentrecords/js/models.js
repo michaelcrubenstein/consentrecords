@@ -5852,7 +5852,7 @@ cr.Service = (function() {
         return cr.Service._servicesPromise;
     }
     
-	Service.prototype.stageColumns = {
+	Service.stageColumns = {
 		Housing: 0,
 		Studying: 1,
 		Certificate: 1,
@@ -5862,6 +5862,7 @@ cr.Service = (function() {
 		Teaching: 3,
 		Expert: 3,
 		Skills: 4,
+		Award: 4,
 		Mentoring: 5,
 		Tutoring: 5,
 		Coaching: 5,
@@ -5871,7 +5872,7 @@ cr.Service = (function() {
 	
 	Service.prototype.getStageDescription = function(stage)
 	{
-		return stage in this.stageColumns && stage;
+		return stage in cr.Service.stageColumns && stage;
 	}
 	
 	Service.prototype.getColumn = function()
@@ -5879,7 +5880,7 @@ cr.Service = (function() {
 		var stage = this.stage();
 		var stageDescription = this.getStageDescription(stage);
 		if (stageDescription)
-			return this.stageColumns[stageDescription];
+			return cr.Service.stageColumns[stageDescription];
 		var _this = this;
 			
 		if (this.id())
@@ -5896,7 +5897,7 @@ cr.Service = (function() {
 					return s.getStageDescription(stage);
 				});
 			if (s)
-				return this.stageColumns[
+				return cr.Service.stageColumns[
 					s.getStageDescription(s.stage())
 				];
 		}
