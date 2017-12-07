@@ -470,7 +470,7 @@ crn.FollowerAccept = (function() {
 		var user = new cr.User();
 		user.setData(d[0]);
 		
-		return [user];
+		return [crp.pushInstance(user)];
 	}
 	
 	FollowerAccept.prototype.appendDescription = function(buttonNode, q)
@@ -545,7 +545,7 @@ crn.ExperienceCommentRequested = (function() {
 		var comment = new cr.Comment();
 		comment.setData(d[2]);
 		
-		return [path, experience, comment];
+		return [crp.pushInstance(path), crp.pushInstance(experience), crp.pushInstance(comment)];
 	}
 	
 	ExperienceCommentRequested.prototype.appendDescription = function(buttonNode, q)
@@ -641,7 +641,7 @@ crn.ExperienceQuestionAnswered = (function() {
 		var experience = new cr.Experience();
 		experience.setData(d[1]);
 		
-		return [path, experience];
+		return [crp.pushInstance(path), crp.pushInstance(experience)];
 	}
 	
 	ExperienceQuestionAnswered.prototype.appendDescription = function(buttonNode, q)
@@ -722,7 +722,7 @@ crn.ExperienceSuggestion = (function() {
 		var service = new cr.Service();
 		service.setData(d[1]);
 		
-		return [path, service];
+		return [crp.pushInstance(path), crp.pushInstance(service)];
 	}
 	
 	ExperienceSuggestion.prototype.appendDescription = function(buttonNode, q)
