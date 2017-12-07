@@ -448,6 +448,11 @@ crn.Notification = (function() {
 		return textSpan;
 	}
 	
+	Notification.prototype.deleteSelf = function()
+	{
+		this.notification.parent().update({'notifications': [{'delete': this.notification.id()}]});
+	}
+	
 	function Notification(d)
 	{
 		this.notification = d;
@@ -757,12 +762,31 @@ crn.ExperienceSuggestion = (function() {
 											var experience = new ExperienceController(cr.signedinUser.path(), null, false)
 											experience.initDateRange(phase);
 											var tag = crp.getInstance(args[1].id());
-											var services = [new ExperienceService()];
-											services[0].service(tag);
+											var services = [new cr.ExperienceService()];
+											services[0].service(tag)
+													   .position(0)
+													   .calculateDescription();
 											experience.experienceServices(services);
-											new NewExperiencePanel(experience, revealPanelLeft)
-																.showLeft()
-																.always(unblockClick);
+											var panel = new NewExperiencePanel(experience, revealPanelLeft);
+											
+											panel.showLeft()
+												 .always(unblockClick);
+											
+											function onAdded(eventObject, newData)
+											{
+												if (newData.containsService(tag))
+												{
+													try { _this.deleteSelf(); }
+													catch(err) { cr.asyncFail(err); };
+												}
+											}
+											
+											$(_this.notification.parent().path()).on('experienceAdded.cr', experience, onAdded);
+											
+											$(panel.node()).on('hiding.cr', function()
+												{
+													$(_this.notification.parent().path()).off('experienceAdded.cr', onAdded);
+												});
 										}
 										catch(err)
 										{
