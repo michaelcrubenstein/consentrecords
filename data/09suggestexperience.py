@@ -20,8 +20,6 @@ from django.db import transaction
 from django.contrib.auth import authenticate
 
 from consentrecords.models import *
-from consentrecords import pathparser
-from consentrecords import instancecreator
 from custom_user.emailer import *
 
 if __name__ == "__main__":
@@ -35,53 +33,32 @@ if __name__ == "__main__":
 
     try:
         with transaction.atomic():
-            transactionState = None if check else TransactionState(user)
-            userInfo = UserInfo(user)
-            userPath = userInfo.instance.getSubInstance(terms['Path'])
+            context = Context('en', authenticate(username=username, password=password))
+            userPath = context.user.paths.all()[0]
         
-            nameList = NameList()
-            fieldsDataDictionary = FieldsDataDictionary()
-            language = None
-            
-            c = 1
             with open(sys.argv[1], 'r') as f:
                 line = f.readline().strip()
                 while len(line) > 0:
-                    args = line.split(None, 2)
+                    args = line.split(None, 1)
                     recipientEmail = args[0]
-                    phasename = args[1]
-                    tagName = args[2]
-                    print (recipientEmail, tagName, phasename)
+                    tagName = args[1]
+                    print (recipientEmail, tagName)
                     
-                    recipient = Instance.objects.get(value__deleteTransaction__isnull=True,
-                                                      value__field=terms.email,
-                                                      value__stringValue__iexact=recipientEmail)
-                    
-                    tag = Instance.objects.get(typeID=terms['Service'],
-                                               value__deleteTransaction__isnull=True,
-                                               value__field=terms.name,
-                                               value__stringValue__iexact=tagName)
-                    
-                    phase = terms['Timeframe'].value_set.get(field=terms['enumerator'],
-                        referenceValue__description__text=phasename,
-                        referenceValue__deleteTransaction__isnull=True).referenceValue
+                    recipient = User.objects.get(emails__text=recipientEmail, deleteTransaction__isnull=True)
                     
                     notificationData = {\
-                            'name': [{'text': 'crn.ExperienceSuggestion'}],
-                            'argument': [{'instanceID': userPath.id},
-                                         {'instanceID': tag.id},
-                                         {'instanceID': phase.id}],
-                            'is fresh': [{'instanceID': terms.yesEnum.id}]
+                            'name': 'crn.ExperienceSuggestion',
+                            'is fresh': 'yes',
+                            'arguments': ['path/%s' % userPath.id.hex,
+                                          'service[name>text=%s]' % tagName],
                         }
-                    notification, notificationValue = instancecreator.create(terms['notification'], 
-                        recipient, terms['notification'], -1, 
-                        notificationData, nameList, transactionState, userInfo, instancecreator.checkCreateNotificationAccess)
+                    notification = Notification.create(recipient, notificationData, context)
                     
-                    path = recipient.getSubInstance(terms['Path'])    
-                    salutation = recipient.getSubDatum(terms.firstName) or path.getSubDatum(terms.name)
-                    isAdmin = True
-                    
-                    Emailer.sendSuggestExperienceByTagEmail(salutation, recipientEmail, tag, isAdmin, hostURL)
+#                     path = recipient.getSubInstance(terms['Path'])    
+#                     salutation = recipient.getSubDatum(terms.firstName) or path.getSubDatum(terms.name)
+#                     isAdmin = True
+#                     
+#                     Emailer.sendSuggestExperienceByTagEmail(salutation, recipientEmail, tag, isAdmin, hostURL)
                     
                     line = f.readline().strip()
                                             

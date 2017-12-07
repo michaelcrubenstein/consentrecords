@@ -1097,6 +1097,7 @@ cr.TranslationInstance = (function() {
 	TranslationInstance.prototype.calculateDescription = function()
 	{
 		this._description = this._text;
+		return this;
 	}
 	
 	/** Called after the contents of the TranslationInstance have been updated on the server. */
@@ -1275,6 +1276,7 @@ cr.ServiceLinkInstance = (function() {
 	ServiceLinkInstance.prototype.calculateDescription = function()
 	{
 		this._description = this.service() ? this.service().description() : "";
+		return this;
 	}
 	
 	/** Called after the contents of the ServiceLinkInstance have been updated on the server. */
@@ -1493,6 +1495,7 @@ cr.UserLinkInstance = (function() {
 	UserLinkInstance.prototype.calculateDescription = function()
 	{
 		this.description(this._user ? this._user.description() : "");
+		return this;
 	}
 		
 	UserLinkInstance.prototype.updateData = function(d, newIDs, canTrigger)
@@ -1862,6 +1865,7 @@ cr.Grant = (function() {
 	Grant.prototype.calculateDescription = function()
 	{
 		this._description = this._grantee ? this._grantee.description() : "";
+		return this;
 	}
 	
 	Grant.prototype.updateData = function(d, newIDs)
@@ -3664,6 +3668,26 @@ cr.Experience = (function() {
 						}
 						return r2;
 					});
+	}
+	
+	Experience.prototype.containsService = function(service)
+	{
+		return this.experienceServices().find(function(es)
+			{
+				return es.service().serviceImplications().findIndex(function(s2)
+					{
+						return service.id() == s2.service().id();
+					}) >= 0;
+			}) ||
+			(this.offering() && 
+			 this.offering().offeringServices() && 
+			 this.offering().offeringServices().find(function(es)
+				{
+					return es.service().serviceImplications().findIndex(function(s2)
+						{
+							return service.id() == s2.service().id();
+						}) >= 0;
+				}));
 	}
 	
 	function Experience() {
