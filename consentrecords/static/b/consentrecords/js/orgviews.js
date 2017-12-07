@@ -226,15 +226,10 @@ var ChildrenPanel = (function () {
 			});
 	}
 	
-	ChildrenPanel.prototype.getAddController = function()
-	{
-		return new (this.searchView.controllerType())(this.parent);
-	}
-	
 	ChildrenPanel.prototype.showAddPanel = function()
 	{
 		var _this = this;
-		var controller = this.getAddController();
+		var controller = new (this.searchView.controllerType())(this.parent);
 		var panel = new (this.searchView.childPanelType())(controller, revealPanelUp);
 		setupOnViewEventHandler(this.parent, controller.addEventType, panel.node(), function(eventObject, newInstance)
 			{
@@ -578,17 +573,6 @@ var EngagementsPanel = (function () {
 
 	EngagementsPanel.prototype.addPanelTitle = "Add Engagement";
 	EngagementsPanel.prototype.searchViewType = EngagementSearchView;
-	
-	EngagementsPanel.prototype.getAddController = function()
-	{
-		var controller = ChildrenPanel.prototype.getAddController.call(this);
-		
-		// Initialize the start and end of the new instance to the corresponding
-		// values for the parent session.
-		controller.newInstance().start(this.parent.start())
-			.end(this.parent.end());
-		return controller;
-	}
 	
 	EngagementsPanel.prototype.savedItems = function()
 	{
