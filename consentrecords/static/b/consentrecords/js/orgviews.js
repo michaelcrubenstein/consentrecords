@@ -2341,6 +2341,7 @@ var PickStagePanel = (function () {
 				{code: 'Teaching', name: 'Teaching'},
 				{code: 'Expert', name: 'Expert'},
 				{code: 'Skills', name: 'Skills'},
+				{code: 'Award', name: 'Award'},
 				{code: 'Mentoring', name: 'Mentoring'},
 				{code: 'Tutoring', name: 'Tutoring'},
 				{code: 'Coaching', name: 'Coaching'},

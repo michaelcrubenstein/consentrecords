@@ -123,7 +123,7 @@ def _validateEnumeration(data, key, validValues):
     if key not in data or not data[key] or data[key] in validValues:
         return
     else:
-        raise ValueError('the value "%s" is not a valid value. Valid values for "%s" are: %s' % (value, key, validValues))
+        raise ValueError('the value "%s" is not a valid value. Valid values are: %s' % (key, validValues))
 
 def idField():
     return dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -4312,7 +4312,7 @@ class Service(RootInstance, PublicInstance, dbmodels.Model):
         return data
     
     def validateStage(data, key):
-        validValues = ['Certificate', 'Coaching', 'Expert', 'Housing', 'Mentoring', 
+        validValues = ['Award', 'Certificate', 'Coaching', 'Expert', 'Housing', 'Mentoring', 
                        'Skills', 'Studying', 'Teaching', 'Training', 'Tutoring', 
                        'Volunteering', 'Wellness', 'Whatever', 'Working']
         _validateEnumeration(data, key, validValues)
