@@ -272,12 +272,14 @@ var WelcomePanel = (function () {
 		return itemClicked;	/* The last child */
 	}
 	
-	WelcomePanel.prototype.alignLeft = function()
+	WelcomePanel.prototype.alignLeft = function(child, duration)
 	{
-		var child = this.currentPromptPanelNode();
+		child = (child !== undefined) ? child : this.currentPromptPanelNode();
+		duration = (duration !== undefined) ? duration : 200;
+		
 		var newScrollLeft = parseInt($(child).css('left')) - 2 * this.promptMargin();
 		
-		$(this.promptScrollArea.node()).animate({scrollLeft: '{0}px'.format(newScrollLeft)}, {duration: 200});
+		$(this.promptScrollArea.node()).animate({scrollLeft: '{0}px'.format(newScrollLeft)}, {duration: duration});
 	}
 	
 	WelcomePanel.prototype.onResizePrompts = function()
@@ -488,7 +490,6 @@ var WelcomePanel = (function () {
 			new PromptPanel(this, this.promptScrollArea, "What is Your Story?", "An experience I have had is...", 'Previous'),
 			new PromptPanel(this, this.promptScrollArea, "What Could Others Learn from Your Experiences?", "An experience I have had is...", 'Previous'),
 			];
-		this.currentPromptIndex = 0;
 		this.promptScrollArea.append('panel');
 		
 		var currentPromptPanel = this.promptPanels[this.currentPromptIndex];
@@ -528,12 +529,12 @@ var WelcomePanel = (function () {
 							{
 								try
 								{
-								for (var i = 0; i < _this.promptPanels.length; ++i)
-								{
-									var tagPoolSection = _this.promptPanels[i].tagPoolSection;
-									var inputNode = tagPoolSection.tagsContainer.select('input.tag').node();
-									tagPoolSection.searchView.constrainTagFlags(inputNode);
-								}
+									for (var i = 0; i < _this.promptPanels.length; ++i)
+									{
+										var tagPoolSection = _this.promptPanels[i].tagPoolSection;
+										var inputNode = tagPoolSection.tagsContainer.select('input.tag').node();
+										tagPoolSection.searchView.constrainTagFlags(inputNode);
+									}
 								}
 								catch (err)
 								{
@@ -789,10 +790,12 @@ var WelcomePanel = (function () {
 		}
 	}
 	
-	function WelcomePanel(onPathwayCreated) {
+	function WelcomePanel(currentPromptIndex) {
 		var _this = this;
 		this.createRoot(null, "Welcome", "welcome");
 		var navContainer = this.appendNavContainer();
+		
+		this.currentPromptIndex = currentPromptIndex === undefined ? 0 : currentPromptIndex;
 
 		var logo = navContainer.appendLeftButton()
 			.append('img')
@@ -848,12 +851,7 @@ var WelcomePanel = (function () {
 				.then(function()
 					{
 						var promise = pathwayPanel.pathtree.setUser(cr.signedinUser.path(), true);
-						pathwayPanel.showLeft().then(
-							function()
-							{
-								if (onPathwayCreated)
-									onPathwayCreated(pathwayPanel);
-							});
+						pathwayPanel.showLeft();
 						return promise;
 					});
 			
@@ -879,6 +877,10 @@ var WelcomePanel = (function () {
 						{
 							_this.startPromptPanelNode = _this.currentPromptPanelNode();
 						});
+				
+				var currentPromptPanel = _this.promptPanels[_this.currentPromptIndex];
+				_this.alignLeft(currentPromptPanel.div.node(), 0);
+		
 			});
 	}
 	

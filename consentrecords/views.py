@@ -79,6 +79,35 @@ def home(request):
 
     return HttpResponse(template.render(args))
 
+def welcomePrompt(request, promptType):
+    logPage(request, 'pathAdvisor/welcomePrompt')
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    
+    currentPromptIndex = (2 if promptType == 'experience' \
+        else 0)
+        
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
+        'currentPromptIndex': currentPromptIndex,
+    }
+    
+    if request.user.is_authenticated:
+        languageCode = request.GET.get('language', 'en')
+        context = Context(languageCode, request.user)
+        user = context.user
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id.hex
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    return HttpResponse(template.render(args))
+
 @ensure_csrf_cookie
 def showLines(request):
     logPage(request, 'pathAdvisor/showLines')
