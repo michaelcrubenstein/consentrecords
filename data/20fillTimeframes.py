@@ -1,4 +1,5 @@
 import datetime
+import django; django.setup()
 
 from consentrecords.models import *
 
