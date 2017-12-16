@@ -34,6 +34,7 @@ urlpatterns = [
     url(r'^signup/([^/@]+@[^/@]+\.[^/@]+)/', views.signup),
     url(r'^signup/', views.signup),
     url(r'^experience/([^/]+)/', views.showExperience),
+    url(r'^prompt/([^/]+)/', views.welcomePrompt),
     url(r'^wordcloud/', views.wordclouds),
 
     url(r'^user/passwordreset/([A-Fa-f0-9]{32})/', views.passwordReset),
