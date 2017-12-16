@@ -43,6 +43,7 @@ urlpatterns = [
     url(r'^signup/([^/@]+@[^/@]+\.[^/@]+)/', views.signup),
     url(r'^signup/', views.signup),
     url(r'^experience/([^/]+)/', views.showExperience),
+    url(r'^wordcloud/', views.wordclouds),
 
     url(r'^commentprompts/', views.showCommentPrompts),
     url(r'^organizations/', views.showOrganizations),
