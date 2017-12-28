@@ -5235,6 +5235,7 @@ class User(SecureRootInstance, dbmodels.Model):
     firstName = dbmodels.CharField(max_length=255, db_index=True, null=True)
     lastName = dbmodels.CharField(max_length=255, db_index=True, null=True)
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    tipLevel = dbmodels.IntegerField(null=True)
     
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredUsers', db_index=True, null=True, on_delete=dbmodels.CASCADE)
@@ -5336,7 +5337,10 @@ class User(SecureRootInstance, dbmodels.Model):
             if 'user grant requests' in fields: 
                 data['user grant requests'] = [i.getData([], context) for i in \
                     UserUserGrantRequest.select_related(self.userGrantRequests.filter(deleteTransaction__isnull=True))]
-
+        
+        if context.user == self and self.tipLevel:
+            data['tip level'] = self.tipLevel
+        
         return data
     
     @property
@@ -5423,6 +5427,7 @@ class User(SecureRootInstance, dbmodels.Model):
                                  lastName = lastName,
                                  birthday = _orNone(data, 'birthday'),
                                  publicAccess=_orNone(data, 'public access'),
+                                 tipLevel=_orNone(data, 'tip level'),
                                  primaryAdministrator=primaryAdministrator,
                                 )
         
@@ -5455,7 +5460,8 @@ class User(SecureRootInstance, dbmodels.Model):
                                              lastName=self.lastName,
                                              birthday=self.birthday,
                                              publicAccess=self.publicAccess,
-                                             primaryAdministrator=self.primaryAdministrator)
+                                             primaryAdministrator=self.primaryAdministrator,
+                                             tipLevel=self.tipLevel)
     
     def revert(self, h):
         self.firstName = h.firstName
@@ -5463,16 +5469,18 @@ class User(SecureRootInstance, dbmodels.Model):
         self.birthday = h.birthday
         self.publicAccess = h.publicAccess
         self.primaryAdministrator = h.primaryAdministrator
+        self.tipLevel = h.tipLevel
     
     @property
     def dataString(self):
-        return "%s\t%s\t%s\t%s\t%s\t%s" % \
+        return "%s\t%s\t%s\t%s\t%s\t%s\t%s" % \
             (self.id, 
              self.firstName or '-', 
              self.lastName or '-', 
              self.birthday or '-',
              self.publicAccess or '-',
              str(self.primaryAdministrator) if self.primaryAdministrator else '-',
+             str(self.tipLevel) if self.tipLevel else '-',
             )
     
     def update(self, changes, context, newIDs={}):
@@ -5514,6 +5522,11 @@ class User(SecureRootInstance, dbmodels.Model):
             self.updateChildren(changes, 'group grants', context, UserGroupGrant, self.groupGrants, newIDs)
             self.updateChildren(changes, 'notifications', context, Notification, self.notifications, newIDs)
         
+        if context.user == self and 'tip level' in changes:
+            newValue = int(changes['tip level'])
+            if newValue != self.tipLevel:
+                history = history or self.buildHistory(context)
+                self.tipLevel = newValue or None
         
         if history:
             self.lastTransaction = context.transaction
@@ -5541,7 +5554,8 @@ class UserHistory(dbmodels.Model):
     birthday = dbmodels.CharField(max_length=10, null=True, editable=False)
     publicAccess = dbmodels.CharField(max_length=10, null=True, editable=False)
     primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredUserHistories', db_index=True, null=True, on_delete=dbmodels.CASCADE)
-
+    tipLevel = dbmodels.IntegerField(null=True, editable=False)
+    
 ### A Multiple String Value containing an email associated with the specified user.
 class UserEmail(ChildInstance, dbmodels.Model):
     id = idField()

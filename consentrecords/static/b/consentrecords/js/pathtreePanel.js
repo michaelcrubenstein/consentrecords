@@ -1644,7 +1644,7 @@ var PathlinesPanel = (function () {
 			
 			this.navContainer.appendTitle(user.caption());
 		
-			addExperienceButton = this.navContainer.appendRightButton();
+			this.addExperienceButton = this.navContainer.appendRightButton();
 			settingsButton = this.navContainer.appendRightButton();
 		}
 		else
@@ -1653,7 +1653,7 @@ var PathlinesPanel = (function () {
 			notificationsButton = this.navContainer.appendLeftButton();
 
 			this.navContainer.appendTitle(user.caption());
-			addExperienceButton = this.navContainer.appendRightButton();
+			this.addExperienceButton = this.navContainer.appendRightButton();
 		}
 
 		if (this.pathtree)
@@ -1668,7 +1668,7 @@ var PathlinesPanel = (function () {
 				
 		$(this.pathtree).on("userSet.cr", function()
 			{
-				_this.setupAddExperienceButton(user, addExperienceButton);
+				_this.setupAddExperienceButton(user, _this.addExperienceButton);
 				
 				_this.settingsAlertButton = new SettingsButton(settingsButton, user, _this);
 				_this.settingsAlertButton.setup();

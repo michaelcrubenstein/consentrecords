@@ -1103,7 +1103,7 @@ crv.SitePanel = (function () {
 		{
 			var mainNode = $(this.mainDiv.node());
 			mainNode.css('height', "{0}px".format(mainNode.getFillHeight()))
-				.one("resize.cr", function(eventObject)
+				.one('resize.cr', function(eventObject)
 				{
 					eventObject.stopPropagation();
 				});
@@ -1111,7 +1111,7 @@ crv.SitePanel = (function () {
 			/* Since calculateHeight is first called within revealing.cr, 
 				resize handlers should be set up in subsequent revealing.cr handlers.
 			 */	
-			mainNode.trigger("resize.cr");
+			mainNode.trigger('resize.cr');
 		}
 	}
 	
@@ -1121,14 +1121,14 @@ crv.SitePanel = (function () {
 		this.mainDiv = this.panelDiv
 			.append("div").classed("panel-fill vertical-scrolling", true);
 		
-		$(this.node()).on("revealing.cr", function()
+		$(this.node()).on('revealing.cr', function()
 			{
 				_this.calculateHeight();
 			});
 		
 		this.mainDiv.appendHeader = function()
 		{
-			return this.append("header")
+			return this.append('header')
 				.text(_this.headerText);
 		}
 		
@@ -1275,10 +1275,11 @@ crv.SitePanel = (function () {
 	
 	$(window).resize(function()
 		{
-			$(".site-panel").css('height', "{0}px".format($(window).innerHeight()))
+			$('.site-panel').css('height', '{0}px'.format($(window).innerHeight()))
 				.each(function()
 				{
 					this.sitePanel.calculateHeight();
+					$(this).trigger('resize.cr');
 				});
 		});
 	return SitePanel;

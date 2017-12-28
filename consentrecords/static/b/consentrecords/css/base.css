@@ -962,3 +962,20 @@ panel.confirm > div>button:focus {
 	outline: none;
 }
 
+panel.hilite {
+	position : absolute;
+}
+
+span.hilite-help {
+	position : absolute;
+	color: white;
+	font-size: 0.8em;
+	font-weight: bold;
+	cursor: default;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	text-align: right;
+}

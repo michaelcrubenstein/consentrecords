@@ -850,7 +850,11 @@ var WelcomePanel = (function () {
 			cr.signedinUser.promiseData(['path'])
 				.then(function()
 					{
-						var promise = pathwayPanel.pathtree.setUser(cr.signedinUser.path(), true);
+						var promise = pathwayPanel.pathtree.setUser(cr.signedinUser.path(), true)
+							.then(function()
+								{
+									new AddExperienceHilitePanel(pathwayPanel.node(), pathwayPanel.addExperienceButton.node());
+								});
 						pathwayPanel.showLeft();
 						return promise;
 					});
