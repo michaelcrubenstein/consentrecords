@@ -12,7 +12,7 @@ var HilitePanel = (function () {
 	{
 		var r = this.hilitedElement.getBoundingClientRect();
 		var r2 = this.panelNode.getBoundingClientRect();
-		var r0 = 10;
+		var r0 = 0;
 		var r1 = Math.max(r.width, r.height) / 2.0 * 1.5;
 		var opacity = 0.5;
 		var y0 = r.top - r2.top + r.height / 2.0;
