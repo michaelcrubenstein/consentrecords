@@ -41,6 +41,14 @@ var HilitePanel = (function () {
 		unblockClick();
 	}
 	
+	HilitePanel.prototype.onClose = function()
+	{
+		if (prepareClick('click', 'Close HilitePanel'))
+		{
+			this.onCompleteClick();
+		}
+	}
+	
 	function HilitePanel(panelNode, hilitedElement) {
 			
 		var _this = this;
@@ -55,15 +63,7 @@ var HilitePanel = (function () {
 			.style('top', 0)
 			.on('click', function()
 				{
-					if (prepareClick('click', 'Close HilitePanel'))
-					{
-						cr.signedinUser.update({'tip level': 1})
-							.then(function()
-								{
-									_this.onCompleteClick();
-								},
-								cr.syncFail);
-					}
+					_this.onClose();
 				});
 		
 		this.canvas = this.panel
@@ -86,11 +86,13 @@ var AddExperienceHilitePanel = (function()
 	AddExperienceHilitePanel.prototype.constructor = AddExperienceHilitePanel;
 	
 	AddExperienceHilitePanel.prototype.helpText = "Add Goals and Experiences to Your Path";
-
+	AddExperienceHilitePanel.prototype.gotIt = "Continue";
+	
 	AddExperienceHilitePanel.prototype.hide = function()
 	{
 		HilitePanel.prototype.hide.call(this);
 		$(this.helpSpanNode).remove();
+		$(this.gotItNode).remove();
 	}
 	
 	AddExperienceHilitePanel.prototype.onCompleteClick = function()
@@ -168,18 +170,33 @@ var AddExperienceHilitePanel = (function()
 			.css('left', left)
 			.css('width', x0 - left);
 		this.drawArrow();
+		
+		left = Math.max(x0 - this.gotItWidth, this.emToPx);
+		$(this.gotItNode).css('top', y0 + $(this.helpSpanNode).outerHeight() + this.emToPx)
+			.css('left', left)
+			.css('width', x0 - left);
 	}
 	
 	function AddExperienceHilitePanel()
 	{
 		HilitePanel.apply(this, arguments);
 		
+		var _this = this;
 		this.helpSpanNode = d3.select(this.panelNode).append('span')
 			.classed('hilite-help', true)
-			.text(AddExperienceHilitePanel.prototype.helpText)
+			.text(this.helpText)
+			.node();
+		this.gotItNode = d3.select(this.panelNode).append('span')
+			.classed('hilite-got-it', true)
+			.text(this.gotIt)
+			.on('click', function()
+				{
+					_this.onClose();
+				})
 			.node();
 		this.emToPx = parseFloat($(this.helpSpanNode).css('font-size'));
 		this.helpMaxWidth = $(this.helpSpanNode).outerWidth();
+		this.gotItWidth = $(this.gotItNode).outerWidth();
 	}
 	
 	return AddExperienceHilitePanel;
