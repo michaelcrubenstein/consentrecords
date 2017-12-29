@@ -1560,8 +1560,7 @@ var PathlinesPanel = (function () {
 			})
 			.classed('add-button', true)
 			.style("display", "none");
-		addExperienceButton.append("span")
-			.classed('site-active-text', true)
+		addExperienceButton.classed('site-active-text', true)
 			.text("+");
 			
 		var moreExperiences = user.path();

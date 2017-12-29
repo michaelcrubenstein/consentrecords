@@ -257,7 +257,7 @@ var SharingPanel = (function() {
 				d3.event.preventDefault();
 			});
 		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
-		backButton.append("span").text(backButtonText);
+		backButton.append('span').text(backButtonText);
 		
 		navContainer.appendTitle("Sharing");
 		
@@ -272,7 +272,7 @@ var SharingPanel = (function() {
 					{
 						showClickFeedback(this, function()
 							{
-								editButton.selectAll('span').text(crv.buttonTexts.edit);
+								editButton.text(crv.buttonTexts.edit);
 							});
 						crf.hideDeleteControls(dials);
 						_this.inEditMode = false;
@@ -285,7 +285,7 @@ var SharingPanel = (function() {
 					{
 						showClickFeedback(this, function()
 							{
-								editButton.selectAll('span').text(crv.buttonTexts.done);
+								editButton.text(crv.buttonTexts.done);
 							});
 						crf.showDeleteControls(dials);
 						_this.inEditMode = true;
@@ -293,7 +293,7 @@ var SharingPanel = (function() {
 					}
 				}
 			});
-		editButton.append('span').text(crv.buttonTexts.edit);
+		editButton.text(crv.buttonTexts.edit);
 		
 		var panel2Div = this.appendScrollArea();
 
@@ -338,12 +338,12 @@ var PickSharingUserPanel = (function() {
 						_this.hide();
 					}
 				})
-			.append('span').text('Cancel');
+			.text('Cancel');
 		
 		navContainer.appendTitle(this.title);
 
 		navContainer.appendRightButton()
-			.on("click", function()
+			.on('click', function()
 			{
 				if (prepareClick('click', 'Add'))
 				{
@@ -371,7 +371,7 @@ var PickSharingUserPanel = (function() {
 				}
 				d3.event.preventDefault();
 			})
-		    .append("span").text(crv.buttonTexts.add);
+		    .text(crv.buttonTexts.add);
 		
 		var panel2Div = this.appendScrollArea();
 

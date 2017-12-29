@@ -435,8 +435,6 @@ var ComparePathsPanel = (function () {
 
 		this.navContainer.appendTitle("Compare Paths");
 		
-		var addExperienceButton = this.navContainer.appendRightButton();
-		
 		this.bottomNavContainer = this.appendBottomNavContainer();
 		this.bottomNavContainer.nav
 			.classed("transparentBottom", true);

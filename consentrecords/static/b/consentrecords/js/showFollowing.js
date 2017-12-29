@@ -25,12 +25,12 @@ var RequestFollowPanel = (function() {
 						_this.hide();
 					}
 				})
-			.append('span').text('Cancel');
+			.text('Cancel');
 		
 		navContainer.appendTitle(this.title);
 		
 		navContainer.appendRightButton()
-			.on("click", function()
+			.on('click', function()
 			{
 				if (prepareClick('click', 'request to follow user'))
 				{
@@ -74,7 +74,7 @@ var RequestFollowPanel = (function() {
 				}
 				d3.event.preventDefault();
 			})
-		    .append("span").text("Request");
+		    .text("Request");
 		
 		var panel2Div = this.appendScrollArea();
 
@@ -255,22 +255,22 @@ var FollowingPanel = (function() {
 				}
 				d3.event.preventDefault();
 			});
-		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
-		backButton.append("span").text("Settings");
+		appendLeftChevronSVG(backButton).classed('site-active-text chevron-left', true);
+		backButton.append('span').text("Settings");
 		
 		navContainer.appendTitle(header);
 		
 		var _this = this;	
 		this.inEditMode = false;
 		var editButton = navContainer.appendRightButton()
-			.on("click", function()
+			.on('click', function()
 			{
 				var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
 				if (_this.inEditMode)
 				{
 					showClickFeedback(this, function()
 						{
-							editButton.selectAll('span').text(crv.buttonTexts.edit);
+							editButton.text(crv.buttonTexts.edit);
 						});
 					if (prepareClick('click', 'Done Edit Following'))
 					{
@@ -285,7 +285,7 @@ var FollowingPanel = (function() {
 					{
 						showClickFeedback(this, function()
 							{
-								editButton.selectAll('span').text(crv.buttonTexts.done);
+								editButton.text(crv.buttonTexts.done);
 							});
 						crf.showDeleteControls(dials);
 						_this.inEditMode = true;
@@ -293,7 +293,7 @@ var FollowingPanel = (function() {
 					}
 				}
 			});
-		editButton.append('span').text(crv.buttonTexts.edit);
+		editButton.text(crv.buttonTexts.edit);
 		
 		var panel2Div = this.appendScrollArea();
 		
