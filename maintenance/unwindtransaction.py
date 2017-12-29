@@ -243,7 +243,7 @@ def printTransaction(t):
                t.createdStreets, t.changedStreets, 
                t.deletedStreets, t.streetHistories)
 
-    printTable("\tfirst name\tlast name\tbirthday\tpublic access\tprimary administrator",
+    printTable("\tfirst name\tlast name\tbirthday\tpublic access\tprimary administrator\ttip level",
                "Users", "User",
                printInstance,
                t.createdUsers, t.changedUsers, 
@@ -285,9 +285,6 @@ if __name__ == "__main__":
             revertChanged(t.changedCommentPromptTexts)
             revertDeleted(t.deletedCommentPromptTexts)
                 
-            revertChanged(t.changedDisqualifyingTags)
-            revertDeleted(t.deletedDisqualifyingTags)
-                
             revertChanged(t.changedEngagements)
             revertDeleted(t.deletedEngagements)
                 
@@ -303,15 +300,6 @@ if __name__ == "__main__":
             revertChanged(t.changedExperienceCustomServices)
             revertDeleted(t.deletedExperienceCustomServices)
 
-            revertChanged(t.changedExperiencePrompts)
-            revertDeleted(t.deletedExperiencePrompts)
-                
-            revertChanged(t.changedExperiencePromptServices)
-            revertDeleted(t.deletedExperiencePromptServices)
-                
-            revertChanged(t.changedExperiencePromptTexts)
-            revertDeleted(t.deletedExperiencePromptTexts)
-                
             revertChanged(t.changedExperienceServices)
             deleted = list(t.deletedExperienceServices.all())
             revertDeleted(t.deletedExperienceServices)
