@@ -181,6 +181,7 @@ var ChildrenPanel = (function () {
 
 		var _this = this;
 		var backButton = this.navContainer.appendLeftButton()
+			.classed('chevron-left-container', true)
 			.on('click', function()
 			{
 				_this.hide();

@@ -247,7 +247,8 @@ var FollowingPanel = (function() {
 		var navContainer = this.appendNavContainer();
 		
 		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
+			.classed('chevron-left-container', true)
+			.on('click', function()
 			{
 				if (prepareClick('click', 'Back'))
 				{

@@ -163,7 +163,8 @@ nav .site-left-chevron {
 }
 
 .chevron-left-container.site-navbar-link {
-	overflow: visible;
+	overflow-x: hidden;
+	display: flex;
 }
 
 .site-navbar-link>svg.chevron-left {
@@ -186,6 +187,7 @@ nav .site-left-chevron {
 	text-overflow: ellipsis;
 	text-align: left;
 	margin-left: .3em;
+	flex-shrink: 100;
 } 
 
 nav.transparentTop {
