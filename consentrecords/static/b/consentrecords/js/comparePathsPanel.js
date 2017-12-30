@@ -298,9 +298,7 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.handleResize = function()
 	{
-		this.topNavHeight = $(this.sitePanel.navContainer.nav.node()).outerHeight();
-		this.bottomNavHeight = $(this.sitePanel.bottomNavContainer.nav.node()).outerHeight();
-		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
+		this.checkNavHeights();
 		if (this.isLayoutDirty)
 			this.checkLayout();
 		else
@@ -376,6 +374,7 @@ var ComparePath = (function() {
 
 		/* setupHeights now so that the initial height of the svg and the vertical lines
 			consume the entire container. */
+		this.checkNavHeights();
 		this.setupHeights();
 		
 		var successFunction2 = function()
@@ -412,7 +411,11 @@ var ComparePathsPanel = (function () {
 	ComparePathsPanel.prototype.rightUser = null;
 	ComparePathsPanel.prototype.pathtree = null;
 	ComparePathsPanel.prototype.navContainer = null;
-	ComparePathsPanel.prototype.bottomNavContainer = null;
+	
+	ComparePathsPanel.prototype.getBottomNavHeight = function()
+	{
+		return 0;
+	}
 	
 	function ComparePathsPanel(leftUser, rightUser) {
 		var _this = this;
@@ -435,10 +438,6 @@ var ComparePathsPanel = (function () {
 
 		this.navContainer.appendTitle("Compare Paths");
 		
-		this.bottomNavContainer = this.appendBottomNavContainer();
-		this.bottomNavContainer.nav
-			.classed("transparentBottom", true);
-
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
 			

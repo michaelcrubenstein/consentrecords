@@ -1025,6 +1025,14 @@ var PathView = (function() {
 		$(this.bg.node()).width(newWidth);
 	}
 	
+	PathView.prototype.checkNavHeights = function()
+	{
+		var navs = $(this.sitePanel.node()).children('nav');
+		this.topNavHeight = $(navs[0]).outerHeight(false);
+		this.bottomNavHeight = this.sitePanel.getBottomNavHeight();
+		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
+	}
+	
 	function PathView(sitePanel, containerDiv)
 	{
 		this.containerDiv = containerDiv;
@@ -1161,10 +1169,7 @@ var PathLines = (function() {
 	
 	PathLines.prototype.handleResize = function()
 	{
-		var navs = $(this.sitePanel.node()).children('nav');
-		this.topNavHeight = $(navs[0]).outerHeight(false);
-		this.bottomNavHeight = this.sitePanel.getBottomNavHeight();
-		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
+		this.checkNavHeights();
 		if (this.isLayoutDirty)
 			this.checkLayout();
 		else
@@ -1207,6 +1212,7 @@ var PathLines = (function() {
 		
 		/* setupHeights now so that the initial height of the svg and the vertical lines
 			consume the entire container. */
+		this.checkNavHeights();
 		this.setupHeights();
 		
 		this.guideGroup.selectAll('g')
