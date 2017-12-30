@@ -1569,7 +1569,14 @@ var PathlinesPanel = (function () {
 			
 		var moreExperiences = user.path();
 		var canAddExperience = (moreExperiences.id() === null ? user.canWrite() : moreExperiences.canWrite());
-		addExperienceButton.style("display", canAddExperience ? null : "none");
+		addExperienceButton.style('display', 'none');
+		if (canAddExperience)
+		{
+			$(this.pathtree).on('userSet.cr', function()
+				{
+					addExperienceButton.style('display', null);
+				});
+		}
 	}
 	
 	PathlinesPanel.prototype.getBottomNavHeight = function()
@@ -1671,18 +1678,18 @@ var PathlinesPanel = (function () {
 			_this.navContainer.setBanner(user.caption());
 		}
 				
+		this.setupAddExperienceButton(user, this.addExperienceButton);
+		
+		this.settingsAlertButton = new SettingsButton(settingsButton, user, this);
+		this.settingsAlertButton.setup();
+		if (notificationsButton)
+		{
+			this.notificationsAlertButton = new NotificationsButton(notificationsButton, user);
+			this.notificationsAlertButton.setup();
+		}
+		
 		$(this.pathtree).on("userSet.cr", function()
 			{
-				_this.setupAddExperienceButton(user, _this.addExperienceButton);
-				
-				_this.settingsAlertButton = new SettingsButton(settingsButton, user, _this);
-				_this.settingsAlertButton.setup();
-				if (notificationsButton)
-				{
-					_this.notificationsAlertButton = new NotificationsButton(notificationsButton, user);
-					_this.notificationsAlertButton.setup();
-				}
-				
 				setupOnViewEventHandler(user, "changed.cr", _this.node(), checkTitle);
 				
 // 				findButton.style("display", user.privilege() === cr.privileges.administer ? null : "none");
