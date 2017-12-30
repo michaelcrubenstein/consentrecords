@@ -81,7 +81,6 @@ var ComparePath = (function() {
 	/* Translate coordinates for the elements of the experienceGroup within the svg */
 	ComparePath.prototype.experienceGroupDX = 40;
 	ComparePath.prototype.experienceGroupDY = 3.6; /* em */
-	ComparePath.prototype.loadingMessageTop = "3.6em";
 	
 	ComparePath.prototype.guideHSpacing = 0;
 

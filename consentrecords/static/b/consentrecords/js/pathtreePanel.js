@@ -392,7 +392,6 @@ var PathView = (function() {
 	/* Translate coordinates for the elements of the experienceGroup within the svg */
 	PathView.prototype.experienceGroupDX = 40;
 	PathView.prototype.experienceGroupDY = 6.5; /* em */
-	PathView.prototype.loadingMessageTop = "6.5em";
 	
 	PathView.prototype.pathBackground = "white";
 	PathView.prototype.emToPX = 11;
@@ -941,10 +940,10 @@ var PathView = (function() {
 			.style('height', '100%')
 			.attr('fill', this.pathBackground);
 			
-		this.loadingMessage = crv.appendLoadingMessage(this.containerDiv)
+		this.loadingMessage = crv.appendLoadingMessage(this.pathwayContainer.node())
 			.style('position', 'absolute')
 			.style('left', '0')
-			.style('top', this.loadingMessageTop);
+			.style('top', '{0}px'.format(this.experienceGroupDY * this.emToPX));
 		
 		this.yearGroup = this.svg.append('g')
 			.classed('year', true);
