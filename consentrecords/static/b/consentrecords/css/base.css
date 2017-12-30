@@ -269,8 +269,9 @@ button.site-active-text:hover {
 }
 
 .add-button {
-	font-size: 28px;
-	line-height: 18px;
+	font-size: 30px;
+	line-height: 16px;
+	padding-bottom: 5px;
 }
 .row-button-group {
 	margin-top: 12px;
