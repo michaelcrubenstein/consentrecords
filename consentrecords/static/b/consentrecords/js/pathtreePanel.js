@@ -1646,7 +1646,7 @@ var PathlinesPanel = (function () {
 					});
 			backButton.append("span").text(crv.buttonTexts.done);
 			
-			this.navContainer.appendTitle(user.caption());
+			this.navContainer.appendTitle('');
 		
 			this.addExperienceButton = this.navContainer.appendRightButton();
 			settingsButton = this.navContainer.appendRightButton();
@@ -1656,9 +1656,11 @@ var PathlinesPanel = (function () {
 			settingsButton = this.navContainer.appendLeftButton();
 			notificationsButton = this.navContainer.appendLeftButton();
 
-			this.navContainer.appendTitle(user.caption());
+			this.navContainer.appendTitle('');
 			this.addExperienceButton = this.navContainer.appendRightButton();
 		}
+		
+		this.navContainer.appendBanner(user.caption());
 
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
@@ -1667,7 +1669,7 @@ var PathlinesPanel = (function () {
 		
 		function checkTitle()
 		{
-			_this.navContainer.setTitle(user.caption());
+			_this.navContainer.setBanner(user.caption());
 		}
 				
 		$(this.pathtree).on("userSet.cr", function()

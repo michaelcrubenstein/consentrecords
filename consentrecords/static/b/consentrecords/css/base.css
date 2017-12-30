@@ -30,7 +30,7 @@ panel.site-panel>nav {
 	border-radius:0px;
 	margin-bottom: 0px;
 }
-panel.site-panel>nav>div {
+panel.site-panel>nav>div:first-child {
 	width: 100%;
 	min-height: 40px;
 	display: flex;
@@ -114,6 +114,23 @@ panel.edit {
 	white-space: nowrap;
 	text-align: center;
 	margin: 0 auto;
+	font-weight: 600;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+}
+
+.site-banner {
+	padding-left: 15px;
+	padding-right: 15px;
+	display: block;
+	font-size: 1.4em;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: left;
 	font-weight: 600;
 	user-select: none;
 	-webkit-user-select: none;

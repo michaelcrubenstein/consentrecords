@@ -882,6 +882,19 @@ var SiteNavContainer = (function() {
 		return h;
 	}
 	
+	SiteNavContainer.prototype.setBanner = function(title)
+	{
+		var h = this.nav.selectAll('div.site-banner');
+		h.text(title);
+		this.sitePanel.headerText = title;
+	}
+	
+	SiteNavContainer.prototype.appendBanner = function(newTitle)
+	{
+		var h = this.nav.append('div').classed('site-banner', true);
+		this.setBanner(newTitle);
+	}
+	
 	function SiteNavContainer(sitePanel)
 	{
 		this.sitePanel = sitePanel;
