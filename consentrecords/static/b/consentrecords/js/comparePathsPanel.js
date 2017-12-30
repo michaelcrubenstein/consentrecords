@@ -354,7 +354,7 @@ var ComparePath = (function() {
 		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
 	}
 	
-	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
+	ComparePath.prototype.setUser = function(leftPath, rightPath)
 	{
 		if (leftPath.privilege() === cr.privileges.find)
 			throw new Error("You do not have permission to see information about {0}".format(leftPath.getDescription()));
@@ -367,7 +367,6 @@ var ComparePath = (function() {
 		
 		this.leftPath = leftPath;
 		this.rightPath = rightPath;
-		this.editable = (editable !== undefined ? editable : true);
 
 		this.appendPathSVG();
 

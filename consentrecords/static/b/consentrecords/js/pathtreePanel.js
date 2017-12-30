@@ -1193,7 +1193,7 @@ var PathLines = (function() {
 			});
 	}
 	
-	PathLines.prototype.setUser = function(path, editable)
+	PathLines.prototype.setUser = function(path)
 	{
 		if (path.privilege() === cr.privileges.find)
 			throw new Error("You do not have permission to see information about {0}".format(path.description()));
@@ -1203,7 +1203,6 @@ var PathLines = (function() {
 		var _this = this;
 		
 		this.path = path;
-		this.editable = (editable !== undefined ? editable : true);
 		
 		this.appendPathSVG();
 		
