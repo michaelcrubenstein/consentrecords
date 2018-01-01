@@ -139,7 +139,6 @@ var QuickAddExperiencePanel = (function () {
 	
 	QuickAddExperiencePanel.prototype.hide = function()
 	{
-		this.dimmer.hide();
 		var _this = this;
 		$(this.mainDiv.node()).trigger('hiding.cr');
 		return this.$flags().animate({left: $(this.mainDiv.node()).innerWidth()},
@@ -297,7 +296,7 @@ var QuickAddExperiencePanel = (function () {
 		this.filter = filter;
 		this.expandedFlag = null;
 		this.mainDiv = d3.select(panelNode).append('panel')
-			.classed("quick-add-experience", true)
+			.classed('quick-add-experience', true)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'Close QuickAddExperiencePanel'))
@@ -413,18 +412,9 @@ var QuickAddExperiencePanel = (function () {
 					_this.otherFlagNode = d3.select(_this.otherFlagRowNode).select('span:first-child').node();
 					
 					_this.mouseDownElement = null;
-					if (!timeframes || timeframes.indexOf('Previous') >= 0)
-					{
-						_this.appendTimeframeButtons(experienceController.parent(), 'Previous', crv.buttonTexts.previousTimeframe)
-					}
-					if (!timeframes || timeframes.indexOf('Current') >= 0)
-					{
-						_this.appendTimeframeButtons(experienceController.parent(), 'Current', crv.buttonTexts.currentTimeframeShort)
-					}
-					if (!timeframes || timeframes.indexOf('Goal') >= 0)
-					{
-						_this.appendTimeframeButtons(experienceController.parent(), 'Goal', crv.buttonTexts.goalTimeframeShort)
-					}
+					_this.appendTimeframeButtons(experienceController.parent(), 'Previous', crv.buttonTexts.previousTimeframe)
+					_this.appendTimeframeButtons(experienceController.parent(), 'Current', crv.buttonTexts.currentTimeframeShort)
+					_this.appendTimeframeButtons(experienceController.parent(), 'Goal', crv.buttonTexts.goalTimeframeShort)
 		
 					_this.appendFlag(g);
 					

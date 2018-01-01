@@ -1902,15 +1902,16 @@ var ColumnInfoPanel = (function() {
 				
 			var skipButton = footer.append('button')
 				.classed('skip', true)
-				.text("Add {0} Experience".format(guideData.name))
+				.text("Add {0} Experience or Goal".format(guideData.name))
 				.on('click', function()
 					{
-						if (prepareClick('click', "Add {0} Experience".format(guideData.name)))
+						if (prepareClick('click', "Add {0} Experience or Goal".format(guideData.name)))
 						{
 							try
 							{
+								dimmer.hide();
 								var controller = new ExperienceController(path, null, false);
-								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Previous', 'Current']);
+								var panel = new QuickAddExperiencePanel(panelNode, controller, filter);
 								$(panel.mainDiv.node()).on('hiding.cr',
 									function()
 									{
@@ -1918,50 +1919,6 @@ var ColumnInfoPanel = (function() {
 									});
 								$.when(panel.promise,
 									   _this.panelNode.sitePanel.onShowingChild())
-									.fail(function(err)
-									{
-										dimmer.hide();
-									})
-									.always(function()
-										{
-											var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
-											$(_this.ideaPanel.node()).animate({left: newLeft},
-												{done: function()
-													{
-														_this.ideaPanel.remove();
-														unblockClick();
-													}});
-										});
-							}
-							catch(err)
-							{
-								cr.syncFail(err);
-							}
-						}
-					});
-		
-			var answerButton = footer.append('button')
-				.classed('answer', true)
-				.text("Add {0} Goal".format(guideData.name))
-				.on('click', function()
-					{
-						if (prepareClick('click', "Add {0} Goal".format(guideData.name)))
-						{
-							try
-							{
-								var controller = new ExperienceController(path, null, false);
-								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Goal']);
-								$(panel.mainDiv.node()).on('hiding.cr',
-									function()
-									{
-										_this.panelNode.sitePanel.onHidingChild();
-									});
-								$.when(panel.promise,
-									   _this.panelNode.sitePanel.onShowingChild())
-									.fail(function(err)
-									{
-										dimmer.hide();
-									})
 									.always(function()
 										{
 											var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
