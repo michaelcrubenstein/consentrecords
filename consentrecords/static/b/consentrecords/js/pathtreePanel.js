@@ -1461,6 +1461,33 @@ var NotificationsButton = (function() {
 	return NotificationsButton;
 })();
 
+var SearchButton = (function() {
+	SearchButton.prototype.button = null;
+	
+	SearchButton.prototype.onClick = function()
+	{
+	}
+	
+	SearchButton.prototype.setup = function()
+	{
+		var _this = this;
+		this.button.on('click', 
+				function() {
+					_this.onClick();
+				})
+			.classed('settings', true)
+			.append("img")
+			.attr("src", searchImagePath);
+	}
+	
+	function SearchButton(button)
+	{
+		this.button = button;
+	}
+	
+	return SearchButton;
+})();
+
 var PathlinesPanel = (function () {
 	PathlinesPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PathlinesPanel.prototype.constructor = PathlinesPanel;
@@ -1629,7 +1656,6 @@ var PathlinesPanel = (function () {
 
 		var settingsButton;
 		var notificationsButton;
-		var addExperienceButton;
 		
 		if (done)
 		{
@@ -1708,24 +1734,26 @@ var HomePanel = (function () {
 	
 	HomePanel.prototype.getBottomNavHeight = function()
 	{
-		return $(this.searchPanel.topBox).outerHeight(false);
+		return 0;
 	}
 	
 	HomePanel.prototype.onShowingChild = function()
 	{
-		return this.searchPanel.hideInput();
+		return null;
 	}
 	
 	HomePanel.prototype.onHidingChild = function()
 	{
-		return this.searchPanel.revealInput();
+		return null;
 	}
 	
 	function HomePanel()
 	{
 		PathlinesPanel.apply(this, arguments);
 		
-		this.searchPanel = new SearchPathsPanel();
+		searchButton = this.navContainer.appendRightButton();
+		this.searchButton = new SearchButton(searchButton);
+		this.searchButton.setup();
 	}
 	
 	return HomePanel;
