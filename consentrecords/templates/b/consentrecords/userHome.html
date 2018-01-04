@@ -755,11 +755,6 @@
 							firstPanel.pathtree.setUser(cr.signedinUser.path(), true)
 							.then(function()
 								{
-									if (cr.signedinUser.tipLevel() == null)
-									{
-										var hilitePanel = new AddExperienceHilitePanel(firstPanel.node(), firstPanel.addExperienceButton.node());
-									}
-		
 									if (handleState)
 										handleState(firstPanel);
 								})

@@ -312,3 +312,7 @@ panel.quick-add-experience>div.flags-container>span.flag-row>button {
 	background: #F8F8F8;
 	border-radius: 0.5em;
 }
+
+panel.quick-add-experience>div.flags-container>span.flag-row>button:first-of-type {
+	margin-left: 15px;
+}

@@ -4,7 +4,6 @@ var QuickAddExperiencePanel = (function () {
 
 	QuickAddExperiencePanel.prototype.stackOffset = 5;
 	QuickAddExperiencePanel.prototype.stackLeftMargin = 15;
-	QuickAddExperiencePanel.prototype.flagHSpacing = 15;
 	QuickAddExperiencePanel.prototype.flagVSpacing = 1.0;
 	QuickAddExperiencePanel.prototype.flagHeightEM = 2.333;
 	QuickAddExperiencePanel.prototype.emToPX = 11;
@@ -93,20 +92,31 @@ var QuickAddExperiencePanel = (function () {
 							/* Ensure the row is visible before calculating the width */
 							$(_this.otherFlagRowNode).css('display', '');
 							fd.firstChildWidth = $(_this.otherFlagNode).outerWidth(true);
+							/* set fd.x and $(this).css('left') immediately so that the 
+								buttons don't appear if the width is diminishing. */
+							fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
+							$(this).css('left', fd.x);
+							
 							flagSets[3].push(this);
 						}
 						else if (_this.flagStack.indexOf(this) < 0)
 							flagSets[3].push(this);
 					}
 				});
-				
-			for (i = 0; i < this.serviceStack.length; ++i)
+			
+			var lastX = 0;	
+			for (var i = 0, j = this.serviceStack.length - 1; i < this.serviceStack.length; ++i, --j)
 			{
-				var flag = this.flagStack[i];
-				$(flag).css('z-index', i);
+				var flag = this.flagStack[j];
+				$(flag).css('z-index', j);
 				var fd = d3.select(flag).datum();
-				fd.x = i * this.stackOffset + this.stackLeftMargin;
+				if (j == this.serviceStack.length - 1)
+					fd.x = panelWidth - fd.firstChildWidth;
+				else
+					fd.x = Math.min(panelWidth - fd.firstChildWidth,
+						lastX - this.stackOffset);
 				fd.y = nextY;
+				lastX = fd.x;
 			}
 			nextY += deltaY;
 		}
@@ -122,7 +132,13 @@ var QuickAddExperiencePanel = (function () {
 			PathGuides.fillOtherNode(_this.otherFlagNode);
 			/* Ensure the row is visible before calculating the width */
 			$(_this.otherFlagRowNode).css('display', '');
-			d3.select(_this.otherFlagNode).datum().firstChildWidth = $(_this.otherFlagNode).outerWidth(true);
+			var fd = d3.select(_this.otherFlagNode).datum();
+			fd.firstChildWidth = $(_this.otherFlagNode).outerWidth(true);
+
+			/* set fd.x and $(this).css('left') immediately so that the 
+				buttons don't appear if the width is diminishing. */
+			fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
+			$(_this.otherFlagNode).css('left', fd.x);
 		}
 		
 		flagSets.forEach(function(fs)
@@ -133,7 +149,7 @@ var QuickAddExperiencePanel = (function () {
 						{
 							var fd = d3.select(gNode).datum();
 							$(gNode).css('display', '');
-							fd.x = panelWidth - fd.firstChildWidth;
+							fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
 							fd.y = nextY;
 							nextY += deltaY;
 						});
@@ -156,14 +172,15 @@ var QuickAddExperiencePanel = (function () {
 	QuickAddExperiencePanel.prototype.hide = function()
 	{
 		var _this = this;
-		$(this.mainDiv.node()).trigger('hiding.cr');
-		return this.$flags().animate({left: $(this.mainDiv.node()).innerWidth()},
-			{duration: 200})
+		var $mainDiv = $(this.mainDiv.node());
+		$mainDiv.trigger('hiding.cr');
+		return $mainDiv
+			.animate({left: '{0}px'.format($mainDiv.parent().innerWidth())})
 			.promise()
-			.done(function()
-			{
-				_this.mainDiv.remove();
-			});
+				.done(function()
+					{
+						$mainDiv.css('display', 'none');
+					});
 	}
 	
 	QuickAddExperiencePanel.prototype.addService = function(path, service, timeframe)
@@ -190,24 +207,23 @@ var QuickAddExperiencePanel = (function () {
 	/* Return true if this panel should be stable across the creation of experiences. */
 	QuickAddExperiencePanel.prototype._isStable = function()
 	{
-		return $(this.panelNode).innerWidth() > 800;
+		return this.panelNode.sitePanel.hasSidebar();
 	}
 	
-	QuickAddExperiencePanel.prototype.handleResize = function(duration)
+	QuickAddExperiencePanel.prototype.layout = function()
 	{
-		var sitePanel = this.panelNode.sitePanel;
-		var nav = $(this.panelNode).children('nav')[0];
-		
 		var $mainNode = $(this.mainDiv.node());
+		var nav = $mainNode.parent().children('nav')[0];
+		
+		this.titleContainer.select('span').style('display', this._isStable() ? null : 'none');
+		
 		$mainNode.css({top: $(nav).outerHeight(),
-					   height: $(this.panelNode).innerHeight() - $(nav).outerHeight()});
+					   height: $mainNode.parent().innerHeight() - $(nav).outerHeight()});
 					   
 		if (this._isStable())
-			$mainNode.css({left: $(this.panelNode).innerWidth() - 450,
-			               width: 450});
+			$mainNode.css({width: 450});
 		else
-			$mainNode.css({left: 0,
-			               width: $(this.panelNode).innerWidth()});
+			$mainNode.css({width: $mainNode.parent().innerWidth()});
 					   
 		var $flagRow = $(this.flagRows.node());
 		var newLeft = $mainNode.innerWidth()
@@ -216,7 +232,19 @@ var QuickAddExperiencePanel = (function () {
 			.height($mainNode.height() - $(this.titleContainer.node()).outerHeight());
 			
 		this._setFlagCoordinates(this.flagRows);
-		TagPoolView.prototype.moveFlags.call(this, duration);
+		TagPoolView.prototype.moveFlags.call(this, 0);
+	}
+	
+	QuickAddExperiencePanel.prototype.handleResize = function()
+	{
+		var $mainNode = $(this.mainDiv.node());
+					   
+		if (this._isStable())
+			$mainNode.css({left: $mainNode.parent().innerWidth() - 450});
+		else
+			$mainNode.css({left: 0});
+		
+		return this.layout();		   
 	}
 	
 	QuickAddExperiencePanel.prototype.appendFlag = function(g)
@@ -268,10 +296,7 @@ var QuickAddExperiencePanel = (function () {
 							
 							_this.addService(path, service, timeframe)
 								.then(function() {
-										if (!_this._isStable())
-											return _this.hide();
-										else
-											return _this.hideFlagRow($flagRow, d);
+										return _this.hideFlagRow($flagRow, d);
 									},
 									cr.chainFail)
 								.then(unblockClick, cr.syncFail);
@@ -367,7 +392,53 @@ var QuickAddExperiencePanel = (function () {
 		}
 	}
 	
-	function QuickAddExperiencePanel(panelNode, experienceController, serviceFilter) {
+	QuickAddExperiencePanel.prototype.clearSelection = function(duration)
+	{
+		this.flagStack.forEach(function(e)
+			{
+				$(e).children('button.timeframe-button').css('display', '');
+			});
+		this.flagStack = [];
+		this.serviceStack = [];
+		this._filterFlags();
+		this._setFlagCoordinates(this.flagRows);
+		return TagPoolView.prototype.moveFlags.call(this, duration);
+	}
+	
+	QuickAddExperiencePanel.prototype.show = function(filter)
+	{
+		this.serviceFilter = filter;
+		
+		var $mainDiv = $(this.mainDiv.node());
+		if ($mainDiv.css('display') == 'none')
+		{
+			var newLeft = this._isStable() ? ($mainDiv.parent().innerWidth() - 450) : 0;
+			$mainDiv
+				.css({left: '{0}px'.format($mainDiv.parent().innerWidth()),
+					  width: $mainDiv.parent().innerWidth() - newLeft,
+					  display: ''});
+		
+			return this.clearSelection(0)
+				.then(function()
+					{
+						$mainDiv.trigger('showing.cr');
+						return $mainDiv.animate({left: '{0}px'.format(newLeft)})
+					   				   .promise();
+					});
+		}
+		else if (filter)
+		{
+			return this.clearSelection();
+		}
+		else
+		{
+			var r2 = $.Deferred();
+			r2.resolve();
+			return r2;
+		}
+	}
+	
+	function QuickAddExperiencePanel(panelNode, path, serviceFilter) {
 			
 		var _this = this;
 		
@@ -377,7 +448,8 @@ var QuickAddExperiencePanel = (function () {
 		this.serviceStack = [];
 		this.flagStack = [];
 		this.mainDiv = d3.select(panelNode).append('panel')
-			.classed('quick-add-experience', true);
+			.classed('quick-add-experience', true)
+			.style('display', 'none');
 		
 		this.titleContainer = this.mainDiv.append('div')
 			.classed('title', true);
@@ -400,7 +472,7 @@ var QuickAddExperiencePanel = (function () {
 		
 		var resize = function()
 			{
-				_this.handleResize(0);
+				_this.handleResize();
 			};
 			
 		$(window).on('resize', resize);
@@ -409,18 +481,10 @@ var QuickAddExperiencePanel = (function () {
 				$(window).off('resize', resize);
 			});
 		
-		var path = experienceController.parent();	
 		setupOnViewEventHandler(path, 'experienceAdded.cr', this.mainDiv.node(), function()
 			{
-				_this.flagStack.forEach(function(e)
-					{
-						$(e).children('button.timeframe-button').css('display', '');
-					});
-				_this.flagStack = [];
-				_this.serviceStack = [];
-				_this._filterFlags();
-				_this._setFlagCoordinates(_this.flagRows);
-				TagPoolView.prototype.moveFlags.call(_this, undefined)
+				_this.serviceFilter = null;
+				_this.clearSelection(0)
 					.fail(cr.asyncFail);
 			});
 		
@@ -464,12 +528,17 @@ var QuickAddExperiencePanel = (function () {
 					_this.otherFlagNode = d3.select(_this.otherFlagRowNode).select('span:first-child').node();
 					
 					_this.mouseDownElement = null;
-					_this.appendTimeframeButtons(experienceController.parent(), 'Previous', crv.buttonTexts.previousTimeframe)
-					_this.appendTimeframeButtons(experienceController.parent(), 'Current', crv.buttonTexts.currentTimeframeShort)
-					_this.appendTimeframeButtons(experienceController.parent(), 'Goal', crv.buttonTexts.goalTimeframeShort)
+					_this.appendTimeframeButtons(path, 'Previous', crv.buttonTexts.previousTimeframe)
+					_this.appendTimeframeButtons(path, 'Current', crv.buttonTexts.currentTimeframeShort)
+					_this.appendTimeframeButtons(path, 'Goal', crv.buttonTexts.goalTimeframeShort)
 		
 					_this.appendFlag(g);
 					
+					var $mainDiv = $(_this.mainDiv.node());
+					var newLeft = _this._isStable() ? ($mainDiv.parent().innerWidth() - 450) : 0;
+					$mainDiv.css({left: '{0}px'.format($mainDiv.parent().innerWidth()),
+					              display: ''});
+	
 					_this._filterFlags();
 					_this.flags().each(function(fd)
 						{
@@ -477,7 +546,9 @@ var QuickAddExperiencePanel = (function () {
 						});
 					_this.$flags().css({opacity: 0, display: 'none'});
 
-					_this.handleResize(undefined);
+					_this.layout();
+					$mainDiv.trigger('showing.cr');
+					$mainDiv.animate({left: '{0}px'.format(newLeft)});
 				}
 				catch(err)
 				{
