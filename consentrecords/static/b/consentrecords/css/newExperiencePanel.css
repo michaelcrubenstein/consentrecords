@@ -254,12 +254,15 @@ panel.quick-add-experience>div.title {
 	padding: 6px 0px 0px 12px;
 }
 
-panel.quick-add-experience>div.title>button.close {
+panel.quick-add-experience>div.title>button {
 	color: white;
 	opacity: 1;
 	padding-left: 0.7em;
 	padding-right: 0.7em;
 	line-height: 0.7em;
+	font-size: 21px;
+	font-weight: 700;
+	line-height: 1;
 }
 
 panel.quick-add-experience>div.flags-container {

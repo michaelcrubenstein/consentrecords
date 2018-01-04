@@ -385,7 +385,6 @@ var QuickAddExperiencePanel = (function () {
 		this.titleContainer.append('span').text("Add an Experience or a Goal to Your Path");
 		
 		var closeButton = this.titleContainer.append('button')
-			.classed('close', true)
 			.on('click', function()
 				{
 					if (prepareClick('click', 'Close QuickAddExperiencePanel'))
