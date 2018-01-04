@@ -144,7 +144,7 @@ var ZoomPanel = (function () {
 						.animate({scrollTop: 0},
 								 {duration: duration})
 						.promise(),
-					$(this.node()).animate({'background-color': 'rgba(0, 0, 0, 0.3)'},
+					$(this.node()).animate({'background-color': 'rgba(128, 128, 128, 0.7)'},
 										   {duration: duration}),
 					$(this.mainDiv.node())
 						.animate({top: this.revealedTop()},
