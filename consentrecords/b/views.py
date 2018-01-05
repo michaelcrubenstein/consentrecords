@@ -279,18 +279,30 @@ def showExperience(request, id):
         args['facebookIntegration'] = True
     
     if isUUID(id):
-        args['state'] = 'experience/%s/' % id
-        pathend = re.search(r'experience/%s/' % id, request.path).end()
-        path = request.path[pathend:]
+        try:
+            experience = Experience.objects.get(pk=id)
+            print(experience.parent.parent.id)
+            print(context.user.id)
+            print(experience.parent.parent.id != context.user.id)
+            if experience.parent.parent.id != context.user.id:
+                args['user'] = experience.parent.parent.id.hex
+            else:
+                args['user'] = None
+        
+            args['state'] = 'experience/%s/' % id
+            pathend = re.search(r'experience/%s/' % id, request.path).end()
+            path = request.path[pathend:]
 
-        if re.match(r'comments/*', path, re.I):
-            args['state'] += 'comments/'
-        elif re.match(r'comment/.*', path, re.I):
-            args['state'] += 'comment/'
-            path = path[len('comment/'):]
-            if re.match(r'[A-Fa-f0-9]{32}/', path):
-                args['state'] += path[:33]
-                path = path[33:]
+            if re.match(r'comments/*', path, re.I):
+                args['state'] += 'comments/'
+            elif re.match(r'comment/.*', path, re.I):
+                args['state'] += 'comment/'
+                path = path[len('comment/'):]
+                if re.match(r'[A-Fa-f0-9]{32}/', path):
+                    args['state'] += path[:33]
+                    path = path[33:]
+        except Experience.DoesNotExist:
+            pass
 
     return HttpResponse(template.render(args))
 
