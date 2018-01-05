@@ -108,34 +108,27 @@ panel.idea > footer {
 }
 
 panel.idea footer button {
-	width: 50%;
+	flex-shrink: 100;
+	flex-grow: 100;
 	font-size: 0.8em;
 	font-weight: bold;
 	padding: 0.6em 0.5em;
 	color: white;
 	background-color: #2C55CC;
 	border: none;
-	border-top-style: solid;
-	border-top-color: white;
-	border-top-width: 0.05em;
 	outline: none;
+	border-top: solid white 0.05em;
+	border-right: solid white 0.05em;
 	vertical-align: middle;
 }
 
-panel.idea footer button.skip {
-	border-right-style: solid;
-	border-right-color: white;
-	border-right-width: 0.05em;
+panel.idea footer button:first-of-type {
 	border-bottom-left-radius: 0.5em;
 }
 
-panel.idea footer button.answer {
+panel.idea footer button:last-of-type {
+	border-right: none;
 	border-bottom-right-radius: 0.5em;
-}
-
-panel.idea > footer button.answer:only-of-type {
-	width: 100%;
-	border-bottom-left-radius: 0.5em;
 }
 
 panel.idea > button.close {

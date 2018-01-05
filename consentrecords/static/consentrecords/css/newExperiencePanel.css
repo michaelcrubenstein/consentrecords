@@ -237,7 +237,7 @@
 	}
 	
 panel.quick-add-experience {
-	background-color: transparent;
+	background-color: rgba(128, 128, 128, 0.7);
 	display: block;
 	position: absolute;
 	top: 0px;
@@ -246,6 +246,23 @@ panel.quick-add-experience {
 	height: 100%;
 	overflow-x: hidden;
 	font-size: 12px;
+}
+
+panel.quick-add-experience>div.title {
+	color: white;
+	text-align: right;
+	padding: 6px 0px 0px 12px;
+}
+
+panel.quick-add-experience>div.title>button {
+	color: white;
+	opacity: 1;
+	padding-left: 0.7em;
+	padding-right: 0.7em;
+	line-height: 0.7em;
+	font-size: 21px;
+	font-weight: 700;
+	line-height: 1;
 }
 
 panel.quick-add-experience>div.flags-container {
@@ -294,4 +311,8 @@ panel.quick-add-experience>div.flags-container>span.flag-row>button {
 	outline: none;
 	background: #F8F8F8;
 	border-radius: 0.5em;
+}
+
+panel.quick-add-experience>div.flags-container>span.flag-row>button:first-of-type {
+	margin-left: 15px;
 }

@@ -81,7 +81,6 @@ var ComparePath = (function() {
 	/* Translate coordinates for the elements of the experienceGroup within the svg */
 	ComparePath.prototype.experienceGroupDX = 40;
 	ComparePath.prototype.experienceGroupDY = 3.6; /* em */
-	ComparePath.prototype.loadingMessageTop = "3.6em";
 	
 	ComparePath.prototype.guideHSpacing = 0;
 
@@ -298,9 +297,7 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.handleResize = function()
 	{
-		this.topNavHeight = $(this.sitePanel.navContainer.nav.node()).outerHeight();
-		this.bottomNavHeight = $(this.sitePanel.bottomNavContainer.nav.node()).outerHeight();
-		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
+		this.checkNavHeights();
 		if (this.isLayoutDirty)
 			this.checkLayout();
 		else
@@ -357,7 +354,7 @@ var ComparePath = (function() {
 		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
 	}
 	
-	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
+	ComparePath.prototype.setUser = function(leftPath, rightPath)
 	{
 		if (leftPath.privilege() === cr.privileges.find)
 			throw new Error("You do not have permission to see information about {0}".format(leftPath.getDescription()));
@@ -370,12 +367,12 @@ var ComparePath = (function() {
 		
 		this.leftPath = leftPath;
 		this.rightPath = rightPath;
-		this.editable = (editable !== undefined ? editable : true);
 
 		this.appendPathSVG();
 
 		/* setupHeights now so that the initial height of the svg and the vertical lines
 			consume the entire container. */
+		this.checkNavHeights();
 		this.setupHeights();
 		
 		var successFunction2 = function()
@@ -412,7 +409,11 @@ var ComparePathsPanel = (function () {
 	ComparePathsPanel.prototype.rightUser = null;
 	ComparePathsPanel.prototype.pathtree = null;
 	ComparePathsPanel.prototype.navContainer = null;
-	ComparePathsPanel.prototype.bottomNavContainer = null;
+	
+	ComparePathsPanel.prototype.getBottomNavHeight = function()
+	{
+		return 0;
+	}
 	
 	function ComparePathsPanel(leftUser, rightUser) {
 		var _this = this;
@@ -435,12 +436,6 @@ var ComparePathsPanel = (function () {
 
 		this.navContainer.appendTitle("Compare Paths");
 		
-		var addExperienceButton = this.navContainer.appendRightButton();
-		
-		this.bottomNavContainer = this.appendBottomNavContainer();
-		this.bottomNavContainer.nav
-			.classed("transparentBottom", true);
-
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
 			

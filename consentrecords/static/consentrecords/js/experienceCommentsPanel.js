@@ -144,7 +144,7 @@ var ZoomPanel = (function () {
 						.animate({scrollTop: 0},
 								 {duration: duration})
 						.promise(),
-					$(this.node()).animate({'background-color': 'rgba(0, 0, 0, 0.3)'},
+					$(this.node()).animate({'background-color': 'rgba(128, 128, 128, 0.7)'},
 										   {duration: duration}),
 					$(this.mainDiv.node())
 						.animate({top: this.revealedTop()},
@@ -591,7 +591,7 @@ var ExperienceCommentsPanel = (function() {
 			var dials = $(this.node()).find('ol.deletable-items>li>button:first-of-type');
 			showClickFeedback(this.editButton.node(), function()
 				{
-					_this.editButton.selectAll('span').text(crv.buttonTexts.done);
+					_this.editButton.text(crv.buttonTexts.done);
 				});
 			crf.showDeleteControls(dials);
 			this.inEditMode = true;
@@ -616,7 +616,7 @@ var ExperienceCommentsPanel = (function() {
 		}
 		catch(err)
 		{
-			this.editButton.selectAll('span').text(crv.buttonTexts.edit);
+			this.editButton.text(crv.buttonTexts.edit);
 			throw err;
 		}
 	}
@@ -822,7 +822,7 @@ var ExperienceCommentsPanel = (function() {
 				d3.event.preventDefault();
 			});
 		appendLeftChevronSVG(backButton).classed("chevron-left", true);
-		backButton.append("span").text(backText);
+		backButton.append('span').text(backText);
 
 		navContainer.appendTitle('');
 		
@@ -842,14 +842,14 @@ var ExperienceCommentsPanel = (function() {
 							var fail = function(err)
 								{
 									newButtonText = crv.buttonTexts.done;
-									_this.editButton.selectAll('span').text(newButtonText);
+									_this.editButton.text(newButtonText);
 									cr.syncFail(err);
 								}
 							try
 							{
 								showClickFeedback(this, function()
 									{
-										_this.editButton.selectAll('span').text(newButtonText);
+										_this.editButton.text(newButtonText);
 									});
 								_this.checkTextAreas()
 									.then(function()
@@ -912,7 +912,7 @@ var ExperienceCommentsPanel = (function() {
 				});
 			this.editButton
 				.classed('edit', true)
-				.append('span').text(crv.buttonTexts.edit);
+				.text(crv.buttonTexts.edit);
 		}
 
 		var shareButton = navContainer.appendRightButton()

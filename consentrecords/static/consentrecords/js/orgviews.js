@@ -181,6 +181,7 @@ var ChildrenPanel = (function () {
 
 		var _this = this;
 		var backButton = this.navContainer.appendLeftButton()
+			.classed('chevron-left-container', true)
 			.on('click', function()
 			{
 				_this.hide();
@@ -207,7 +208,7 @@ var ChildrenPanel = (function () {
 					}
 					d3.event.preventDefault();
 				});
-		addButton.append('span').text("+");
+		addButton.text("+");
 		
 		this.searchView = new (this.searchViewType)(this, this.parent);
 		$(this.node()).one('revealing.cr', function() {
@@ -1318,7 +1319,7 @@ var RootItemsPanel = (function () {
 					}
 					d3.event.preventDefault();
 				});
-		addButton.append('span').text("+");
+		addButton.text("+");
 	}
 	
 	function RootItemsPanel(header, onShow)
@@ -2246,7 +2247,7 @@ var PickPrimaryAdministratorPanel = (function() {
 				}
 				d3.event.preventDefault();
 			})
-		    .append("span").text(crv.buttonTexts.done);
+		    .text(crv.buttonTexts.done);
 		
 		var sectionPanel = this.mainDiv.append('section')
 			.classed('cell edit unique', true);

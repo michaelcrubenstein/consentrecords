@@ -283,13 +283,18 @@ var TagPoolView = (function () {
 		}
 		else
 		{
+			var margin = 0;
 			g.each(function(fd)
 				{
 					if (fd.visible === undefined || fd.visible)
 					{
 						flagSets[3].push(fd);
 						if (fd.outerWidth === undefined)
-							fd.outerWidth = $(this).outerWidth();
+						{
+							if (margin == 0)
+								margin = $(this).outerWidth() - getTextWidth(this.textContent, $(this).css('font'));
+							fd.outerWidth = getTextWidth(this.textContent, $(this).css('font')) + margin;
+						}
 					}
 				});
 		}
