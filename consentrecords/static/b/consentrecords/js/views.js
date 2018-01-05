@@ -882,6 +882,19 @@ var SiteNavContainer = (function() {
 		return h;
 	}
 	
+	SiteNavContainer.prototype.setBanner = function(title)
+	{
+		var h = this.nav.selectAll('div.site-banner');
+		h.text(title);
+		this.sitePanel.headerText = title;
+	}
+	
+	SiteNavContainer.prototype.appendBanner = function(newTitle)
+	{
+		var h = this.nav.append('div').classed('site-banner', true);
+		this.setBanner(newTitle);
+	}
+	
 	function SiteNavContainer(sitePanel)
 	{
 		this.sitePanel = sitePanel;
@@ -1671,7 +1684,7 @@ var Dimmer = (function () {
 	
 	Dimmer.prototype.show = function()
 	{
-		return $(this.dimmerDiv.node()).animate({opacity: 0.3}, 200)
+		return $(this.dimmerDiv.node()).animate({opacity: 0.7}, 200)
 			.promise();
 	}
 	
@@ -2441,7 +2454,7 @@ var ConfirmPanel = (function() {
 		return $.when(
 			$(this.div.node()).animate({'top': $(this.panel.node()).height() - $(this.div.node()).outerHeight(true)})
 				.promise(),
-			$(this.panel.node()).animate({'background-color': 'rgba(0, 0, 0, 0.3)'}).promise());
+			$(this.panel.node()).animate({'background-color': 'rgba(128, 128, 128, 0.7)'}).promise());
 	}
 
 	ConfirmPanel.prototype.hideDown = function()

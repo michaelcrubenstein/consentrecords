@@ -392,7 +392,6 @@ var PathView = (function() {
 	/* Translate coordinates for the elements of the experienceGroup within the svg */
 	PathView.prototype.experienceGroupDX = 40;
 	PathView.prototype.experienceGroupDY = 6.5; /* em */
-	PathView.prototype.loadingMessageTop = "6.5em";
 	
 	PathView.prototype.pathBackground = "white";
 	PathView.prototype.emToPX = 11;
@@ -488,13 +487,7 @@ var PathView = (function() {
 				}
 				var newPanel = new ExperienceCommentsPanel(fd, this.sitePanel.headerText);
 				
-				$(newPanel.node()).on('hiding.cr', function()
-					{
-						_this.sitePanel.onHidingChild();
-					});
-				
-				$.when(newPanel.showLeft(),
-					   this.sitePanel.onShowingChild())
+				newPanel.showLeft()
 					.always(function()
 						{
 							if (!fd.selected())
@@ -941,10 +934,10 @@ var PathView = (function() {
 			.style('height', '100%')
 			.attr('fill', this.pathBackground);
 			
-		this.loadingMessage = crv.appendLoadingMessage(this.containerDiv)
+		this.loadingMessage = crv.appendLoadingMessage(this.pathwayContainer.node())
 			.style('position', 'absolute')
 			.style('left', '0')
-			.style('top', this.loadingMessageTop);
+			.style('top', '{0}px'.format(this.experienceGroupDY * this.emToPX));
 		
 		this.yearGroup = this.svg.append('g')
 			.classed('year', true);
@@ -1023,6 +1016,14 @@ var PathView = (function() {
 			});
 		$(this.svg.node()).width(newWidth);
 		$(this.bg.node()).width(newWidth);
+	}
+	
+	PathView.prototype.checkNavHeights = function()
+	{
+		var navs = $(this.sitePanel.node()).children('nav');
+		this.topNavHeight = $(navs[0]).outerHeight(false);
+		this.bottomNavHeight = this.sitePanel.getBottomNavHeight();
+		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
 	}
 	
 	function PathView(sitePanel, containerDiv)
@@ -1161,10 +1162,7 @@ var PathLines = (function() {
 	
 	PathLines.prototype.handleResize = function()
 	{
-		var navs = $(this.sitePanel.node()).children('nav');
-		this.topNavHeight = $(navs[0]).outerHeight(false);
-		this.bottomNavHeight = this.sitePanel.getBottomNavHeight();
-		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
+		this.checkNavHeights();
 		if (this.isLayoutDirty)
 			this.checkLayout();
 		else
@@ -1189,7 +1187,7 @@ var PathLines = (function() {
 			});
 	}
 	
-	PathLines.prototype.setUser = function(path, editable)
+	PathLines.prototype.setUser = function(path)
 	{
 		if (path.privilege() === cr.privileges.find)
 			throw new Error("You do not have permission to see information about {0}".format(path.description()));
@@ -1199,7 +1197,6 @@ var PathLines = (function() {
 		var _this = this;
 		
 		this.path = path;
-		this.editable = (editable !== undefined ? editable : true);
 		
 		this.appendPathSVG();
 		
@@ -1207,6 +1204,7 @@ var PathLines = (function() {
 		
 		/* setupHeights now so that the initial height of the svg and the vertical lines
 			consume the entire container. */
+		this.checkNavHeights();
 		this.setupHeights();
 		
 		this.guideGroup.selectAll('g')
@@ -1257,7 +1255,7 @@ var PathLines = (function() {
 				_this.loadingMessage.remove();
 			
 				_this.isUserSet = true;
-				$(_this).trigger("userSet.cr");
+				$(_this).trigger('userSet.cr');
 			}
 			catch(err)
 			{
@@ -1344,12 +1342,7 @@ var SettingsButton = (function() {
 				controller.oldInstance(this.user);
 				var panel = new Settings(controller, revealPanelUp);
 				
-				$(panel.node()).on('hiding.cr', function()
-					{
-						_this.pathtreePanel.onHidingChild();
-					});
-				$.when(panel.showUp(),
-					   _this.pathtreePanel.onShowingChild())
+				panel.showUp()
 					.always(unblockClick);
 			}
 			catch(err)
@@ -1457,6 +1450,50 @@ var NotificationsButton = (function() {
 	return NotificationsButton;
 })();
 
+var SearchButton = (function() {
+	SearchButton.prototype.button = null;
+	
+	SearchButton.prototype.onClick = function()
+	{
+		if (prepareClick('click', 'Search Paths'))
+		{
+			try
+			{
+				var panel = new SearchPathsPanel();
+				panel.revealPanel(0)
+					.then(function()
+						{
+							return panel.showUp();
+						})
+					.then(unblockClick, cr.syncFail);
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+		}
+	}
+	
+	SearchButton.prototype.setup = function()
+	{
+		var _this = this;
+		this.button.on('click', 
+				function() {
+					_this.onClick();
+				})
+			.classed('settings', true)
+			.append("img")
+			.attr("src", searchImagePath);
+	}
+	
+	function SearchButton(button)
+	{
+		this.button = button;
+	}
+	
+	return SearchButton;
+})();
+
 var PathlinesPanel = (function () {
 	PathlinesPanel.prototype = Object.create(crv.SitePanel.prototype);
 	PathlinesPanel.prototype.constructor = PathlinesPanel;
@@ -1465,11 +1502,11 @@ var PathlinesPanel = (function () {
 	PathlinesPanel.prototype.pathtree = null;
 	PathlinesPanel.prototype.navContainer = null;
 		
-	PathlinesPanel.prototype.checkSettingsBadge = function(user)
+	PathlinesPanel.prototype.hasSidebar = function()
 	{
-		settingsButton.selectAll("span").text(this.userSettingsBadgeCount(user));
+		return $(this.node()).innerWidth() > 800;
 	}
-		
+	
 	PathlinesPanel.prototype.notificationsBadgeCount = function(user)
 	{
 		var length = user.notifications().length;
@@ -1530,6 +1567,29 @@ var PathlinesPanel = (function () {
 		}
 	}
 	
+	PathlinesPanel.prototype.showQuickAddExperiencePanel = function(filter)
+	{
+		if (this.quickAddExperiencePanel === undefined)
+		{
+			var path = this.pathtree.path;
+			this.quickAddExperiencePanel = new QuickAddExperiencePanel(this.node(), path, filter);
+			var _this = this;
+			$(this.quickAddExperiencePanel.mainDiv.node()).on('hiding.cr', function()
+				{
+					$(_this.addExperienceButton.node()).animate({opacity: 1});
+				})
+				.on('showing.cr', function()
+				{
+					$(_this.addExperienceButton.node()).animate({opacity: 0.5});
+				});
+			return this.quickAddExperiencePanel.promise;
+		}
+		else
+		{
+			return this.quickAddExperiencePanel.show(filter);
+		}
+	}
+	
 	PathlinesPanel.prototype.setupAddExperienceButton = function(user, addExperienceButton)
 	{
 		var _this = this;
@@ -1539,16 +1599,7 @@ var PathlinesPanel = (function () {
 				{
 					try
 					{
-						var path = _this.pathtree.path;
-						var experienceController = new ExperienceController(path, null, false);
-						var panel = new QuickAddExperiencePanel(_this.node(), experienceController);
-						$(panel.mainDiv.node()).on('hiding.cr',
-							function()
-							{
-								_this.onHidingChild();
-							});
-						$.when(panel.promise,
-							   _this.onShowingChild())
+						_this.showQuickAddExperiencePanel()
 							.always(unblockClick);
 					}
 					catch(err)
@@ -1560,13 +1611,19 @@ var PathlinesPanel = (function () {
 			})
 			.classed('add-button', true)
 			.style("display", "none");
-		addExperienceButton.append("span")
-			.classed('site-active-text', true)
+		addExperienceButton.classed('site-active-text', true)
 			.text("+");
 			
 		var moreExperiences = user.path();
 		var canAddExperience = (moreExperiences.id() === null ? user.canWrite() : moreExperiences.canWrite());
-		addExperienceButton.style("display", canAddExperience ? null : "none");
+		addExperienceButton.style('display', 'none');
+		if (canAddExperience)
+		{
+			$(this.pathtree).on('userSet.cr', function()
+				{
+					addExperienceButton.style('display', null);
+				});
+		}
 	}
 	
 	PathlinesPanel.prototype.getBottomNavHeight = function()
@@ -1595,16 +1652,6 @@ var PathlinesPanel = (function () {
 		return newPanel;
 	}
 	
-	PathlinesPanel.prototype.onShowingChild = function()
-	{
-		return null;
-	}
-	
-	PathlinesPanel.prototype.onHidingChild = function()
-	{
-		return null;
-	}
-	
 	function PathlinesPanel(user, done) {
 		var _this = this;
 		this.user = user;
@@ -1619,7 +1666,6 @@ var PathlinesPanel = (function () {
 
 		var settingsButton;
 		var notificationsButton;
-		var addExperienceButton;
 		
 		if (done)
 		{
@@ -1642,7 +1688,7 @@ var PathlinesPanel = (function () {
 					});
 			backButton.append("span").text(crv.buttonTexts.done);
 			
-			this.navContainer.appendTitle(user.caption());
+			this.navContainer.appendTitle('');
 		
 			this.addExperienceButton = this.navContainer.appendRightButton();
 			settingsButton = this.navContainer.appendRightButton();
@@ -1652,9 +1698,11 @@ var PathlinesPanel = (function () {
 			settingsButton = this.navContainer.appendLeftButton();
 			notificationsButton = this.navContainer.appendLeftButton();
 
-			this.navContainer.appendTitle(user.caption());
+			this.navContainer.appendTitle('');
 			this.addExperienceButton = this.navContainer.appendRightButton();
 		}
+		
+		this.navContainer.appendBanner(user.caption());
 
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
@@ -1663,21 +1711,21 @@ var PathlinesPanel = (function () {
 		
 		function checkTitle()
 		{
-			_this.navContainer.setTitle(user.caption());
+			_this.navContainer.setBanner(user.caption());
 		}
 				
-		$(this.pathtree).on("userSet.cr", function()
+		this.setupAddExperienceButton(user, this.addExperienceButton);
+		
+		this.settingsAlertButton = new SettingsButton(settingsButton, user, this);
+		this.settingsAlertButton.setup();
+		if (notificationsButton)
+		{
+			this.notificationsAlertButton = new NotificationsButton(notificationsButton, user);
+			this.notificationsAlertButton.setup();
+		}
+		
+		$(this.pathtree).on('userSet.cr', function()
 			{
-				_this.setupAddExperienceButton(user, _this.addExperienceButton);
-				
-				_this.settingsAlertButton = new SettingsButton(settingsButton, user, _this);
-				_this.settingsAlertButton.setup();
-				if (notificationsButton)
-				{
-					_this.notificationsAlertButton = new NotificationsButton(notificationsButton, user);
-					_this.notificationsAlertButton.setup();
-				}
-				
 				setupOnViewEventHandler(user, "changed.cr", _this.node(), checkTitle);
 				
 // 				findButton.style("display", user.privilege() === cr.privileges.administer ? null : "none");
@@ -1696,24 +1744,30 @@ var HomePanel = (function () {
 	
 	HomePanel.prototype.getBottomNavHeight = function()
 	{
-		return $(this.searchPanel.topBox).outerHeight(false);
-	}
-	
-	HomePanel.prototype.onShowingChild = function()
-	{
-		return this.searchPanel.hideInput();
-	}
-	
-	HomePanel.prototype.onHidingChild = function()
-	{
-		return this.searchPanel.revealInput();
+		return 0;
 	}
 	
 	function HomePanel()
 	{
 		PathlinesPanel.apply(this, arguments);
 		
-		this.searchPanel = new SearchPathsPanel();
+		searchButton = this.navContainer.appendRightButton();
+		this.searchButton = new SearchButton(searchButton);
+		this.searchButton.setup();
+		
+		var _this = this;
+		$(this.pathtree).on('userSet.cr', function()
+			{
+				if (_this.hasSidebar())
+					_this.showQuickAddExperiencePanel();
+				else
+				{
+					if (cr.signedinUser.tipLevel() == null)
+					{
+						new AddExperienceHilitePanel(_this.node(), _this.addExperienceButton.node());
+					}
+				}
+			});
 	}
 	
 	return HomePanel;
@@ -1769,16 +1823,6 @@ var OtherPathPanel = (function () {
 		return 0;
 	}
 	
-	OtherPathPanel.prototype.onShowingChild = function()
-	{
-		return null;
-	}
-	
-	OtherPathPanel.prototype.onHidingChild = function()
-	{
-		return null;
-	}
-	
 	function OtherPathPanel(path, done) {
 		var _this = this;
 		this.path = path;
@@ -1823,7 +1867,7 @@ var OtherPathPanel = (function () {
 			
 		this.pathtree = new OtherPathlines(this, panel2Div.node());
 		
-		$(this.pathtree).on("userSet.cr", function()
+		$(this.pathtree).on('userSet.cr', function()
 			{
 				this.isMinHeight = true;
 				this.handleResize();
@@ -1842,7 +1886,6 @@ var ColumnInfoPanel = (function() {
 		var newLeft = "{0}px".format(($(this.panelNode).width() - $(this.ideaPanel.node()).outerWidth()) / 2);
 		$(this.ideaPanel.node()).animate({left: newLeft},
 			{done: done});
-		this.panelNode.sitePanel.onShowingChild();
 	}
 	
 	function ColumnInfoPanel(panelNode, path, guideData, done, fail)
@@ -1860,7 +1903,6 @@ var ColumnInfoPanel = (function() {
 			{
 				dimmer.hide();
 				_this.ideaPanel.remove();
-				_this.panelNode.sitePanel.onHidingChild();
 			}
 		
 			dimmer.mousedown(onCancel);
@@ -1890,66 +1932,15 @@ var ColumnInfoPanel = (function() {
 				
 			var skipButton = footer.append('button')
 				.classed('skip', true)
-				.text("Add {0} Experience".format(guideData.name))
+				.text("Add {0} Experience or Goal".format(guideData.name))
 				.on('click', function()
 					{
-						if (prepareClick('click', "Add {0} Experience".format(guideData.name)))
+						if (prepareClick('click', "Add {0} Experience or Goal".format(guideData.name)))
 						{
 							try
 							{
-								var controller = new ExperienceController(path, null, false);
-								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Previous', 'Current']);
-								$(panel.mainDiv.node()).on('hiding.cr',
-									function()
-									{
-										_this.panelNode.sitePanel.onHidingChild();
-									});
-								$.when(panel.promise,
-									   _this.panelNode.sitePanel.onShowingChild())
-									.fail(function(err)
-									{
-										dimmer.hide();
-									})
-									.always(function()
-										{
-											var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
-											$(_this.ideaPanel.node()).animate({left: newLeft},
-												{done: function()
-													{
-														_this.ideaPanel.remove();
-														unblockClick();
-													}});
-										});
-							}
-							catch(err)
-							{
-								cr.syncFail(err);
-							}
-						}
-					});
-		
-			var answerButton = footer.append('button')
-				.classed('answer', true)
-				.text("Add {0} Goal".format(guideData.name))
-				.on('click', function()
-					{
-						if (prepareClick('click', "Add {0} Goal".format(guideData.name)))
-						{
-							try
-							{
-								var controller = new ExperienceController(path, null, false);
-								var panel = new QuickAddExperiencePanel(panelNode, controller, dimmer, filter, ['Goal']);
-								$(panel.mainDiv.node()).on('hiding.cr',
-									function()
-									{
-										_this.panelNode.sitePanel.onHidingChild();
-									});
-								$.when(panel.promise,
-									   _this.panelNode.sitePanel.onShowingChild())
-									.fail(function(err)
-									{
-										dimmer.hide();
-									})
+								dimmer.hide();
+								_this.panelNode.sitePanel.showQuickAddExperiencePanel(filter)
 									.always(function()
 										{
 											var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
