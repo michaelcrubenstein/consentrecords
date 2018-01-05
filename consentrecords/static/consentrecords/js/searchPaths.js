@@ -215,7 +215,6 @@ var SearchPathsPanel = (function () {
 
 	SearchPathsPanel.prototype.selectedPool = null;
 	
-	SearchPathsPanel.prototype.mode = 'revealInput';
 	SearchPathsPanel.prototype.topBox = null;
 	SearchPathsPanel.prototype.searchInput = null;
 	SearchPathsPanel.prototype.cancelButton = null;
@@ -241,73 +240,6 @@ var SearchPathsPanel = (function () {
 		$(this.searchInput).hide(0).show(0);
 	}
 	
-	SearchPathsPanel.prototype.hideInput = function(duration)
-	{
-		var newTop = $(window).height();
-		var _this = this;
-		this.mode = 'hideInput';
-		return $(this.node()).animate({top: newTop},
-								   	  {duration: duration})
-			.promise()
-			.then(function()
-				{
-					$(_this.searchInput).css('display', 'none');
-				},
-				cr.chainFail);
-
-	}
-	
-	SearchPathsPanel.prototype.revealInput = function(duration)
-	{
-		var newTop = $(window).height() 
-					 - $(this.searchInput).outerHeight(true)
-					 - $(this.topHandle).outerHeight(true);
-		
-		/* Reset the right margin to the same as the left margin. */
-		var inputMarginLeft = parseInt($(this.searchInput).css('margin-left'));
-		var inputMarginRight = parseInt($(this.searchInput).css('margin-right'));
-
-		var inputWidth = $(this.searchInput.parentNode).width()
-						 - inputMarginLeft + inputMarginRight
-						 - $(this.searchInput).outerWidth(true) + $(this.searchInput).outerWidth(false);
-
-		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
-
-		var queryBottom;
-		if (this.queryTagPoolView.flags().selectAll('g').size() == 0)
-			queryBottom = 0;
-		else
-			queryBottom = 100;
-			
-		var _this = this;
-		
-		this.mode = 'revealInput';
-		this.mainDiv.classed('vertical-scrolling', false)
-			.classed('no-scrolling', true);
-		$(this.searchInput).css('display', '');
-		
-		return $.when(
-			$(this.node()).animate({top: newTop,
-									height: $(this.topBox).outerHeight(true)},
-								   {duration: duration}),
-			$(this.searchInput).animate({width: inputWidth,
-										 "margin-right": inputMarginLeft},
-										{duration: duration,
-										 done: function()
-											{
-												_this.clearInput();
-											}
-										 }),
-			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
-										  opacity: 0.0},
-								   {duration: duration,
-								   complete: function()
-								   	{
-								   		$(_this.cancelButton).css('display', 'none');
-								   	}})
-			);
-	}
-	
 	SearchPathsPanel.prototype.revealPanel = function(duration)
 	{
 		/* Ensure the height of the node and the mainNode are correct. */
@@ -327,8 +259,6 @@ var SearchPathsPanel = (function () {
 						 
 		$(this.searchInput).css('display', '');
 		$(this.cancelButton).css('display', '');
-		$(this.node()).animate({top: 0},
-							   {duration: duration});
 		$(this.searchInput).animate({width: inputWidth,
 									 "margin-right": 0},
 							   {duration: duration});
@@ -374,7 +304,6 @@ var SearchPathsPanel = (function () {
 			resultsHeight >= queryBottom)
 			$(this.resultContainerNode).height(queryBottom);
 		
-		this.mode = 'revealPanel';
 		return $.when($poolContainer.animate(
 					{width: poolWidth, 
 					 height: poolHeight},
@@ -735,8 +664,7 @@ var SearchPathsPanel = (function () {
 				handleResize();
 			});
 			
-		this.createRoot(null, "Search Paths", "search-paths");
-		this.mode = 'revealInput';
+		this.createRoot(null, "Search Paths", "search-paths", revealPanelUp);
 		
 		var mainDiv = this.appendScrollArea();
 		
@@ -753,7 +681,7 @@ var SearchPathsPanel = (function () {
 			
 		this.cancelButton = topBox.append('button')
 			.classed('cancel', true)
-			.text(crv.buttonTexts.cancel)
+			.text(crv.buttonTexts.done)
 			.style('display', 'none')
 			.node();
 			
@@ -860,38 +788,15 @@ var SearchPathsPanel = (function () {
 		this.queryHelp = this.queryContainer.append('span')
 			.text('Tap tags to find paths containing those tags.');
 		
-		$(this.topBox).click(function(event)
-			{
-				if ($(_this.node()).position().top == 0)
-				{
-					_this.revealInput();
-				}
-				else
-				{
-					$(_this.searchInput).focus();
-				}
-				event.stopPropagation();
-			});
-			
 		$(this.cancelButton).click(function(event)
 			{
-				_this.revealInput()
-					.then(function()
-						{
-							_this._clearQuery();
-						});
-				
+				_this.hide();				
 				event.stopPropagation();
 			});
 			
 		function handleResize()
 		{
-			if (_this.mode == 'revealPanel')
-				_this.revealPanel(0);
-			else if (_this.mode == 'revealInput')
-				_this.revealInput(0);
-			else
-				_this.hideInput(0);
+			_this.revealPanel(0);
 		}
 		
 		$(mainDiv.node()).on("resize.cr", handleResize);
@@ -900,7 +805,6 @@ var SearchPathsPanel = (function () {
 			{
 				_this.panelDiv.style('top', "{0}px".format($(window).height()));
 				_this.panelDiv.style('display', 'block');
-				_this.revealInput();
 
 				_this.searchPathsResultsView = new SearchPathsResultsView(_this);
 				

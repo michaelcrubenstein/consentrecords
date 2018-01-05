@@ -2,36 +2,47 @@ var QuickAddExperiencePanel = (function () {
 	QuickAddExperiencePanel.prototype = Object.create(EditPanel.prototype);
 	QuickAddExperiencePanel.prototype.constructor = QuickAddExperiencePanel;
 
-	QuickAddExperiencePanel.prototype.flagHSpacing = 15;
+	QuickAddExperiencePanel.prototype.stackOffset = 5;
+	QuickAddExperiencePanel.prototype.stackLeftMargin = 15;
 	QuickAddExperiencePanel.prototype.flagVSpacing = 1.0;
 	QuickAddExperiencePanel.prototype.flagHeightEM = 2.333;
 	QuickAddExperiencePanel.prototype.emToPX = 11;
 	QuickAddExperiencePanel.prototype.flagTopMargin = 1.0;	/* em */
 	
-	QuickAddExperiencePanel.prototype.currentService = null;
+	QuickAddExperiencePanel.prototype.serviceStack = null;
+	QuickAddExperiencePanel.prototype.flagStack = null;
 	QuickAddExperiencePanel.prototype.currentFlag = null;
+	
+	QuickAddExperiencePanel.prototype._pushFlag = function(flag, service)
+	{
+		this.serviceStack.push(service);
+		this.flagStack.push(flag);
+		$(flag).children('button.timeframe-button').css('display', 'none');
+	}
+	
+	QuickAddExperiencePanel.prototype._popFlag = function()
+	{
+		this.serviceStack.pop();
+		return this.flagStack.pop();
+	}
 
 	/* Set the visible flags for each of the services associated with this flags. */
 	QuickAddExperiencePanel.prototype._filterFlags = function()
 	{
 		var _this = this;
-		if (this.currentService)
+		if (this.serviceStack.length)
 		{
-			var filterService = this.currentService;
+			var filterService = this.serviceStack.slice(-1)[0];
 		
-			/* Make the services that are directly implied by filterService visible. */
-			var sis = filterService && filterService.serviceImplications().map(function(si) { return si.service(); })
-				.filter(function(s) { return s != filterService && s.impliedDirectlyBy().indexOf(filterService) >= 0;});
-
 			this.flags().each(function(fs)
 				{
 					if (this == _this.otherFlagRowNode)
 						fs.visible = true;
+					else if (_this.flagStack.indexOf(this) >= 0)
+						fs.visible = true;
 					else
-						fs.visible = (!_this.filter || _this.filter(fs)) &&
-							(fs.service == filterService ||
-							 filterService.impliedDirectlyBy().indexOf(fs.service) >= 0 ||
-							 sis.indexOf(fs.service) >= 0);
+						fs.visible = (!_this.serviceFilter || _this.serviceFilter(fs)) &&
+							filterService.impliedDirectlyBy().indexOf(fs.service) >= 0;
 				});
 		}
 		else
@@ -40,11 +51,11 @@ var QuickAddExperiencePanel = (function () {
 				{
 					return this != _this.otherFlagRowNode &&
 						   fs.service.serviceImplications().length <= 1 &&
-						(!_this.filter || _this.filter(fs));
+						(!_this.serviceFilter || _this.serviceFilter(fs));
 				});
 			if (rootServices.size() == 1)
 			{
-				this.currentService = rootServices.datum().service;
+				this._pushFlag(rootServices.node(), rootServices.datum().service);
 				this._filterFlags();
 			}
 			else
@@ -66,34 +77,48 @@ var QuickAddExperiencePanel = (function () {
 		var panelWidth = $(this.mainDiv.node()).innerWidth();
 		
 		var flagSets = [[], [], [], []];
-		var filterService = this.currentService;
-		if (filterService)
+		if (this.serviceStack.length)
 		{
+			var filterService = this.serviceStack.slice(-1)[0];
 			g.each(function(fd)
 				{
 					if (fd.visible === undefined || fd.visible)
 					{
-						if (fd.service == filterService)
-							flagSets[1].push(this);
-						else if (this == _this.otherFlagRowNode)
+						if (this == _this.otherFlagRowNode)
 						{
 							d3.select(_this.otherFlagNode)
 								.text("Other {0}".format(filterService.description()));
 							PathGuides.fillNode(_this.otherFlagNode, filterService.getColumn());
-							fd.x = undefined;
-							flagSets[2].push(this);
+							/* Ensure the row is visible before calculating the width */
+							$(_this.otherFlagRowNode).css('display', '');
+							fd.firstChildWidth = $(_this.otherFlagNode).outerWidth(true);
+							/* set fd.x and $(this).css('left') immediately so that the 
+								buttons don't appear if the width is diminishing. */
+							fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
+							$(this).css('left', fd.x);
+							
+							flagSets[3].push(this);
 						}
-						else if (fd.service.serviceImplications().find(function(si)
-							{
-								return si.service() == filterService;
-							}))
-							flagSets[2].push(this);
-						else if (fd.service.impliedDirectlyBy().indexOf(filterService) >= 0)
-							flagSets[0].push(this);
-						else
+						else if (_this.flagStack.indexOf(this) < 0)
 							flagSets[3].push(this);
 					}
 				});
+			
+			var lastX = 0;	
+			for (var i = 0, j = this.serviceStack.length - 1; i < this.serviceStack.length; ++i, --j)
+			{
+				var flag = this.flagStack[j];
+				$(flag).css('z-index', j);
+				var fd = d3.select(flag).datum();
+				if (j == this.serviceStack.length - 1)
+					fd.x = panelWidth - fd.firstChildWidth;
+				else
+					fd.x = Math.min(panelWidth - fd.firstChildWidth,
+						lastX - this.stackOffset);
+				fd.y = nextY;
+				lastX = fd.x;
+			}
+			nextY += deltaY;
 		}
 		else
 		{
@@ -105,9 +130,17 @@ var QuickAddExperiencePanel = (function () {
 			d3.select(_this.otherFlagNode)
 				.text("Other");
 			PathGuides.fillOtherNode(_this.otherFlagNode);
-			d3.select(_this.otherFlagNode).datum().x = undefined;
-		}
+			/* Ensure the row is visible before calculating the width */
+			$(_this.otherFlagRowNode).css('display', '');
+			var fd = d3.select(_this.otherFlagNode).datum();
+			fd.firstChildWidth = $(_this.otherFlagNode).outerWidth(true);
 
+			/* set fd.x and $(this).css('left') immediately so that the 
+				buttons don't appear if the width is diminishing. */
+			fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
+			$(_this.otherFlagNode).css('left', fd.x);
+		}
+		
 		flagSets.forEach(function(fs)
 			{
 				if (fs.length)
@@ -116,8 +149,7 @@ var QuickAddExperiencePanel = (function () {
 						{
 							var fd = d3.select(gNode).datum();
 							$(gNode).css('display', '');
-							if (fd.x === undefined)
-								fd.x = panelWidth - $(gNode).children('span:first-child').outerWidth(true);
+							fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
 							fd.y = nextY;
 							nextY += deltaY;
 						});
@@ -139,40 +171,29 @@ var QuickAddExperiencePanel = (function () {
 	
 	QuickAddExperiencePanel.prototype.hide = function()
 	{
-		this.dimmer.hide();
 		var _this = this;
-		$(this.mainDiv.node()).trigger('hiding.cr');
-		return this.$flags().animate({left: $(this.mainDiv.node()).innerWidth()},
-			{duration: 200})
+		var $mainDiv = $(this.mainDiv.node());
+		$mainDiv.trigger('hiding.cr');
+		return $mainDiv
+			.animate({left: '{0}px'.format($mainDiv.parent().innerWidth())})
 			.promise()
-			.done(function()
-			{
-				_this.mainDiv.remove();
-			});
+				.done(function()
+					{
+						$mainDiv.css('display', 'none');
+					});
 	}
 	
-	QuickAddExperiencePanel.prototype.addService = function(path, service, timeframe, isOther)
+	QuickAddExperiencePanel.prototype.addService = function(path, service, timeframe)
 	{
 		var controller = new ExperienceController(path, null, false);
 		if (service)
 			controller.service(service);
 		
-		if (isOther)
-		{
-			controller.addService("Other Tag");
-		}
 		controller.timeframe(timeframe);
 		controller.initDateRange(timeframe);
 		var panel = new NewExperiencePanel(controller);
 		
-			
-		return panel.showUp()
-			.then(function()
-				{
-					if (isOther)
-						panel.focusLastTag();
-				},
-				cr.chainFail);
+		return panel.showUp();
 	}
 	
 	QuickAddExperiencePanel.prototype.hideFlagRow = function($flagRow, fd)
@@ -183,18 +204,47 @@ var QuickAddExperiencePanel = (function () {
 		return $flagRow.animate({left: fd.x}).promise();
 	}
 	
-	QuickAddExperiencePanel.prototype.handleResize = function(duration)
+	/* Return true if this panel should be stable across the creation of experiences. */
+	QuickAddExperiencePanel.prototype._isStable = function()
 	{
+		return this.panelNode.sitePanel.hasSidebar();
+	}
+	
+	QuickAddExperiencePanel.prototype.layout = function()
+	{
+		var $mainNode = $(this.mainDiv.node());
+		var nav = $mainNode.parent().children('nav')[0];
+		
+		this.titleContainer.select('span').style('display', this._isStable() ? null : 'none');
+		
+		$mainNode.css({top: $(nav).outerHeight(),
+					   height: $mainNode.parent().innerHeight() - $(nav).outerHeight()});
+					   
+		if (this._isStable())
+			$mainNode.css({width: 450});
+		else
+			$mainNode.css({width: $mainNode.parent().innerWidth()});
+					   
 		var $flagRow = $(this.flagRows.node());
-		var newLeft = $(this.mainDiv.node()).innerWidth()
+		var newLeft = $mainNode.innerWidth()
 			 - $flagRow.children('span:first-child').outerWidth(true);
 		$(this.flagsContainer.node()).width($flagRow.outerWidth(true) + newLeft)
-			.height($(this.mainDiv.node()).height());
+			.height($mainNode.height() - $(this.titleContainer.node()).outerHeight());
 			
-		/* Clear the x coordinates before resetting them. */
-		this.flagRows.each(function(fs) { fs.x = undefined; });
-		this._setFlagCoordinates(this.flagRows, undefined, undefined);
-		TagPoolView.prototype.moveFlags.call(this, duration);
+		this._setFlagCoordinates(this.flagRows);
+		TagPoolView.prototype.moveFlags.call(this, 0);
+	}
+	
+	QuickAddExperiencePanel.prototype.handleResize = function()
+	{
+		var $mainNode = $(this.mainDiv.node());
+					   
+		if (this._isStable())
+			$mainNode.css({left: $mainNode.parent().innerWidth() - 450});
+		else
+			$mainNode.css({left: 0});
+		
+		return this.layout();		   
 	}
 	
 	QuickAddExperiencePanel.prototype.appendFlag = function(g)
@@ -232,7 +282,7 @@ var QuickAddExperiencePanel = (function () {
 					if (_this.mouseDownElement)
 						_this.mouseDownElement = null;
 					else
-						_this.hideFlagRow($(this).parent(), fd);
+						_this.hideFlagRow($(this).parent(), d);
 				})
 			.on('click', function(d)
 				{
@@ -242,11 +292,11 @@ var QuickAddExperiencePanel = (function () {
 						{
 							var $flagRow = $(this).parent();
 							var service = ($flagRow.get(0) == _this.otherFlagRowNode) 
-								? _this.currentService : d.service;
+								? _this.serviceStack.slice(-1)[0] : d.service;
 							
-							_this.addService(path, service, timeframe, $flagRow.get(0) == _this.otherFlagRowNode)
+							_this.addService(path, service, timeframe)
 								.then(function() {
-										return _this.hide();
+										return _this.hideFlagRow($flagRow, d);
 									},
 									cr.chainFail)
 								.then(unblockClick, cr.syncFail);
@@ -278,26 +328,135 @@ var QuickAddExperiencePanel = (function () {
 		var _this = this;
 		if (d.service == null)
 			children = [];
-		else if (this.filter)
+		else if (this.serviceFilter)
 			children = d.service.impliedDirectlyBy().filter(function(s)
 				{
-					return _this.filter(s);
+					return _this.serviceFilter(s);
 				});
 		else
 			children = d.service.impliedDirectlyBy();
 		return children.length;
 	}
 	
-	function QuickAddExperiencePanel(panelNode, experienceController, dimmer, filter, timeframes) {
+	QuickAddExperiencePanel.prototype.handleClickFlag = function(currentFlag, d)
+	{
+		if (prepareClick('click', d ? d.description() : 'quick add experience panel'))
+		{
+			try
+			{
+				var _this = this;
+				
+				/* If the clicked flag is not the expanded flag,
+					then close the expanded flag.
+				 */
+				if (this.expandedFlag &&
+					this.expandedFlag.get(0) != currentFlag)
+				{
+					this.toggleLeft(this.expandedFlag, d3.select(this.expandedFlag.get(0)).datum());
+				}
+				
+				/* If the user clicked on a flag at the top, pop it. */
+				if (d && d.service && 
+					this.serviceStack.indexOf(d.service) >= 0)
+				{
+					var flag = _this._popFlag();
+					_this._filterFlags();
+					_this._setFlagCoordinates(_this.flagRows);
+					TagPoolView.prototype.moveFlags.call(_this, undefined)
+						.then(function()
+							{
+								$(flag).children('button.timeframe-button').css('display', '');
+								unblockClick();
+							},
+							cr.syncFail);
+				}
+				else if (d && this.numChildren(d) == 0)
+				{
+					/* If the user clicked a child with no other children, show its timeframe options. */
+					this.toggleLeft($(currentFlag), d)
+						.then(unblockClick, cr.syncFail);
+				}
+				else if (d)
+				{
+					this._pushFlag(currentFlag, d.service);
+					this._filterFlags();
+					this._setFlagCoordinates(this.flagRows);
+					TagPoolView.prototype.moveFlags.call(this, undefined)
+						.then(unblockClick, cr.syncFail);
+				}
+			}
+			catch (err)
+			{
+				cr.syncFail(err);
+			}
+		}
+	}
+	
+	QuickAddExperiencePanel.prototype.clearSelection = function(duration)
+	{
+		this.flagStack.forEach(function(e)
+			{
+				$(e).children('button.timeframe-button').css('display', '');
+			});
+		this.flagStack = [];
+		this.serviceStack = [];
+		this._filterFlags();
+		this._setFlagCoordinates(this.flagRows);
+		return TagPoolView.prototype.moveFlags.call(this, duration);
+	}
+	
+	QuickAddExperiencePanel.prototype.show = function(filter)
+	{
+		this.serviceFilter = filter;
+		
+		var $mainDiv = $(this.mainDiv.node());
+		if ($mainDiv.css('display') == 'none')
+		{
+			var newLeft = this._isStable() ? ($mainDiv.parent().innerWidth() - 450) : 0;
+			$mainDiv
+				.css({left: '{0}px'.format($mainDiv.parent().innerWidth()),
+					  width: $mainDiv.parent().innerWidth() - newLeft,
+					  display: ''});
+		
+			return this.clearSelection(0)
+				.then(function()
+					{
+						$mainDiv.trigger('showing.cr');
+						return $mainDiv.animate({left: '{0}px'.format(newLeft)})
+					   				   .promise();
+					});
+		}
+		else if (filter)
+		{
+			return this.clearSelection();
+		}
+		else
+		{
+			var r2 = $.Deferred();
+			r2.resolve();
+			return r2;
+		}
+	}
+	
+	function QuickAddExperiencePanel(panelNode, path, serviceFilter) {
 			
 		var _this = this;
 		
 		this.panelNode = panelNode;
-		this.dimmer = dimmer || new Dimmer(panelNode, 200);
-		this.filter = filter;
+		this.serviceFilter = serviceFilter;
 		this.expandedFlag = null;
+		this.serviceStack = [];
+		this.flagStack = [];
 		this.mainDiv = d3.select(panelNode).append('panel')
-			.classed("quick-add-experience", true)
+			.classed('quick-add-experience', true)
+			.style('display', 'none');
+		
+		this.titleContainer = this.mainDiv.append('div')
+			.classed('title', true);
+		
+		this.titleContainer.append('span').text("Add an Experience or a Goal to Your Path");
+		
+		var closeButton = this.titleContainer.append('button')
 			.on('click', function()
 				{
 					if (prepareClick('click', 'Close QuickAddExperiencePanel'))
@@ -305,23 +464,32 @@ var QuickAddExperiencePanel = (function () {
 						_this.hide().then(unblockClick, cr.syncFail);
 					}
 				});
-			
+		var closeSpan = closeButton.append('span')
+			.text(String.fromCharCode(215)	/* 215 - unicode value for times character */);
+
 		this.flagsContainer = this.mainDiv.append('div')
 			.classed('flags-container', true);
 		
 		var resize = function()
 			{
-				_this.handleResize(0);
+				_this.handleResize();
 			};
 			
 		$(window).on('resize', resize);
 		$(this.mainDiv.node()).on('remove', function()
 			{
 				$(window).off('resize', resize);
-			});	
+			});
 		
-		this.promise = $.when(_this.dimmer.show(), cr.Service.servicesPromise())
-		 .then(function(x1, services)
+		setupOnViewEventHandler(path, 'experienceAdded.cr', this.mainDiv.node(), function()
+			{
+				_this.serviceFilter = null;
+				_this.clearSelection(0)
+					.fail(cr.asyncFail);
+			});
+		
+		this.promise = $.when(cr.Service.servicesPromise())
+		 .then(function(services)
 			{
 				try
 				{
@@ -353,85 +521,34 @@ var QuickAddExperiencePanel = (function () {
 					var g = _this.flagRows.append('span')
 						.on('click', function(d)
 							{
-								if (prepareClick('click', d.description()))
-								{
-									try
-									{
-										var $currentFlag = $(this).parent();
-
-										/* If the clicked flag is not the expanded flag,
-											then close the expanded flag.
-										 */
-										if (_this.expandedFlag &&
-											_this.expandedFlag.get(0) != this.parentNode)
-										{
-											_this.toggleLeft(_this.expandedFlag, d3.select(_this.expandedFlag.get(0)).datum());
-										}
-										if (d.service && _this.currentService == d.service)
-										{
-											_this.toggleLeft($currentFlag, d)
-												.then(function()
-													{
-														if (!d.expanded && d.service.serviceImplications().length <= 1)
-														{
-															_this.currentService = null;
-															_this._filterFlags();
-															_this._setFlagCoordinates(_this.flagRows, undefined, undefined);
-															TagPoolView.prototype.moveFlags.call(_this, undefined)
-																.then(unblockClick, cr.syncFail);
-														}
-														else
-															unblockClick();
-													}, cr.syncFail);
-										}
-										else if (_this.numChildren(d) == 0)
-										{
-											_this.toggleLeft($currentFlag, d)
-												.then(unblockClick, cr.syncFail);
-										}
-										else
-										{
-											_this.currentService = d.service;
-											_this._filterFlags();
-											_this._setFlagCoordinates(_this.flagRows, undefined, undefined);
-											TagPoolView.prototype.moveFlags.call(_this, undefined)
-												.then(function()
-												{
-													_this.toggleLeft($currentFlag, d);
-												},
-												cr.chainFail)
-												.then(unblockClick, cr.syncFail);
-										}
-									}
-									catch (err)
-									{
-										cr.syncFail(err);
-									}
-								}
+								var currentFlag = this.parentNode;
+								_this.handleClickFlag(currentFlag, d);
 							});
 							
 					_this.otherFlagNode = d3.select(_this.otherFlagRowNode).select('span:first-child').node();
 					
 					_this.mouseDownElement = null;
-					if (!timeframes || timeframes.indexOf('Previous') >= 0)
-					{
-						_this.appendTimeframeButtons(experienceController.parent(), 'Previous', crv.buttonTexts.previousTimeframe)
-					}
-					if (!timeframes || timeframes.indexOf('Current') >= 0)
-					{
-						_this.appendTimeframeButtons(experienceController.parent(), 'Current', crv.buttonTexts.currentTimeframeShort)
-					}
-					if (!timeframes || timeframes.indexOf('Goal') >= 0)
-					{
-						_this.appendTimeframeButtons(experienceController.parent(), 'Goal', crv.buttonTexts.goalTimeframeShort)
-					}
+					_this.appendTimeframeButtons(path, 'Previous', crv.buttonTexts.previousTimeframe)
+					_this.appendTimeframeButtons(path, 'Current', crv.buttonTexts.currentTimeframeShort)
+					_this.appendTimeframeButtons(path, 'Goal', crv.buttonTexts.goalTimeframeShort)
 		
 					_this.appendFlag(g);
 					
+					var $mainDiv = $(_this.mainDiv.node());
+					var newLeft = _this._isStable() ? ($mainDiv.parent().innerWidth() - 450) : 0;
+					$mainDiv.css({left: '{0}px'.format($mainDiv.parent().innerWidth()),
+					              display: ''});
+	
 					_this._filterFlags();
+					_this.flags().each(function(fd)
+						{
+							fd.firstChildWidth = $(this).children('span:first-child').outerWidth(true);
+						});
 					_this.$flags().css({opacity: 0, display: 'none'});
 
-					_this.handleResize(undefined);
+					_this.layout();
+					$mainDiv.trigger('showing.cr');
+					$mainDiv.animate({left: '{0}px'.format(newLeft)});
 				}
 				catch(err)
 				{

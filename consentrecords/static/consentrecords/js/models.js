@@ -7013,6 +7013,7 @@ cr.User = (function() {
 	User.prototype._path = null;
 	User.prototype._userGrantRequests = null;
 	User.prototype._userGrantRequestsPromise = null;
+	User.prototype._tipLevel = null;
 	
 	User.prototype.urlPath = function()
 	{
@@ -7033,6 +7034,7 @@ cr.User = (function() {
 		this._path = null;
 		this._userGrantRequests = null;
 		this._userGrantRequestPromise = null;
+		this._tipLevel = null;
 	}
 	
 	User.prototype.setDefaultValues = function()
@@ -7047,6 +7049,7 @@ cr.User = (function() {
 		this._path = new cr.Path();
 		this._path.parent(this);
 		this._userGrantRequests = [];
+		this._tipLevel = null;
 	}
 	
 	User.prototype.setData = function(d)
@@ -7056,6 +7059,8 @@ cr.User = (function() {
 		this._lastName = 'last name' in d ? d['last name'] : "";
 		this._birthday = 'birthday' in d ? d['birthday'] : "";
 		this._systemAccess = 'system access' in d ? d['system access'] : null;
+		this._tipLevel = 'tip level' in d ? d['tip level'] : null;
+			
 		this.setChildren(d, 'emails', cr.UserEmail, this.emails);
 		this.setChildren(d, 'notifications', cr.Notification, this.notifications);
 		this.setChildren(d, 'user grant requests', cr.UserUserGrantRequest, this.userGrantRequests);
@@ -7076,6 +7081,7 @@ cr.User = (function() {
 		if (!this._lastName) this._lastName = source._lastName;
 		if (!this._birthday) this._birthday = source._birthday;
 		if (!this._systemAccess) this._systemAccess = source._systemAccess;
+		if (!this._tipLevel) this._tipLevel = source._tipLevel;
 		if (!this._path) this._path = source._path;
 		if (!this._emails) this._emails = source._emails;
 		if (!this._notifications) this._notifications = source._notifications;
@@ -7094,6 +7100,7 @@ cr.User = (function() {
 		newInstance._lastName = this._lastName;
 		newInstance._birthday = this._birthday;
 		newInstance._systemAccess = this._systemAccess;
+		newInstance._tipLevel = this._tipLevel;
 		
 		newInstance._emails = this.duplicateList(this.emails(), duplicateForEdit);
 		
@@ -7186,6 +7193,12 @@ cr.User = (function() {
 			this.path().birthday(this._birthday && this._birthday.substr(0, 7));
 			changed = true;
 		}
+		if ('tip level' in d)
+		{
+			this._tipLevel = d['tip level'];
+			changed = true;
+		}
+		
 		if ('path' in d)
 		{
 			if (this.path().updateData(d['path'], newIDs))
@@ -7328,6 +7341,20 @@ cr.User = (function() {
 		else
 		{
 			this._systemAccess = newSystemAccess;
+			return this;
+		}
+	}
+	
+	User.prototype.tipLevel = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._tipLevel;
+		else
+		{
+		    if (newValue != this._tipLevel)
+		    {
+				this._tipLevel = newValue;
+			}
 			return this;
 		}
 	}

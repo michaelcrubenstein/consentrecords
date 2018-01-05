@@ -76,6 +76,7 @@ var UpdatePasswordPanel = (function () {
 		var navContainer = this.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
+			.classed('chevron-left-container', true)
 			.on('click', function()
 			{
 				if (prepareClick('click', 'Cancel'))
@@ -186,6 +187,7 @@ var UpdateUsernamePanel = (function () {
 		var navContainer = this.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
+			.classed('chevron-left-container', true)
 			.on("click", function()
 			{
 				if (prepareClick('click', 'Cancel'))

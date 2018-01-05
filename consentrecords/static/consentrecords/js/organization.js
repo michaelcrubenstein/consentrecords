@@ -98,7 +98,7 @@ function showPath(path)
 			   .then(function()
 				{
 					var panel = new OtherPathPanel(path, true);
-					panel.pathtree.setUser(path, true);
+					panel.pathtree.setUser(path);
 					panel.showLeft().then(unblockClick);
 					
 					r2 = $.Deferred();
@@ -119,7 +119,7 @@ function showUser(user)
 			try
 			{
 				var panel = new PathlinesPanel(user, true);
-				panel.pathtree.setUser(user.path(), true);
+				panel.pathtree.setUser(user.path());
 				panel.showLeft().then(unblockClick);
 			}
 			catch(err)

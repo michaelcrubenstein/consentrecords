@@ -162,6 +162,7 @@
 	<script src="{% static "consentrecords/js/dotsnavigator.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/findExperience.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/hilitePanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
@@ -185,6 +186,7 @@
 		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}' + jsVersionPathSuffix;
 		settingsImagePath = '{% static "consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
 		notificationsImagePath = '{% static "consentrecords/png/notifications.png" %}' + jsVersionPathSuffix;
+		searchImagePath = '{% static "consentrecords/png/search.png" %}' + jsVersionPathSuffix;
 		shareImagePath = '{% static "consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
 		myPathwayImagePath = '{% static "consentrecords/png/mypathway.svg" %}' + jsVersionPathSuffix;
 		compareImagePath = '{% static "consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
@@ -646,25 +648,59 @@
 							
 							try
 							{
-								var commentsPanel = pathwayPanel.showCommentsPanelAsync(experienceID);
-								
-								if (stateString.startsWith("comment/"))
-								{
-									stateString = stateString.substring("comment/".length);
-									var commentID = stateString.substring(0, stateString.indexOf("/"));
-									stateString = stateString.substring(stateString.indexOf("/")+1);
-									if (commentsPanel)
-									{
-										/* Turn on editing */
-										commentsPanel.startEditing();
-										/* Edit the comment with the specified id. */
-										commentsPanel.promise = commentsPanel.promise
-											.then(function()
+								var promise;
+								{% if user %}
+								promise = 
+									crp.promise({path: 'user/' + '{{user}}',
+												 fields: ['path'], 
+												 resultType: cr.User})
+										.then(function(users)
+											{
+												if (users.length > 0)
 												{
-													commentsPanel.focusOnComment(commentID);
-												});									
-									}
-								}
+													var panel = new PathlinesPanel(users[0], true);
+													panel.showLeft();
+													return panel.pathtree.setUser(users[0].path(), true)
+														.then(function()
+															{
+																promise = $.Deferred();
+																promise.resolve(panel);
+																return promise;
+															});
+												}
+											},
+											cr.chainFail);
+								{% else %}
+									promise = $.Deferred();
+									promise.resolve(pathwayPanel);
+								{% endif %}
+								promise.then(function(pathwayPanel)
+									{
+										try
+										{
+											var commentsPanel = pathwayPanel.showCommentsPanelAsync(experienceID);
+							
+											if (stateString.startsWith("comment/"))
+											{
+												stateString = stateString.substring("comment/".length);
+												var commentID = stateString.substring(0, stateString.indexOf("/"));
+												stateString = stateString.substring(stateString.indexOf("/")+1);
+												if (commentsPanel)
+												{
+													/* Turn on editing */
+													commentsPanel.startEditing();
+													/* Edit the comment with the specified id. */
+													commentsPanel.promise = commentsPanel.promise
+														.then(function()
+															{
+																commentsPanel.focusOnComment(commentID);
+															});									
+												}
+											}
+										}
+										catch(err) { cr.asyncFail(err); }
+									},
+									cr.asyncFail);
 									
 							}
 							catch(err)
@@ -675,22 +711,7 @@
 						
 					if (pathwayPanel.pathtree.isUserSet)
 					{
-						if (pathwayPanel.pathtree.path.experiences().find(function(e)
-							{
-								return e.id() == experienceID;
-							}))
-						{
-							f(pathwayPanel);
-						}
-						else
-						{
-							sign_out()
-								.then(function()
-									{
-										checkSignin(f);
-									},
-									cr.asyncFail);
-						}
+						f(pathwayPanel);
 					}
 					else
 						$(pathwayPanel.pathtree).on('userSet.cr', function()

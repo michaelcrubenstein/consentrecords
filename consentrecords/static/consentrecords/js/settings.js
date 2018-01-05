@@ -839,20 +839,19 @@ var NotificationsPanel = (function () {
 
 		navContainer.appendTitle(this.panelTitle);
 		
-		var doneButton = navContainer.appendRightButton();
+		var doneButton = navContainer.appendRightButton()
+			.on('click', function()
+				{
+					if (prepareClick('click', 'done editing'))
+					{
+						showClickFeedback(this);
+						_this.hide();
+					}
+				})
+ 			.text(crv.buttonTexts.done);
 			
 		var panel2Div = this.appendScrollArea();
 		
-		doneButton.on("click", function()
-			{
-				if (prepareClick('click', 'done editing'))
-				{
-					showClickFeedback(this);
-					_this.hide();
-				}
-			})
- 			.append("span").text(crv.buttonTexts.done);
-
 		var sections = this.mainDiv.append('section')
 		    .datum(user.notifications())
 			.classed("cell edit", true)

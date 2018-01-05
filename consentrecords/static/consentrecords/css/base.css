@@ -30,7 +30,7 @@ panel.site-panel>nav {
 	border-radius:0px;
 	margin-bottom: 0px;
 }
-panel.site-panel>nav>div {
+panel.site-panel>nav>div:first-child {
 	width: 100%;
 	min-height: 40px;
 	display: flex;
@@ -122,6 +122,23 @@ panel.edit {
 	-o-user-select: none;
 }
 
+.site-banner {
+	padding-left: 15px;
+	padding-right: 15px;
+	display: block;
+	font-size: 1.2em;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: left;
+	font-weight: 600;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+}
+
 panel>nav .left-link {
 	max-width: calc(100% - 48px);	/* Subtract 48 pixels to ensure it doesn't run into the right link */
 	text-align: left;
@@ -163,7 +180,8 @@ nav .site-left-chevron {
 }
 
 .chevron-left-container.site-navbar-link {
-	overflow: visible;
+	overflow-x: hidden;
+	display: flex;
 }
 
 .site-navbar-link>svg.chevron-left {
@@ -186,6 +204,7 @@ nav .site-left-chevron {
 	text-overflow: ellipsis;
 	text-align: left;
 	margin-left: .3em;
+	flex-shrink: 100;
 } 
 
 nav.transparentTop {
@@ -267,8 +286,9 @@ button.site-active-text:hover {
 }
 
 .add-button {
-	font-size: 28px;
-	line-height: 18px;
+	font-size: 30px;
+	line-height: 16px;
+	padding-bottom: 5px;
 }
 .row-button-group {
 	margin-top: 12px;
@@ -861,7 +881,7 @@ panel.site-panel > div.dimmer {
 	width: 100%;
 	height: 100%;
 	opacity: 0;
-	background-color: black;
+	background-color: gray;
 }
 
 panel.zoom svg.handle { /* top handle */
@@ -962,3 +982,38 @@ panel.confirm > div>button:focus {
 	outline: none;
 }
 
+panel.hilite {
+	position : absolute;
+}
+
+span.hilite-help {
+	position : absolute;
+	color: white;
+	font-size: 0.8em;
+	font-weight: bold;
+	cursor: default;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	text-align: right;
+}
+
+span.hilite-got-it {
+	position : absolute;
+	color: white;
+	font-size: 0.95em;
+	font-weight: bold;
+	cursor: default;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	background-color: rgba(248, 248, 248, 0.8);
+	color: #2C55CC;
+	box-shadow: 0px 0px 15px rgba(248, 248, 248, 0.8);
+	padding: 3px 6px;
+	border-radius: 6px;
+}

@@ -882,6 +882,19 @@ var SiteNavContainer = (function() {
 		return h;
 	}
 	
+	SiteNavContainer.prototype.setBanner = function(title)
+	{
+		var h = this.nav.selectAll('div.site-banner');
+		h.text(title);
+		this.sitePanel.headerText = title;
+	}
+	
+	SiteNavContainer.prototype.appendBanner = function(newTitle)
+	{
+		var h = this.nav.append('div').classed('site-banner', true);
+		this.setBanner(newTitle);
+	}
+	
 	function SiteNavContainer(sitePanel)
 	{
 		this.sitePanel = sitePanel;
@@ -1103,7 +1116,7 @@ crv.SitePanel = (function () {
 		{
 			var mainNode = $(this.mainDiv.node());
 			mainNode.css('height', "{0}px".format(mainNode.getFillHeight()))
-				.one("resize.cr", function(eventObject)
+				.one('resize.cr', function(eventObject)
 				{
 					eventObject.stopPropagation();
 				});
@@ -1111,7 +1124,7 @@ crv.SitePanel = (function () {
 			/* Since calculateHeight is first called within revealing.cr, 
 				resize handlers should be set up in subsequent revealing.cr handlers.
 			 */	
-			mainNode.trigger("resize.cr");
+			mainNode.trigger('resize.cr');
 		}
 	}
 	
@@ -1121,14 +1134,14 @@ crv.SitePanel = (function () {
 		this.mainDiv = this.panelDiv
 			.append("div").classed("panel-fill vertical-scrolling", true);
 		
-		$(this.node()).on("revealing.cr", function()
+		$(this.node()).on('revealing.cr', function()
 			{
 				_this.calculateHeight();
 			});
 		
 		this.mainDiv.appendHeader = function()
 		{
-			return this.append("header")
+			return this.append('header')
 				.text(_this.headerText);
 		}
 		
@@ -1275,10 +1288,11 @@ crv.SitePanel = (function () {
 	
 	$(window).resize(function()
 		{
-			$(".site-panel").css('height', "{0}px".format($(window).innerHeight()))
+			$('.site-panel').css('height', '{0}px'.format($(window).innerHeight()))
 				.each(function()
 				{
 					this.sitePanel.calculateHeight();
+					$(this).trigger('resize.cr');
 				});
 		});
 	return SitePanel;
@@ -1670,7 +1684,7 @@ var Dimmer = (function () {
 	
 	Dimmer.prototype.show = function()
 	{
-		return $(this.dimmerDiv.node()).animate({opacity: 0.3}, 200)
+		return $(this.dimmerDiv.node()).animate({opacity: 0.7}, 200)
 			.promise();
 	}
 	
@@ -2440,7 +2454,7 @@ var ConfirmPanel = (function() {
 		return $.when(
 			$(this.div.node()).animate({'top': $(this.panel.node()).height() - $(this.div.node()).outerHeight(true)})
 				.promise(),
-			$(this.panel.node()).animate({'background-color': 'rgba(0, 0, 0, 0.3)'}).promise());
+			$(this.panel.node()).animate({'background-color': 'rgba(128, 128, 128, 0.7)'}).promise());
 	}
 
 	ConfirmPanel.prototype.hideDown = function()
