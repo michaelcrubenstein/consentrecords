@@ -76,6 +76,7 @@
 	<script src="{% static "b/consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/hilitePanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "b/consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
@@ -92,6 +93,7 @@
 		staticPath = '{% static "b/" %}';
 		jsVersionPathSuffix = '?v={{jsversion}}';
 		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
+		addImagePath = '{% static "b/consentrecords/png/add.png" %}' + jsVersionPathSuffix;
 		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
 		notificationsImagePath = '{% static "b/consentrecords/png/notifications.png" %}' + jsVersionPathSuffix;
 		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
