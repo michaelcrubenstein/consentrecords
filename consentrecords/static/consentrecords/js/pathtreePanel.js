@@ -1318,6 +1318,11 @@ var AlertButton = (function() {
 			.classed("badge", true);
 	}
 	
+	AlertButton.prototype.node = function()
+	{
+		return this.button.node();
+	}
+	
 	function AlertButton(button, user)
 	{
 		this.button = button;
@@ -1486,6 +1491,11 @@ var SearchButton = (function() {
 			.attr("src", searchImagePath);
 	}
 	
+	SearchButton.prototype.node = function()
+	{
+		return this.button.node();
+	}
+	
 	function SearchButton(button)
 	{
 		this.button = button;
@@ -1609,10 +1619,10 @@ var PathlinesPanel = (function () {
 				}
 				d3.event.preventDefault();
 			})
-			.classed('add-button', true)
-			.style("display", "none");
-		addExperienceButton.classed('site-active-text', true)
-			.text("+");
+			.style('display', 'none');
+		addExperienceButton.classed('site-active-text settings', true)
+			.append('img')
+			.attr('src', addImagePath);
 			
 		var moreExperiences = user.path();
 		var canAddExperience = (moreExperiences.id() === null ? user.canWrite() : moreExperiences.canWrite());
@@ -1634,7 +1644,7 @@ var PathlinesPanel = (function () {
 	/** Returns the FlagController whose experience matches the specified id. */
 	PathlinesPanel.prototype.getFlagData = function(id)
 	{
-		var $group = $(this.panelDiv.node()).find(".experiences>g")
+		var $group = $(this.panelDiv.node()).find('.experiences>g')
 			.filter(function() { 
 				return d3.select(this).datum().experience.id() == id; 
 				});
@@ -1760,12 +1770,21 @@ var HomePanel = (function () {
 			{
 				if (_this.hasSidebar())
 					_this.showQuickAddExperiencePanel();
-				else
+				if (cr.signedinUser.tipLevel() == null)
 				{
-					if (cr.signedinUser.tipLevel() == null)
-					{
-						new AddExperienceHilitePanel(_this.node(), _this.addExperienceButton.node());
-					}
+					new PathHeadersHilitePanel(_this);
+				} else if (cr.signedinUser.tipLevel() == 1)
+				{
+					new AddExperienceHilitePanel(_this);
+				} else if (cr.signedinUser.tipLevel() == 2)
+				{
+					new SearchButtonHilitePanel(_this);
+				} else if (cr.signedinUser.tipLevel() == 3)
+				{
+					new SettingsButtonHilitePanel(_this);
+				} else if (cr.signedinUser.tipLevel() == 4)
+				{
+					new NotificationsButtonHilitePanel(_this);
 				}
 			});
 	}

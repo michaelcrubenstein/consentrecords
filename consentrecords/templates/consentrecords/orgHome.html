@@ -193,6 +193,7 @@
 	<script src="{% static "consentrecords/js/dotsnavigator.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/findExperience.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "consentrecords/js/hilitePanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
@@ -208,6 +209,7 @@
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
+		addImagePath = '{% static "consentrecords/png/add.png" %}'
 		settingsImagePath = '{% static "consentrecords/png/settings.png" %}'
 		shareImagePath = '{% static "consentrecords/png/share.svg" %}'
 		
@@ -751,16 +753,7 @@
 									}
 									d3.event.preventDefault();
 								});
-							var infoButtons =  buttons.append("div", ":first-child")
-								.classed("info-button", true)
-								.on("click", function(user) {
-									if (prepareClick('click', 'user: ' + user.description()))
-									{
-										showUser(user, sitePanel.node());
-									}
-									d3.event.preventDefault();
-								});
-							drawInfoButtons(infoButtons);
+							appendInfoButtons(buttons, undefined, function(items) { return items.append('div', ':first-child'); });
 						}
 					}
 					
