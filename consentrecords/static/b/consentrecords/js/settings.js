@@ -242,7 +242,7 @@ var Settings = (function () {
 								.format(window.location.origin, email));
 						});
 	
-					var sharingDiv = _this.appendActionButton('Sharing', function(d) {
+					var sharingDiv = _this.appendActionButton("Sharing", function(d) {
 						showClickFeedback(this);
 						checkBirthday(d, function(d)
 							{
@@ -280,6 +280,20 @@ var Settings = (function () {
 					crf.appendRightChevrons(childrenButton.selectAll('li'));
 
 				
+					var sharingDiv = _this.appendActionButton("Administrator", function(d) {
+						showClickFeedback(this);
+						checkBirthday(d, function(d)
+							{
+								if (prepareClick('click', 'Administrator'))
+								{
+									var panel = new AdministratorPanel(controller.oldInstance(), Settings.prototype.panelTitle);
+									_this.revealSubPanel(panel);
+								}
+							});
+
+						});
+					crf.appendRightChevrons(sharingDiv.selectAll('li'));
+
 					appendUserActions();
 				});
 		}
