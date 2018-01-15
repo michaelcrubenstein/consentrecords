@@ -274,6 +274,7 @@ var SharingPanel = (function() {
 						showClickFeedback(this, function()
 							{
 								editButton.text(crv.buttonTexts.edit);
+								_this.navContainer.centerTitle();
 							});
 						crf.hideDeleteControls(dials);
 						_this.inEditMode = false;
@@ -287,6 +288,7 @@ var SharingPanel = (function() {
 						showClickFeedback(this, function()
 							{
 								editButton.text(crv.buttonTexts.done);
+								_this.navContainer.centerTitle();
 							});
 						crf.showDeleteControls(dials);
 						_this.inEditMode = true;
