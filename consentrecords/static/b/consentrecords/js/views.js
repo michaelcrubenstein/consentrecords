@@ -84,6 +84,7 @@ var crv = {
 		edit: "Edit",
 		email: "Email",
 		emailPublic: "By Request",
+		emailPublicDocumentation: "Others can request access to your profile if they know your email address.",
 		emails: "Emails",
 		end: "End",
 		ended: "Ended",
@@ -101,6 +102,7 @@ var crv = {
 		group: "Group",
 		groups: "Groups",
 		hidden: "Hidden",
+		hiddenDocumentation: "No one will be able to locate or identify you.",
 		implications: "Implications",
 		inquiry: "Inquiry",
 		inquiries: "Inquiries",
@@ -125,6 +127,7 @@ var crv = {
 		organizationLabels: "Organization Labels",
 		organizations: "Organizations",
 		pathPublic: "Public Path Only",
+		pathPublicDocumentation: "Your path may be found by others, identified only by your screen name. Others can request access to your profile if they know your email address.",
 		period: "Period",
 		periods: "Periods",
 		pickOffering: "Pick Offering",
@@ -162,6 +165,7 @@ var crv = {
 		timeframe: "Timeframe",
 		user: "User",
 		userPublic: "Public Profile and Path",
+		userPublicDocumentation: "Others can look at your profile and path (except for information you hide from view).",
 		users: "Users",
 		webSite: "Web Site",
 		weekday: "Weekday",
@@ -2391,6 +2395,14 @@ var PickFromListPanel = (function () {
 	{
 		return this.datumDescription(d);
 	}
+	
+	PickFromListPanel.prototype.appendDescriptions = function(items)
+	{
+		var _this = this;
+		items.append('div')
+			.classed('description-text growable unselectable', true)
+			.text(function(d) { return _this.datumDescription(d); });
+	}
 
 	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
 	{
@@ -2406,16 +2418,14 @@ var PickFromListPanel = (function () {
 		var section = this.appendScrollArea().append("section")
 			.classed("cell multiple", true);
 		var itemsDiv = crf.appendItemList(section)
-			.classed('hover-items', true);
+			.classed('hover-items checkable', true);
 			
 		var items = itemsDiv.selectAll('li')
 			.data(this.data())
 			.enter()
 			.append('li');
 		
-		items.append("div")
-			.classed("description-text growable unselectable", true)
-			.text(function(d) { return _this.datumDescription(d); });
+		this.appendDescriptions(items);
 		
 		this.oldDescription = oldDescription;		
 		items.filter(function(d, i)
