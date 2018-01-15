@@ -2368,7 +2368,16 @@ var PickStagePanel = (function () {
 	
 	PickStagePanel.prototype.getDescription = function(storedValue)
 	{
-		return storedValue || crv.buttonTexts.nullString;
+		if (storedValue)
+		{
+			var d = PickStagePanel.prototype.data().find(function(d) { return d.code == storedValue; });
+			if (d)
+				return d.name;
+			else
+				return crv.buttonTexts.nullString;
+		}
+		else
+			return crv.buttonTexts.nullString;
 	}
 
 	PickStagePanel.prototype.createRoot = function(user, initialValue)

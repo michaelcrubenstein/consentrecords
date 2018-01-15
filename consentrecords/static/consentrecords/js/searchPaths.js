@@ -188,14 +188,40 @@ var SearchTagPoolView = (function () {
 		var _this = this;
 		var queryData = this.sitePanel.queryTagPoolView.flags().data();
 		
+		/* inQueryFlags returns true if the specified flag is already part of the query data. */
 		function inQueryFlags(a)
 		{
 			return queryData.some(function(fd) { return fd.service == a.service; });
 		}
+		
+		var myTags = [];
+		if (this.sitePanel.filterColumn === undefined)
+		{
+			cr.signedinUser.path().experiences().forEach(function(e)
+				{
+					e.experienceServices().forEach(function(es)
+						{
+							es.service().serviceImplications().forEach(function(si)
+								{
+									if (myTags.indexOf(si.service()) < 0)
+										myTags.push(si.service());
+								});
+						});
+				});
+		}
+		function inMyFlags(a)
+		{
+			if (inQueryFlags(a))
+				a.visible = false;
+			else if (myTags.length > 0 && myTags.indexOf(a.service) < 0)
+				a.visible = false;
+			else
+				a.visible = true;
+		}
 
 		var filterFunction = this.sitePanel.filterColumn !== undefined ?
 			function(fs) { fs.visible = (fs.getColumn() == _this.sitePanel.filterColumn) && !inQueryFlags(fs); } :
-			function(fs) { fs.visible = !inQueryFlags(fs); };
+			inMyFlags;
 			
 		this.flags().each(filterFunction);
 	}
@@ -705,8 +731,12 @@ var SearchPathsPanel = (function () {
 			})
 			.on('input', function(event)
 			{
-				_this.filterPool();
-				_this.poolContainer.layoutFlags();
+				try
+				{
+					_this.filterPool();
+					_this.poolContainer.layoutFlags();
+				}
+				catch (err) { cr.asyncFail(err); }
 				//event.stopPropagation();
 			});
 			
@@ -716,7 +746,7 @@ var SearchPathsPanel = (function () {
 			
 		var div = stagesDiv.append('div');
 		
-		var svgData = [{name: "All Tags", color: "#222", click: this.handleAllClick},
+		var svgData = [{name: "My Tags", color: "#222", click: this.handleAllClick},
 				   {name: "School", color: "#2828E7", click: this.handleSchoolClick},
 				   {name: "Interests", color: "#8328E7", click: this.handleInterestsClick},
 				   {name: "Career", color: "#805050", click: this.handleCareerClick},
