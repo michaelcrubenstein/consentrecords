@@ -84,6 +84,7 @@ var crv = {
 		edit: "Edit",
 		email: "Email",
 		emailPublic: "By Request",
+		emailPublicDocumentation: "Others can request access to your profile if they know your email address.",
 		emails: "Emails",
 		end: "End",
 		ended: "Ended",
@@ -101,6 +102,7 @@ var crv = {
 		group: "Group",
 		groups: "Groups",
 		hidden: "Hidden",
+		hiddenDocumentation: "No one will be able to locate or identify you.",
 		implications: "Implications",
 		inquiry: "Inquiry",
 		inquiries: "Inquiries",
@@ -125,6 +127,7 @@ var crv = {
 		organizationLabels: "Organization Labels",
 		organizations: "Organizations",
 		pathPublic: "Public Path Only",
+		pathPublicDocumentation: "Your path may be found by others, identified only by your screen name. Others can request access to your profile if they know your email address.",
 		period: "Period",
 		periods: "Periods",
 		pickOffering: "Pick Offering",
@@ -162,6 +165,7 @@ var crv = {
 		timeframe: "Timeframe",
 		user: "User",
 		userPublic: "Public Profile and Path",
+		userPublicDocumentation: "Others can look at your profile and path (except for information you hide from view).",
 		users: "Users",
 		webSite: "Web Site",
 		weekday: "Weekday",
@@ -715,30 +719,30 @@ function appendViewButtons(items, fill)
 function appendItems(container, data, doneDelete)
 {
 	var i = 0;
-	return container.selectAll("li")
+	return container.selectAll('li')
 		.data(data, function(d) {
 			/* Ensure that this operation appends without replacing any items. */
 			i += 1;
 			return i;
 		  })
 		.enter()
-		.append("li")	// So that each button appears on its own row.
+		.append('li')	// So that each button appears on its own row.
 		.each(function(d) { _setupItemHandlers.call(this, d, doneDelete); });
 }
 
-function appendItem(container, d)
+function appendItem(container, d, doneDelete)
 {
 	return container
-		.append("li")	// So that each button appears on its own row.
+		.append('li')	// So that each button appears on its own row.
 		.datum(d)
-		.each(_setupItemHandlers);
+		.each(function(d) { _setupItemHandlers.call(this, d, doneDelete); });
 }
 
 /* Returns the set of objects that contain the description of each data element */
 function appendViewCellItems(container, cell, clickFunction)
 {
 	// Remove any lingering contents.
-	container.selectAll("li").remove();
+	container.selectAll('li').remove();
 
 	var items = appendItems(container, cell.data);
 	
@@ -755,7 +759,7 @@ function appendViewCellItems(container, cell, clickFunction)
 function appendEditCellItems(itemsDiv, cell, clickFunction)
 {
 	// Remove any lingering contents.
-	itemsDiv.selectAll("li").remove();
+	itemsDiv.selectAll('li').remove();
 
 	var items = appendItems(itemsDiv, cell.data);
 	
@@ -831,6 +835,47 @@ var SiteNavContainer = (function() {
 		this.sitePanel.headerText = title;
 	}
 	
+	SiteNavContainer.prototype.centerTitle = function()
+	{
+		var leftWidth = 0, rightWidth = 0;
+		var h = this.div.selectAll('div.site-title');
+		
+		this.div.selectAll('.left-link').each(function(d)
+			{
+				if ($(this).css('display') != 'none')
+					leftWidth += $(this).outerWidth();
+			});
+		this.div.selectAll('.right-link').each(function(d)
+			{
+				if ($(this).css('display') != 'none')
+					rightWidth += $(this).outerWidth();
+			});
+		h.style('padding-right', '0px')
+			 .style('padding-left', '0px');
+
+		var newTitle = h.text();
+		var padding = newTitle ? ($(h.node()).innerWidth() - (getTextWidth(newTitle, h.style('font'))+1)) : 0;
+		if (padding <= 0)
+		{
+			h.style('padding-right', '0px')
+			 .style('padding-left', '0px');
+		}
+		else if (leftWidth > rightWidth)
+		{
+			if (leftWidth - rightWidth < padding)
+				padding = leftWidth - rightWidth;
+			h.style('padding-right', '{0}px'.format(padding))
+			 .style('padding-left', '0px');
+		}
+		else
+		{
+			if (rightWidth - leftWidth < padding)
+				padding = rightWidth - leftWidth;
+			h.style('padding-left', '{0}px'.format(padding))
+			 .style('padding-right', '0px');
+		}
+	}
+	
 	SiteNavContainer.prototype.appendTitle = function(newTitle)
 	{
 		var h = this.div.append('div').classed('site-title', true);
@@ -839,37 +884,7 @@ var SiteNavContainer = (function() {
 		var _this = this;
 		var f = function()
 			{
-				var leftWidth = 0, rightWidth = 0;
-				_this.div.selectAll('.left-link').each(function(d)
-					{
-						leftWidth += $(this).outerWidth();
-					});
-				_this.div.selectAll('.right-link').each(function(d)
-					{
-						rightWidth += $(this).outerWidth();
-					});
-				h.style('padding-right', '0px')
-					 .style('padding-left', '0px');
-				var padding = newTitle ? ($(h.node()).innerWidth() - (getTextWidth(newTitle, h.style("font"))+1)) : 0;
-				if (padding <= 0)
-				{
-					h.style('padding-right', '0px')
-					 .style('padding-left', '0px');
-				}
-				else if (leftWidth > rightWidth)
-				{
-					if (leftWidth - rightWidth < padding)
-						padding = leftWidth - rightWidth;
-					h.style('padding-right', '{0}px'.format(padding))
-					 .style('padding-left', '0px');
-				}
-				else
-				{
-					if (rightWidth - leftWidth < padding)
-						padding = rightWidth - leftWidth;
-					h.style('padding-left', '{0}px'.format(padding))
-					 .style('padding-right', '0px');
-				}
+				_this.centerTitle();
 			};
 			
 		$(this.sitePanel.node()).on('revealing.cr', f);
@@ -2380,6 +2395,14 @@ var PickFromListPanel = (function () {
 	{
 		return this.datumDescription(d);
 	}
+	
+	PickFromListPanel.prototype.appendDescriptions = function(items)
+	{
+		var _this = this;
+		items.append('div')
+			.classed('description-text growable unselectable', true)
+			.text(function(d) { return _this.datumDescription(d); });
+	}
 
 	PickFromListPanel.prototype.createRoot = function(datum, headerText, oldDescription)
 	{
@@ -2395,16 +2418,14 @@ var PickFromListPanel = (function () {
 		var section = this.appendScrollArea().append("section")
 			.classed("cell multiple", true);
 		var itemsDiv = crf.appendItemList(section)
-			.classed('hover-items', true);
+			.classed('hover-items checkable', true);
 			
 		var items = itemsDiv.selectAll('li')
 			.data(this.data())
 			.enter()
 			.append('li');
 		
-		items.append("div")
-			.classed("description-text growable unselectable", true)
-			.text(function(d) { return _this.datumDescription(d); });
+		this.appendDescriptions(items);
 		
 		this.oldDescription = oldDescription;		
 		items.filter(function(d, i)

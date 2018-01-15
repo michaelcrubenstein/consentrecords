@@ -5,13 +5,6 @@ var Settings = (function () {
 	Settings.prototype.panelTitle = "Settings";
 	Settings.prototype.userPublicAccessLabel = "Profile Visibility";
 	Settings.prototype.accessRequestLabel = "Access Requests";
-	Settings.prototype.pathPublicAccessLabel = "Path Visiblity";
-	Settings.prototype.pathSameAccessLabel = "Same As Profile";
-	Settings.prototype.pathAlwaysPublicAccessLabel = "Public";
-	Settings.prototype.profileHiddenLabel = "Hidden";
-	Settings.prototype.emailVisibleLabel = "By Request";
-	Settings.prototype.pathVisibleLabel = "Public Path Only";
-	Settings.prototype.allVisibleLabel = "Public Profile and Path";
 	Settings.prototype.hiddenDocumentation = "No one will be able to locate or identify you.";
 	Settings.prototype.byRequestVisibleDocumentation = "Others can request access to your profile if they know your email address.";
 	Settings.prototype.pathVisibleDocumentation = "Your path may be found by others, identified only by your screen name. Others can request access to your profile if they know your email address.";
@@ -180,13 +173,13 @@ var Settings = (function () {
 						var documentation;
 			
 						if (d.userAccess == 'read')
-							documentation = _this.allVisibleDocumentation;
+							documentation = crv.buttonTexts.userPublicDocumentation;
 						else if (d.pathAccess == 'read')
-							documentation = _this.pathVisibleDocumentation;
+							documentation = crv.buttonTexts.pathPublicDocumentation;
 						else if (d.userAccess == 'find')
-							documentation = _this.byRequestVisibleDocumentation;
+							documentation = crv.buttonTexts.emailPublicDocumentation;
 						else
-							documentation = _this.hiddenDocumentation;
+							documentation = crv.buttonTexts.hiddenDocumentation;
 						docDiv.text(documentation);
 					}
 			
@@ -242,7 +235,7 @@ var Settings = (function () {
 								.format(window.location.origin, email));
 						});
 	
-					var sharingDiv = _this.appendActionButton('Sharing', function(d) {
+					var sharingDiv = _this.appendActionButton("Sharing", function(d) {
 						showClickFeedback(this);
 						checkBirthday(d, function(d)
 							{
@@ -280,6 +273,20 @@ var Settings = (function () {
 					crf.appendRightChevrons(childrenButton.selectAll('li'));
 
 				
+					var sharingDiv = _this.appendActionButton("Administrator", function(d) {
+						showClickFeedback(this);
+						checkBirthday(d, function(d)
+							{
+								if (prepareClick('click', 'Administrator'))
+								{
+									var panel = new AdministratorPanel(controller.oldInstance(), Settings.prototype.panelTitle);
+									_this.revealSubPanel(panel);
+								}
+							});
+
+						});
+					crf.appendRightChevrons(sharingDiv.selectAll('li'));
+
 					appendUserActions();
 				});
 		}
@@ -298,10 +305,10 @@ var PickUserAccessPanel = (function () {
 	
 	PickUserAccessPanel.prototype.data = function()
 	{
-		return [{userAccess: '', pathAccess: '', name: crv.buttonTexts.hidden},
-				{userAccess: 'find', pathAccess: '', name: crv.buttonTexts.emailPublic},
-				{userAccess: 'find', pathAccess: 'read', name: crv.buttonTexts.pathPublic},
-				{userAccess: 'read', pathAccess: '', name: crv.buttonTexts.userPublic},
+		return [{userAccess: '', pathAccess: '', name: crv.buttonTexts.hidden, helpText: crv.buttonTexts.hiddenDocumentation},
+				{userAccess: 'find', pathAccess: '', name: crv.buttonTexts.emailPublic, helpText: crv.buttonTexts.emailPublicDocumentation},
+				{userAccess: 'find', pathAccess: 'read', name: crv.buttonTexts.pathPublic, helpText: crv.buttonTexts.pathPublicDocumentation},
+				{userAccess: 'read', pathAccess: '', name: crv.buttonTexts.userPublic, helpText: crv.buttonTexts.userPublicDocumentation},
 			   ];
 	}
 	
@@ -326,6 +333,17 @@ var PickUserAccessPanel = (function () {
 		return d.name;
 	}
 	
+	PickUserAccessPanel.prototype.appendDescriptions = function(items)
+	{
+		var descriptions = items.append('div')
+			.classed('description-text growable unselectable', true);
+		descriptions.append('div')
+			.text(function(d) { return d.name; });
+		descriptions.append('div')
+			.classed('documentation', true)
+			.text(function(d) { return d.helpText; });
+	}
+
 	PickUserAccessPanel.prototype.createRoot = function(user, initialValue)
 	{
 		this.initialUserPublicAccess = user.publicAccess();
