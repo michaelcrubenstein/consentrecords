@@ -371,6 +371,34 @@ def ignore(request, email):
     return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
+def search(request):
+    LogRecord.emit(request.user, 'pathAdvisor/search/', None)
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
+    }
+    
+    language = request.GET.get('language', 'en')
+    context = Context(language, request.user)
+    
+    if request.user.is_authenticated:
+        user = context.user
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id.hex
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'search/'
+        
+    return HttpResponse(template.render(args))
+
+@ensure_csrf_cookie
 def userSettings(request):
     LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
     

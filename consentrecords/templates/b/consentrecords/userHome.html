@@ -594,9 +594,31 @@
 				}
 				needsSignin = true;
 			}
+			else if (stateString.startsWith("search/"))
+			{
+				/* Display the search panel. */
+				handleState = function(pathwayPanel)
+				{
+					try
+					{
+						var panel = new SearchPathsPanel();
+						panel.revealPanel(0)
+							.then(function()
+								{
+									return panel.showUp();
+								},
+								cr.asyncFail);
+					}
+					catch(err)
+					{
+						cr.asyncFail(err);
+					}
+				}
+				needsSignin = true;
+			}
 			else if (stateString.startsWith("settings/"))
 			{
-				/* Ignore the specified follower */
+				/* Display the settings panel. */
 				handleState = function(pathwayPanel)
 				{
 					try
