@@ -6,6 +6,8 @@ var SharingPanel = (function() {
 	SharingPanel.prototype.privileges = null;
 	SharingPanel.prototype.user = null;
 	
+	SharingPanel.prototype.helpText = "Add a user to this list to share your path and profile with them without making your path and profile public.";
+
 	/* readPrivilegeIndex is the index into the privileges array that identifies
 		read privileges. */
 	SharingPanel.prototype.readPrivilegeIndex = 0;
@@ -116,10 +118,16 @@ var SharingPanel = (function() {
 		var sections, itemCells, items;
 		var accessRequestSection, accessRequestList;
 		
-		accessRequestSection = panel2Div.append("section")
+		var docSection = _this.mainDiv.append('section')
+			.classed('cell documentation', true);
+
+		var docDiv = docSection.append('div');
+		docDiv.text(this.helpText);
+		
+		accessRequestSection = panel2Div.append('section')
 			.datum(this.user)
-			.classed("cell multiple edit", true);
-		accessRequestSection.append("label")
+			.classed('cell multiple edit', true);
+		accessRequestSection.append('label')
 			.text("Access Requests");
 		accessRequestList = crf.appendItemList(accessRequestSection);
 			
@@ -156,20 +164,18 @@ var SharingPanel = (function() {
 		}
 	
 		var key = 0;
-		sections = panel2Div.selectAll("section")
+		sections = panel2Div.selectAll('section')
 			.data(this.privileges, function(d) {
 				/* Ensure that this operation appends without replacing any items. */
 				key += 1;
 				return key;
 			  })
 			.enter()
-			.append("section")
-			.classed("cell multiple edit", true);
-		sections.append("label")
-			.text(function(d) { return d.label });
+			.append('section')
+			.classed('cell multiple edit', true);
 			
 		itemCells = crf.appendItemList(sections)
-			.classed("deletable-items", true);
+			.classed('deletable-items', true);
 	
 		// Reference the views back to the privileges objects.
 		itemCells.each(function(d) { d.itemsDiv = this; });
@@ -302,7 +308,7 @@ var SharingPanel = (function() {
 
 		this.privilegesByID =  {};
 		this.privileges =  [
-			{name: cr.privileges.read, id: "", accessRecords: [], accessors: [], label: "Who Can See Your Profile"}];
+			{name: cr.privileges.read, id: "", accessRecords: [], accessors: []}];
 	
 		this.getPrivileges(panel2Div);
 	}
@@ -492,18 +498,18 @@ var AdministratorPanel = (function() {
 		docDiv.text(this.helpText);
 		
 		var key = 0;
-		sections = panel2Div.selectAll("section")
+		sections = panel2Div.selectAll('section')
 			.data(this.privileges, function(d) {
 				/* Ensure that this operation appends without replacing any items. */
 				key += 1;
 				return key;
 			  })
 			.enter()
-			.append("section")
-			.classed("cell multiple edit", true);
+			.append('section')
+			.classed('cell multiple edit', true);
 			
 		itemCells = crf.appendItemList(sections)
-			.classed("deletable-items", true);
+			.classed('deletable-items', true);
 	
 		// Reference the views back to the privileges objects.
 		itemCells.each(function(d) { d.itemsDiv = this; });
