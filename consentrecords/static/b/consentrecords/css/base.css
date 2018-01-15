@@ -454,6 +454,13 @@ panel.list .description-text {
 .site-chevron-right+.description-text {
 	margin-right: 18px;
 }
+
+li>div.description-text>div.documentation {
+	padding: .5em 1em;
+	font-size: 0.8em;
+	color: #666;
+}
+
 .cell.edit.translation li select {
 	width: 80px;
 	margin-right: 12px;
@@ -660,6 +667,18 @@ ol.cell-items>li>.growable:first-child {
 /* If the growable is the last item, give it a right margin of 12 pixels. */
 ol.cell-items>li>.growable:last-child {
 	padding-right: 1em;
+}
+
+ol.checkable>li>.growable:first-child {
+	margin-left: 2.2em;
+}
+
+span.checked {
+	width: 1.2em;
+}
+
+span.checked+div.growable {
+	margin-left: 0em;
 }
 
 ol.cell-items>li>.unselectable {
