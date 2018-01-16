@@ -118,12 +118,6 @@ var SharingPanel = (function() {
 		var sections, itemCells, items;
 		var accessRequestSection, accessRequestList;
 		
-		var docSection = _this.mainDiv.append('section')
-			.classed('cell documentation', true);
-
-		var docDiv = docSection.append('div');
-		docDiv.text(this.helpText);
-		
 		accessRequestSection = panel2Div.append('section')
 			.datum(this.user)
 			.classed('cell multiple edit', true);
@@ -149,6 +143,12 @@ var SharingPanel = (function() {
 		this.appendApplyButtons(itemButtonDivs);
 		this.appendIgnoreButtons(itemButtonDivs);
 			
+		var docSection = _this.mainDiv.append('section')
+			.classed('cell documentation', true);
+
+		var docDiv = docSection.append('div');
+		docDiv.text(this.helpText);
+		
 		// Sort the access records by type.
 		var grants = user.userGrants().concat(user.groupGrants());
 		for (var i = 0; i < grants.length; ++i)
