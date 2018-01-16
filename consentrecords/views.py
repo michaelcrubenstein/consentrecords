@@ -958,12 +958,10 @@ class api:
                         .filter((Q(era__gt=Subquery(s1.values('era')[:1]))|
                                  Q(end__gt=Subquery(s1.values('end')[:1])))&
                                 ~Q(start__lte=Subquery(s1.values('start')[:1])))
-                for e in s2: print(e)
 
                 ss = ExperienceImplication.objects.filter(experience__in=s2)\
                     .values('service')\
                     .annotate(weight=Count('experience__parent', distinct=True))
-                for e in ss: print(Service.objects.get(pk=e['service']))
                 
                 p = list(map(lambda s:{'id': s['service'].hex, 'weight': s['weight']}, ss))
         
