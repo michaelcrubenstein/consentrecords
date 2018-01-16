@@ -1,7 +1,11 @@
-	panel.sharing li span.site-active-text {
-		padding-right: 12px;
-	}
-	panel.sharing li span.site-active-text:first-of-type {
-		padding-left: 12px;
-	}
+panel.sharing>div.panel-fill>section:first-of-type {
+	margin-bottom: 1em;
+}
+
+panel.sharing li span.site-active-text {
+	padding-right: 12px;
+}
+panel.sharing li span.site-active-text:first-of-type {
+	padding-left: 12px;
+}
 	
