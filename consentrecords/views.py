@@ -298,7 +298,7 @@ def showExperience(request, id):
     if isUUID(id):
         try:
             experience = Experience.objects.get(pk=id)
-            if experience.parent.parent.id != context.user.id:
+            if not context.user or experience.parent.parent.id != context.user.id:
                 args['user'] = experience.parent.parent.id.hex
             else:
                 args['user'] = None
