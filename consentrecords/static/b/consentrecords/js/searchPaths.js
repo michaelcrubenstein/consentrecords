@@ -244,7 +244,6 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.topBox = null;
 	SearchPathsPanel.prototype.searchInput = null;
 	SearchPathsPanel.prototype.cancelButton = null;
-	SearchPathsPanel.prototype.topHandle = null;
 	SearchPathsPanel.prototype.poolContainer = null;
 	SearchPathsPanel.prototype.queryTagPoolView = null;
 	
@@ -696,10 +695,6 @@ var SearchPathsPanel = (function () {
 		
 		var topBox = mainDiv.append('div');
 		this.topBox = topBox.node();
-			
-		this.topHandle = topBox.append('div')
-			.classed('handle', true)
-			.node();
 			
 		this.searchInput = topBox.append('input')
 			.attr('placeholder', 'Search for a path')
