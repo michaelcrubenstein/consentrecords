@@ -1223,7 +1223,20 @@ var ExperienceShareOptions = (function () {
 				}
 				e.stopPropagation();
 			});
-				
+			
+		var copyButton = this.appendButton()
+			.text("Copy Experience Web Address")
+			.classed('copy', true)
+			.attr('data-clipboard-text', 
+			      '{0}/experience/{1}'.format(window.location.origin, experience.id()));
+		
+		var clipboard = new Clipboard(copyButton.node());
+		$(this.panel.node()).on('remove', function() { clipboard.destroy(); });
+			
+		clipboard.on('error', function(e) {
+			cr.asyncFail("Press Ctrl+C to copy");
+		});
+						
 		var cancelButton = this.appendButton()
 			.text(crv.buttonTexts.cancel);
 		
