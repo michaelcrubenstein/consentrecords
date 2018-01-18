@@ -193,7 +193,7 @@ var Settings = (function () {
 						sharingButton.selectAll("span.badge").text(badgeCount);
 					}
 			
-					var email = oldUser.emails()[0].text();
+					var email = oldUser.id();
 					var urlSection = _this.mainDiv.append('section')
 						.classed('cell edit unique', true)
 						.datum(email);
@@ -208,7 +208,7 @@ var Settings = (function () {
 						.append('div')
 						.classed('growable unselectable', true)
 						.text("{0}/for/{1}"
-							.format(window.location.origin, email))
+							.format(window.location.origin, oldUser.id()))
 						.on('click', function(d)
 							{
 								checkBirthday(d, function(d)
@@ -371,7 +371,7 @@ var ShareOptions = (function () {
 			.text("Copy Path")
 			.classed('copy', true)
 			.attr('data-clipboard-text', 
-			      '{0}/for/{1}'.format(window.location.origin, user.emails()[0].text()));
+			      '{0}/for/{1}'.format(window.location.origin, user.id()));
 		
 		var clipboard = new Clipboard(copyButton.node());
 		$(this.panel.node()).on('remove', function() { clipboard.destroy(); });
