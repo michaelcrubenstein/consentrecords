@@ -264,7 +264,10 @@ def showPathway(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = 'user[email>text=%s]' % email
+    if isUUID(email):
+        containerPath = 'user/%s' % email
+    else:
+        containerPath = 'user[email>text=%s]' % email
     tokens = cssparser.tokenizeHTML(containerPath)
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     if len(qs) > 0:
