@@ -10,15 +10,7 @@ panel.search-paths > div.panel-fill > div:first-child {	/* top box */
 	width: 100%;
 	background: #EEE;
 	overflow-x: hidden;	/* So the cancel button slides in from the right. */
-}
-
-panel.search-paths div.handle {
-	display: block;
-	background: #C0C0C0;
-	border-radius: 2px;
-	height: 5px;
-	width: 30px;
-	margin: 4px auto;
+	margin-top: 12px;
 }
 
 panel.search-paths input {
