@@ -691,6 +691,12 @@
 																return promise;
 															});
 												}
+												else
+												{
+													promise = $.Deferred();
+													promise.reject(new Error("The specified user does not exist or you do not have permission to view their path."));
+													return promise;
+												}
 											},
 											cr.chainFail);
 								{% else %}
