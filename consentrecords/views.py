@@ -79,6 +79,7 @@ def home(request):
 
     return HttpResponse(template.render(args))
 
+@ensure_csrf_cookie
 def welcomePrompt(request, promptType):
     logPage(request, 'pathAdvisor/welcomePrompt')
     
@@ -497,6 +498,7 @@ def signup(request, email=None):
         
     return HttpResponse(template.render(args))
 
+@ensure_csrf_cookie
 def passwordReset(request, resetKey):
     # Don't rely on authentication.
     
