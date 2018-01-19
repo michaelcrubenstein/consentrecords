@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^find/', views.find),
     url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
+    url(r'^for/([A-Fa-f0-9]{32})/', views.showPathway),
     url(r'^add/([A-Fa-f0-9]{32})/', views.addExperience),
     url(r'^add/', views.addToPathway),
     url(r'^accept/([^/@]+@[^/@]+\.[^/@]+)/', views.accept),
