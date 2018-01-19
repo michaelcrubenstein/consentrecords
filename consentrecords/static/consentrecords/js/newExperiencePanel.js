@@ -1225,7 +1225,7 @@ var ExperienceShareOptions = (function () {
 			});
 			
 		var copyButton = this.appendButton()
-			.text("Copy Experience Web Address")
+			.text("Copy Experience Link")
 			.classed('copy', true)
 			.attr('data-clipboard-text', 
 			      '{0}/experience/{1}'.format(window.location.origin, experience.id()));
