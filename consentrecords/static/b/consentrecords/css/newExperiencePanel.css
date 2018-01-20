@@ -276,11 +276,15 @@ panel.quick-add-experience>div.flags-container {
 }
 panel.quick-add-experience>div.flags-container>span.flag-row {
 	position: absolute;
+	display: flex;
 	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
 	font-weight: 600;
 	white-space: nowrap;
 	padding-bottom: 1em;
+	align-items: stretch;
+	-webkit-align-items: stretch;
 }
+
 panel.quick-add-experience>div.flags-container>span.flag-row>span.flag {
 	position: static;
 	border-left-style: solid;
@@ -294,9 +298,20 @@ panel.quick-add-experience>div.flags-container>span.flag-row>span.flag {
 	padding-right: 0.6em;
 	padding-top: 0.5em;
 	padding-bottom: 0.5em;
-	margin-right: 1em;
-	margin-bottom: 1em;
+	margin-right: 0;
 	line-height: 1.25em;
+}
+
+panel.quick-add-experience>div.flags-container>span.flag-row>span.svg-container {
+	display: flex;
+	padding-left: 6px;
+	padding-right: 6px;
+	align-items: center;
+	-webkit-align-items: center;
+}
+
+panel.quick-add-experience>div.flags-container>span.flag-row>span.svg-container>svg {
+	height: 12px;
 }
 
 panel.quick-add-experience>div.flags-container>span.flag-row>button {
@@ -307,6 +322,7 @@ panel.quick-add-experience>div.flags-container>span.flag-row>button {
 	cursor: default;
 	padding: 0.5em 0.6em;
 	margin-right: 1em;
+	font-size: 11px;
 	line-height: 1.25em;
 	outline: none;
 	background: #F8F8F8;
