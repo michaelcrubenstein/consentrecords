@@ -30,13 +30,13 @@ var QuickAddExperiencePanel = (function () {
 	QuickAddExperiencePanel.prototype._filterFlags = function()
 	{
 		var _this = this;
-		if (this.serviceStack.length)
+		if (this.serviceStack.length > 1)
 		{
 			var filterService = this.serviceStack.slice(-1)[0];
 		
 			this.flags().each(function(fs)
 				{
-					if (this == _this.otherFlagRowNode)
+					if (this == _this.otherFlagRowNode || this == _this.rootFlagRowNode)
 						fs.visible = true;
 					else if (_this.flagStack.indexOf(this) >= 0)
 						fs.visible = true;
@@ -47,11 +47,14 @@ var QuickAddExperiencePanel = (function () {
 		}
 		else
 		{
+			/* rootServices are the services that appear at the top level. */
 			var rootServices = this.flags().filter(function(fs)
 				{
-					return this != _this.otherFlagRowNode &&
-						   fs.service.serviceImplications().length <= 1 &&
-						(!_this.serviceFilter || _this.serviceFilter(fs));
+					if (this == _this.rootFlagRowNode || this == _this.otherFlagRowNode)
+						return false;
+					else
+						return fs.service.serviceImplications().length <= 1 &&
+								(!_this.serviceFilter || _this.serviceFilter(fs));
 				});
 			if (rootServices.size() == 1)
 			{
@@ -62,6 +65,7 @@ var QuickAddExperiencePanel = (function () {
 			{
 				this.flags().each(function(fs) { fs.visible = false; });
 				rootServices.each(function(fs) { fs.visible = true; });
+				d3.select(this.rootFlagRowNode).datum().visible = true;
 				d3.select(this.otherFlagRowNode).datum().visible = true;
 			}
 		}
@@ -76,8 +80,8 @@ var QuickAddExperiencePanel = (function () {
 		var nextY = this.flagTopMargin;
 		var panelWidth = $(this.mainDiv.node()).innerWidth();
 		
-		var flagSets = [[], [], [], []];
-		if (this.serviceStack.length)
+		var flagSet = [];
+		if (this.serviceStack.length > 1)
 		{
 			var filterService = this.serviceStack.slice(-1)[0];
 			g.each(function(fd)
@@ -97,35 +101,20 @@ var QuickAddExperiencePanel = (function () {
 							fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
 							$(this).css('left', fd.x);
 							
-							flagSets[3].push(this);
+							flagSet.push(this);
 						}
 						else if (_this.flagStack.indexOf(this) < 0)
-							flagSets[3].push(this);
+							flagSet.push(this);
 					}
 				});
-			
-			var lastX = 0;	
-			for (var i = 0, j = this.serviceStack.length - 1; i < this.serviceStack.length; ++i, --j)
-			{
-				var flag = this.flagStack[j];
-				$(flag).css('z-index', j);
-				var fd = d3.select(flag).datum();
-				if (j == this.serviceStack.length - 1)
-					fd.x = panelWidth - fd.firstChildWidth;
-				else
-					fd.x = Math.min(panelWidth - fd.firstChildWidth,
-						lastX - this.stackOffset);
-				fd.y = nextY;
-				lastX = fd.x;
-			}
-			nextY += deltaY;
 		}
 		else
 		{
 			g.each(function(fd)
 				{
-					if (fd.visible === undefined || fd.visible)
-						flagSets[3].push(this);
+					if (this != _this.rootFlagRowNode &&
+						(fd.visible === undefined || fd.visible))
+						flagSet.push(this);
 				});
 			d3.select(_this.otherFlagNode)
 				.text("Other");
@@ -140,20 +129,28 @@ var QuickAddExperiencePanel = (function () {
 			fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
 			$(_this.otherFlagNode).css('left', fd.x);
 		}
+
+		/* Set the positions of the top row of flags. */	
+		var lastX = panelWidth - this.stackLeftMargin;	
+		for (var i = 0, j = this.serviceStack.length - 1; i < this.serviceStack.length; ++i, --j)
+		{
+			var flag = this.flagStack[j];
+			var fd = d3.select(flag).datum();
+			$(flag).css('display', '');
+			fd.x = lastX - fd.firstChildWidth - this.stackLeftMargin;
+			fd.y = nextY;
+			lastX = fd.x;
+		}
+
+		nextY += deltaY;
 		
-		flagSets.forEach(function(fs)
+		flagSet.forEach(function(gNode)
 			{
-				if (fs.length)
-				{
-					fs.forEach(function(gNode)
-						{
-							var fd = d3.select(gNode).datum();
-							$(gNode).css('display', '');
-							fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
-							fd.y = nextY;
-							nextY += deltaY;
-						});
-				}
+				var fd = d3.select(gNode).datum();
+				$(gNode).css('display', '');
+				fd.x = panelWidth - fd.firstChildWidth - _this.stackLeftMargin;
+				fd.y = nextY;
+				nextY += deltaY;
 			});
 			
 		return (nextY + this.flagHeightEM) * this.emToPX;
@@ -199,7 +196,7 @@ var QuickAddExperiencePanel = (function () {
 	QuickAddExperiencePanel.prototype.hideFlagRow = function($flagRow, fd)
 	{
 		fd.expanded = false;
-		if ($flagRow == this.expandedFlag)
+		if (this.expandedFlag && $flagRow.get(0) == this.expandedFlag.get(0))
 			this.expandedFlag = null;
 		return $flagRow.animate({left: fd.x}).promise();
 	}
@@ -226,8 +223,7 @@ var QuickAddExperiencePanel = (function () {
 			$mainNode.css({width: $mainNode.parent().innerWidth()});
 					   
 		var $flagRow = $(this.flagRows.node());
-		var newLeft = $mainNode.innerWidth()
-			 - $flagRow.children('span:first-child').outerWidth(true);
+		var newLeft = $mainNode.innerWidth() - this.flagRows.datum().firstChildWidth;
 		$(this.flagsContainer.node()).width($flagRow.outerWidth(true) + newLeft)
 			.height($mainNode.height() - $(this.titleContainer.node()).outerHeight());
 			
@@ -249,6 +245,7 @@ var QuickAddExperiencePanel = (function () {
 	
 	QuickAddExperiencePanel.prototype.appendFlag = function(g)
 	{
+		var _this = this;
 		g.classed('flag', true)
 			.each(function(d)
 				{
@@ -256,7 +253,12 @@ var QuickAddExperiencePanel = (function () {
 				})
 			.text(function(d)
 				{
-					return d.description();
+					if (this == _this.rootFlagNode)
+						return "Experience Tags";
+					else if (this == _this.otherFlagNode)
+						return "Other";
+					else
+						return d.description();
 				});
 	}
 	
@@ -270,7 +272,12 @@ var QuickAddExperiencePanel = (function () {
 	QuickAddExperiencePanel.prototype.appendTimeframeButtons = function(path, timeframe, text)
 	{
 		var _this = this;
-		this.flagRows.append('button')
+		this.flagRows.filter(function(d)
+			{
+				return this != _this.rootFlagRowNode &&
+					_this.numChildren(d) == 0;
+			})
+			.append('button')
 			.classed('timeframe-button', true)
 			.text(text)
 			.on('mousedown', function()
@@ -307,6 +314,29 @@ var QuickAddExperiencePanel = (function () {
 						}
 					}
 				});
+	}
+	
+	QuickAddExperiencePanel.prototype.appendChevrons = function()
+	{
+		var _this = this;
+		var flags = this.flagRows.filter(function(d)
+			{
+				return this == _this.rootFlagRowNode || _this.numChildren(d) > 0;
+			});
+		var containers = flags.append('span')
+			.classed('svg-container', true)
+			.on('click', function(d)
+				{
+					_this.handleClickFlag(this.parentNode, d);
+				})
+			.each(function(d)
+			{
+				PathGuides.fillNode(this, d.getColumn());
+			})
+		appendRightChevronSVG(containers).each(function(d)
+			{
+				$(this).css('fill', $(this).css('color'));
+			});
 	}
 	
 	QuickAddExperiencePanel.prototype.toggleLeft = function($currentFlag, d)
@@ -355,20 +385,34 @@ var QuickAddExperiencePanel = (function () {
 					this.toggleLeft(this.expandedFlag, d3.select(this.expandedFlag.get(0)).datum());
 				}
 				
-				/* If the user clicked on a flag at the top, pop it. */
-				if (d && d.service && 
-					this.serviceStack.indexOf(d.service) >= 0)
+				if (this.rootFlagRowNode == currentFlag)
 				{
-					var flag = _this._popFlag();
+					while (this.flagStack.length > 1)
+						this._popFlag();
 					_this._filterFlags();
 					_this._setFlagCoordinates(_this.flagRows);
 					TagPoolView.prototype.moveFlags.call(_this, undefined)
-						.then(function()
-							{
-								$(flag).children('button.timeframe-button').css('display', '');
-								unblockClick();
-							},
-							cr.syncFail);
+						.then(unblockClick, cr.syncFail);
+				}
+				/* If the user clicked on a flag at the top, pop it. */
+				else if (d && d.service && 
+					this.serviceStack.indexOf(d.service) >= 0)
+				{
+					var numFlags = this.serviceStack.indexOf(d.service) + 1;
+					var flag = null;
+					while (this.serviceStack.length > numFlags)
+					{
+						flag = _this._popFlag();
+					}
+					if (flag)
+					{
+						_this._filterFlags();
+						_this._setFlagCoordinates(_this.flagRows);
+						TagPoolView.prototype.moveFlags.call(_this, undefined)
+							.then(unblockClick, cr.syncFail);
+					}
+					else
+						unblockClick();
 				}
 				else if (d && this.numChildren(d) == 0)
 				{
@@ -398,8 +442,8 @@ var QuickAddExperiencePanel = (function () {
 			{
 				$(e).children('button.timeframe-button').css('display', '');
 			});
-		this.flagStack = [];
-		this.serviceStack = [];
+		this.flagStack = [this.rootFlagRowNode];
+		this.serviceStack = [d3.select(this.rootFlagRowNode).datum().service];
 		this._filterFlags();
 		this._setFlagCoordinates(this.flagRows);
 		return TagPoolView.prototype.moveFlags.call(this, duration);
@@ -445,8 +489,6 @@ var QuickAddExperiencePanel = (function () {
 		this.panelNode = panelNode;
 		this.serviceFilter = serviceFilter;
 		this.expandedFlag = null;
-		this.serviceStack = [];
-		this.flagStack = [];
 		this.mainDiv = d3.select(panelNode).append('panel')
 			.classed('quick-add-experience', true)
 			.style('display', 'none');
@@ -500,7 +542,11 @@ var QuickAddExperiencePanel = (function () {
 						.data(controllers)
 						.enter()
 						.append('span');
-					
+						
+					_this.rootFlagRowNode = _this.flagsContainer.append('span')
+						.datum(new ServiceFlagController(null))
+						.node();
+						
 					_this.otherFlagRowNode = _this.flagsContainer.append('span')
 						.datum(new ServiceFlagController(null))
 						.node();
@@ -521,17 +567,22 @@ var QuickAddExperiencePanel = (function () {
 					var g = _this.flagRows.append('span')
 						.on('click', function(d)
 							{
-								var currentFlag = this.parentNode;
-								_this.handleClickFlag(currentFlag, d);
+								_this.handleClickFlag(this.parentNode, d);
 							});
 							
+					_this.flagStack = [_this.rootFlagRowNode];
+					_this.serviceStack = [d3.select(_this.rootFlagRowNode).datum().service];
 					_this.otherFlagNode = d3.select(_this.otherFlagRowNode).select('span:first-child').node();
+					_this.rootFlagNode = d3.select(_this.rootFlagRowNode).select('span:first-child').node();
+					
+					$(_this.rootFlagNode).text("Pick First Tag");
 					
 					_this.mouseDownElement = null;
 					_this.appendTimeframeButtons(path, 'Previous', crv.buttonTexts.previousTimeframe)
 					_this.appendTimeframeButtons(path, 'Current', crv.buttonTexts.currentTimeframeShort)
 					_this.appendTimeframeButtons(path, 'Goal', crv.buttonTexts.goalTimeframeShort)
 		
+					_this.appendChevrons();
 					_this.appendFlag(g);
 					
 					var $mainDiv = $(_this.mainDiv.node());
@@ -542,7 +593,13 @@ var QuickAddExperiencePanel = (function () {
 					_this._filterFlags();
 					_this.flags().each(function(fd)
 						{
-							fd.firstChildWidth = $(this).children('span:first-child').outerWidth(true);
+							/* If this flag has no children, then the first child width is the width of 
+								the flag. Otherwise, it is the width of the flag + the right chevron.
+							 */
+							if (_this.numChildren(fd) == 0 && this != _this.rootFlagRowNode)
+								fd.firstChildWidth = $(this).children('span:first-child').outerWidth(true);
+							else
+								fd.firstChildWidth = $(this).outerWidth(true);
 						});
 					_this.$flags().css({opacity: 0, display: 'none'});
 
