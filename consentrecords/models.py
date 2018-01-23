@@ -44,6 +44,13 @@ def _isEmail(s):
 def _orNone(data, key):
     return data[key] if key in data else None
     
+def _orNoneTimeframe(data, key):
+    if key not in data: return None
+    d=data[key]
+    return 1 if d == 'Previous' \
+        else 2 if d == 'Current' \
+        else 3 if d == 'Goal' else None
+    
 def _orNoneForeignKey(data, key, context, resultClass, thisQS=None, thisQSType=None):
     if key not in data:
         return None
@@ -1914,15 +1921,13 @@ class Experience(ChildInstance, dbmodels.Model):
     engagement = dbmodels.ForeignKey('consentrecords.Engagement', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     start = dbmodels.CharField(max_length=10, db_index=True, null=True)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    era = dbmodels.IntegerField(null=True)
+    era = dbmodels.IntegerField(db_index=True, null=True)
     
     fieldMap = {'custom organization': 'customOrganization',
                 'custom site': 'customSite',
                 'custom offering': 'customOffering',
                 'start': 'start',
                 'end': 'end',
-                'timeframe': 'timeframe',
                }
                
     elementMap = {'organization': ('organization__', "Organization", 'experiences'),
@@ -1954,6 +1959,13 @@ class Experience(ChildInstance, dbmodels.Model):
             return str(self.customServices.all()[0])
         else:
             return 'Unnamed Experience'
+            
+    @property
+    def timeframeString(self):
+        return 'Previous' if self.era == 1 \
+        else 'Current' if self.era == 2 \
+        else 'Goal' if self.era == 3 \
+        else None
     
     def __str__(self):
         return self.description(None)
@@ -2037,8 +2049,8 @@ class Experience(ChildInstance, dbmodels.Model):
                 
             if 'comments' in fields:
                 data['comments'] = [i.getData([], context) for i in self.currentComments];
-            if self.timeframe:
-                data['timeframe'] = self.timeframe
+            if self.era:
+                data['timeframe'] = self.timeframeString
         return data
 
     def getSubClause(qs, user, accessType):
@@ -2100,16 +2112,11 @@ class Experience(ChildInstance, dbmodels.Model):
                                  offering = _orNoneForeignKey(data, 'offering', context, Offering),
                                  customOffering = _orNone(data, 'custom offering'),
                                  engagement = _orNoneForeignKey(data, 'engagement', context, Engagement),
-                                 timeframe = _orNone(data, 'timeframe'),
+                                 era = _orNoneTimeframe(data, 'timeframe'),
                                  start = _orNone(data, 'start'),
                                  end = _orNone(data, 'end'),
                                 )
         
-        if newItem.timeframe:
-            newItem.era = 1 if newItem.timeframe == 'Previous' \
-                     else 2 if newItem.timeframe == 'Current' \
-                     else 3 if newItem.timeframe == 'Goal' else None
-            newItem.save()
         if newItem.engagement and newItem.engagement.parent.parent != newItem.offering:
             newItem.offering = newItem.engagement.parent.parent
             newItem.save()
@@ -2156,8 +2163,7 @@ class Experience(ChildInstance, dbmodels.Model):
                                              engagement=self.engagement,
                                              start=self.start,
                                              end=self.end,
-                                             timeframe=self.timeframe,
-                                             era = self.era)
+                                              era = self.era)
         
     def revert(self, h):
         self.organization = h.organization 
@@ -2169,7 +2175,6 @@ class Experience(ChildInstance, dbmodels.Model):
         self.engagement = h.engagement 
         self.start = h.start 
         self.end = h.end 
-        self.timeframe = h.timeframe 
         self.era = h.era 
     
     @property
@@ -2184,7 +2189,7 @@ class Experience(ChildInstance, dbmodels.Model):
              str(self.engagement) if self.engagement else '-',
              self.start or '-',
              self.end or '-',
-             self.timeframe or '-',
+             self.era or '-',
              )
         for j in self.experienceImplications.all():
             s += "\n\tImplied Service: %s" % str(j.service)
@@ -2244,12 +2249,9 @@ class Experience(ChildInstance, dbmodels.Model):
             if 'end' in changes and changes['end'] != self.end:
                 history = history or self.buildHistory(context)
                 self.end = changes['end']
-            if 'timeframe' in changes and changes['timeframe'] != self.timeframe:
+            if 'timeframe' in changes and changes['timeframe'] != self.timeframeString:
                 history = history or self.buildHistory(context)
-                self.timeframe = changes['timeframe']
-                self.era = 1 if self.timeframe == 'Previous' \
-                      else 2 if self.timeframe == 'Current' \
-                      else 3 if self.timeframe == 'Goal' else None
+                self.era = _orNoneTimeframe(changes, 'timeframe')
         
             self.updateChildren(changes, 'services', context, ExperienceService, self.services, newIDs)
             self.updateChildren(changes, 'custom services', context, ExperienceCustomService, self.customServices, newIDs)
@@ -2296,7 +2298,6 @@ class ExperienceHistory(dbmodels.Model):
     engagement = dbmodels.ForeignKey('consentrecords.Engagement', related_name='experienceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
     start = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
-    timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     era = dbmodels.IntegerField(null=True, editable=False)
 
     @property
@@ -2311,7 +2312,7 @@ class ExperienceHistory(dbmodels.Model):
              str(self.engagement) if self.engagement else '-',
              self.start or '-',
              self.end or '-',
-             self.timeframe or '-',
+             self.era or '-',
              )
         for j in self.experienceImplications.all():
             s += "\tImplied Service: %s" % str(j.service)
