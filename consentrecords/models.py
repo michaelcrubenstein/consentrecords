@@ -3583,8 +3583,8 @@ class Organization(SecureRootInstance, dbmodels.Model):
                  self.primaryAdministrator = newValue or None
         
         if context.canAdminister(self):
-            self.updateChildren(changes, 'user grants', context, UserUserGrant, self.userGrants, newIDs)
-            self.updateChildren(changes, 'group grants', context, UserGroupGrant, self.groupGrants, newIDs)
+            self.updateChildren(changes, 'user grants', context, OrganizationUserGrant, self.userGrants, newIDs)
+            self.updateChildren(changes, 'group grants', context, OrganizationGroupGrant, self.groupGrants, newIDs)
         
         if history:
             self.lastTransaction = context.transaction
@@ -3687,7 +3687,7 @@ class OrganizationUserGrant(Grant, dbmodels.Model):
             
     def create(parent, data, context, newIDs={}):
         if not context.canAdminister(parent):
-           raise PermissionDenied('you do not have permission to administer this user')
+           raise PermissionDenied('you do not have permission to administer this organization')
         
         grantee = _orNoneForeignKey(data, 'grantee', context, User)
         if not grantee:
@@ -3774,7 +3774,7 @@ class OrganizationGroupGrant(Grant, dbmodels.Model):
     
     def create(parent, data, context, newIDs={}):
         if not context.canAdminister(parent):
-           raise PermissionDenied('you do not have permission to administer this user')
+           raise PermissionDenied('you do not have permission to administer this organization')
         
         grantee = _orNoneForeignKey(data, 'grantee', context, Group)
         if not grantee:
