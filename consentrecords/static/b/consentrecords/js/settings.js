@@ -696,6 +696,12 @@ crn.ExperienceQuestionAnswered = (function() {
 											$.when(path.promiseExperiences())
 												.then(function()
 													{
+														if (path.experiences().findIndex(function(e) { return e.id() == args[1].id(); }) < 0)
+														{
+															var r = $.Deferred();
+															r.reject(new Error("this notification refers to an experience that has been deleted."));
+															return r;
+														}
 														return checkOfferingCells(args[1]);
 													})
 												.then(function()
