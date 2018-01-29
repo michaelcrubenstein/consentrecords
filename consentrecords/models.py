@@ -219,7 +219,7 @@ def _filterClause(tokens, user, qsType, accessType, prefix=''):
         else:
             return getFieldQ(prefix, tokens[1], tokens[2])
     elif fieldName in qsType.elementMap:
-        prefix = prefix + qsType.elementMap[fieldName][0]
+        prefix += qsType.elementMap[fieldName][0]
         if len(tokens) == 1:
             return Q((prefix + 'isnull', False), (prefix + 'deleteTransaction__isnull', True))
         else:
@@ -227,6 +227,11 @@ def _filterClause(tokens, user, qsType, accessType, prefix=''):
             
             if tokens[1] == '>':
                 subQ = _filterClause(tokens[2:], user, subType, accessType, prefix=prefix)
+                if qsType == Path and subType == Experience:
+                    q = subType.findableQueryClause(user, prefix[:-2]) # Remove the ending '__' in the prefix
+                    if q: 
+                        subQ = subQ & q
+
                 if 'deleteTransaction' in subType.__dict__:
                     return subQ & Q((prefix + 'deleteTransaction__isnull', True))
                 else:
@@ -847,9 +852,9 @@ class PermissionGrant(Grant):
     def administrableQuerySet(qs, user):
             qClause = Q(grantor__primaryAdministrator=user) |\
                       Q(grantor__userGrants__grantee=user, 
-                        grantor__userGrants__privilege='administer', 
+                        grantor__userGrants__permission=Permission.administer, 
                         grantor__userGrants__deleteTransaction__isnull=True) |\
-                      Q(grantor__groupGrants__privilege='administer', 
+                      Q(grantor__groupGrants__permission=Permission.administer, 
                         grantor__groupGrants__deleteTransaction__isnull=True,
                         grantor__groupGrants__grantee__deleteTransaction__isnull=True,
                         grantor__groupGrants__grantee__members__user=user,
@@ -1274,7 +1279,7 @@ class Address(ChildInstance, dbmodels.Model):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
+            return Address.filterForHeadData(qs, user, accessType), Organization
 
     def filterForHeadData(qs, user, accessType):
         return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent')
@@ -1417,16 +1422,16 @@ class Comment(ChildInstance, dbmodels.Model):
         return data
 
     def getSubClause(qs, user, accessType):
-        if accessType == Path:
+        if accessType == Experience:
             return qs, accessType
         else:
-            return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
+            return Comment.filterForHeadData(qs, user, accessType), Experience
 
     def filterForHeadData(qs, user, accessType):
-        return Path.findableQuerySet(qs, user, prefix='parent__parent')
+        return Experience.findableQuerySet(qs, user, prefix='parent')
             
     def filterForGetData(qs, user, accessType):
-        return Path.readableQuerySet(qs, user, prefix='parent__parent')
+        return Experience.readableQuerySet(qs, user, prefix='parent')
             
     def order_by(queryset, context):
         return queryset.order_by('transaction__creation_time')
@@ -1770,7 +1775,7 @@ class Engagement(ChildInstance, dbmodels.Model):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
+            return Engagement.filterForHeadData(qs, user, accessType), Organization
 
     def filterForHeadData(qs, user, accessType):
         return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent')
@@ -1930,7 +1935,7 @@ class Enrollment(ChildInstance, dbmodels.Model):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent'), Organization
+            return Enrollment.filterForHeadData(qs, user, accessType), Organization
 
     def filterForHeadData(qs, user, accessType):
         return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent__parent')
@@ -2161,16 +2166,90 @@ class Experience(ChildInstance, dbmodels.Model):
         return data
 
     def getSubClause(qs, user, accessType):
-        if accessType == Path:
+        if accessType == Experience:
             return qs, accessType
         else:
-            return Path.findableQuerySet(qs, user, prefix='parent'), Path
+            return Experience.findableQuerySet(qs, user, prefix=''), Experience
+
+    def anonymousFindFilter(prefix=''):
+        isHiddenClause = (prefix + '__isHidden') if prefix else 'isHidden'
+        return Q((isHidden, False))&\
+               Path.anonymousFindFilter(prefix + '__parent' if prefix else 'parent')
+        
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousReadFilter(prefix=''):
+        isHiddenClause = (prefix + '__isHidden') if prefix else 'isHidden'
+        return Q((isHidden, False))&\
+               Path.anonymousReadFilter(prefix + '__parent' if prefix else 'parent')
+    
+    # returns a querySet that enumerates the grantor_ids for grants
+    # for the specified user to have one of the specified privileges.
+    def grantorIDs(user):
+        return ExperienceUserGrant.objects.filter(\
+                permission=Permission.read,
+                deleteTransaction__isnull=True,
+                grantee=user,
+            ).values('grantor_id').union(\
+            ExperienceGroupGrant.objects.filter(\
+                permission=Permission.read,
+                deleteTransaction__isnull=True,
+                grantee__deleteTransaction__isnull=True,
+                grantee__members__user=user,
+                grantee__members__deleteTransaction__isnull=True,
+            ).values('grantor_id'))
+    
+    def privilegedQueryClause(user, prefix, privileges):
+        if prefix: prefix += '__'
+        parentPrefix = prefix + 'parent__'
+        pathPublicAccessClause = parentPrefix + 'publicAccess__in'
+        userPublicAccessClause = parentPrefix + 'parent__publicAccess__in'
+        userPrimaryAdministratorClause = parentPrefix + 'parent__primaryAdministrator'
+        userInClause = parentPrefix + 'parent_id__in'
+        grantClause = SecureRootInstance.grantorIDs(user, privileges)
+        writableGrantClause = SecureRootInstance.grantorIDs(user, ['write', 'administer'])
+        experienceGrantClause = Experience.grantorIDs(user) if 'read' in privileges else []
+        
+        qClause = (Q((prefix + 'isHidden', False))&\
+                   (Q((pathPublicAccessClause, privileges))|\
+                    Q((userPublicAccessClause, privileges))|\
+                    Q((userInClause, grantClause))))|\
+                  Q((userPrimaryAdministratorClause, user))|\
+                  Q((userInClause, writableGrantClause))|\
+                  Q((prefix + 'id__in', experienceGrantClause))
+        
+        print(qClause)
+        
+        return qClause
+
+    def findableQueryClause(user, prefix):
+        if not user:
+            return Experience.anonymousFindFilter(prefix)
+        elif user.is_administrator:
+            return None
+        else:
+            return Experience.privilegedQueryClause(user, prefix, ["find", "read", "register", "write", "administer"])
+    
+    def privilegedQuerySet(qs, user, prefix, privileges):
+        return qs.filter(Experience.privilegedQueryClause(user, prefix, privileges))
+    
+    def findableQuerySet(qs, user, prefix=''):
+        q = Experience.findableQueryClause(user, prefix)
+        return qs.filter(q) if q else qs
+
+    def readableQuerySet(qs, user, prefix=''):
+        if not user:
+            return qs.filter(Experience.anonymousReadFilter(prefix))
+        elif user.is_administrator:
+            return qs
+        else:
+            return Experience.privilegedQuerySet(qs, user, prefix, ["read", "write", "administer"])
 
     def filterForHeadData(qs, user, accessType):
-        return Path.findableQuerySet(qs, user, prefix='parent')
+        return Experience.findableQuerySet(qs, user, prefix='')
             
     def filterForGetData(qs, user, accessType):
-        return Path.readableQuerySet(qs, user, prefix='parent')
+        return Experience.readableQuerySet(qs, user, prefix='')
             
     def checkCanWrite(self, context):
         if self.engagement and context.canWrite(self.engagement):
@@ -2492,16 +2571,16 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         return querySet
         
     def getSubClause(qs, user, accessType):
-        if accessType == Path:
+        if accessType == Experience:
             return qs, accessType
         else:
-            return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
+            return ExperienceCustomService.filterForHeadData(qs, user, accessType), Experience
 
     def filterForHeadData(qs, user, accessType):
-        return Path.findableQuerySet(qs, user, prefix='parent__parent')
+        return Experience.findableQuerySet(qs, user, prefix='parent')
     
     def filterForGetData(qs, user, accessType):
-        return Path.readableQuerySet(qs, user, prefix='parent__parent')
+        return Experience.readableQuerySet(qs, user, prefix='parent')
     
     def order_by(queryset, context):
         return queryset.order_by('position')
@@ -2580,16 +2659,16 @@ class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
                  }
                  
     def getSubClause(qs, user, accessType):
-        if accessType == Path:
+        if accessType == Experience:
             return qs, accessType
         else:
-            return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
+            return ExperienceService.filterForHeadData(qs, user, accessType), Experience
     
     def filterForHeadData(qs, user, accessType):
-        return Path.findableQuerySet(qs, user, prefix='parent__parent')
+        return Experience.findableQuerySet(qs, user, prefix='parent')
             
     def filterForGetData(qs, user, accessType):
-        return Path.readableQuerySet(qs, user, prefix='parent__parent')
+        return Experience.readableQuerySet(qs, user, prefix='parent')
             
     def create(parent, data, context, newIDs={}):
         parent.checkCanWrite(context)
