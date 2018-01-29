@@ -50,7 +50,7 @@ def _orNoneTimeframe(data, key):
     return 1 if d == 'Previous' \
         else 2 if d == 'Current' \
         else 3 if d == 'Goal' else None
-    
+        
 def _orNoneForeignKey(data, key, context, resultClass, thisQS=None, thisQSType=None):
     if key not in data:
         return None
@@ -298,6 +298,51 @@ def _subFields(fields, parentField):
     return list(map(lambda s: s[start:], 
         filter(lambda s: s.startswith(prefix), fields)))
 
+class Permission:
+    administer = 15
+    write = 7
+    read = 5
+    register = 3
+    find = 1
+    
+    def parse(s):
+        p = Permission.find if s == 'find' \
+          else Permission.read if s == 'read' \
+          else Permission.write if s == 'write' \
+          else Permission.administer if s == 'administer' \
+          else Permission.register if s == 'register' \
+          else None
+        if not p:
+            raise ValueError('the privilege "%s" is not recognized' % s)
+        return p
+    
+    def reduce(f, publicAccess):
+        # map the access records to their corresponding privilege values.              
+        p = map(lambda i: i['permission'], f)
+
+        def compare(a, b):
+            if a == b:
+                return a
+            elif not a:
+                return b
+            elif not b:
+                return a
+            elif a > b:
+                return a
+            else:
+                return b
+
+        return reduce(comparePrivileges, p, publicAccess)
+        
+    @property
+    def to_string(p):
+        return 'administer' if p == Permission.administer \
+        else 'write' if p == Permission.write \
+        else 'read' if p == Permission.read \
+        else 'register' if p == Permission.register \
+        else 'find' if p == Permission.find \
+        else None
+    
 class Transaction(dbmodels.Model):
     id = idField()
     user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
@@ -748,6 +793,46 @@ class Grant(IInstance):
         return "%s\t%s\t%s\t%s" % \
               (
                 self.id, str(self.grantor), str(self.grantee), self.privilege or '-'
+              )
+     
+    @property    
+    def privilegeSource(self):
+        return self
+        
+    def fetchPrivilege(self, user):
+        return 'administer' if self.grantor.fetchPrivilege(user) == 'administer' else \
+        'write' if self.grantee.id == user.id \
+        else None
+    
+    def administrableQuerySet(qs, user):
+            qClause = Q(grantor__primaryAdministrator=user) |\
+                      Q(grantor__userGrants__grantee=user, 
+                        grantor__userGrants__privilege='administer', 
+                        grantor__userGrants__deleteTransaction__isnull=True) |\
+                      Q(grantor__groupGrants__privilege='administer', 
+                        grantor__groupGrants__deleteTransaction__isnull=True,
+                        grantor__groupGrants__grantee__deleteTransaction__isnull=True,
+                        grantor__groupGrants__grantee__members__user=user,
+                        grantor__groupGrants__grantee__members__deleteTransaction__isnull=True)
+            return qs.filter(qClause)
+    
+    def order_by(queryset, context):
+        return queryset.filter(Q(grantee__emails__deleteTransaction__isnull=True)& 
+                               Q(grantee__emails__position=0))\
+                       .order_by('grantee__emails__text')
+    
+### An instance that contains access information.
+class PermissionGrant(Grant):
+        
+    def revert(self, h):
+        self.grantee = h.grantee
+        self.permission = h.permission
+    
+    @property
+    def dataString(self):
+        return "%s\t%s\t%s\t%s" % \
+              (
+                self.id, str(self.grantor), str(self.grantee), self.permission
               )
      
     @property    
@@ -1922,6 +2007,7 @@ class Experience(ChildInstance, dbmodels.Model):
     start = dbmodels.CharField(max_length=10, db_index=True, null=True)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
     era = dbmodels.IntegerField(db_index=True, null=True)
+    isHidden = dbmodels.BooleanField(db_index=True, default=False)
     
     fieldMap = {'custom organization': 'customOrganization',
                 'custom site': 'customSite',
@@ -1998,8 +2084,26 @@ class Experience(ChildInstance, dbmodels.Model):
                 Comment.select_related(Comment.objects.filter(deleteTransaction__isnull=True)).order_by('transaction__creation_time'),
                                               to_attr='currentComments'))
         return qs
-            
     
+    @property    
+    def privilegeSource(self):
+        if self.isHidden:
+            return self
+        else:
+            return self.parent.privilegeSource
+                    
+    def fetchPrivilege(self, user):
+        parentPrivilege = self.parent.fetchPrivilege(user)
+        if parentPrivilege == 'administer' or parentPrivilege == 'write':
+            return parentPrivilege
+
+        f = self.userGrants.filter(grantee=user, deleteTransaction__isnull=True).values('permission')\
+            .union(self.groupGrants.filter(grantee__members__user=user, deleteTransaction__isnull=True,
+                                           grantee__deleteTransaction__isnull=True,
+                                           grantee__members__deleteTransaction__isnull=True).values('permission'))
+        p = Permission.reduce(f, None)
+        return p and Permission.to_string(p)
+
     def getData(self, fields, context):
         data = self.headData(context)
         if context.canRead(self):
@@ -2051,6 +2155,9 @@ class Experience(ChildInstance, dbmodels.Model):
                 data['comments'] = [i.getData([], context) for i in self.currentComments];
             if self.era:
                 data['timeframe'] = self.timeframeString
+                
+            data['is hidden'] = self.isHidden
+            
         return data
 
     def getSubClause(qs, user, accessType):
@@ -2253,12 +2360,22 @@ class Experience(ChildInstance, dbmodels.Model):
                 history = history or self.buildHistory(context)
                 self.era = _orNoneTimeframe(changes, 'timeframe')
         
+            if context.canAdminister(self):
+                if 'is hidden' in changes and changes['is hidden'] != self.isHidden:
+                    history = history or self.buildHistory(context)
+                    self.isHidden = bool(changes['is hidden'])
+                    # Special behavior: Only change is hidden if the current user can administer
+            
             self.updateChildren(changes, 'services', context, ExperienceService, self.services, newIDs)
             self.updateChildren(changes, 'custom services', context, ExperienceCustomService, self.customServices, newIDs)
         
         if context.canRead(self):
             self.updateChildren(changes, 'comments', context, Comment, self.comments, newIDs)
 
+        if context.canAdminister(self):
+            self.updateChildren(changes, 'user grants', context, ExperienceUserGrant, self.userGrants, newIDs)
+            self.updateChildren(changes, 'group grants', context, ExperienceGroupGrant, self.groupGrants, newIDs)
+        
         if history:
             self.lastTransaction = context.transaction
             self.save()
@@ -2535,6 +2652,174 @@ class ExperienceServiceHistory(dbmodels.Model):
     def dataString(self):
         return "%s\t%s\t%s" % (self.id, self.position, self.service or '-')
            
+### A Multiple Picked Value
+class ExperienceUserGrant(Grant, dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('createdExperienceUserGrants')
+    lastTransaction = lastTransactionField('changedExperienceUserGrants')
+    deleteTransaction = deleteTransactionField('deletedExperienceUserGrants')
+
+    grantor = dbmodels.ForeignKey('consentrecords.Experience', related_name='userGrants', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='experienceUserGrantees', db_index=True, on_delete=dbmodels.CASCADE)
+    permission = dbmodels.IntegerField(db_index=True)
+
+    fieldMap = {'permission': 'permission'}
+    
+    elementMap = {'grantee': ('grantee__', 'User', 'experienceUserGrantees'),
+                  'grantor': ('grantor__', 'Experience', 'userGrants'),
+                 }
+                 
+    def __str__(self):
+        return self.description()
+    
+    @property
+    def privilege(self):
+        return Permission.to_string(self.permission)
+    
+    def getSubClause(qs, user, accessType):
+        if accessType == ExperienceUserGrant:
+            return qs, accessType
+        elif not user:
+            return qs.none(), ExperienceUserGrant
+        elif user.is_administrator:
+            return qs, ExperienceUserGrant
+        else:
+            return Grant.administrableQuerySet(qs, user), ExperienceUserGrant
+
+    def filterForHeadData(qs, user, accessType):
+        return ExperienceUserGrant.getSubClause(qs, user, accessType)[0]
+            
+    def filterForGetData(qs, user, accessType):
+        return ExperienceUserGrant.getSubClause(qs, user, accessType)[0]
+            
+    def create(parent, data, context, newIDs={}):
+        if not context.canAdminister(parent):
+           raise PermissionDenied('you do not have permission to administer this experience')
+        
+        grantee = _orNoneForeignKey(data, 'grantee', context, User)
+        if not grantee:
+            raise ValueError("the grantee for a new user grant is not specified")
+        elif type(grantee) != User:
+            raise ValueError("the grantee for a new user grant is not a user: %s(%s)" % (str(type(grantee)), str(grantee)))
+            
+        if 'privilege' not in data:
+            raise ValueError("the privilege for a new user grant is not specified")
+        elif data['privilege'] not in ['find', 'read', 'register', 'write', 'administer']:
+            raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
+            
+        oldItem = parent.userGrants.filter(deleteTransaction__isnull=True,
+                                           grantee=grantee)
+        if oldItem.exists():
+            raise ValueError('%s already has access to this experience' % str(grantee))
+
+        newItem = ExperienceUserGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 grantor_id=parent.id,
+                                 grantee=grantee,
+                                 permission=Permission.parse(data['privilege']))
+        
+        return newItem                          
+        
+class ExperienceUserGrantHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('experienceUserGrantHistories')
+    instance = historyInstanceField(ExperienceUserGrant)
+
+    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='experienceGranteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    permission = dbmodels.IntegerField(db_index=True, editable=False)
+
+    @property
+    def dataString(self):
+        return"%s\t%s\t%s\t%s" % \
+              (
+                self.id, str(self.instance.grantor), str(self.grantee), self.permission
+              )
+         
+### A Multiple Picked Value
+class ExperienceGroupGrant(Grant, dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('createdExperienceGroupGrants')
+    lastTransaction = lastTransactionField('changedExperienceGroupGrants')
+    deleteTransaction = deleteTransactionField('deletedExperienceGroupGrants')
+
+    grantor = dbmodels.ForeignKey('consentrecords.Experience', related_name='groupGrants', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='experienceGroupGrantees', db_index=True, on_delete=dbmodels.CASCADE)
+    permission = dbmodels.IntegerField(db_index=True)
+
+    fieldMap = {'permission': 'permission'}
+    
+    elementMap = {'grantor': ('grantor__', 'Group', 'groupGrants'),
+                  'grantee': ('grantee__', 'Group', 'experienceGroupGrantees'),
+                  }
+                 
+    def __str__(self):
+        return self.description()
+    
+    def getSubClause(qs, user, accessType):
+        if accessType == ExperienceGroupGrant:
+            return qs, accessType
+        elif not user:
+            return qs.none(), ExperienceGroupGrant
+        elif user.is_administrator:
+            return qs, ExperienceGroupGrant
+        else:
+            return Grant.administrableQuerySet(qs, user), ExperienceGroupGrant
+
+    def filterForHeadData(qs, user, accessType):
+        return ExperienceGroupGrant.getSubClause(qs, user, accessType)[0]
+            
+    def filterForGetData(qs, user, accessType):
+        return ExperienceGroupGrant.getSubClause(qs, user, accessType)[0]
+            
+    def order_by(queryset, context):
+        return queryset.filter(Q(grantee__names__deleteTransaction__isnull=True)& 
+                               (Q(grantee__names__languageCode=context.languageCode)|(Q(grantee__names__languageCode='en')&~Q(grantee__names__parent__names__languageCode=context.languageCode))))\
+                       .order_by('grantee__names__text')
+    
+    def create(parent, data, context, newIDs={}):
+        if not context.canAdminister(parent):
+           raise PermissionDenied('you do not have permission to administer this experience')
+        
+        grantee = _orNoneForeignKey(data, 'grantee', context, Group)
+        if not grantee:
+            raise ValueError("the grantee for a new group grant is not specified")
+            
+        if 'privilege' not in data:
+            raise ValueError("the privilege for a new group grant is not specified")
+        elif data['privilege'] not in ['find', 'read', 'register', 'write', 'administer']:
+            raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
+            
+        oldItem = parent.groupGrants.filter(deleteTransaction__isnull=True,
+                                           grantee=grantee)
+        if oldItem.exists():
+            if parent == context.user:
+                raise ValueError('%s is already following you' % str(grantee))
+            else:
+                raise ValueError('%s is already following %s' % (str(grantee), str(parent)))
+
+        newItem = ExperienceGroupGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 grantor_id=parent.id,
+                                 grantee=_orNoneForeignKey(data, 'grantee', context, Group),
+                                 permission=Permission.parse(data['privilege']))
+        
+        return newItem                          
+        
+class ExperienceGroupGrantHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('experienceGroupGrantHistories')
+    instance = historyInstanceField(ExperienceGroupGrant)
+
+    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='experienceGranteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    permission = dbmodels.IntegerField(db_index=True, editable=False)
+    
+    @property
+    def dataString(self):
+        return"%s\t%s\t%s\t%s" % \
+              (
+                self.id, str(self.instance.grantor), str(self.grantee), self.permission
+              )
+         
 class Group(ChildInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdGroups')
@@ -5833,7 +6118,8 @@ class Context:
         self.user = User.create(propertyList, self)
                     
         return self.user
-            
+    
+    # returns the client-side representation of the privilege for the specified item.        
     def getPrivilege(self, i):
         if self.is_administrator:
             return "administer"
