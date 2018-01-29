@@ -3132,6 +3132,7 @@ cr.Experience = (function() {
 	Experience.prototype._customOffering = null;
 	Experience.prototype._engagement = null;
 	Experience.prototype._timeframe = null;
+	Experience.prototype._isHidden = null;
 	Experience.prototype._services = null;
 	Experience.prototype._customServices = null;
 	Experience.prototype._comments = null;
@@ -3229,6 +3230,20 @@ cr.Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.isHidden = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._isHidden;
+		else
+		{
+		    if (newValue != this._isHidden)
+		    {
+				this._isHidden = newValue;
+			}
+			return this;
+		}
+	}
+	
 	Experience.prototype.experienceServices = function(newValue)
 	{
 		if (newValue === undefined)
@@ -3305,6 +3320,7 @@ cr.Experience = (function() {
 		this._customOffering = "";
 		this._engagement = null;
 		this._timeframe = "Previous";
+		this._isHidden = false;
 		this._services = [];
 		this._customServices = [];
 		this._comments = [];
@@ -3331,6 +3347,8 @@ cr.Experience = (function() {
 			
 		if (this.timeframe())
 			initialData['timeframe'] = this.timeframe();
+		
+		initialData['is hidden'] = this.isHidden();
 		
 		var i = 0;
 		
@@ -3365,6 +3383,9 @@ cr.Experience = (function() {
 		if (cr.stringChanged(this.timeframe(), revision.timeframe()))
 			changes['timeframe'] = revision.timeframe();
 		
+		if (this.isHidden() != revision.isHidden())
+			changes['is hidden'] = revision.isHidden();
+		
 		this.appendUpdateList(this.experienceServices(), revision.distinctExperienceServices(), changes, 'services');
 		this.appendUpdateList(this.customServices(), revision.customServices(), changes, 'custom services');
 			
@@ -3391,6 +3412,7 @@ cr.Experience = (function() {
 		this._customSite = 'custom site' in d ? d['custom site'] : "";
 		this._customOffering = 'custom offering' in d ? d['custom offering'] : "";
 		this._timeframe = 'timeframe' in d ? d['timeframe'] : "";
+		this._isHidden = 'is hidden' in d ? d['is hidden'] : false;
 		this.setChildren(d, 'services', cr.ExperienceService, this.experienceServices);
 		this.setChildren(d, 'custom services', cr.ExperienceCustomService, this.customServices);
 		this.setChildren(d, 'comments', cr.Comment, this.comments);
@@ -3411,6 +3433,7 @@ cr.Experience = (function() {
 		if (!this._customSite) this._customSite = source._customSite;
 		if (!this._customOffering) this._customOffering = source._customOffering;
 		if (!this._timeframe) this._timeframe = source._timeframe;
+		this._isHidden = source._isHidden;
 		if (!this._services) this._services = source._services;
 		if (!this._customServices) this._customServices = source._customServices;
 		if (!this._comments) this._comments = source._comments;
@@ -3489,6 +3512,11 @@ cr.Experience = (function() {
 			this._timeframe = d['timeframe'];
 			changed = true;
 		}
+		if ('is hidden' in d)
+		{
+			this._isHidden = d['is hidden'];
+			changed = true;
+		}
 		
 		if (changed)
 			this.triggerChanged();
@@ -3529,6 +3557,8 @@ cr.Experience = (function() {
 		
 		/* Initialize previously null timeframes to reasonable values. */
 		newInstance._timeframe = this.getPhase();
+		
+		newInstance._isHidden = this._isHidden;
 		
 		newInstance._services = this.duplicateList(this._services, duplicateForEdit);
 		newInstance._customServices = this.duplicateList(this._customServices, duplicateForEdit);

@@ -2062,6 +2062,17 @@ var NewExperiencePanel = (function () {
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
 			
+		this.appendActionButton("Privacy", function()
+			{
+				if (prepareClick('click', 'Privacy'))
+				{
+					var panel = new ExperienceSecurityPanel(experienceController, revealPanelLeft);
+					panel.showLeft()
+						.then(unblockClick, cr.syncFail);
+				}
+			})
+			.classed('first', true);
+			
 		/* The initial comment section. */
 		if (!experienceController.oldInstance())
 		{
@@ -2139,3 +2150,41 @@ var NewExperiencePanel = (function () {
 	return NewExperiencePanel;
 })();
 
+var ExperienceSecurityPanel = (function () {
+	ExperienceSecurityPanel.prototype = Object.create(EditItemPanel.prototype);
+	ExperienceSecurityPanel.prototype.constructor = ExperienceSecurityPanel;
+	ExperienceSecurityPanel.prototype.title = "Experience Security";
+	ExperienceSecurityPanel.prototype.isHiddenLabel = "Private Experience";
+	
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	ExperienceSecurityPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		this.newInstance().isHidden(this.isHiddenControl.node().checked);
+		return false;
+	}
+	
+	ExperienceSecurityPanel.prototype.promiseUpdateChanges = function()
+	{
+		/* Do not save the changes now. Instead, they are saved when the parent panel is closed. */
+		var r = $.Deferred();
+		r.resolve();
+		return r;
+	}
+
+	function ExperienceSecurityPanel(experienceController, showFunction) {
+		EditItemPanel.call(this, experienceController);
+		
+		var _this = this;
+		this.createRoot(this.title, showFunction, false);
+		
+		var isHiddenSection = this.mainDiv.append('section')
+			.classed('cell edit unique', true);
+		
+		isHiddenSection.append('label')
+			.text(this.isHiddenLabel);
+			
+		this.isHiddenControl = this.appendCheckboxEditor(isHiddenSection, this.isHiddenLabel, experienceController.newInstance().isHidden(), "checkbox");
+	}
+	
+	return ExperienceSecurityPanel;
+})();
