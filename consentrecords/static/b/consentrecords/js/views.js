@@ -1911,6 +1911,40 @@ var EditItemPanel = (function () {
 		return inputs;
 	}
 	
+	EditItemPanel.prototype.appendCheckboxEditor = function(section, placeholder, value, inputType)
+	{
+		var itemsDiv = crf.appendItemList(section);
+		var items = itemsDiv.append('li');
+
+		items.append('span').classed('growable', true);
+		var inputs = items.append('input')
+			.attr('type', 'checkbox');
+		inputs.node().checked = value;
+		var switchery = Switchery(inputs.node(), {size: 'small'});
+			
+		if (this.onFocusInOtherInput !== undefined)
+		{
+			var _this = this;
+			inputs.on('click', function()
+				{
+					try
+					{
+						var done = function() { };
+						if (!_this.onFocusInOtherInput(null, done))
+						{
+							done();
+						}
+					}
+					catch (err)
+					{
+						cr.asyncFail(err);
+					}
+				});
+		}
+		
+		return inputs;
+	}
+	
 	EditItemPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText, minDate, maxDate, placeholder)
 	{
 		placeholder = (placeholder !== undefined) 

@@ -526,6 +526,11 @@ li > .row-button {
 	padding: 0px 0px;
 }
 
+.cell.edit.unique li>.switchery {
+	align-self: center;
+	margin: 0px 1em;
+}
+
 .left-expanding-div {
 	overflow: hidden;
 	width: auto;

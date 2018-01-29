@@ -1,0 +1,109 @@
+/*
+ *
+ * Main stylesheet for Switchery.
+ * http://abpetkov.github.io/switchery/
+ *
+ */
+
+/* Switchery defaults. */
+
+.switchery {
+  background-color: #fff;
+  border: 1px solid #dfdfdf;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-block;
+  height: 30px;
+  position: relative;
+  vertical-align: middle;
+  width: 50px;
+
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+
+  -webkit-background-clip: content-box;
+  background-clip: content-box;
+}
+
+.switchery > small {
+  background: #fff;
+  border-radius: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  height: 30px;
+  position: absolute;
+  top: 0;
+  width: 30px;
+}
+
+/* Switchery sizes. */
+
+.switchery-small {
+  border-radius: 20px;
+  height: 20px;
+  width: 33px;
+  box-shadow: box-shadow: 0 0 0 0 #dfdfdf inset;
+}
+
+.switchery-small > small {
+  height: 20px;
+  width: 20px;
+}
+
+.switchery-large {
+  border-radius: 40px;
+  height: 40px;
+  width: 66px;
+}
+
+.switchery-large > small {
+  height: 40px;
+  width: 40px;
+}
+
+@keyframes showCheck {
+	from {box-shadow: 0 0 0 0 #dfdfdf inset;
+		  border-color: #dfdfdf;
+		  background-color: #fff;
+		 }
+	to   {box-shadow: 0 0 0 10px #64bd63 inset;
+		  border-color: #64bd63;
+		  background-color: #fff;
+		 }
+}
+
+@keyframes hideCheck {
+	from {box-shadow: 0 0 0 10px #dfdfdf inset;
+		  border-color: #dfdfdf;
+		  background-color: #fff;
+		 }
+	to   {box-shadow: 0 0 0 0 #dfdfdf inset;
+		  border-color: #dfdfdf;
+		  background-color: #fff;
+		 }
+}
+
+.switchery-small.checking {
+	animation: showCheck;
+	animation-duration: 0.2s;
+	-webkit-animation-fill-mode: both;
+	-webkit-animation-iteration-count: 1;
+	animation-fill-mode: both;
+	animation-iteration-count: 1;
+}
+
+.switchery-small.unchecking {
+	animation: hideCheck;
+	animation-duration: 0.2s;
+	-webkit-animation-fill-mode: both;
+	-webkit-animation-iteration-count: 1;
+	animation-fill-mode: both;
+	animation-iteration-count: 1;
+}
+
