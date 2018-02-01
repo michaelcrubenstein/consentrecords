@@ -339,7 +339,6 @@ class Permission:
 
         return reduce(comparePrivileges, p, publicAccess)
         
-    @property
     def to_string(p):
         return 'administer' if p == Permission.administer \
         else 'write' if p == Permission.write \
