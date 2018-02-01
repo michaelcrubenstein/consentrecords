@@ -211,8 +211,6 @@ var ZoomPanel = (function () {
 			.classed('handle', true);
 		this.topHandle = topHandle.node();
 		
-		topHandle.append('span');
-			
 		var topSVG = topHandle.append('svg')
 			.classed('handle', true);
 		this.topSVG = topSVG.node();
@@ -220,8 +218,6 @@ var ZoomPanel = (function () {
 		topSVG.append('path')
 			.attr('d', 'M 4 4 l 18 7 l 18 -7');
 			
-		topHandle.append('span');
-
 		this.inputNode = this.appendInputNode(topBox);
 			
 		this.cancelButton = topBox.append('button')

@@ -933,10 +933,8 @@ panel.zoom div.handle {
 	display: flex;
 	width: 100%;
 	margin: 4px auto;
-}
-
-panel.zoom div.handle > span {
-	flex-grow: 100;
+	align-items: center;
+	flex-direction: column;
 }
 
 panel.zoom input, panel.zoom textarea {
