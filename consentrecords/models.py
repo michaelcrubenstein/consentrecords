@@ -2296,7 +2296,12 @@ class Experience(ChildInstance, dbmodels.Model):
         _validateDate(data, 'end')
         if 'start' in data and 'end' in data and data['start'] > data['end']:
             raise ValueError('the start date of an experience cannot be after the end date of the experience')
-             
+        
+        if context.getPrivilege(parent) != 'administer' or 'is hidden' not in data:
+            isHidden = False
+        else:
+        	isHidden = bool(data['is hidden'])
+        	
         newItem = Experience.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
@@ -2310,6 +2315,7 @@ class Experience(ChildInstance, dbmodels.Model):
                                  era = _orNoneTimeframe(data, 'timeframe'),
                                  start = _orNone(data, 'start'),
                                  end = _orNone(data, 'end'),
+                                 isHidden = isHidden,
                                 )
         
         if newItem.engagement and newItem.engagement.parent.parent != newItem.offering:
