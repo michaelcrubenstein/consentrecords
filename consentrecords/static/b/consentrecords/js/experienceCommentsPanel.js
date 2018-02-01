@@ -601,18 +601,10 @@ var ExperienceCommentsPanel = (function() {
 				.each(function() { $(this).trigger('resize.cr'); });
 			commentList.selectAll('button.reply')
 				.style('display', 'none');
-			
-			/* position the edit chevron as appropriate. 
-				12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
-				18 is the height of the chevron, so that the chevron is vertically centered. 
-			 */
-			
-			/* Set the width of this.detailGroup to be width of the container. */
-			$(this.detailGroup.node()).animate({'width': $(this.mainDiv.node()).innerWidth()} );
 		}
 		catch(err)
 		{
-			this.editButton.text(crv.buttonTexts.edit);
+			this.editButton.text(crv.buttonTexts.editComments);
 			throw err;
 		}
 	}
@@ -784,6 +776,7 @@ var ExperienceCommentsPanel = (function() {
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
+		var panel2Div = this.appendScrollArea();
 
 		var backButton = navContainer.appendLeftButton()
 			.classed('chevron-left-container', true)
@@ -823,9 +816,92 @@ var ExperienceCommentsPanel = (function() {
 		navContainer.appendTitle('');
 		
 		this.inEditMode = false;
+
+		var shareButton = navContainer.appendRightButton()
+			.on('click', function()
+				{
+					if (prepareClick('click', 'share'))
+					{
+						new ExperienceShareOptions(fd.experience, fd.experience.path());
+					}
+				});
+		shareButton.append("img")
+			.attr("src", shareImagePath);
+
+		this.mainDiv.classed('vertical-scrolling', false)
+			.classed('no-scrolling', true);
+
+		this.detailGroup = this.mainDiv.append('div')
+			.classed('detail', true)
+			.datum(fd);
+		this.detailTextGroup = this.detailGroup.append('div');
+		
+		function resizeDetail()
+		{
+			fd.appendElements(_this.detailTextGroup, 12);
+			if (backText != fd.experience.parent().parent().caption())
+			{
+				var containerDiv = _this.detailTextGroup.select('div');
+				containerDiv.insert('div', ':first-child')
+					.classed('user-label', true)
+					.text(fd.experience.parent().parent().caption());
+			}
+		}
+		
+		function changeEventHandler(eventObject, newValue)
+		{
+			fd.colorHTMLElement(_this.detailGroup.node());
+			fd.colorHTMLElement(navContainer.nav.node());
+			resizeDetail();
+		}
+		
+		setTimeout(changeEventHandler);
+		
+		/* Update the contents of the top banner if the contents of the experience are changed. */
+		fd.setupChangeEventHandler(this.mainDiv.node(), changeEventHandler);
+		
+		/* Hide this panel if the experience is deleted */
+		setupOneViewEventHandler(fd.experience, "deleted.cr", this.node(), function(eventObject)
+			{
+				_this.hideNow();
+			});
+
 		if (fd.experience.canWrite())
-		{		
-			this.editButton = navContainer.appendRightButton()
+		{
+			this.editChevronContainer = appendRightChevronSVG(this.detailGroup);
+			$(this.editChevronContainer.node()).width(this.editChevronWidth)
+				.height(this.editChevronHeight);
+						
+			this.detailGroup.on('click', function(e)
+				{
+					_this.showDetailPanel(fd);
+				})
+		}
+		
+		if (fd.experience.canWrite())
+		{
+			var editCommentsContainer = this.mainDiv.append('div')
+				.classed('edit', true);
+				
+			if (fd.experience.privilege() == 'administer')
+			{
+				this.sharingButton = editCommentsContainer.append('div').append('span')
+					.classed('site-active-text', true)
+					.text(crv.buttonTexts.sharing)
+					.on('click', function()
+						{
+							if (prepareClick('click', 'Sharing'))
+							{
+								var experienceController = new ExperienceController(fd.experience.parent(), fd.experience, true);
+								experienceController.oldInstance(fd.experience);
+								var panel = new ExperienceSecurityPanel(experienceController, _this.title, revealPanelUp);
+								panel.showUp()
+									.then(unblockClick, cr.syncFail);
+							}
+						});
+			}
+			
+			this.editButton = editCommentsContainer.append('div').append('span')
 				.on("click", function()
 				{
 					if (_this.inEditMode)
@@ -834,7 +910,7 @@ var ExperienceCommentsPanel = (function() {
 						{
 							/* Store the new text in a button so that it is set properly
 								when an error occurs whether or not the callback to showClickFeedback is called. */
-							var newButtonText = crv.buttonTexts.edit;
+							var newButtonText = crv.buttonTexts.editComments;
 							var fail = function(err)
 								{
 									newButtonText = crv.buttonTexts.done;
@@ -852,10 +928,6 @@ var ExperienceCommentsPanel = (function() {
 									{
 										try
 										{
-											$(_this.detailGroup.node())
-												.animate({'width': $(_this.mainDiv.node()).innerWidth() + 
-																   $(_this.editChevronContainer.node()).outerWidth(true)} );
-
 											var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
 											crf.hideDeleteControls(dials);
 											_this.inEditMode = false;
@@ -907,84 +979,12 @@ var ExperienceCommentsPanel = (function() {
 					}
 				});
 			this.editButton
-				.classed('edit', true)
-				.text(crv.buttonTexts.edit);
+				.classed('site-active-text', true)
+				.text(crv.buttonTexts.editComments);
 		}
 
-		var shareButton = navContainer.appendRightButton()
-			.on('click', function()
-				{
-					if (prepareClick('click', 'share'))
-					{
-						new ExperienceShareOptions(fd.experience, fd.experience.path());
-					}
-				});
-		shareButton.append("img")
-			.attr("src", shareImagePath);
-
-		var panel2Div = this.appendScrollArea();
-
-		this.mainDiv.classed('vertical-scrolling', false)
-			.classed('no-scrolling', true);
-
-		this.detailGroup = panel2Div.append('div')
-			.classed('detail', true)
-			.datum(fd);
-		this.detailTextGroup = this.detailGroup.append('div');
-		
-		function resizeDetail()
-		{
-			fd.appendElements(_this.detailTextGroup, 12);
-			if (backText != fd.experience.parent().parent().caption())
-			{
-				var containerDiv = _this.detailTextGroup.select('div');
-				containerDiv.insert('div', ':first-child')
-					.classed('user-label', true)
-					.text(fd.experience.parent().parent().caption());
-			}
-			
-			if (fd.experience.canWrite())
-			{
-				$(_this.detailGroup.node()).width($(_this.mainDiv.node()).innerWidth() +
-					(_this.inEditMode ? 0 : $(_this.editChevronContainer.node()).outerWidth(true)));
-			}
-		}
-		
-		function changeEventHandler(eventObject, newValue)
-		{
-			fd.colorHTMLElement(_this.detailGroup.node());
-			fd.colorHTMLElement(navContainer.nav.node());
-			resizeDetail();
-		}
-		
-		setTimeout(changeEventHandler);
-		
-		/* Update the contents of the top banner if the contents of the experience are changed. */
-		fd.setupChangeEventHandler(this.mainDiv.node(), changeEventHandler);
-		
-		/* Hide this panel if the experience is deleted */
-		setupOneViewEventHandler(fd.experience, "deleted.cr", this.node(), function(eventObject)
-			{
-				_this.hideNow();
-			});
-
-		if (fd.experience.canWrite())
-		{
-			this.editChevronContainer = appendRightChevronSVG(this.detailGroup);
-			$(this.editChevronContainer.node()).width(this.editChevronWidth)
-				.height(this.editChevronHeight);
-						
-			this.detailGroup.on('click', function(e)
-				{
-					if (_this.inEditMode)
-					{
-						_this.showDetailPanel(fd);
-					}
-				})
-		}
-		
 		var comments = fd.experience.comments();
-		var commentsDiv = panel2Div.append('section')
+		var commentsDiv = this.mainDiv.append('section')
 			.classed('multiple edit comments', true);
 		this.commentsSection = commentsDiv.node();
 		var commentList = crf.appendItemList(commentsDiv)
@@ -999,7 +999,7 @@ var ExperienceCommentsPanel = (function() {
 		
 		if (fd.experience.canWrite())
 		{
-			var newCommentDiv = panel2Div.append('section')
+			var newCommentDiv = this.mainDiv.append('section')
 				.classed('new-comment', true);
 			var newCommentButton = newCommentDiv.append('button')
 				.classed('site-active-text add-comment', true)
@@ -1072,7 +1072,7 @@ var ExperienceCommentsPanel = (function() {
 					})
 				.node();
 
-			$(panel2Div.node()).on('resize.cr', function()
+			$(this.mainDiv.node()).on('resize.cr', function()
 				{
 					$(_this.newCommentInputNode).width(
 						$(newCommentDiv.node()).width() - 
@@ -1085,7 +1085,13 @@ var ExperienceCommentsPanel = (function() {
 		
 		if (fd.experience.id())
 		{
-			this.promise = fd.experience.promiseData(['comments'])
+			var fields =['comments'];
+			if (fd.experience.privilege() == 'administer')
+			{
+				fields.push('user grants');
+				fields.push('group grants');
+			}
+			this.promise = fd.experience.promiseData(fields)
 				.then(function(comments)
 					{
 						var r = $.Deferred();
@@ -1107,7 +1113,7 @@ var ExperienceCommentsPanel = (function() {
 			this.promise.resolve();
 		}
 
-		$(panel2Div.node()).on('resize.cr', function()
+		$(this.mainDiv.node()).on('resize.cr', function()
 			{
 				_this.resizeCommentsSection();
 			});
@@ -1122,7 +1128,7 @@ var ExperienceCommentsPanel = (function() {
 				{
 					try
 					{
-						$(panel2Div.node()).on('resize.cr', resizeDetail);	
+						$(_this.mainDiv.node()).on('resize.cr', resizeDetail);	
 			
 						var f = function()
 							{
@@ -1133,7 +1139,7 @@ var ExperienceCommentsPanel = (function() {
 										});
 							};
 							
-						$(panel2Div.node()).on('resize.cr', f);	
+						$(_this.mainDiv.node()).on('resize.cr', f);	
 						_this.setupAsk();
 						f();
 					}

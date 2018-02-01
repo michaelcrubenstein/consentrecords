@@ -235,7 +235,7 @@ var Settings = (function () {
 								.format(window.location.origin, email));
 						});
 	
-					var sharingDiv = _this.appendActionButton("Sharing", function(d) {
+					var sharingDiv = _this.appendActionButton(crv.buttonTexts.sharing, function(d) {
 						showClickFeedback(this);
 						checkBirthday(d, function(d)
 							{

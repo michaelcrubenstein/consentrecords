@@ -1,177 +1,5 @@
-/* A panel that contains a single list of user grants. */
-var UserGrantsPanel = (function() {
-	UserGrantsPanel.prototype = Object.create(EditPanel.prototype);
-	UserGrantsPanel.prototype.constructor = UserGrantsPanel;
-	
-	UserGrantsPanel.prototype.user = null;
-	UserGrantsPanel.prototype.inEditMode = false;
-	UserGrantsPanel.prototype.editButton = null;
-	UserGrantsPanel.prototype.privilegesByID = null;
-	UserGrantsPanel.prototype.privileges = null;
-	
-	UserGrantsPanel.prototype.appendBackButton = function(backButtonText)
-	{
-		var _this = this;
-		var backButton = this.navContainer.appendLeftButton()
-			.classed('chevron-left-container', true)
-			.on('click', function()
-			{
-				if (prepareClick('click', _this.headerText + ' Done'))
-				{
-					_this.hide();
-				}
-				d3.event.preventDefault();
-			});
-		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
-		backButton.append('span').text(backButtonText);
-		
-		return backButton;
-	}
-	
-	UserGrantsPanel.prototype.appendEditButton = function()
-	{
-		var _this = this;
-		
-		this.inEditMode = false;
-		this.editButton = this.navContainer.appendRightButton()
-			.on('click', function()
-			{
-				var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
-				if (_this.inEditMode)
-				{
-					if (prepareClick('click', 'Done Edit ' + _this.headerText))
-					{
-						showClickFeedback(this, function()
-							{
-								_this.editButton.text(crv.buttonTexts.edit);
-								_this.navContainer.centerTitle();
-							});
-						crf.hideDeleteControls(dials);
-						_this.inEditMode = false;
-						unblockClick();
-					}
-				}
-				else
-				{
-					if (prepareClick('click', 'Edit ' + _this.headerText))
-					{
-						showClickFeedback(this, function()
-							{
-								_this.editButton.text(crv.buttonTexts.done);
-								_this.navContainer.centerTitle();
-							});
-						crf.showDeleteControls(dials);
-						_this.inEditMode = true;
-						unblockClick();
-					}
-				}
-			});
-		this.editButton.text(crv.buttonTexts.edit);
-				
-		this.editButton.style('display', null);
-		this.navContainer.centerTitle();
-	}
-	
-	/*** Appends the controls for each item that shows a user or group that has a specified privilege.
-	 */
-	UserGrantsPanel.prototype.appendUserControls = function(items)
-	{
-		crf.appendDeleteControls(items);
-
-		items.append("div")
-			.classed("description-text growable unselectable", true)
-			.text(_getDataDescription)
-			.each(_pushTextChanged);
-
-		appendInfoButtons(items, function(d) { return d.grantee(); });
-
-		crf.appendConfirmDeleteControls(items);
-		this.checkDeleteControlVisibility(items);
-		
-		return items;
-	}
-
-	UserGrantsPanel.prototype.checkDeleteControlVisibility = function(items)
-	{
-		/* Note that items may contain 0 items, but this code still works. */
-		var deleteControls = $(items.node()).parent().find('button.delete');
-		if (!this.inEditMode)
-			crf.hideDeleteControls(deleteControls, 0);
-		else
-			crf.showDeleteControls(deleteControls, 0);
-	}
-	
-	/* Produces a function which adds new value view to a container view
-		when the new data is added.
-		the viewFunction is called when the item is clicked.
-	 */
-	UserGrantsPanel.prototype.onGrantAdded = function(itemsDivNode, newValue)
-	{
-		var itemsDiv = d3.select(itemsDivNode);
-		var item = appendItem(itemsDiv, newValue);
-		
-		this.appendUserControls(item);
-
-		item.style("display", null);
-		var newHeight = item.style("height");
-		item.style("height", "0");
-		$(item.node()).animate({height: newHeight}, 400, "swing");
-		
-		this.editButton.style('display', '');
-		this.navContainer.centerTitle();
-	}
-
-	UserGrantsPanel.prototype.addAccessRecord = function(accessorLevel, path)
-	{
-		var _this = this;
-
-		return this.user.postUserGrant(accessorLevel.name, path)
-			.then(function(changes, newIDs)
-				{
-					return cr.getData({path: 'user user grant/' + newIDs['1'], resultType: cr.UserUserGrant, fields: []})
-				})
-			.then(function(userGrants)
-				{
-					var userGrant = userGrants[0];
-					_this.onGrantAdded(accessorLevel.itemsDiv, userGrant);
-					var r2 = $.Deferred();
-					r2.resolve(userGrant);
-					return r2;
-				});
-	}
-	
-	/*
-		Responds to a request to add a user or group to the access records of the specified user.
-	 */
-	UserGrantsPanel.prototype.addAccessor = function(title, accessorLevel)
-	{
-		var _this = this;
-		
-		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
-		{
-			function onPick(path)
-			{
-				_this.addAccessRecord(accessorLevel, path)
-					.then(function()
-						{
-							panel.hideRight(unblockClick);
-						}, cr.syncFail);
-			}
-			var panel = new PickSharingUserPanel(title, _this.newUserEmailDocumentation, onPick);
-		}
-	}
-
-	function UserGrantsPanel(user)
-	{
-		this.user = user;
-		this.privilegesByID =  {};
-	}
-	
-	return UserGrantsPanel;
-})();
-
 var SharingPanel = (function() {
-	SharingPanel.prototype = Object.create(UserGrantsPanel.prototype);
+	SharingPanel.prototype = Object.create(GrantsPanel.prototype);
 	SharingPanel.prototype.constructor = SharingPanel;
 	
 	SharingPanel.prototype.helpText = "Add a user to this list to share your path and profile with them without making your path and profile public.";
@@ -243,7 +71,7 @@ var SharingPanel = (function() {
 		var accessRequestSection, accessRequestList;
 		
 		accessRequestSection = panel2Div.append('section')
-			.datum(this.user)
+			.datum(this.grantor)
 			.classed('cell multiple edit', true);
 		accessRequestSection.append('label')
 			.text("Access Requests");
@@ -326,19 +154,24 @@ var SharingPanel = (function() {
 			var p = this.privileges[j];
 			this.privilegesByID[p.name] = p;
 		}
-		this.loadAccessRecords(panel2Div, this.user);
+		this.loadAccessRecords(panel2Div, this.grantor);
+	}
+	
+	SharingPanel.prototype.userGrantsPath = function()
+	{
+		return 'user user grant';
 	}
 	
 	function SharingPanel(user, backButtonText)
 	{
-		UserGrantsPanel.call(this, user);
+		GrantsPanel.call(this, user);
 		
-		this.createRoot(null, "Sharing", revealPanelLeft);
+		this.createRoot(null, crv.buttonTexts.sharing, revealPanelLeft);
 		this.panelDiv.classed('sharing', true);
 		
 		this.appendBackButton(backButtonText);
 		
-		this.navContainer.appendTitle("Sharing");
+		this.navContainer.appendTitle(crv.buttonTexts.sharing);
 		
 		this.appendEditButton();
 		
@@ -445,21 +278,21 @@ var PickSharingUserPanel = (function() {
 })();
 
 var AdministratorPanel = (function() {
-	AdministratorPanel.prototype = Object.create(UserGrantsPanel.prototype);
+	AdministratorPanel.prototype = Object.create(GrantsPanel.prototype);
 	AdministratorPanel.prototype.constructor = AdministratorPanel;
 	
 	AdministratorPanel.prototype.helpText = "Add an administrator if you need someone else, such as a parent or guardian, to manage your account for you.";
 	AdministratorPanel.prototype.newUserEmailDocumentation = 
 		"Type the email address of someone you want to be an administrator for your account.";
 	
-	AdministratorPanel.prototype.loadAccessRecords = function(panel2Div, user)
+	AdministratorPanel.prototype.loadAccessRecords = function(panel2Div, grantor)
 	{
 		var _this = this;
 		var sections, itemCells, items;
 		var accessRequestSection, accessRequestList;
 		
 		// Sort the access records by type.
-		var grants = user.userGrants().concat(user.groupGrants());
+		var grants = grantor.userGrants().concat(grantor.groupGrants());
 		for (var i = 0; i < grants.length; ++i)
 		{
 			var a = grants[i];
@@ -525,12 +358,17 @@ var AdministratorPanel = (function() {
 			var p = this.privileges[j];
 			this.privilegesByID[p.name] = p;
 		}
-		this.loadAccessRecords(panel2Div, this.user);
+		this.loadAccessRecords(panel2Div, this.grantor);
+	}
+	
+	AdministratorPanel.prototype.userGrantsPath = function()
+	{
+		return 'user user grant';
 	}
 	
 	function AdministratorPanel(user, backButtonText)
 	{
-		UserGrantsPanel.call(this, user);
+		GrantsPanel.call(this, user);
 		
 		this.createRoot(null, "Administrators", revealPanelLeft);
 		this.panelDiv.classed('sharing', true);

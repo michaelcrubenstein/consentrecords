@@ -1549,11 +1549,8 @@ cr.Grantable = (function() {
 	Grantable.prototype = Object.create(cr.IInstance.prototype);
 	Grantable.prototype.constructor = Grantable;
 
-	Grantable.prototype._publicAccess = null;
-	Grantable.prototype._primaryAdministrator = null;
 	Grantable.prototype._userGrants = null;
 	Grantable.prototype._groupGrants = null;
-	Grantable.prototype._grantsPromise = null;
 
 	Grantable.prototype.userGrants = function(newValue)
 	{
@@ -1577,53 +1574,15 @@ cr.Grantable = (function() {
 		}
 	}
 	
-	Grantable.prototype.publicAccess = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._publicAccess;
-		else
-		{
-			if (this._publicAccess != newValue)
-			{
-				this._publicAccess = newValue;
-			}
-			return this;
-		}
-	}
-	
-	Grantable.prototype.primaryAdministrator = function(newValue)
-	{
-		if (newValue === undefined)
-			return this._primaryAdministrator;
-		else
-		{
-			if (this._primaryAdministrator != newValue)
-			{
-				this._primaryAdministrator = newValue;
-			}
-			return this;
-		}
-	}
-	
 	Grantable.prototype.appendData = function(initialData)
 	{
-		if (this.publicAccess())
-			initialData['public access'] = this.publicAccess();
-			
-		if (this.primaryAdministrator())
-			initialData['primary administrator'] = this.primaryAdministrator().urlPath();
+		/* TODO: append userGrants and groupGrants */
 	}
 
 	
 	Grantable.prototype.appendChanges = function(revision, changes)
 	{
 		changes = changes !== undefined ? changes : {};
-		
-		if (cr.stringChanged(this.publicAccess(), revision.publicAccess()))
-			changes['public access'] = revision.publicAccess();
-				
-		if (cr.linkChanged(this.primaryAdministrator(), revision.primaryAdministrator()))
-			changes['primary administrator'] = revision.primaryAdministrator() && revision.primaryAdministrator().urlPath();
 		
 		if (revision.userGrants())
 			this.appendUpdateList(this.userGrants(), revision.userGrants(), changes, 'user grants');	
@@ -1637,23 +1596,13 @@ cr.Grantable = (function() {
 	Grantable.prototype.clear = function()
 	{
 		cr.IInstance.prototype.clear.call(this);
-		this._publicAccess = null;
-		this._primaryAdministrator = null;
 		this._userGrants = null;
 		this._groupGrants = null;
-		this._grantsPromise = null;
 	}
 	
 	Grantable.prototype.setData = function(d)
 	{
 		cr.IInstance.prototype.setData.call(this, d);
-		this._publicAccess = 'public access' in d ? d['public access'] : "";
-		if ('primary administrator' in d)
-		{
-		    this._primaryAdministrator = new cr.User();
-		    this._primaryAdministrator.setData(d['primary administrator']);
-		    this._primaryAdministrator = crp.pushInstance(this._primaryAdministrator);
-		}
 		
 		if ('userGrantType' in this)
 		{
@@ -1668,8 +1617,6 @@ cr.Grantable = (function() {
 	Grantable.prototype.mergeData = function(source)
 	{
 		cr.IInstance.prototype.mergeData.call(this, source);
-		if (!this._publicAccess) this._publicAccess = source._publicAccess;
-		if (!this._primaryAdministrator) this._primaryAdministrator = source._primaryAdministrator;
 		if (!this._userGrants && source._userGrants)
 			this._userGrants = source._userGrants;
 		if (!this._groupGrants && source._groupGrants)
@@ -1683,24 +1630,6 @@ cr.Grantable = (function() {
 		var changed = false;
 		
 		cr.IInstance.prototype.updateData.call(this, d, newIDs);
-		if ('public access' in d)
-		{
-			this._publicAccess = d['public access'];
-			changed = true;
-		}
-		
-		if ('primary administrator' in d)
-		{
-			if (!d['primary administrator'])
-				this._primaryAdministrator = null;
-			else
-			{
-				console.assert(d['primary administrator'].startsWith('user/'));
-				var userID = d['primary administrator'].substring(5);
-				this._primaryAdministrator = crp.getInstance(userID);
-			}
-		    changed = true;
-		}
 		if ('user grants' in d)
 		{
 			if (this.updateList(this.userGrants, d['user grants'], newIDs, 'userGrantAdded.cr'))
@@ -1721,10 +1650,15 @@ cr.Grantable = (function() {
 	Grantable.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
-		newInstance._primaryAdministrator = this._primaryAdministrator;
-		newInstance._publicAccess = this._publicAccess;
 		
-		/* User grants and group grants are handled in their own context. */
+		if (duplicateForEdit)
+		{
+			if (this._userGrants)
+				newInstance._userGrants = this.duplicateList(this._userGrants, duplicateForEdit);
+			if (this._groupGrants)
+				newInstance._groupGrants = this.duplicateList(this._groupGrants, duplicateForEdit);
+		}
+		
 		return this;
 	}
 	
@@ -1764,6 +1698,142 @@ cr.Grantable = (function() {
     
 })();
 
+cr.PublicGrantable = (function() {
+	PublicGrantable.prototype = Object.create(cr.Grantable.prototype);
+	PublicGrantable.prototype.constructor = PublicGrantable;
+
+	PublicGrantable.prototype._publicAccess = null;
+	PublicGrantable.prototype._primaryAdministrator = null;
+	
+	PublicGrantable.prototype.publicAccess = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._publicAccess;
+		else
+		{
+			if (this._publicAccess != newValue)
+			{
+				this._publicAccess = newValue;
+			}
+			return this;
+		}
+	}
+	
+	PublicGrantable.prototype.primaryAdministrator = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._primaryAdministrator;
+		else
+		{
+			if (this._primaryAdministrator != newValue)
+			{
+				this._primaryAdministrator = newValue;
+			}
+			return this;
+		}
+	}
+	
+	PublicGrantable.prototype.appendData = function(initialData)
+	{
+		if (this.publicAccess())
+			initialData['public access'] = this.publicAccess();
+			
+		if (this.primaryAdministrator())
+			initialData['primary administrator'] = this.primaryAdministrator().urlPath();
+	}
+
+	
+	PublicGrantable.prototype.appendChanges = function(revision, changes)
+	{
+		changes = cr.Grantable.prototype.appendChanges.call(this, revision, changes);
+		
+		if (cr.stringChanged(this.publicAccess(), revision.publicAccess()))
+			changes['public access'] = revision.publicAccess();
+				
+		if (cr.linkChanged(this.primaryAdministrator(), revision.primaryAdministrator()))
+			changes['primary administrator'] = revision.primaryAdministrator() && revision.primaryAdministrator().urlPath();
+		
+		return changes;
+	}
+	
+	PublicGrantable.prototype.clear = function()
+	{
+		cr.Grantable.prototype.clear.call(this);
+		this._publicAccess = null;
+		this._primaryAdministrator = null;
+	}
+	
+	PublicGrantable.prototype.setData = function(d)
+	{
+		cr.Grantable.prototype.setData.call(this, d);
+		this._publicAccess = 'public access' in d ? d['public access'] : "";
+		if ('primary administrator' in d)
+		{
+		    this._primaryAdministrator = new cr.User();
+		    this._primaryAdministrator.setData(d['primary administrator']);
+		    this._primaryAdministrator = crp.pushInstance(this._primaryAdministrator);
+		}
+    }
+    
+    /** Merge the contents of the specified source into this PublicGrantable for
+    	values that are not specified herein.
+     */
+	PublicGrantable.prototype.mergeData = function(source)
+	{
+		cr.Grantable.prototype.mergeData.call(this, source);
+		if (!this._publicAccess) this._publicAccess = source._publicAccess;
+		if (!this._primaryAdministrator) this._primaryAdministrator = source._primaryAdministrator;
+		return this;
+	}
+	
+	/** Called after the contents of the PublicGrantable have been updated on the server. */
+	PublicGrantable.prototype.updateData = function(d, newIDs)
+	{
+		var changed = false;
+		
+		changed = cr.Grantable.prototype.updateData.call(this, d, newIDs);
+		if ('public access' in d)
+		{
+			this._publicAccess = d['public access'];
+			changed = true;
+		}
+		
+		if ('primary administrator' in d)
+		{
+			if (!d['primary administrator'])
+				this._primaryAdministrator = null;
+			else
+			{
+				console.assert(d['primary administrator'].startsWith('user/'));
+				var userID = d['primary administrator'].substring(5);
+				this._primaryAdministrator = crp.getInstance(userID);
+			}
+		    changed = true;
+		}
+		
+		return changed;
+	}
+	
+	/* Copies all of the data associated with this instance prior to making changes.
+		For experiences, comments are not copied.
+	 */
+	PublicGrantable.prototype.duplicateData = function(newInstance, duplicateForEdit)
+	{
+		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		newInstance._primaryAdministrator = this._primaryAdministrator;
+		newInstance._publicAccess = this._publicAccess;
+		
+		return this;
+	}
+	
+    function PublicGrantable() {
+    	cr.Grantable.call(this);
+    }
+    
+    return PublicGrantable;
+    
+})();
+
 cr.Grant = (function() {
 	Grant.prototype = Object.create(cr.IInstance.prototype);
 	Grant.prototype.constructor = Grant;
@@ -1777,7 +1847,7 @@ cr.Grant = (function() {
 			return this._grantee;
 		else
 		{
-		    if (newValue.id() != this._grantee.id())
+		    if (newValue.id() != (this._grantee && this._grantee.id()))
 		    {
 				this._grantee = newValue;
 			}
@@ -3119,7 +3189,7 @@ cr.Enrollment = (function() {
 })();
 	
 cr.Experience = (function() {
-	Experience.prototype = Object.create(cr.IInstance.prototype);
+	Experience.prototype = Object.create(cr.Grantable.prototype);
 	Object.assign(Experience.prototype, cr.OfferingLinkInstance.prototype);
 	Object.assign(Experience.prototype, cr.DateRangeInstance.prototype);
 	Experience.prototype.constructor = Experience;
@@ -3310,7 +3380,7 @@ cr.Experience = (function() {
 	
 	Experience.prototype.setDefaultValues = function()
 	{
-		cr.IInstance.prototype.setDefaultValues.call(this);
+		cr.Grantable.prototype.setDefaultValues.call(this);
 		this.setDefaultDateRange();
 		this._organization = null;
 		this._customOrganization = "";
@@ -3388,13 +3458,21 @@ cr.Experience = (function() {
 		
 		this.appendUpdateList(this.experienceServices(), revision.distinctExperienceServices(), changes, 'services');
 		this.appendUpdateList(this.customServices(), revision.customServices(), changes, 'custom services');
-			
+		
+		if (this.privilege() == cr.privileges.administer)
+		{
+			if (this.userGrants())
+				this.appendUpdateList(this.userGrants(), revision.userGrants(), changes, 'user grants');
+			if (this.groupGrants())
+				this.appendUpdateList(this.groupGrants(), revision.groupGrants(), changes, 'group grants');
+		}
+		
 		return changes;
 	}
 	
 	Experience.prototype.setData = function(d)
 	{
-		cr.IInstance.prototype.setData.call(this, d);
+		cr.Grantable.prototype.setData.call(this, d);
 		cr.OrganizationLinkInstance.prototype.setData.call(this, d);
 		cr.SiteLinkInstance.prototype.setData.call(this, d);
 		this.setOfferingLink(d);
@@ -3423,7 +3501,7 @@ cr.Experience = (function() {
      */
 	Experience.prototype.mergeData = function(source)
 	{
-		cr.IInstance.prototype.mergeData.call(this, source);
+		cr.Grantable.prototype.mergeData.call(this, source);
 		cr.OrganizationLinkInstance.prototype.mergeData.call(this, source);
 		cr.SiteLinkInstance.prototype.mergeData.call(this, source);
 		this.mergeOfferingLink(source);
@@ -3481,7 +3559,7 @@ cr.Experience = (function() {
 	{
 		var changed = false;
 		
-		cr.IInstance.prototype.updateData.call(this, d, newIDs);
+		cr.Grantable.prototype.updateData.call(this, d, newIDs);
 		if (cr.OrganizationLinkInstance.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		if (cr.SiteLinkInstance.prototype.updateData.call(this, d, newIDs))
@@ -3544,7 +3622,7 @@ cr.Experience = (function() {
 	 */
 	Experience.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
     	this.duplicateDateRange(newInstance);
 		newInstance._path = this._path;
 		newInstance._organization = this._organization;
@@ -3570,6 +3648,16 @@ cr.Experience = (function() {
 		}
 		
 		return this;
+	}
+	
+	Experience.prototype.userGrantType = function()
+	{
+		return cr.ExperienceUserGrant;
+	}
+	
+	Experience.prototype.groupGrantType = function()
+	{
+		return cr.ExperienceGroupGrant;
 	}
 	
 	Experience.prototype.triggerDeleted = function()
@@ -3721,7 +3809,7 @@ cr.Experience = (function() {
 	}
 	
 	function Experience() {
-	    cr.IInstance.call(this);
+	    cr.Grantable.call(this);
 	};
 	
 	return Experience;
@@ -3889,6 +3977,42 @@ cr.ExperienceService = (function() {
 	};
 	
 	return ExperienceService;
+
+})();
+	
+cr.ExperienceUserGrant = (function() {
+	ExperienceUserGrant.prototype = Object.create(cr.UserGrant.prototype);
+	ExperienceUserGrant.prototype.constructor = ExperienceUserGrant;
+
+	ExperienceUserGrant.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'experience user grant/{0}'.format(this.id());
+	}
+	
+	function ExperienceUserGrant() {
+	    cr.UserGrant.call(this);
+	};
+	
+	return ExperienceUserGrant;
+
+})();
+	
+cr.ExperienceGroupGrant = (function() {
+	ExperienceGroupGrant.prototype = Object.create(cr.GroupGrant.prototype);
+	ExperienceGroupGrant.prototype.constructor = ExperienceGroupGrant;
+
+	ExperienceGroupGrant.prototype.urlPath = function()
+	{
+		console.assert(this.id());
+		return 'experience group grant/{0}'.format(this.id());
+	}
+	
+	function ExperienceGroupGrant() {
+	    cr.GroupGrant.call(this);
+	};
+	
+	return ExperienceGroupGrant;
 
 })();
 	
@@ -4678,7 +4802,7 @@ cr.OfferingService = (function() {
 })();
 	
 cr.Organization = (function() {
-	Organization.prototype = Object.create(cr.Grantable.prototype);
+	Organization.prototype = Object.create(cr.PublicGrantable.prototype);
 	Object.assign(Organization.prototype, cr.NamedInstance.prototype);
 	Organization.prototype.constructor = Organization;
 
@@ -4751,7 +4875,7 @@ cr.Organization = (function() {
 	
 	Organization.prototype.setDefaultValues = function()
 	{
-		cr.Grantable.prototype.setDefaultValues.call(this);
+		cr.PublicGrantable.prototype.setDefaultValues.call(this);
 		this._webSite = "";
 		this._names = [];
 		this._groups = [];
@@ -4764,7 +4888,7 @@ cr.Organization = (function() {
 	 */
 	Organization.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.PublicGrantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		this.duplicateNames(newInstance, duplicateForEdit);
 		
 		newInstance._webSite = this._webSite;
@@ -4783,7 +4907,7 @@ cr.Organization = (function() {
 	
 	Organization.prototype.appendData = function(initialData)
 	{
-		cr.Grantable.prototype.appendData.call(this, initialData);
+		cr.PublicGrantable.prototype.appendData.call(this, initialData);
 		if (this.webSite())
 			initialData['web site'] = this.webSite();
 		
@@ -4801,7 +4925,7 @@ cr.Organization = (function() {
 	 */
 	Organization.prototype.appendChanges = function(revision, changes)
 	{
-		changes = cr.Grantable.prototype.appendChanges.call(this, revision, changes);
+		changes = cr.PublicGrantable.prototype.appendChanges.call(this, revision, changes);
 		
 		if (cr.stringChanged(this.webSite(), revision.webSite()))
 			changes['web site'] = revision.webSite();
@@ -4819,7 +4943,7 @@ cr.Organization = (function() {
 	 */
 	Organization.prototype.setData = function(d)
 	{
-		cr.Grantable.prototype.setData.call(this, d);
+		cr.PublicGrantable.prototype.setData.call(this, d);
 		this.setNames(d, cr.OrganizationName);
 
 		this._webSite = 'web site' in d ? d['web site'] : "";
@@ -4838,7 +4962,7 @@ cr.Organization = (function() {
      */
 	Organization.prototype.mergeData = function(source)
 	{
-		cr.Grantable.prototype.mergeData.call(this, source);
+		cr.PublicGrantable.prototype.mergeData.call(this, source);
 		if (!this._webSite) this._webSite = source._webSite;
 		if (!this._names && source._names)
 			this._names = source._names;
@@ -4867,7 +4991,7 @@ cr.Organization = (function() {
 	{
 		var changed = false;
 		
-		if (cr.Grantable.prototype.updateData.call(this, d, newIDs))
+		if (cr.PublicGrantable.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 			
 		if ('web site' in d)
@@ -4942,7 +5066,7 @@ cr.Organization = (function() {
     }
     
 	function Organization() {
-	    cr.Grantable.call(this);
+	    cr.PublicGrantable.call(this);
 	};
 	
 	return Organization;
@@ -5064,7 +5188,7 @@ var AgeCalculator = (function() {
 })();
 
 cr.Path = (function() {
-	Path.prototype = Object.create(cr.Grantable.prototype);
+	Path.prototype = Object.create(cr.PublicGrantable.prototype);
 	Path.prototype.constructor = Path;
 
 	Path.prototype._birthday = null;
@@ -5220,7 +5344,7 @@ cr.Path = (function() {
     
 	Path.prototype.setData = function(d)
 	{
-		cr.Grantable.prototype.setData.call(this, d);
+		cr.PublicGrantable.prototype.setData.call(this, d);
 		this._birthday = 'birthday' in d ? d['birthday'] : "";
 		this._name = 'name' in d ? d['name'] : "";
 		this._specialAccess = 'special access' in d ? d['special access'] : "";
@@ -5248,7 +5372,7 @@ cr.Path = (function() {
      */
 	Path.prototype.mergeData = function(source)
 	{
-		cr.Grantable.prototype.mergeData.call(this, source);
+		cr.PublicGrantable.prototype.mergeData.call(this, source);
 		if (this._name === null) this._name = source._name;
 		if (!this._experiences) 
 		{
@@ -5265,7 +5389,7 @@ cr.Path = (function() {
 	 */
 	Path.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.PublicGrantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._name = this._name;
 		newInstance._specialAccess = this._specialAccess;
@@ -5285,7 +5409,7 @@ cr.Path = (function() {
 	 */
 	Path.prototype.appendChanges = function(revision, changes)
 	{
-		changes = cr.Grantable.prototype.appendChanges.call(this, revision, changes);
+		changes = cr.PublicGrantable.prototype.appendChanges.call(this, revision, changes);
 		
 		if (cr.stringChanged(this.name(), revision.name()))
 			changes['screen name'] = revision.name();
@@ -5307,7 +5431,7 @@ cr.Path = (function() {
 	{
 		var changed = false;
 		
-		if (cr.Grantable.prototype.updateData.call(this, d, newIDs))
+		if (cr.PublicGrantable.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 		
 		if ('screen name' in d)
@@ -5411,7 +5535,7 @@ cr.Path = (function() {
     }
     
 	function Path() {
-	    cr.Grantable.call(this);
+	    cr.PublicGrantable.call(this);
 	};
 	
 	return Path;
@@ -7030,7 +7154,7 @@ cr.Street = (function() {
 })();
 
 cr.User = (function() {
-	User.prototype = Object.create(cr.Grantable.prototype);
+	User.prototype = Object.create(cr.PublicGrantable.prototype);
 	User.prototype.constructor = User;
 
 	User.prototype._firstName = null;
@@ -7053,7 +7177,7 @@ cr.User = (function() {
 	
 	User.prototype.clear = function()
 	{
-		cr.Grantable.prototype.clear.call(this);
+		cr.PublicGrantable.prototype.clear.call(this);
 		this._firstName = null;
 		this._lastName = null;
 		this._birthday = null;
@@ -7069,7 +7193,7 @@ cr.User = (function() {
 	
 	User.prototype.setDefaultValues = function()
 	{
-		cr.Grantable.prototype.setDefaultValues.call(this);
+		cr.PublicGrantable.prototype.setDefaultValues.call(this);
 		this._firstName = "";
 		this._lastName = "";
 		this._birthday = "";
@@ -7084,7 +7208,7 @@ cr.User = (function() {
 	
 	User.prototype.setData = function(d)
 	{
-		cr.Grantable.prototype.setData.call(this, d);
+		cr.PublicGrantable.prototype.setData.call(this, d);
 		this._firstName = 'first name' in d ? d['first name'] : "";
 		this._lastName = 'last name' in d ? d['last name'] : "";
 		this._birthday = 'birthday' in d ? d['birthday'] : "";
@@ -7106,7 +7230,7 @@ cr.User = (function() {
 	
 	User.prototype.mergeData = function(source)
 	{
-		cr.Grantable.prototype.mergeData.call(this, source);
+		cr.PublicGrantable.prototype.mergeData.call(this, source);
 		if (!this._firstName) this._firstName = source._firstName;
 		if (!this._lastName) this._lastName = source._lastName;
 		if (!this._birthday) this._birthday = source._birthday;
@@ -7124,7 +7248,7 @@ cr.User = (function() {
 	 */
 	User.prototype.duplicateData = function(newInstance, duplicateForEdit)
 	{
-		cr.Grantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
+		cr.PublicGrantable.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
 		newInstance._firstName = this._firstName;
 		newInstance._lastName = this._lastName;
@@ -7149,7 +7273,7 @@ cr.User = (function() {
 	 */
 	User.prototype.appendData = function(initialData)
 	{
-		cr.Grantable.prototype.appendData.call(this, initialData);
+		cr.PublicGrantable.prototype.appendData.call(this, initialData);
 		if (this.firstName())
 			initialData['first name'] = this.firstName();
 		if (this.lastName())
@@ -7174,7 +7298,7 @@ cr.User = (function() {
 	
 	User.prototype.appendChanges = function(revision, changes)
 	{
-		changes = cr.Grantable.prototype.appendChanges.call(this, revision, changes);
+		changes = cr.PublicGrantable.prototype.appendChanges.call(this, revision, changes);
 		
 		if (cr.stringChanged(this.firstName(), revision.firstName()))
 			changes['first name'] = revision.firstName();
@@ -7202,7 +7326,7 @@ cr.User = (function() {
 	{
 		var changed = false;
 		
-		if (cr.Grantable.prototype.updateData.call(this, d, newIDs))
+		if (cr.PublicGrantable.prototype.updateData.call(this, d, newIDs))
 			changed = true;
 			
 		/* Emails are handled separately. */
@@ -7528,7 +7652,7 @@ cr.User = (function() {
     }
     
 	function User() {
-	    cr.Grantable.call(this);
+	    cr.PublicGrantable.call(this);
 	};
 	
 	return User;

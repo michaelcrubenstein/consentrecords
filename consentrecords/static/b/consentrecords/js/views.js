@@ -82,6 +82,7 @@ var crv = {
 		domain: "Domain",
 		done: "Done",
 		edit: "Edit",
+		editComments: "Edit Comments",
 		email: "Email",
 		emailPublic: "By Request",
 		emailPublicDocumentation: "Others can request access to your profile if they know your email address.",
@@ -103,6 +104,7 @@ var crv = {
 		groups: "Groups",
 		hidden: "Hidden",
 		hiddenDocumentation: "No one will be able to locate or identify you.",
+		hiddenExperience: "Hidden Experience",
 		implications: "Implications",
 		inquiry: "Inquiry",
 		inquiries: "Inquiries",
@@ -147,6 +149,7 @@ var crv = {
 		session: "Session",
 		sessions: "Sessions",
 		settings: "Settings",
+		sharing: "Sharing",
 		site: "Site",
 		siteLabel: "Site Label",
 		siteLabels: "Site Labels",
@@ -1743,6 +1746,40 @@ var EditPanel = (function() {
 
 	EditPanel.prototype.navContainer = null;
 	
+	EditPanel.prototype.appendCheckboxEditor = function(section, value)
+	{
+		var itemsDiv = crf.appendItemList(section);
+		var items = itemsDiv.append('li');
+
+		items.append('span').classed('growable', true);
+		var inputs = items.append('input')
+			.attr('type', 'checkbox');
+		inputs.node().checked = value;
+		var switchery = Switchery(inputs.node(), {size: 'small'});
+			
+		if (this.onFocusInOtherInput !== undefined)
+		{
+			var _this = this;
+			inputs.on('click', function()
+				{
+					try
+					{
+						var done = function() { };
+						if (!_this.onFocusInOtherInput(null, done))
+						{
+							done();
+						}
+					}
+					catch (err)
+					{
+						cr.asyncFail(err);
+					}
+				});
+		}
+		
+		return inputs;
+	}
+	
 	EditPanel.prototype.createRoot = function(objectData, header, onShow)
 	{
 		crv.SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
@@ -1887,40 +1924,6 @@ var EditItemPanel = (function () {
 			.attr('type', inputType)
 			.attr('placeholder', placeholder)
 			.property('value', value);
-			
-		if (this.onFocusInOtherInput !== undefined)
-		{
-			var _this = this;
-			inputs.on('click', function()
-				{
-					try
-					{
-						var done = function() { };
-						if (!_this.onFocusInOtherInput(null, done))
-						{
-							done();
-						}
-					}
-					catch (err)
-					{
-						cr.asyncFail(err);
-					}
-				});
-		}
-		
-		return inputs;
-	}
-	
-	EditItemPanel.prototype.appendCheckboxEditor = function(section, placeholder, value, inputType)
-	{
-		var itemsDiv = crf.appendItemList(section);
-		var items = itemsDiv.append('li');
-
-		items.append('span').classed('growable', true);
-		var inputs = items.append('input')
-			.attr('type', 'checkbox');
-		inputs.node().checked = value;
-		var switchery = Switchery(inputs.node(), {size: 'small'});
 			
 		if (this.onFocusInOtherInput !== undefined)
 		{
@@ -2564,3 +2567,176 @@ var ConfirmPanel = (function() {
 	
 	return ConfirmPanel;
 })();
+
+/* A panel that contains a single list of user grants. */
+var GrantsPanel = (function() {
+	GrantsPanel.prototype = Object.create(EditPanel.prototype);
+	GrantsPanel.prototype.constructor = GrantsPanel;
+	
+	GrantsPanel.prototype.grantor = null;
+	GrantsPanel.prototype.inEditMode = false;
+	GrantsPanel.prototype.editButton = null;
+	GrantsPanel.prototype.privilegesByID = null;
+	GrantsPanel.prototype.privileges = null;
+	
+	GrantsPanel.prototype.appendBackButton = function(backButtonText)
+	{
+		var _this = this;
+		var backButton = this.navContainer.appendLeftButton()
+			.classed('chevron-left-container', true)
+			.on('click', function()
+			{
+				if (prepareClick('click', _this.headerText + ' Done'))
+				{
+					_this.hide();
+				}
+				d3.event.preventDefault();
+			});
+		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		backButton.append('span').text(backButtonText);
+		
+		return backButton;
+	}
+	
+	GrantsPanel.prototype.appendEditButton = function()
+	{
+		var _this = this;
+		
+		this.inEditMode = false;
+		this.editButton = this.navContainer.appendRightButton()
+			.on('click', function()
+			{
+				var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
+				if (_this.inEditMode)
+				{
+					if (prepareClick('click', 'Done Edit ' + _this.headerText))
+					{
+						showClickFeedback(this, function()
+							{
+								_this.editButton.text(crv.buttonTexts.edit);
+								_this.navContainer.centerTitle();
+							});
+						crf.hideDeleteControls(dials);
+						_this.inEditMode = false;
+						unblockClick();
+					}
+				}
+				else
+				{
+					if (prepareClick('click', 'Edit ' + _this.headerText))
+					{
+						showClickFeedback(this, function()
+							{
+								_this.editButton.text(crv.buttonTexts.done);
+								_this.navContainer.centerTitle();
+							});
+						crf.showDeleteControls(dials);
+						_this.inEditMode = true;
+						unblockClick();
+					}
+				}
+			});
+		this.editButton.text(crv.buttonTexts.edit);
+				
+		this.editButton.style('display', null);
+		this.navContainer.centerTitle();
+	}
+	
+	/*** Appends the controls for each item that shows a user or group that has a specified privilege.
+	 */
+	GrantsPanel.prototype.appendUserControls = function(items)
+	{
+		crf.appendDeleteControls(items);
+
+		items.append("div")
+			.classed("description-text growable unselectable", true)
+			.text(_getDataDescription)
+			.each(_pushTextChanged);
+
+		appendInfoButtons(items, function(d) { return d.grantee(); });
+
+		crf.appendConfirmDeleteControls(items);
+		this.checkDeleteControlVisibility(items);
+		
+		return items;
+	}
+
+	GrantsPanel.prototype.checkDeleteControlVisibility = function(items)
+	{
+		/* Note that items may contain 0 items, but this code still works. */
+		var deleteControls = $(items.node()).parent().find('button.delete');
+		if (!this.inEditMode)
+			crf.hideDeleteControls(deleteControls, 0);
+		else
+			crf.showDeleteControls(deleteControls, 0);
+	}
+	
+	/* Produces a function which adds new value view to a container view
+		when the new data is added.
+		the viewFunction is called when the item is clicked.
+	 */
+	GrantsPanel.prototype.onGrantAdded = function(itemsDivNode, newValue)
+	{
+		var itemsDiv = d3.select(itemsDivNode);
+		var item = appendItem(itemsDiv, newValue);
+		
+		this.appendUserControls(item);
+
+		item.style("display", null);
+		var newHeight = item.style("height");
+		item.style("height", "0");
+		$(item.node()).animate({height: newHeight}, 400, "swing");
+		
+		this.editButton.style('display', '');
+		this.navContainer.centerTitle();
+	}
+
+	GrantsPanel.prototype.addAccessRecord = function(accessorLevel, path)
+	{
+		var _this = this;
+
+		return this.grantor.postUserGrant(accessorLevel.name, path)
+			.then(function(changes, newIDs)
+				{
+					return cr.getData({path: _this.userGrantsPath() + '/' + newIDs['1'], resultType: _this.grantor.userGrantType(), fields: []})
+				})
+			.then(function(userGrants)
+				{
+					var userGrant = userGrants[0];
+					_this.onGrantAdded(accessorLevel.itemsDiv, userGrant);
+					var r2 = $.Deferred();
+					r2.resolve(userGrant);
+					return r2;
+				});
+	}
+	
+	/*
+		Responds to a request to add a user or group to the access records of the specified user.
+	 */
+	GrantsPanel.prototype.addAccessor = function(title, accessorLevel)
+	{
+		var _this = this;
+		
+		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
+		{
+			function onPick(path)
+			{
+				_this.addAccessRecord(accessorLevel, path)
+					.then(function()
+						{
+							panel.hideRight(unblockClick);
+						}, cr.syncFail);
+			}
+			var panel = new PickSharingUserPanel(title, _this.newUserEmailDocumentation, onPick);
+		}
+	}
+
+	function GrantsPanel(grantor)
+	{
+		this.grantor = grantor;
+		this.privilegesByID =  {};
+	}
+	
+	return GrantsPanel;
+})();
+
