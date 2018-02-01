@@ -2206,19 +2206,20 @@ class Experience(ChildInstance, dbmodels.Model):
         userPublicAccessClause = parentPrefix + 'parent__publicAccess__in'
         userPrimaryAdministratorClause = parentPrefix + 'parent__primaryAdministrator'
         userInClause = parentPrefix + 'parent_id__in'
-        grantClause = SecureRootInstance.grantorIDs(user, privileges)
-        writableGrantClause = SecureRootInstance.grantorIDs(user, ['write', 'administer'])
+        privilegedUsers = SecureRootInstance.grantorIDs(user, privileges)
+        
+        rootPrivileges = ['write', 'administer'] if 'write' in privileges else ['administer']
+        writableGrantClause = SecureRootInstance.grantorIDs(user, rootPrivileges)
+        
         experienceGrantClause = Experience.grantorIDs(user) if 'read' in privileges else []
         
         qClause = (Q((prefix + 'isHidden', False))&\
                    (Q((pathPublicAccessClause, privileges))|\
                     Q((userPublicAccessClause, privileges))|\
-                    Q((userInClause, grantClause))))|\
+                    Q((userInClause, privilegedUsers))))|\
                   Q((userPrimaryAdministratorClause, user))|\
                   Q((userInClause, writableGrantClause))|\
                   Q((prefix + 'id__in', experienceGrantClause))
-        
-        print(qClause)
         
         return qClause
 
