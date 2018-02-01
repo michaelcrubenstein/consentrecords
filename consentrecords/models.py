@@ -501,7 +501,9 @@ class RootInstance(IInstance):
              'enrollment': Enrollment,
              'experience': Experience,
              'experience custom service': ExperienceCustomService,
+             'experience group grant': ExperienceGroupGrant,
              'experience service': ExperienceService,
+             'experience user grant': ExperienceUserGrant,
              'group': Group,
              'group name': GroupName,
              'group member': GroupMember,
@@ -2159,8 +2161,15 @@ class Experience(ChildInstance, dbmodels.Model):
                 data['comments'] = [i.getData([], context) for i in self.currentComments];
             if self.era:
                 data['timeframe'] = self.timeframeString
-                
-            data['is hidden'] = self.isHidden
+            
+            if context.canAdminister(self):    
+                data['is hidden'] = self.isHidden
+                if 'user grants' in fields:
+                    data['user grants'] = [i.getData([], context) for i in \
+                                           ExperienceUserGrant.order_by(self.userGrants.filter(deleteTransaction__isnull=True), context)]
+                if 'group grants' in fields:
+                    data['group grants'] = [i.getData([], context) for i in \
+                                            ExperienceGroupGrant.order_by(self.groupGrants.filter(deleteTransaction__isnull=True), context)]
             
         return data
 
@@ -2732,7 +2741,7 @@ class ExperienceServiceHistory(dbmodels.Model):
         return "%s\t%s\t%s" % (self.id, self.position, self.service or '-')
            
 ### A Multiple Picked Value
-class ExperienceUserGrant(Grant, dbmodels.Model):
+class ExperienceUserGrant(PermissionGrant, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdExperienceUserGrants')
     lastTransaction = lastTransactionField('changedExperienceUserGrants')
@@ -2755,6 +2764,18 @@ class ExperienceUserGrant(Grant, dbmodels.Model):
     def privilege(self):
         return Permission.to_string(self.permission)
     
+    def administrableQuerySet(qs, user):
+            qClause = Q(grantor__parent__parent__primaryAdministrator=user) |\
+                      Q(grantor__parent__parent__userGrants__grantee=user, 
+                        grantor__parent__parent__userGrants__privilege='administer', 
+                        grantor__parent__parent__userGrants__deleteTransaction__isnull=True) |\
+                      Q(grantor__parent__parent__groupGrants__privilege='administer', 
+                        grantor__parent__parent__groupGrants__deleteTransaction__isnull=True,
+                        grantor__parent__parent__groupGrants__grantee__deleteTransaction__isnull=True,
+                        grantor__parent__parent__groupGrants__grantee__members__user=user,
+                        grantor__parent__parent__groupGrants__grantee__members__deleteTransaction__isnull=True)
+            return qs.filter(qClause)
+    
     def getSubClause(qs, user, accessType):
         if accessType == ExperienceUserGrant:
             return qs, accessType
@@ -2763,7 +2784,7 @@ class ExperienceUserGrant(Grant, dbmodels.Model):
         elif user.is_administrator:
             return qs, ExperienceUserGrant
         else:
-            return Grant.administrableQuerySet(qs, user), ExperienceUserGrant
+            return ExperienceUserGrant.administrableQuerySet(qs, user), ExperienceUserGrant
 
     def filterForHeadData(qs, user, accessType):
         return ExperienceUserGrant.getSubClause(qs, user, accessType)[0]
@@ -2785,7 +2806,7 @@ class ExperienceUserGrant(Grant, dbmodels.Model):
             raise ValueError("the privilege for a new user grant is not specified")
         elif data['privilege'] not in ['find', 'read', 'register', 'write', 'administer']:
             raise ValueError('the privilege "%s" is not recognized' % data['privilege'])
-            
+        
         oldItem = parent.userGrants.filter(deleteTransaction__isnull=True,
                                            grantee=grantee)
         if oldItem.exists():
@@ -2834,6 +2855,10 @@ class ExperienceGroupGrant(Grant, dbmodels.Model):
     def __str__(self):
         return self.description()
     
+    @property
+    def privilege(self):
+        return Permission.to_string(self.permission)
+    
     def getSubClause(qs, user, accessType):
         if accessType == ExperienceGroupGrant:
             return qs, accessType
@@ -2842,7 +2867,7 @@ class ExperienceGroupGrant(Grant, dbmodels.Model):
         elif user.is_administrator:
             return qs, ExperienceGroupGrant
         else:
-            return Grant.administrableQuerySet(qs, user), ExperienceGroupGrant
+            return ExperienceUserGrant.administrableQuerySet(qs, user), ExperienceGroupGrant
 
     def filterForHeadData(qs, user, accessType):
         return ExperienceGroupGrant.getSubClause(qs, user, accessType)[0]
