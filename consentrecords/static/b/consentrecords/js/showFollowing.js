@@ -77,24 +77,24 @@ var RequestFollowPanel = (function() {
 		    .text("Request");
 		
 		var panel2Div = this.appendScrollArea();
-
-		var sectionPanel = panel2Div.append('section')
-			.classed('cell edit unique', true);
-			
-		var itemsDiv = crf.appendItemList(sectionPanel);
-
-		var divs = itemsDiv.append("li");	// So that each item appears on its own row.
-			
-		var emailInput = divs.append("input")
-			.classed('growable', true)
-			.attr("type", "email")
-			.attr("placeholder", 'Email');
 			
 		var docSection = panel2Div.append('section')
 			.classed('cell documentation', true);
 			
 		var docDiv = docSection.append('div')
 			.text(this.emailDocumentation);
+
+		var sectionPanel = panel2Div.append('section')
+			.classed('cell edit unique', true);
+			
+		var itemsDiv = crf.appendItemList(sectionPanel);
+
+		var divs = itemsDiv.append('li');	// So that each item appears on its own row.
+			
+		this.emailInput = divs.append('input')
+			.classed('growable', true)
+			.attr('type', 'email')
+			.attr('placeholder', "Email");
 	}
 	
 	return RequestFollowPanel;
@@ -322,8 +322,13 @@ var FollowingPanel = (function() {
 				{
 					showClickFeedback(this);
 	
-					new RequestFollowPanel(user, _this)
+					var panel = new RequestFollowPanel(user, _this);
+					
+					panel
 						.showUp()
+						.then(function() {
+								panel.emailInput.node().focus();
+							})
 						.always(unblockClick);
 				}
 				d3.event.preventDefault();

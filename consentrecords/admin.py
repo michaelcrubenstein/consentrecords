@@ -315,11 +315,11 @@ admin.site.register(Enrollment, EnrollmentAdmin)
 
 class ExperienceHistoryInline(TabularInline):
     model = ExperienceHistory
-    list_display = ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe')
+    list_display = ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era')
     fieldsets = (
-        (None, {'fields': ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe')}),
+        (None, {'fields': ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era')}),
     )
-    readonly_fields = ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe')
+    readonly_fields = ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era')
 
     ordering = ['transaction__creation_time']
     show_change_link = True
@@ -362,12 +362,12 @@ class CommentInline(TabularInline):
     fk_name = 'parent'
     
 class ExperienceAdmin(ModelAdmin):
-    list_display = ('id', 'parent', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    list_display = ('id', 'parent', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('parent', 'parent_id', 'id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+        (None, {'fields': ('parent', 'parent_id', 'id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
     )
-    readonly_fields = ('parent', 'parent_id', 'id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    readonly_fields = ('parent', 'parent_id', 'id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['transaction__creation_time']
     inlines = [ExperienceHistoryInline, ExperienceServiceInline, ExperienceCustomServiceInline, CommentInline]
@@ -748,11 +748,11 @@ class PathHistoryInline(TabularInline):
 
 class ExperienceInline(TabularInline):
     model = Experience
-    list_display = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'deleteTransaction')
+    list_display = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era', 't_creationTime', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'deleteTransaction')}),
+        (None, {'fields': ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era', 't_creationTime', 'deleteTransaction')}),
     )
-    readonly_fields = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'deleteTransaction')
+    readonly_fields = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'era', 't_creationTime', 'deleteTransaction')
 
     ordering = ['start', 'end', 'transaction__creation_time']
     fk_name = 'parent'

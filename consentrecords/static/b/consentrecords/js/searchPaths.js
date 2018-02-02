@@ -54,7 +54,7 @@ var SearchPathsResultsView = (function () {
 						{
 							return s.service().serviceImplications().findIndex(function(s2)
 								{
-									return qf.service.id() == s2.id();
+									return qf.service.id() == s2.service().id();
 								}) >= 0;
 						}) >= 0;
 				}) >= 0)
