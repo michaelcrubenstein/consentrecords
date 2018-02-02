@@ -1273,7 +1273,7 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.siteDefaultPlaceholder = 'Location (Optional)';
 	NewExperiencePanel.prototype.offeringDefaultPlaceholder = 'Title';
 	
-	NewExperiencePanel.prototype.hiddenDocumentation = "This experience will be hidden to others you share your path with unless you share this experience with them explicitly.";
+	NewExperiencePanel.prototype.hiddenDocumentation = "This experience will be hidden from anyone who can see your path unless you share this experience with them explicitly.";
 	NewExperiencePanel.prototype.visibleDocumentation = "This experience will appear to anyone who can see your path.";
 
 	NewExperiencePanel.prototype.setTagColor = function(node)
@@ -2192,7 +2192,7 @@ var ExperienceSecurityPanel = (function () {
 	ExperienceSecurityPanel.prototype.helpText = "Add a user to share this experience with them.";
 	ExperienceSecurityPanel.prototype.newUserEmailDocumentation = 
 		"Type the email address of someone you want to share this experience with.";
-	ExperienceSecurityPanel.prototype.hiddenDocumentation = "This experience will be hidden to others you share your path with unless you add them below.";
+	ExperienceSecurityPanel.prototype.hiddenDocumentation = "This experience will be hidden from anyone who can see your path with unless you add them below.";
 	ExperienceSecurityPanel.prototype.visibleDocumentation = "This experience will appear to anyone who can see your path.";
 	
 
