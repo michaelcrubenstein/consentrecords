@@ -1273,6 +1273,9 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.siteDefaultPlaceholder = 'Location (Optional)';
 	NewExperiencePanel.prototype.offeringDefaultPlaceholder = 'Title';
 	
+	NewExperiencePanel.prototype.hiddenDocumentation = "This experience will be hidden from anyone who can see your path unless you share this experience with them explicitly.";
+	NewExperiencePanel.prototype.visibleDocumentation = "This experience will appear to anyone who can see your path.";
+
 	NewExperiencePanel.prototype.setTagColor = function(node)
 	{
 		this.tagPoolSection.setTagColor(node);
@@ -1489,7 +1492,7 @@ var NewExperiencePanel = (function () {
 					comments[0].text(text);
 				}
 			}
-			else if (this.controller.newInstance().comments().length > 0)
+			else if (this.controller().newInstance().comments().length > 0)
 			{
 				comments[0].deleteData();
 			}
@@ -1660,6 +1663,18 @@ var NewExperiencePanel = (function () {
 		}
 	}
 		
+	NewExperiencePanel.prototype.checkHiddenControlVisibility = function()
+	{
+		if (this.controller().newInstance().isHidden())
+		{
+			this.isHiddenDocumentationContainer.text(this.hiddenDocumentation);
+		}
+		else
+		{
+			this.isHiddenDocumentationContainer.text(this.visibleDocumentation);
+		}
+	}
+	
 	function NewExperiencePanel(experienceController, showFunction) {
 		EditItemPanel.call(this, experienceController);
 			
@@ -2062,6 +2077,36 @@ var NewExperiencePanel = (function () {
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
 			
+		var isHiddenSection = this.mainDiv.append('section')
+			.classed('cell edit unique first', true);
+		
+		isHiddenSection.append('label')
+			.text(crv.buttonTexts.hiddenExperience);
+			
+		this.isHiddenControl = this.appendCheckboxEditor(isHiddenSection, experienceController.newInstance().isHidden(), "checkbox");
+		
+		var docSection = this.mainDiv.append('section')
+			.classed('cell documentation', true);
+
+		this.isHiddenDocumentationContainer = docSection.append('div')
+			.text(experienceController.newInstance().isHidden() ? this.hiddenDocumentation : this.visibleDocumentation);
+
+		$(this.isHiddenControl.node()).on('change', function()
+			{
+				var newChecked = _this.isHiddenControl.node().checked;
+				if (prepareClick('click', 
+								 newChecked ? 
+								 	'is hidden hiding' : 
+								 	'is hidden showing'))
+				{
+					experienceController.newInstance().isHidden(newChecked);
+					_this.checkHiddenControlVisibility();
+					unblockClick();
+				}
+				else
+					_this.isHiddenControl.node().checked = !newChecked;
+			});
+					
 		/* The initial comment section. */
 		if (!experienceController.oldInstance())
 		{
@@ -2137,5 +2182,224 @@ var NewExperiencePanel = (function () {
 	}
 	
 	return NewExperiencePanel;
+})();
+
+var ExperienceSecurityPanel = (function () {
+	ExperienceSecurityPanel.prototype = Object.create(GrantsPanel.prototype);
+	ExperienceSecurityPanel.prototype.constructor = ExperienceSecurityPanel;
+	ExperienceSecurityPanel.prototype.title = "Experience Sharing";
+	
+	ExperienceSecurityPanel.prototype.helpText = "Add a user to share this experience with them.";
+	ExperienceSecurityPanel.prototype.newUserEmailDocumentation = 
+		"Type the email address of someone you want to share this experience with.";
+	ExperienceSecurityPanel.prototype.hiddenDocumentation = "This experience will be hidden from anyone who can see your path with unless you add them below.";
+	ExperienceSecurityPanel.prototype.visibleDocumentation = "This experience will appear to anyone who can see your path.";
+	
+
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	ExperienceSecurityPanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		this.newInstance().isHidden(this.isHiddenControl.node().checked);
+		return false;
+	}
+	
+	ExperienceSecurityPanel.prototype.promiseUpdateChanges = function()
+	{
+		/* Do not save the changes now. Instead, they are saved when the parent panel is closed. */
+		var r = $.Deferred();
+		r.resolve();
+		return r;
+	}
+
+	ExperienceSecurityPanel.prototype.addAccessRecord = function(accessorLevel, path)
+	{
+		var _this = this;
+		
+		return cr.getData({path: path, resultType: cr.User, fields: ['none']})
+			.then(function(grantees)
+				{
+					var userGrant = new (_this.grantor.userGrantType())();
+					userGrant.privilege(accessorLevel.name);
+					userGrant.grantee(grantees[0]);
+					userGrant.parent(_this.grantor);
+					_this.grantor.userGrants().push(userGrant);
+					_this.onGrantAdded(accessorLevel.itemsDiv, userGrant);
+					var r2 = $.Deferred();
+					r2.resolve(userGrant);
+					return r2;
+				},
+				cr.chainFail);
+	}
+	
+	ExperienceSecurityPanel.prototype.loadAccessRecords = function(panel2Div, grantor)
+	{
+		var _this = this;
+		var sections, itemCells, items;
+		var accessRequestSection, accessRequestList;
+		
+		// Sort the access records by type.
+		var grants = grantor.userGrants().concat(grantor.groupGrants());
+		for (var i = 0; i < grants.length; ++i)
+		{
+			var a = grants[i];
+			var privilege = a.privilege();
+			if (privilege in this.privilegesByID)
+			{
+				var sa = this.privilegesByID[privilege];
+				sa.accessRecords.push(a);
+				sa.accessors.push(a);
+			}
+		}
+	
+		var key = 0;
+		sections = panel2Div.selectAll('section')
+			.data(this.privileges, function(d) {
+				/* Ensure that this operation appends without replacing any items. */
+				key += 1;
+				return key;
+			  })
+			.enter()
+			.append('section')
+			.classed('cell multiple edit', true);
+		
+		/* Place this docSection inside the other section so that it gets hidden by the
+			associated VerticalReveal.
+		 */	
+		var docSection = sections.append('section')
+			.classed('cell documentation first', true);
+
+		var docDiv = docSection.append('div');
+		docDiv.text(this.helpText);
+		
+		itemCells = crf.appendItemList(sections)
+			.classed('deletable-items', true);
+	
+		// Reference the views back to the privileges objects.
+		itemCells.each(function(d) { d.itemsDiv = this; });
+		
+		items = appendItems(itemCells, 
+							function(d) { return d.accessors },
+							function(d) {
+								_this.editButton.style('display', itemCells.selectAll('li').size() ? '' : 'none');
+								_this.navContainer.centerTitle();
+							});
+		
+		this.appendUserControls(items);
+		
+		this.editButton.style('display', itemCells.selectAll('li').size() ? '' : 'none');
+		this.navContainer.centerTitle();
+		this.reveal = new VerticalReveal(sections.node());
+		if (!panel2Div.datum().isHidden())
+			this.reveal.hide({duration: 0});
+			
+		
+		/* Add one more button for the add Button item. */
+		sections
+			.append('button').classed('btn row-button add-item site-active-text', true)
+			.on('click', function(d) {
+				_this.addAccessor("Sharing User", d);
+			})
+			.append('div').text("Add User");
+		
+	}
+
+	ExperienceSecurityPanel.prototype.getPrivileges = function(panel2Div)
+	{
+		var _this = this;
+		for (var j = 0; j < this.privileges.length; ++j)
+		{
+			var p = this.privileges[j];
+			this.privilegesByID[p.name] = p;
+		}
+		this.loadAccessRecords(panel2Div, this.grantor);
+	}
+	
+	ExperienceSecurityPanel.prototype.userGrantsPath = function()
+	{
+		return 'experience user grant';
+	}
+	
+	ExperienceSecurityPanel.prototype.checkHiddenControlVisibility = function(done)
+	{
+		if (this.grantor.isHidden())
+		{
+			this.isHiddenDocumentationContainer.text(this.hiddenDocumentation);
+			this.reveal.show({duration: 400, done: done});
+		}
+		else
+		{
+			this.isHiddenDocumentationContainer.text(this.visibleDocumentation);
+			this.reveal.hide({duration: 400, done: done});
+		}
+	}
+	
+	function ExperienceSecurityPanel(experienceController, backButtonText, showFunction) {
+		GrantsPanel.call(this, experienceController.newInstance());
+		
+		var _this = this;
+		this.createRoot(experienceController.newInstance(), this.title, showFunction);
+		
+		this.navContainer.appendTitle("Experience Sharing");
+		var doneButton = this.navContainer.appendRightButton()
+			.on('click', function()
+				{
+					if (prepareClick('click', 'done editing'))
+					{
+						showClickFeedback(this);
+						_this.hide();
+					}
+				})
+ 			.text(crv.buttonTexts.done);
+
+		this.appendEditButton();
+		
+		var isHiddenSection = this.mainDiv.append('section')
+			.classed('cell edit unique first', true);
+		
+		isHiddenSection.append('label')
+			.text(crv.buttonTexts.hiddenExperience);
+			
+		this.isHiddenControl = this.appendCheckboxEditor(isHiddenSection, experienceController.newInstance().isHidden());
+		
+		var docSection = this.mainDiv.append('section')
+			.classed('cell documentation', true);
+
+		this.isHiddenDocumentationContainer = docSection.append('div')
+			.text(experienceController.newInstance().isHidden() ? this.hiddenDocumentation : this.visibleDocumentation);
+
+		$(this.isHiddenControl.node()).on('change', function()
+			{
+				var newChecked = _this.isHiddenControl.node().checked;
+				if (prepareClick('click', 
+								 newChecked ? 
+								 	'is hidden hiding' : 
+								 	'is hidden showing'))
+				{
+					experienceController.newInstance().isHidden(newChecked);
+					_this.checkHiddenControlVisibility(unblockClick);
+					experienceController.save(false)
+						.then(function()
+							{
+							},
+							function(err)
+							{
+								newChecked = !newChecked;
+								experienceController.newInstance().isHidden(newChecked);
+								_this.isHiddenControl.node().checked(!newChecked);
+								_this.checkHiddenControlVisibility();
+								cr.asyncFail(err);
+							});
+				}
+				else
+					_this.isHiddenControl.node().checked = !newChecked;
+			});
+		
+		this.privileges =  [
+			{name: cr.privileges.read, id: "", accessRecords: [], accessors: []}];
+	
+		this.getPrivileges(this.mainDiv);
+	}
+	
+	return ExperienceSecurityPanel;
 })();
 

@@ -3,13 +3,6 @@ panel.site-panel.comments>nav {
 	border: none;
 }
 
-/* Set the minimum width of this button so that the buttons don't shift when changing
-	the text from Edit to Done */
-panel.comments > nav div.edit {
-	text-align: center;
-	min-width: 70px;
-}
-
 panel.comments div.panel-fill {
 	background: white;
 }
@@ -19,6 +12,7 @@ panel.comments div.detail {
 	font-size: 12px;
 	display: flex;
 	align-items: center;
+	width: 100%;
 	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
@@ -65,6 +59,25 @@ panel.comments .flag-label {
 
 panel.comments svg line {
 	stroke-opacity: 0.3;
+}
+
+panel.comments div.edit {
+	display: flex;
+	flex-direction: column;
+	outline: none;
+	border-bottom: solid 1px #DDD;
+	margin-left: 1em;
+}
+
+panel.comments div.edit>div {
+	display: flex;
+	flex-direction: row-reverse;
+}
+
+panel.comments div.edit>div>span {
+	font-size: 0.8em;
+	outline: none;
+	padding: 0.5em 1.0em;
 }
 
 section.comments {
