@@ -523,8 +523,22 @@ var ExperienceCommentsPanel = (function() {
 	
 	ExperienceCommentsPanel.prototype.loadComments = function(data)
 	{
+		var _this = this;
 		var commentList = this.mainDiv.select('section.comments>ol');
-		var items = appendItems(commentList, data);
+		var items = appendItems(commentList, data,
+							function(d) {
+								if (commentList.selectAll('li').size())
+								{
+									_this.editButton.style('display', '');
+								}
+								else
+								{
+									_this.editButton.style('display', 'none');
+									_this.editButton.text(crv.buttonTexts.editComments);
+									_this.inEditMode = false;
+								}
+								_this.resizeCommentsSection();
+							});
 		
 		var deleteControls = crf.appendDeleteControls(items);
 		this.appendDescriptions(items);
@@ -539,6 +553,7 @@ var ExperienceCommentsPanel = (function() {
 				$(this).find('textarea').trigger('resize.cr');
 			});
 		
+		this.editButton.style('display', commentList.selectAll('li').size() ? '' : 'none');
 		this.checkDeleteControlVisibility(items);
 	}
 	
@@ -780,7 +795,7 @@ var ExperienceCommentsPanel = (function() {
 
 		var backButton = navContainer.appendLeftButton()
 			.classed('chevron-left-container', true)
-			.on("click", function()
+			.on('click', function()
 			{
 				if (prepareClick('click', 'Experience Comments Done'))
 				{
@@ -902,7 +917,7 @@ var ExperienceCommentsPanel = (function() {
 			}
 			
 			this.editButton = editCommentsContainer.append('div').append('span')
-				.on("click", function()
+				.on('click', function()
 				{
 					if (_this.inEditMode)
 					{
@@ -983,7 +998,6 @@ var ExperienceCommentsPanel = (function() {
 				.text(crv.buttonTexts.editComments);
 		}
 
-		var comments = fd.experience.comments();
 		var commentsDiv = this.mainDiv.append('section')
 			.classed('multiple edit comments', true);
 		this.commentsSection = commentsDiv.node();
@@ -1120,6 +1134,8 @@ var ExperienceCommentsPanel = (function() {
 			
 		$(_this.node()).on('revealing.cr', function()
 			{
+				if (fd.experience.canWrite())
+					_this.editButton.style('display', commentList.selectAll('li').size() ? '' : 'none');
 				_this.resizeCommentsSection();
 			});
 			
