@@ -49,8 +49,9 @@ var Controller = (function() {
 		return true;
 	}
 	
-	Controller.prototype.save = function()
+	Controller.prototype.save = function(showSavingMessage)
 	{
+		showSavingMessage = showSavingMessage !== undefined ? showSavingMessage : true;
 		var _this = this;
 	
 		if (this.oldInstance())
@@ -67,7 +68,8 @@ var Controller = (function() {
 			var r;
 			if (this.oldInstance().id())
 			{
-				bootstrap_alert.show($('.alert-container'), this.savingMessage, "alert-info");
+				if (showSavingMessage)
+					bootstrap_alert.show($('.alert-container'), this.savingMessage, "alert-info");
 				r = this.oldInstance().update(updateData, false);
 			}
 			else
