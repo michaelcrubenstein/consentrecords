@@ -2181,14 +2181,14 @@ class Experience(ChildInstance, dbmodels.Model):
 
     def anonymousFindFilter(prefix=''):
         isHiddenClause = (prefix + '__isHidden') if prefix else 'isHidden'
-        return Q((isHidden, False))&\
+        return Q((isHiddenClause, False))&\
                Path.anonymousFindFilter(prefix + '__parent' if prefix else 'parent')
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
         isHiddenClause = (prefix + '__isHidden') if prefix else 'isHidden'
-        return Q((isHidden, False))&\
+        return Q((isHiddenClause, False))&\
                Path.anonymousReadFilter(prefix + '__parent' if prefix else 'parent')
     
     # returns a querySet that enumerates the grantor_ids for grants
