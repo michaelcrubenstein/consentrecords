@@ -629,91 +629,96 @@ def _getOrganizationChildren(organization, siteName, offeringName):
 def addToPathway(request):
     LogRecord.emit(request.user, 'pathAdvisor/addToPathway', str(request.user))
     
-    organizationName = request.GET.get('o', None)
-    siteName = request.GET.get('s', None)
-    offeringName = request.GET.get('f', None)
-    serviceName = request.GET.get('t', None)
+    try:
+        organizationName = request.GET.get('o', None)
+        siteName = request.GET.get('s', None)
+        offeringName = request.GET.get('f', None)
+        serviceName = request.GET.get('t', None)
     
-    languageCode = request.GET.get('language', 'en')
-    context = Context(languageCode, request.user)
+        languageCode = request.GET.get('language', 'en')
+        context = Context(languageCode, request.user)
 
-    if offeringName and isUUID(offeringName):
-        try:
-            offering = Offering.objects.get(pk=offeringName, deleteTransaction__isnull=True)
-            site = offering.parent
-            organization = site.parent
-        except Offering.DoesNotExist:
+        if offeringName and isUUID(offeringName):
+            try:
+                offering = Offering.objects.get(pk=offeringName, deleteTransaction__isnull=True)
+                site = offering.parent
+                organization = site.parent
+            except Offering.DoesNotExist:
+                organization, site, offering = None, None, None
+        elif siteName and isUUID(siteName):
+            try:
+                site = Site.objects.get(pk=siteName, deleteTransaction__isnull=True)
+                organization = site.parent
+                if offeringName:
+                    try:
+                        offering = site.offerings.get(names__text=offeringName, names__deleteTransaction__isnull=True)
+                    except Offering.DoesNotExist:
+                        offering = None
+            except Site.DoesNotExist:
+                organization, site, offering = None, None, None
+        elif organizationName and isUUID(organizationName):
+            try:
+                organization = Organization.objects.get(pk=organizationName, deleteTransaction__isnull=True)
+                site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+            except Organization.DoesNotExist:
+                organization, site, offering = None, None, None
+        elif organizationName:
+            try:
+                organization = Organization.objects.get(names__text=organizationName, names__deleteTransaction__isnull=True)
+                site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+            except Organization.DoesNotExist:
+                organization, site, offering = None, None, None
+        else:
             organization, site, offering = None, None, None
-    elif siteName and isUUID(siteName):
-        try:
-            site = Site.objects.get(pk=siteName, deleteTransaction__isnull=True)
-            organization = site.parent
-            if offeringName:
-                try:
-                    offering = site.offerings.get(names__text=offeringName, names__deleteTransaction__isnull=True)
-                except Offering.DoesNotExist:
-                    offering = None
-        except Site.DoesNotExist:
-            organization, site, offering = None, None, None
-    elif organizationName and isUUID(organizationName):
-        try:
-            organization = Organization.objects.get(pk=organizationName, deleteTransaction__isnull=True)
-            site, offering = _getOrganizationChildren(organization, siteName, offeringName)
-        except Organization.DoesNotExist:
-            organization, site, offering = None, None, None
-    elif organizationName:
-        try:
-            organization = Organization.objects.get(names__text=organizationName, names__deleteTransaction__isnull=True)
-            site, offering = _getOrganizationChildren(organization, siteName, offeringName)
-        except Organization.DoesNotExist:
-            organization, site, offering = None, None, None
-    else:
-        organization, site, offering = None, None, None
     
-    if serviceName and isUUID(serviceName):
-        try:
-            service = Service.objects.get(pk=serviceName, deleteTransaction__isnull=True)
-        except Service.DoesNotExist:
+        if serviceName and isUUID(serviceName):
+            try:
+                service = Service.objects.get(pk=serviceName, deleteTransaction__isnull=True)
+            except Service.DoesNotExist:
+                service = None
+        elif serviceName:
+            service = Service.objects.get(names__text=serviceName, deleteTransaction__isnull=True, names__deleteTransaction__isnull=True)
+        else:
             service = None
-    elif serviceName:
-        service = Service.objects.get(names__text=serviceName, deleteTransaction__isnull=True, names__deleteTransaction__isnull=True)
-    else:
-        service = None
     
-    template = loader.get_template(templateDirectory + 'userHome.html')
-    args = {
-        'user': request.user,
-        'urlprefix': urlPrefix,
-        'jsversion': settings.JS_VERSION,
-        'cdn_url': settings.CDN_URL,
-    }
+        template = loader.get_template(templateDirectory + 'userHome.html')
+        args = {
+            'user': request.user,
+            'urlprefix': urlPrefix,
+            'jsversion': settings.JS_VERSION,
+            'cdn_url': settings.CDN_URL,
+        }
 
-    if settings.FACEBOOK_SHOW:
-        args['fbURL'] = request.build_absolute_uri()
-        args['fbTitle'] = 'Add %s'%(offeringName if offeringName else serviceName if serviceName else 'Experience')
-        atText = (organizationName if organizationName == siteName else \
-                ('%s//%s' % (organizationName, siteName)) if siteName else organizationName)
-        args['fbDescription'] = atText
+        if settings.FACEBOOK_SHOW:
+            args['fbURL'] = request.build_absolute_uri()
+            args['fbTitle'] = 'Add %s'%(offeringName if offeringName else serviceName if serviceName else 'Experience')
+            atText = (organizationName if organizationName == siteName else \
+                    ('%s//%s' % (organizationName, siteName)) if siteName else organizationName)
+            args['fbDescription'] = atText
 
-    if organizationName:
-        args['organization'] = organization.id.hex if organization else organizationName
-    if siteName:
-        args['site'] = site.id.hex if site else siteName
-    if offeringName:
-        args['offering'] = offering.id.hex if offering else offeringName
-    if serviceName:
-        args['service'] = service.id.hex if service else serviceName
+        if organizationName:
+            args['organization'] = organization.id.hex if organization else organizationName
+        if siteName:
+            args['site'] = site.id.hex if site else siteName
+        if offeringName:
+            args['offering'] = offering.id.hex if offering else offeringName
+        if serviceName:
+            args['service'] = service.id.hex if service else serviceName
 
-    if request.user.is_authenticated:
-        user = Context(language, request.user).user
-        if not user:
-            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id.hex
+        if request.user.is_authenticated:
+            user = context.user
+            if not user:
+                return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+            args['userID'] = user.id.hex
     
-    if settings.FACEBOOK_SHOW:
-        args['facebookIntegration'] = True
+        if settings.FACEBOOK_SHOW:
+            args['facebookIntegration'] = True
 
-    args['state'] = 'addToPathway'
+        args['state'] = 'addToPathway'
 
-    return HttpResponse(template.render(args))
+        return HttpResponse(template.render(args))
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponseBadRequest(reason=str(e))
 

@@ -277,7 +277,8 @@
 				service = crp.getInstance(serviceName);
 			else
 				service = null;
-			{% else %}var serviceName = null;
+			var serviceList = [service || serviceName];
+			{% else %}var serviceName = null, service = null, serviceList = [];
 			{% endif %}
 	
 			var controller = pathwayPanel.createExperience();
@@ -295,7 +296,7 @@
 								{
 									if (offerings[0] instanceof cr.Offering)
 									{
-										controller.createFromOffering(offerings[0], [service]);
+										controller.createFromOffering(offerings[0], serviceList);
 										var panel = new NewExperiencePanel(controller);
 										panel.showUp();
 									}
@@ -312,25 +313,32 @@
 					crp.promise({path: "site/" + siteName, 
 								 fields: ["parents"],
 								 resultType: cr.Site})
-						.done(function(sites)
+						.then(function(sites)
 							{
-								if (sites.length > 0)
+								try
 								{
-									if (sites[0] instanceof cr.Site)
+									if (sites.length > 0)
 									{
-										controller.createFromSite(sites[0], [service]);
-										var panel = new NewExperiencePanel(controller);
-										panel.showUp();
+										if (sites[0] instanceof cr.Site)
+										{
+											controller.createFromSite(sites[0], serviceList);
+											var panel = new NewExperiencePanel(controller);
+											panel.showUp();
+										}
+										else
+											cr.asyncFail("The specified site does not appear to be a site.");
 									}
 									else
-										cr.asyncFail("The specified site does not appear to be a site.");
+									{
+										cr.asyncFail("The specified site does not exist or you do not have permission to view it.");
+									}
 								}
-								else
+								catch(err)
 								{
-									cr.asyncFail("The specified site does not exist or you do not have permission to view it.");
+									cr.asyncFail(err);
 								}
-							})
-						.fail(cr.asyncFail);
+							},
+							cr.asyncFail)
 				}
 				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
 				{
@@ -346,7 +354,6 @@
 										.organization(organizations[0])
 										.customSite(siteName)
 										.customOffering(offeringName);
-									controller.initPreviousDateRange()
 									if (serviceName)
 										controller.addService(service || serviceName);
 									var panel = new NewExperiencePanel(controller);
@@ -362,29 +369,26 @@
 					controller
 						.customOrganization(organizationName)
 						.customSite(siteName)
-						.customOffering(offeringName)
-						.initPreviousDateRange();
+						.customOffering(offeringName);
 					if (serviceName)
 					    controller.addService(service || serviceName);
 					var panel = new NewExperiencePanel(controller);
 					panel.showUp();
 				}
-				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+				else if (service)
 				{
-					controller.createFromService(crp.getInstance(serviceName));
+					controller.createFromService(service);
 					new NewExperiencePanel(controller).showUp();
 				}
 				else if (serviceName)
 				{
 					controller.addService(serviceName);
-					controller.initPreviousDateRange();
 
 					new NewExperiencePanel(controller, revealPanelUp)
 						.showUp();
 				}
 				else
 				{
-					controller.initPreviousDateRange();
 					new NewExperiencePanel(controller, revealPanelUp)
 						.showUp();
 				}

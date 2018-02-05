@@ -751,8 +751,6 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.createFromSite = function(d, services)
 	{
-		this.initPreviousDateRange();
-		
 		this.organization(d.organization())
 			.customOrganization(null)
 			.site(d)
@@ -769,8 +767,6 @@ var ExperienceController = (function() {
 		if (!d.site())
 			throw new Error("Runtime Error: Site is not present in offering record.")
 
-		this.initPreviousDateRange();
-		
 		this.offeringPicked(d);
 		
 		var _this = this;
@@ -779,8 +775,6 @@ var ExperienceController = (function() {
 	
 	ExperienceController.prototype.createFromService = function(d)
 	{
-		this.initPreviousDateRange();
-		
 		var service = this.addService(d);
 	}
 	
