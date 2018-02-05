@@ -2292,7 +2292,6 @@ var ExperienceSecurityPanel = (function () {
 		if (!panel2Div.datum().isHidden())
 			this.reveal.hide({duration: 0});
 			
-		
 		/* Add one more button for the add Button item. */
 		sections
 			.append('button').classed('btn row-button add-item site-active-text', true)
@@ -2301,11 +2300,11 @@ var ExperienceSecurityPanel = (function () {
 			})
 			.append('div').text("Add User");
 		
+		this.checkHiddenControlVisibility(0);
 	}
 
 	ExperienceSecurityPanel.prototype.getPrivileges = function(panel2Div)
 	{
-		var _this = this;
 		for (var j = 0; j < this.privileges.length; ++j)
 		{
 			var p = this.privileges[j];
@@ -2319,17 +2318,17 @@ var ExperienceSecurityPanel = (function () {
 		return 'experience user grant';
 	}
 	
-	ExperienceSecurityPanel.prototype.checkHiddenControlVisibility = function(done)
+	ExperienceSecurityPanel.prototype.checkHiddenControlVisibility = function(duration, done)
 	{
 		if (this.grantor.isHidden())
 		{
 			this.isHiddenDocumentationContainer.text(this.hiddenDocumentation);
-			this.reveal.show({duration: 400, done: done});
+			this.reveal.show({duration: duration, done: done});
 		}
 		else
 		{
 			this.isHiddenDocumentationContainer.text(this.visibleDocumentation);
-			this.reveal.hide({duration: 400, done: done});
+			this.reveal.hide({duration: duration, done: done});
 		}
 	}
 	
@@ -2376,7 +2375,7 @@ var ExperienceSecurityPanel = (function () {
 								 	'is hidden showing'))
 				{
 					experienceController.newInstance().isHidden(newChecked);
-					_this.checkHiddenControlVisibility(unblockClick);
+					_this.checkHiddenControlVisibility(400, unblockClick);
 					experienceController.save(false)
 						.then(function()
 							{
@@ -2386,7 +2385,7 @@ var ExperienceSecurityPanel = (function () {
 								newChecked = !newChecked;
 								experienceController.newInstance().isHidden(newChecked);
 								_this.isHiddenControl.node().checked(!newChecked);
-								_this.checkHiddenControlVisibility();
+								_this.checkHiddenControlVisibility(400);
 								cr.asyncFail(err);
 							});
 				}
