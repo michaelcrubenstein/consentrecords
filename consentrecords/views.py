@@ -796,9 +796,6 @@ def addToPathway(request):
     if serviceName:
         args['service'] = service.id.hex if service else serviceName
 
-    language = request.GET.get('language', 'en')
-    context = Context(language, request.user)
-    
     if request.user.is_authenticated:
         user = context.user
         if not user:
