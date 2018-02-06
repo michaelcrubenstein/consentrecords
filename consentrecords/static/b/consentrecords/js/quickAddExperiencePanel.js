@@ -156,6 +156,26 @@ var QuickAddExperiencePanel = (function () {
 		return (nextY + this.flagHeightEM) * this.emToPX;
 	}
 	
+	QuickAddExperiencePanel.prototype.moveFlags = function(duration)
+	{
+		var d;
+		var oldX;
+		
+		/* Before moving the flags, set the x of the expanded flag so that it remains visible. */
+		if (this.expandedFlag)
+		{
+			d = d3.select(this.expandedFlag.get(0)).datum();
+			oldX = d.x
+			d.x = $(this.mainDiv.node()).innerWidth() - this.expandedFlag.outerWidth(true);
+		}
+
+		var promise = TagPoolView.prototype.moveFlags.call(this, duration);
+		if (this.expandedFlag)
+			d.x = oldX;
+
+		return promise;
+	}
+	
 	QuickAddExperiencePanel.prototype.flags = function()
 	{
 		return this.flagsContainer.selectAll('span.flag-row');
@@ -222,13 +242,8 @@ var QuickAddExperiencePanel = (function () {
 		else
 			$mainNode.css({width: $mainNode.parent().innerWidth()});
 					   
-		var $flagRow = $(this.flagRows.node());
-		var newLeft = $mainNode.innerWidth() - this.flagRows.datum().firstChildWidth;
-		$(this.flagsContainer.node()).width($flagRow.outerWidth(true) + newLeft)
-			.height($mainNode.height() - $(this.titleContainer.node()).outerHeight());
-			
 		this._setFlagCoordinates(this.flagRows);
-		TagPoolView.prototype.moveFlags.call(this, 0);
+		this.moveFlags(0);
 	}
 	
 	QuickAddExperiencePanel.prototype.handleResize = function()
@@ -391,7 +406,7 @@ var QuickAddExperiencePanel = (function () {
 						this._popFlag();
 					_this._filterFlags();
 					_this._setFlagCoordinates(_this.flagRows);
-					TagPoolView.prototype.moveFlags.call(_this, undefined)
+					_this.moveFlags()
 						.then(unblockClick, cr.syncFail);
 				}
 				/* If the user clicked on a flag at the top, pop it. */
@@ -408,7 +423,7 @@ var QuickAddExperiencePanel = (function () {
 					{
 						_this._filterFlags();
 						_this._setFlagCoordinates(_this.flagRows);
-						TagPoolView.prototype.moveFlags.call(_this, undefined)
+						_this.moveFlags()
 							.then(unblockClick, cr.syncFail);
 					}
 					else
@@ -425,7 +440,7 @@ var QuickAddExperiencePanel = (function () {
 					this._pushFlag(currentFlag, d.service);
 					this._filterFlags();
 					this._setFlagCoordinates(this.flagRows);
-					TagPoolView.prototype.moveFlags.call(this, undefined)
+					this.moveFlags()
 						.then(unblockClick, cr.syncFail);
 				}
 			}
@@ -446,7 +461,7 @@ var QuickAddExperiencePanel = (function () {
 		this.serviceStack = [d3.select(this.rootFlagRowNode).datum().service];
 		this._filterFlags();
 		this._setFlagCoordinates(this.flagRows);
-		return TagPoolView.prototype.moveFlags.call(this, duration);
+		return this.moveFlags(duration);
 	}
 	
 	QuickAddExperiencePanel.prototype.show = function(filter)
