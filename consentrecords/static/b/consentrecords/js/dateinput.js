@@ -20,7 +20,6 @@ var DateWheel = (function () {
 	DateWheel.prototype.oldDay = 0;
 	DateWheel.prototype.minDate = null;
 	DateWheel.prototype.maxDate = null;
-	DateWheel.prototype.blockClear = false;
 	DateWheel.prototype.isClear = false;
 	DateWheel.prototype.didDrag = false;
 	
@@ -81,12 +80,10 @@ var DateWheel = (function () {
 							newScrollTop = itemHeight * newIndex;
 						}
 						
-						_this.blockClear = true;
 						$(node).animate({"scrollTop": newScrollTop}, 200, 'swing', 
 							function()
 							{
 								done.call(this);
-								_this.blockClear = false;
 							});
 					}, 110);
 			}
@@ -201,6 +198,7 @@ var DateWheel = (function () {
 		var maxYear = (maxDate).getUTCFullYear();
 		var minYear = minDate ? minDate.getUTCFullYear() : maxYear - 100;
 
+		this.pauseAlignment();
 		if (this.oldYear)
 		{
 			if (this.oldYear < minYear)
@@ -230,6 +228,7 @@ var DateWheel = (function () {
 		}
 				
 		this._onYearChanged();
+		this.restartAlignment();
     }
     
 	DateWheel.prototype.value = function(newValue)
@@ -306,6 +305,11 @@ var DateWheel = (function () {
 		this._setSelectedIndex(this.monthNode, this.oldMonth - 1);
 		this._setSelectedIndex(this.dayNode, this.oldDay);
 		
+		this.restartAlignment();
+	}
+	
+	DateWheel.prototype.restartAlignment = function()
+	{
 		/* Set up scrolling in a timeout after the scrolling caused by the
 			above code is handled. 
 		 */
@@ -318,11 +322,16 @@ var DateWheel = (function () {
 			});
 	}
 	
-	DateWheel.prototype.onHiding = function()
+	DateWheel.prototype.pauseAlignment = function()
 	{
 		$(this.yearNode).off('scroll', this._yearScrolled);
 		$(this.monthNode).off('scroll', this._monthScrolled);
 		$(this.dayNode).off('scroll', this._dayScrolled);
+	}
+	
+	DateWheel.prototype.onHiding = function()
+	{
+		this.pauseAlignment();
 	}
 	
     DateWheel.prototype.onChange = function()
@@ -421,11 +430,14 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
-					if (!_this.blockClear)
+					var newYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
+					if (newYear != _this.oldYear)
+					{
 						_this.isClear = false;
-					_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
-					_this._onYearChanged();
-					$(_this).trigger('change');
+						_this.oldYear = newYear;
+						_this._onYearChanged();
+						$(_this).trigger('change');
+					}
 				}
 			});
 		this._monthScrolled = this._getAlignmentFunction(function() 
@@ -435,11 +447,14 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
-					if (!_this.blockClear)
+					var newMonth = _this._getSelectedIndex(_this.monthNode) + 1;
+					if (newMonth != _this.oldMonth)
+					{
 						_this.isClear = false;
-					_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
-					_this._onMonthChanged();
-					$(_this).trigger('change');
+						_this.oldMonth = newMonth;
+						_this._onMonthChanged();
+						$(_this).trigger('change');
+					}
 				}
 			});
 		
@@ -450,11 +465,14 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
-					if (!_this.blockClear)
+					var newDay = _this._getSelectedIndex(_this.dayNode);
+					if (_this.oldDay != newDay)
+					{
 						_this.isClear = false;
-					_this.oldDay = _this._getSelectedIndex(_this.dayNode);
-					_this.onChange(); 
-					$(_this).trigger('change');
+						_this.oldDay = newDay;
+						_this.onChange(); 
+						$(_this).trigger('change');
+					}
 				}
 			});
 		$(this.yearNode).click(unClear);
@@ -479,8 +497,6 @@ var DateWheel = (function () {
 		this.oldYear = currentDate.getUTCFullYear();
 		this.oldMonth = currentDate.getUTCMonth() + 1;
 		this.oldDay = 0;	/* no day */
-		
-		this.checkMinDate(minDate, maxDate);
 	}
 	
 	return DateWheel;
