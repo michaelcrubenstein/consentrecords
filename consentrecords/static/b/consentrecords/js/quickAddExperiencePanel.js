@@ -210,7 +210,8 @@ var QuickAddExperiencePanel = (function () {
 		controller.initDateRange(timeframe);
 		var panel = new NewExperiencePanel(controller);
 		
-		return panel.showUp();
+		return panel.showUp()
+			.then(function() { panel.checkTips(); } );
 	}
 	
 	QuickAddExperiencePanel.prototype.hideFlagRow = function($flagRow, fd)
