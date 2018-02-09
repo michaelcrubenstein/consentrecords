@@ -1752,6 +1752,9 @@ var HomePanel = (function () {
 	HomePanel.prototype = Object.create(PathlinesPanel.prototype);
 	HomePanel.prototype.constructor = HomePanel;
 	
+	HomePanel.prototype.tipLevelMask = 7;
+	HomePanel.prototype.tipLevelShift = 0;
+	
 	HomePanel.prototype.getBottomNavHeight = function()
 	{
 		return 0;
@@ -1770,19 +1773,20 @@ var HomePanel = (function () {
 			{
 				if (_this.hasSidebar())
 					_this.showQuickAddExperiencePanel();
-				if (cr.signedinUser.tipLevel() == null)
+				var tipLevel = ((cr.signedinUser.tipLevel() || 0) & _this.tipLevelMask) >>> _this.tipLevelShift;
+				if (tipLevel == 0)
 				{
 					new PathHeadersHilitePanel(_this);
-				} else if (cr.signedinUser.tipLevel() == 1)
+				} else if (tipLevel == 1)
 				{
 					new AddExperienceHilitePanel(_this);
-				} else if (cr.signedinUser.tipLevel() == 2)
+				} else if (tipLevel == 2)
 				{
 					new SearchButtonHilitePanel(_this);
-				} else if (cr.signedinUser.tipLevel() == 3)
+				} else if (tipLevel == 3)
 				{
 					new SettingsButtonHilitePanel(_this);
-				} else if (cr.signedinUser.tipLevel() == 4)
+				} else if (tipLevel == 4)
 				{
 					new NotificationsButtonHilitePanel(_this);
 				}
@@ -1810,8 +1814,10 @@ var OtherPathlines = (function() {
 			try
 			{
 				var controller = new ExperienceController(cr.signedinUser.path(), fd.experience, false);
-				new NewExperiencePanel(controller)
-					.showUp()
+				var newPanel = new NewExperiencePanel(controller);
+				
+				newPanel.showUp()
+					.then(function() { newPanel.checkTips(); }, cr.chainFail)
 					.always(unblockClick);
 			}
 			catch(err)

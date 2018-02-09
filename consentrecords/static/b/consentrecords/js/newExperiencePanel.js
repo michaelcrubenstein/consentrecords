@@ -1276,6 +1276,8 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.hiddenDocumentation = "This experience will be hidden from anyone who can see your path unless you share this experience with them explicitly.";
 	NewExperiencePanel.prototype.visibleDocumentation = "This experience will appear to anyone who can see your path.";
 
+	NewExperiencePanel.prototype.tipLevelShift = 3;
+	
 	NewExperiencePanel.prototype.setTagColor = function(node)
 	{
 		this.tagPoolSection.setTagColor(node);
@@ -1672,6 +1674,30 @@ var NewExperiencePanel = (function () {
 		else
 		{
 			this.isHiddenDocumentationContainer.text(this.visibleDocumentation);
+		}
+	}
+	
+	NewExperiencePanel.prototype.checkTips = function()
+	{
+		var tipLevel = ((cr.signedinUser.tipLevel() || 0) & TagsHilitePanel.prototype.tipLevelMask) >>> this.tipLevelShift;
+		if (tipLevel == 0)
+		{
+			new TagsHilitePanel(this);
+		} else if (tipLevel == 1)
+		{
+			new TimeframesHilitePanel(this);
+		} else if (tipLevel == 2)
+		{
+			new OrganizationHilitePanel(this);
+		} else if (tipLevel == 3)
+		{
+			new OfferingHilitePanel(this);
+		} else if (tipLevel == 4)
+		{
+			new HiddenToggleHilitePanel(this);
+		} else if (tipLevel == 5)
+		{
+			new AddButtonHilitePanel(this);
 		}
 	}
 	
@@ -2077,13 +2103,13 @@ var NewExperiencePanel = (function () {
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
 			
-		var isHiddenSection = this.mainDiv.append('section')
+		this.isHiddenSection = this.mainDiv.append('section')
 			.classed('cell edit unique first', true);
 		
-		isHiddenSection.append('label')
+		this.isHiddenSection.append('label')
 			.text(crv.buttonTexts.hiddenExperience);
 			
-		this.isHiddenControl = this.appendCheckboxEditor(isHiddenSection, experienceController.newInstance().isHidden(), "checkbox");
+		this.isHiddenControl = this.appendCheckboxEditor(this.isHiddenSection, experienceController.newInstance().isHidden(), "checkbox");
 		
 		var docSection = this.mainDiv.append('section')
 			.classed('cell documentation', true);

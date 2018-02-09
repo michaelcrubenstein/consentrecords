@@ -282,6 +282,14 @@
 			{% endif %}
 	
 			var controller = pathwayPanel.createExperience();
+			
+			var showExperienceController = function(controller)
+			{
+				var panel = new NewExperiencePanel(controller);
+				panel.showUp()
+					.then(function() { panel.checkTips(); }, cr.asyncFail);
+			}
+			
 			var done = function(service)
 			{
 				var panel;
@@ -297,8 +305,7 @@
 									if (offerings[0] instanceof cr.Offering)
 									{
 										controller.createFromOffering(offerings[0], serviceList);
-										var panel = new NewExperiencePanel(controller);
-										panel.showUp();
+										showExperienceController(controller);
 									}
 									else
 										cr.asyncFail("The specified offering does not appear to be an offering.");
@@ -322,8 +329,7 @@
 										if (sites[0] instanceof cr.Site)
 										{
 											controller.createFromSite(sites[0], serviceList);
-											var panel = new NewExperiencePanel(controller);
-											panel.showUp();
+											showExperienceController(controller);
 										}
 										else
 											cr.asyncFail("The specified site does not appear to be a site.");
@@ -356,8 +362,7 @@
 										.customOffering(offeringName);
 									if (serviceName)
 										controller.addService(service || serviceName);
-									var panel = new NewExperiencePanel(controller);
-									panel.showUp();
+									showExperienceController(controller);
 								}
 								else
 									cr.asyncFail("The specified organization does not exist or you do not have permission to view it.");
@@ -372,25 +377,21 @@
 						.customOffering(offeringName);
 					if (serviceName)
 					    controller.addService(service || serviceName);
-					var panel = new NewExperiencePanel(controller);
-					panel.showUp();
+					showExperienceController(controller);
 				}
 				else if (service)
 				{
 					controller.createFromService(service);
-					new NewExperiencePanel(controller).showUp();
+					showExperienceController(controller);
 				}
 				else if (serviceName)
 				{
 					controller.addService(serviceName);
-
-					new NewExperiencePanel(controller, revealPanelUp)
-						.showUp();
+					showExperienceController(controller);
 				}
 				else
 				{
-					new NewExperiencePanel(controller, revealPanelUp)
-						.showUp();
+					showExperienceController(controller);
 				}
 			}
 			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
