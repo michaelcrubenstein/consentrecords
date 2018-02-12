@@ -50,6 +50,7 @@ var Settings = (function () {
 			controller.newInstance().birthday, crv.buttonTexts.birthday, minDate, new Date());
 		this.birthdaySection.classed('first', true);
 		this.birthdaySection.editor.canShowNotSureReveal = false;
+		this.birthdaySection.editor.dateWheel.checkMinDate(minDate, new Date());
 		
 		var publicAccessSection = null;
 		var publicAccessSectionTextContainer = null;
