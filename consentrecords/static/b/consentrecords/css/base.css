@@ -6,6 +6,29 @@
 	box-sizing: border-box;
 }
 
+.badge {
+	display: inline-block;
+	min-width: 10px;
+	padding: 3px 5px;
+	font-size: 12px;
+	font-weight: normal;
+	line-height: 1;
+	color: #fff;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	background-color: #2C55CC;
+	border-radius: 10px;
+}
+
+.badge:empty {
+	display: none;
+}
+
+.badge:hover {
+	background-color: #2222FF;
+}
+
 html {
 	height: 100%;
 	width: 100%;
