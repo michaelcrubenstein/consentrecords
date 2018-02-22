@@ -171,7 +171,10 @@ html {
 	width: 100%;
 }
 body {
+	font-family: SF-UI, "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: medium;
+	line-height: 1.42857143;
+	color: #333;
 	overflow-y: hidden;
 	overflow-x: hidden;
 	height: 100%;
