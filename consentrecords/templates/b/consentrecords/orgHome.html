@@ -208,10 +208,12 @@
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
-		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
-		addImagePath = '{% static "b/consentrecords/png/add.png" %}'
-		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}'
-		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}'
+		jsVersionPathSuffix = '?v={{jsversion}}';
+		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}' + jsVersionPathSuffix;
+		addImagePath = '{% static "b/consentrecords/png/add.png" %}' + jsVersionPathSuffix;
+		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
+		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
+		deleteButtonPath = '{% static "b/consentrecords/png/delete.png" %}' + jsVersionPathSuffix;
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection

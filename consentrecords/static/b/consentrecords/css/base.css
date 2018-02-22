@@ -630,23 +630,41 @@ span.checked {
 	user-select: none;
 }
 
-.glyphicon-minus-sign {
+button.delete > img {
+	height: 1em;
+	width: 1em;
+	-ms-transform: rotate(90deg); /* IE 9 */
+	-webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+	transform: rotate(90deg);
+}
+
+button.delete > div, .glyphicon-minus-sign {
 	position: relative;
-	color: red;
 	-ms-transform: rotate(90deg); /* IE 9 */
 	-webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
 	transform: rotate(90deg);
 	border: none;
-	border-radius: 0;
 	background: transparent;
-	background-color: transparent;
 	padding: 0px;
 	outline: none;
+	font-weight: bold;
+	font-size: 1.0em;
+	background-color: red;
+	color: white;
+	border-radius: 1em;
+	height: 1em;
+	width: 1em;
+	line-height: 0.8em;
+	text-align: center;
+	vertical-align: middle;
 }
-.glyphicon-minus-sign:hover {
-	color: red;
+button.delete > div:focus, .glyphicon-minus-sign:focus {
+	outline: none;
 }
-.glyphicon-minus-sign:focus {
+
+button.delete {
+	align-items: center;
+	display: flex;
 	outline: none;
 }
 
