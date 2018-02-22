@@ -17,8 +17,6 @@ panel#id_sign_in_panel hr {
 	font-weight: normal;
 }
 .form-signin .checkbox label {
-	min-height: 20px;
-	padding-left: 20px;
 	padding-bottom: 10px;
 	padding-top: 10px;
 	margin: 0;
@@ -39,7 +37,6 @@ panel#id_sign_in_panel hr {
   z-index: 2;
 }
 .form-signin input[type="email"] {
-  margin-bottom: -1px;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
   margin-bottom: 10px;
