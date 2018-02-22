@@ -108,11 +108,11 @@ var UpdatePasswordPanel = (function () {
 						.classed('form-simple form-signin', true);
 		form.append('label').attr('for', 'id_currentpassword').attr('class', 'sr-only').text('Current Password');
 		var currentPasswordInput = form.append('input')
+			.classed('feedback-control', true)
 			.attr('type', 'password')
 			.attr('id', 'id_currentpassword')
 			.attr('name', 'currentpassword')
 			.attr('placeholder', 'Current password')
-			.classed('feedback-control', true)
 			.attr('required', '1')
 			.attr('autofocus', '')
 			.node();
@@ -124,8 +124,8 @@ var UpdatePasswordPanel = (function () {
 			.classed('control-label sr-only', true)
 			.text("New Password");
 		this.passwordInput = passwordGroup.append('input')
-			.attr('id', 'id_newPassword')
 			.classed('feedback-control', true)
+			.attr('id', 'id_newPassword')
 			.attr('type', 'password')
 			.attr('placeholder', "New password")
 			.attr('required', '1')
@@ -143,9 +143,9 @@ var UpdatePasswordPanel = (function () {
 			.classed('control-label sr-only', true)
 			.text("Confirm Password");
 		this.confirmInput = confirmGroup.append('input')
+			.classed('feedback-control', true)
 			.attr('type', 'password')
 			.attr('id', 'id_confirmNewPassword')
-			.classed('feedback-control', true)
 			.attr('placeholder', "Confirm password")
 			.attr('required', '1')
 			.on('input', function() { _this.checkenabled(); })

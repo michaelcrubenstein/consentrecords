@@ -16,9 +16,6 @@
     
     <title>PathAdvisor - {{rootItemPluralName}}</title>
 
-    <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-
     <!-- Custom styles for this template -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -100,6 +97,7 @@
 		myPathwayImagePath = '{% static "b/consentrecords/png/mypathway.svg" %}' + jsVersionPathSuffix;
 		compareImagePath = '{% static "b/consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
 		inquiryImagePath = '{% static "b/consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
+		deleteButtonPath = '{% static "b/consentrecords/png/delete.png" %}' + jsVersionPathSuffix;
 		
 		/* For show methods, the obj is the DOM object that contains the item being shown.
 							 the d object contains the field information.

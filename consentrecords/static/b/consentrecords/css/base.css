@@ -6,12 +6,175 @@
 	box-sizing: border-box;
 }
 
+button,
+input,
+optgroup,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+}
+
+label {
+  display: inline-block;
+  max-width: 100%; /* Force IE8 to wrap long content (see https://github.com/twbs/bootstrap/issues/13141) */
+}
+
+/* Only display content to screen readers
+//
+// See: http://a11yproject.com/posts/how-to-hide-content */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+/* This makes alert fall on top and over other items. */
+.alert {
+  width: calc(100% - 30px);
+  position: fixed;
+  margin-left: 15px;
+  margin-right: 15px;
+  padding: 15px;
+  margin-bottom: 0px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.alert > button:focus {
+	outline: none;
+}
+
+.alert > span {
+	display: block;
+}
+
+.alert h4 {
+  margin-top: 0;
+  color: inherit;
+}
+.alert .alert-link {
+  font-weight: bold;
+}
+.alert > p,
+.alert > ul {
+  margin-bottom: 0;
+}
+.alert > p + p {
+  margin-top: 5px;
+}
+.alert-dismissable,
+.alert-dismissible {
+  padding-right: 35px;
+}
+.alert-dismissable .close,
+.alert-dismissible .close {
+  position: relative;
+  top: -2px;
+  right: -21px;
+  color: inherit;
+}
+.alert-success {
+  background-color: #dff0d8;
+  border-color: #d6e9c6;
+  color: #3c763d;
+}
+.alert-success hr {
+  border-top-color: #c9e2b3;
+}
+.alert-success .alert-link {
+  color: #2b542c;
+}
+.alert-info {
+  background-color: #d9edf7;
+  border-color: #bce8f1;
+  color: #31708f;
+}
+.alert-info hr {
+  border-top-color: #a6e1ec;
+}
+.alert-info .alert-link {
+  color: #245269;
+}
+.alert-warning {
+  background-color: #fcf8e3;
+  border-color: #faebcc;
+  color: #8a6d3b;
+}
+.alert-warning hr {
+  border-top-color: #f7e1b5;
+}
+.alert-warning .alert-link {
+  color: #66512c;
+}
+.alert-danger {
+  background-color: #f2dede;
+  border-color: #ebccd1;
+  color: #a94442;
+}
+.alert-danger hr {
+  border-top-color: #e4b9c0;
+}
+.alert-danger .alert-link {
+  color: #843534;
+}
+
+.close {
+	float: right;
+	font-size: 21px;
+	font-weight: 700;
+	line-height: 1;
+	color: #000;
+	text-shadow: 0 1px 0 #fff;
+	opacity: .2
+}
+
+.close:hover,
+.close:focus {
+    text-decoration: none;
+    cursor: pointer;
+    opacity: .5;
+  }
+
+.badge {
+	display: inline-block;
+	min-width: 10px;
+	padding: 3px 5px;
+	font-size: 12px;
+	font-weight: normal;
+	line-height: 1;
+	color: #fff;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	background-color: #2C55CC;
+	border-radius: 10px;
+}
+
+.badge:empty {
+	display: none;
+}
+
+.badge:hover {
+	background-color: #2222FF;
+}
+
 html {
 	height: 100%;
 	width: 100%;
 }
 body {
+	font-family: SF-UI, "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: medium;
+	line-height: 1.42857143;
+	color: #333;
 	overflow-y: hidden;
 	overflow-x: hidden;
 	height: 100%;
@@ -64,30 +227,6 @@ panel.initial {
 .no-scrolling {
 	overflow-y: hidden;
 	overflow-x: hidden;
-}
-
-/* This makes alert fall on top and over other items. */
-body > div.alert {
-	width: calc(100% - 30px);
-	position: fixed;
-	border-radius: 0px;
-	margin-left: 15px;
-	margin-right: 15px;
-}
-
-body > div.alert > button:focus {
-	outline: none;
-}
-
-/* This corrects a problem caused by bootstrap that introduces a gap below alerts when they are visible.
-	The problem is that it leads to an invalid outerHeight for the .alert container.
- */
-.alert {
-	margin-bottom: 0px;
-}
-
-body > div.alert > span {
-	display: block;
 }
 
 panel.list {
@@ -630,23 +769,41 @@ span.checked {
 	user-select: none;
 }
 
-.glyphicon-minus-sign {
+button.delete > img {
+	height: 1em;
+	width: 1em;
+	-ms-transform: rotate(90deg); /* IE 9 */
+	-webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+	transform: rotate(90deg);
+}
+
+button.delete > div, .glyphicon-minus-sign {
 	position: relative;
-	color: red;
 	-ms-transform: rotate(90deg); /* IE 9 */
 	-webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
 	transform: rotate(90deg);
 	border: none;
-	border-radius: 0;
 	background: transparent;
-	background-color: transparent;
 	padding: 0px;
 	outline: none;
+	font-weight: bold;
+	font-size: 1.0em;
+	background-color: red;
+	color: white;
+	border-radius: 1em;
+	height: 1em;
+	width: 1em;
+	line-height: 0.8em;
+	text-align: center;
+	vertical-align: middle;
 }
-.glyphicon-minus-sign:hover {
-	color: red;
+button.delete > div:focus, .glyphicon-minus-sign:focus {
+	outline: none;
 }
-.glyphicon-minus-sign:focus {
+
+button.delete {
+	align-items: center;
+	display: flex;
 	outline: none;
 }
 

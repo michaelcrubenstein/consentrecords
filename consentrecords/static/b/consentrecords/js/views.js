@@ -522,7 +522,7 @@ var crf = {
 
 		var buttons = containers.append('button')
 			.classed('delete', true)
-			.on("click", function(e)
+			.on('click', function(e)
 			{
 				if ($(this).css("opacity") > 0 &&
 					prepareClick('click', 'delete button'))
@@ -532,7 +532,7 @@ var crf = {
 					
 					$this.parent().stop();
 					$button.css('opacity', 1);
-					$this.children('div').animateRotate(90, 180, 600, 'swing');
+					$this.children().animateRotate(90, 180, 600, 'swing');
 					$this.parent().animate({'width': $this.parent().parent().innerWidth()},
 											 {duration: 600,
 											  easing: 'swing',
@@ -544,8 +544,8 @@ var crf = {
 				};
 				d3.event.preventDefault();
 			});
-		buttons.append('div')
-			.classed("glyphicon glyphicon-minus-sign", true);
+		buttons.append('img')
+			.attr('src', deleteButtonPath);
 			
 		return buttons;
 	},
@@ -573,7 +573,7 @@ var crf = {
 			.on('blur', function(e)
 			{
 				var deleteButton = $(this.parentNode).find("button:first-of-type");
-				deleteButton.children('div').animateRotate(180, 90, 400);
+				deleteButton.children().animateRotate(180, 90, 400);
 
 				var confirmButtons = $(this);
 				var rightHiddenWidth = confirmButtons.outerWidth();

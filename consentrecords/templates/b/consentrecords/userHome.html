@@ -19,9 +19,6 @@
 
     <title>PathAdvisor</title>
 
-    <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "switchery/css/switchery.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -195,6 +192,7 @@
 		compareImagePath = '{% static "b/consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
 		inquiryImagePath = '{% static "b/consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
 		logoPath = '{% static "b/consentrecords/png/LOGO 1.png" %}' + jsVersionPathSuffix;
+		deleteButtonPath = '{% static "b/consentrecords/png/delete.png" %}' + jsVersionPathSuffix;
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection

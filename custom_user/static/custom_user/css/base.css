@@ -69,16 +69,6 @@
 	}
 }
 
-/* Alerts are styled here and in consentrecords. */	
-/* This makes alert fall on top and over other items. */
-body > div.alert {
-	width: calc(100% - 30px);
-	position: fixed;
-	border-radius: 0px;
-	margin-left: 15px;
-	margin-right: 15px;
-}
-
 body > div.alert > button:focus {
 	outline: none;
 }
