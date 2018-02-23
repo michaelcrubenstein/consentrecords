@@ -58,13 +58,11 @@ var UpdatePasswordPanel = (function () {
 		if (submitEnabled)
 		{
 			$(this.submitButton).removeClass("site-disabled-text")
-							   .addClass("site-active-text")
 							   .prop( "disabled", false );
 		}
 		else
 		{
 			$(this.submitButton).addClass("site-disabled-text")
-							   .removeClass("site-active-text")
 							   .prop( "disabled", true );
 		}
 	}
