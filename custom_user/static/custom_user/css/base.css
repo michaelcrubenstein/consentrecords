@@ -23,34 +23,6 @@
     white-space: nowrap;
 }
 
-/* For text that responds to touches or clicks */
-.site-active-text, .site-disabled-text {
-	user-select: none;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
-}
-
-.site-active-text {
-	color: #2C55CC;
-}
-
-.site-active-text:hover {
-	text-decoration: none;
-	cursor: pointer;
-	color: #2222FF;
-}
-
-.site-disabled-text {
-	color: #117788;
-	cursor: default;
-}
-
-.site-disabled-text:hover {
-	text-decoration: none;
-}
-
 /* Only on the phone */
 @media (max-width: 767px) {
 	.navbar-brand {

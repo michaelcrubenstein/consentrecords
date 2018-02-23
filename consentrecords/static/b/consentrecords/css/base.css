@@ -166,6 +166,27 @@ label {
 	background-color: #2222FF;
 }
 
+/* For text that responds to touches or clicks */
+.site-active-text {
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	color: #2C55CC;
+	cursor: pointer;
+}
+
+.site-active-text:hover {
+	text-decoration: none;
+	color: #2222FF;
+}
+
+.site-disabled-text {
+	opacity: 0.5;
+	cursor: default;
+}
+
 html {
 	height: 100%;
 	width: 100%;

@@ -312,13 +312,11 @@ var SigninPanel = (function()
 	SigninPanel.prototype.checkenabled = function() {			
 		if (!this.canSubmit())
 		{
-			this.signinButton.classed("site-disabled-text", true)
-				.classed("site-active-text", false);
+			this.signinButton.classed("site-disabled-text", true);
 		}
 		else
 		{
-			this.signinButton.classed("site-disabled-text", false)
-				.classed("site-active-text", true);
+			this.signinButton.classed("site-disabled-text", false);
 		}
 	},
 	
@@ -609,14 +607,12 @@ var ForgotPasswordPanel = (function()
 		if (!this.canSubmit())
 		{
 			$(this.submitButton).addClass("site-disabled-text")
-							   .removeClass("site-active-text")
 							   .prop( "disabled", true );
 			this.emailOK.textContent = "";
 		}
 		else
 		{
 			$(this.submitButton).removeClass("site-disabled-text")
-							   .addClass("site-active-text")
 							   .prop( "disabled", false );
 			this.emailOK.textContent = crv.buttonTexts.checkmark;
 		}
@@ -821,13 +817,11 @@ var ResetPasswordPanel = (function()
 		if (submitEnabled)
 		{
 			$(this.submitButton).removeClass("site-disabled-text")
-							   .addClass("site-active-text")
 							   .prop( "disabled", false );
 		}
 		else
 		{
 			$(this.submitButton).addClass("site-disabled-text")
-							   .removeClass("site-active-text")
 							   .prop( "disabled", true );
 		}
 	}
