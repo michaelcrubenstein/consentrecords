@@ -21,16 +21,9 @@ panel.pathway .settings>img {
 }
 
 panel.pathway span.badge {
-	background-color: #2C55CC;
 	position: relative;
 	left: -4px;
 	top: -4px;
-	font-weight: normal;
-	padding: 3px 5px;
-}
-
-panel.pathway span.badge:hover {
-	background-color: #2222FF;
 }
 
 div.pathlines {
@@ -156,14 +149,7 @@ panel.idea > button.close > span {
 }
 
 panel.settings span.badge {
-	background-color: #2C55CC;
-	font-weight: normal;
 	margin-left: 3px;
-	padding: 3px 5px;
-}
-
-panel.settings span.badge:hover {
-	background-color: #2222FF;
 }
 
 panel.notifications .is-fresh {

@@ -19,12 +19,11 @@
     
     <title>PathAdvisor - Organization</title>
 
-    <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 	<link href="{% static "jqcloud2/dist/jqcloud.min.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "switchery/css/switchery.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -181,6 +180,7 @@
 	<script src="{{cdn_url}}d3/3.5.17/d3.min.js"></script>
 	<script src="{{cdn_url}}datejs/1.0/date.min.js"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+	<script src="{% static "switchery/js/switchery.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "jqcloud2/dist/jqcloud.min.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}?v={{jsversion}}"></script>
@@ -208,10 +208,12 @@
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
-		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
-		addImagePath = '{% static "consentrecords/png/add.png" %}'
-		settingsImagePath = '{% static "consentrecords/png/settings.png" %}'
-		shareImagePath = '{% static "consentrecords/png/share.svg" %}'
+		jsVersionPathSuffix = '?v={{jsversion}}';
+		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}' + jsVersionPathSuffix;
+		addImagePath = '{% static "consentrecords/png/add.png" %}' + jsVersionPathSuffix;
+		settingsImagePath = '{% static "consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
+		shareImagePath = '{% static "consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
+		deleteButtonPath = '{% static "consentrecords/png/delete.png" %}' + jsVersionPathSuffix;
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection

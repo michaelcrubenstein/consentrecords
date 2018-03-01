@@ -16,11 +16,9 @@
     
     <title>PathAdvisor - {{rootItemPluralName}}</title>
 
-    <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-
     <!-- Custom styles for this template -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "switchery/css/switchery.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -66,6 +64,7 @@
 	<script src="{{cdn_url}}d3/3.5.17/d3.min.js"></script>
 	<script src="{{cdn_url}}datejs/1.0/date.min.js"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+	<script src="{% static "switchery/js/switchery.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
@@ -100,6 +99,7 @@
 		myPathwayImagePath = '{% static "consentrecords/png/mypathway.svg" %}' + jsVersionPathSuffix;
 		compareImagePath = '{% static "consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
 		inquiryImagePath = '{% static "consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
+		deleteButtonPath = '{% static "consentrecords/png/delete.png" %}' + jsVersionPathSuffix;
 		
 		/* For show methods, the obj is the DOM object that contains the item being shown.
 							 the d object contains the field information.
