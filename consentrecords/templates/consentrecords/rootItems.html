@@ -120,7 +120,7 @@
 
 		/* The global object used to identify the current user. */
 		{% if userID %}
-		cr.createSignedinUser("{{userID}}", ['system access'])
+		cr.createSignedinUser("{{userID}}", ['path', 'system access'])
 			.fail(cr.asyncFail);
 		{% endif %}
 		

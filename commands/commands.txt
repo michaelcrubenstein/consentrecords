@@ -365,20 +365,6 @@ sudo apt-get update && sudo apt-get upgrade && sudo apt-get dist-upgrade
 sudo reboot
 
 ##################################################################
-# Python commands to update a value
-##################################################################
-
-# This example uses the commands to strip the leading character from a text value.
-from django.db import transaction
-nameLists = NameList()
-user = Instance.objects.get(typeID=terms.user, deleteTransaction__isnull=True, description__text='michaelcrubenstein@gmail.com')
-def d1(i):
-    with transaction.atomic():
-        transactionState = TransactionState(user.transaction.user)
-        i.value_set.get(field=terms.name, deleteTransaction__isnull=True).updateValue({'text': i.description.text[1:]}, transactionState)
-        Instance.updateDescriptions([i], nameLists)
-
-##################################################################
 # If the key needs to change, it is referenced by name in the following locations:
 ##################################################################
 
