@@ -673,8 +673,14 @@ var WelcomePanel = (function () {
 		var emailGroup = div.append('div');
 		this.emailGroup = emailGroup.node();
 		
+		var emailLabel = emailGroup.append('label')
+			.attr('for', 'id_newEmail')
+			.classed('control-label sr-only', true)
+			.text("Email Address");
+
 		this.emailInput = emailGroup.append('input')
-			.classed('email feedback-control', true)
+			.classed('base-input email feedback-control', true)
+			.attr('id', 'id_newEmail')
 			.attr('placeholder', "Email Address")
 			.node();
 			
@@ -692,7 +698,7 @@ var WelcomePanel = (function () {
 			.text("New Password");
 		this.passwordInput = passwordGroup.append('input')
 			.attr('id', 'id_newPassword')
-			.classed('feedback-control', true)
+			.classed('base-input feedback-control', true)
 			.attr('type', 'password')
 			.attr('placeholder', "New password")
 			.on('input', function() { _this.checkenabled(); })
@@ -709,7 +715,7 @@ var WelcomePanel = (function () {
 			.text("Confirm New Password");
 		this.confirmInput = confirmGroup.append('input')
 			.attr('id', 'id_confirmNewPassword')
-			.classed('feedback-control', true)
+			.classed('base-input feedback-control', true)
 			.attr('type', 'password')
 			.attr('placeholder', "Confirm new password")
 			.on('input', function() { _this.checkenabled(); })

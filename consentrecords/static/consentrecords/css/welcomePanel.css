@@ -199,7 +199,10 @@ panel.welcome div.signup>div>div:last-child {
 	margin-top: 1em;
 }
 
-panel.welcome div.signup input, panel.sign-in input {
+input.base-input,
+panel.sign-in input[type=email],
+panel.sign-in input[type=password]
+ {
 	border: none;
 	outline: none;
 	border-bottom: 1.5px solid #222;

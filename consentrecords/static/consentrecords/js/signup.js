@@ -312,13 +312,11 @@ var SigninPanel = (function()
 	SigninPanel.prototype.checkenabled = function() {			
 		if (!this.canSubmit())
 		{
-			this.signinButton.classed("site-disabled-text", true)
-				.classed("site-active-text", false);
+			this.signinButton.classed("site-disabled-text", true);
 		}
 		else
 		{
-			this.signinButton.classed("site-disabled-text", false)
-				.classed("site-active-text", true);
+			this.signinButton.classed("site-disabled-text", false);
 		}
 	},
 	
@@ -454,6 +452,7 @@ var SigninPanel = (function()
 			.classed('form-simple form-signin', true);
 		
 		this.emailInput = form.append('input')
+				.classed('base-input', true)
 				.attr('type', 'email')
 				.attr('maxlength', '254')
 				.attr('placeholder', 'Email address')
@@ -469,6 +468,7 @@ var SigninPanel = (function()
 		this.emailMessageReveal.hide();
 		
 		this.passwordInput = form.append('input')
+				.classed('base-input', true)
 				.attr('type', 'password')
 				.attr('maxlength', '254')
 				.attr('placeholder', 'Password')
@@ -497,7 +497,7 @@ var SigninPanel = (function()
 			.attr('type', 'checkbox')
 			.node();
 	
-		rememberMeCheckboxLabel.append('text').text(" Remember me");
+		rememberMeCheckboxLabel.append('text').text("Remember me");
 			
 		var buttonContainer = form.append('div')
 			.classed('form-group site-trio-container', true);
@@ -607,14 +607,12 @@ var ForgotPasswordPanel = (function()
 		if (!this.canSubmit())
 		{
 			$(this.submitButton).addClass("site-disabled-text")
-							   .removeClass("site-active-text")
 							   .prop( "disabled", true );
 			this.emailOK.textContent = "";
 		}
 		else
 		{
 			$(this.submitButton).removeClass("site-disabled-text")
-							   .addClass("site-active-text")
 							   .prop( "disabled", false );
 			this.emailOK.textContent = crv.buttonTexts.checkmark;
 		}
@@ -726,6 +724,7 @@ var ForgotPasswordPanel = (function()
 		this.emailGroup = emailGroup.node();
 		
 		this.emailInput = emailGroup.append('input')
+			.classed('base-input', true)
 			.classed('feedback-control', true)
 			.attr('type', 'email')
 			.attr('placeholder', "Email Address")
@@ -818,13 +817,11 @@ var ResetPasswordPanel = (function()
 		if (submitEnabled)
 		{
 			$(this.submitButton).removeClass("site-disabled-text")
-							   .addClass("site-active-text")
 							   .prop( "disabled", false );
 		}
 		else
 		{
 			$(this.submitButton).addClass("site-disabled-text")
-							   .removeClass("site-active-text")
 							   .prop( "disabled", true );
 		}
 	}
@@ -929,6 +926,7 @@ var ResetPasswordPanel = (function()
 		this.emailGroup = emailGroup.node();
 		
 		this.emailInput = emailGroup.append('input')
+			.classed('base-input', true)
 			.classed('feedback-control', true)
 			.attr('type', 'email')
 			.attr('placeholder', "Email Address")
@@ -953,6 +951,7 @@ var ResetPasswordPanel = (function()
 			.text("New Password");
 		this.passwordInput = passwordGroup.append('input')
 			.attr('id', 'id_newPassword')
+			.classed('base-input', true)
 			.classed('feedback-control', true)
 			.attr('type', 'password')
 			.attr('placeholder', "New password")
@@ -978,6 +977,7 @@ var ResetPasswordPanel = (function()
 			.text("Confirm New Password");
 		this.confirmInput = confirmGroup.append('input')
 			.attr('id', 'id_confirmNewPassword')
+			.classed('base-input', true)
 			.classed('feedback-control', true)
 			.attr('type', 'password')
 			.attr('placeholder', "Confirm new password")

@@ -19,13 +19,11 @@
 
     <title>PathAdvisor</title>
 
-    <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="{{cdn_url}}twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-
 	<link href="{% static "jqcloud2/dist/jqcloud.min.css" %}?v={{jsversion}}" rel="stylesheet">
 	
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "switchery/css/switchery.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -153,6 +151,7 @@
 	<script src="{{cdn_url}}clipboard.js/1.7.1/clipboard.min.js"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "datejs/time.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "switchery/js/switchery.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "jqcloud2/dist/jqcloud.min.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}?v={{jsversion}}"></script>
@@ -195,6 +194,7 @@
 		compareImagePath = '{% static "consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
 		inquiryImagePath = '{% static "consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
 		logoPath = '{% static "consentrecords/png/LOGO 1.png" %}' + jsVersionPathSuffix;
+		deleteButtonPath = '{% static "consentrecords/png/delete.png" %}' + jsVersionPathSuffix;
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection

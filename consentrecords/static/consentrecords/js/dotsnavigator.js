@@ -182,8 +182,7 @@ var DotsNavigator = (function () {
 	{
 		var isEnabled = this.isForwardEnabled();
 		this.doneButton
-			.classed("site-disabled-text", !isEnabled)
-			.classed("site-active-text", isEnabled);
+			.classed("site-disabled-text", !isEnabled);
 	}
 	
 	function DotsNavigator(panel2Div, numDots) {
