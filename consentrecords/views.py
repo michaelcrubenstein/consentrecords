@@ -1127,8 +1127,8 @@ def setResetPassword(request):
 
         results = {}
         context = Context(languageCode, request.user)
-        user = context.user
-        results['user'] = user.getData(['system access', 'email'], context)
+        users = User.select_related(User.objects.filter(pk=context.user.id), ['path', 'system access', 'email'])
+        results['user'] = users[0].getData(['path', 'system access', 'email'], context)
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
