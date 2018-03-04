@@ -2300,8 +2300,8 @@ class Experience(ChildInstance, dbmodels.Model):
         if context.getPrivilege(parent) != 'administer' or 'is hidden' not in data:
             isHidden = False
         else:
-        	isHidden = bool(data['is hidden'])
-        	
+            isHidden = bool(data['is hidden'])
+            
         newItem = Experience.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
@@ -5803,16 +5803,21 @@ class User(SecureRootInstance, dbmodels.Model):
         email = data['emails'][0]['text']
         firstName = _orNone(data, 'first name')
         lastName = _orNone(data, 'last name')
-        if not AuthUser.objects.filter(email=email).exists():
-            if not context.is_administrator:
-                raise ValueError('non-administrators cannot create users')
+        
+        manager = get_user_model().objects
+        if not manager.filter(email=email).exists():
+            if not context.can_create_user:
+                raise ValueError('the currently logged-in user cannot create users')
             
-            manager = get_user_model().objects
             constituent = manager.create_user(email=email, password='', 
-                                              firstName = firstName, lastName = lastName)    
+                                              firstName = firstName, lastName = lastName)
+            constituent.set_unusable_password()
+        else:
+            constituent = manager.get(email=email)
             
         # Handle special case for primary administrator when creating a new SecureRootInstance subclass.
-        if 'primary administrator' in data and data['primary administrator'] == 'user/%s' % id.hex:
+        if 'primary administrator' in data and data['primary administrator'].startswith('user/'):
+            id = data['primary administrator'][5:]
             primaryAdministrator = User.objects.get(pk=id)
         else:
             primaryAdministrator = _orNoneForeignKey(data, 'primary administrator', context, User)
@@ -5847,6 +5852,13 @@ class User(SecureRootInstance, dbmodels.Model):
         
         newItem.createChildren(data, 'user grant requests', context, UserUserGrantRequest, newIDs)
         
+        if not constituent.has_usable_password():
+            UserUserGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 grantor_id=newItem.id,
+                                 grantee=context.user,
+                                 privilege='administer')
+                   
         return newItem                          
         
     def buildHistory(self, context):
@@ -6243,6 +6255,11 @@ class Context:
     @property
     def is_administrator(self):
         return self.authUser and self.authUser.is_superuser
+    
+    # Species whether or not the currently logged-in user has permission to create users.
+    @property
+    def can_create_user(self):
+        return self.is_administrator
     
     @property
     def transaction(self):

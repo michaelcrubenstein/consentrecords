@@ -845,7 +845,7 @@ class api:
                         RootInstance.parseUpdateData(d, Service, context, newIDs)
                     results = {'new IDs': newIDs}
                 elif 'users' in changes:
-                    if not context.is_administrator:
+                    if not context.can_create_user:
                         raise PermissionDenied("write permission failed")
                     newIDs = {}
                     for d in changes['users']:
