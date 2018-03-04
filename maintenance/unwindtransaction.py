@@ -21,7 +21,7 @@ def printComment(i):
          ))
                   
 def printInstance(i):
-	print(i.dataString)
+    print(i.dataString)
          
 def revertChanged(changed):
     for i in changed.exclude(transaction=t):
@@ -248,6 +248,12 @@ def printTransaction(t):
                printInstance,
                t.createdUsers, t.changedUsers, 
                t.deletedUsers, t.userHistories)
+    
+    authUsers = list(filter(lambda au: not au.is_anonymous, 
+                            map(lambda u: u.authUser, t.createdUsers.all())))
+        
+    for au in authUsers:
+        print('Deleting Authentication User: %s' % str(au))
 
     printTable("\tposition\ttext",
                "User Emails", "User Email",
@@ -391,9 +397,15 @@ if __name__ == "__main__":
             revertChanged(t.changedUserUserGrantRequests)
             revertDeleted(t.deletedUserUserGrantRequests)
 
+            authUsers = list(filter(lambda au: not au.is_anonymous, 
+                                    map(lambda u: u.authUser, t.createdUsers.all())))
+        
             n, d = t.delete()
 
             sys.stderr.write('\nTransaction deleted: %s\n'%t)
             for key in d.keys():
                 if d[key]: print(d[key], key)
     
+            for au in authUsers:
+                print(au)
+                au.delete()
