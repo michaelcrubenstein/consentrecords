@@ -7236,7 +7236,13 @@ cr.User = (function() {
 		if (!this._birthday) this._birthday = source._birthday;
 		if (!this._systemAccess) this._systemAccess = source._systemAccess;
 		if (!this._tipLevel) this._tipLevel = source._tipLevel;
-		if (!this._path) this._path = source._path;
+		if (source._path)
+		{
+			if (!this._path) 
+				this._path = source._path;
+			else
+				this._path.mergeData(source._path);
+		}
 		if (!this._emails) this._emails = source._emails;
 		if (!this._notifications) this._notifications = source._notifications;
 		if (!this._userGrantRequests) this._userGrantRequests = source._userGrantRequests;
