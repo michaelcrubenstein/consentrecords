@@ -61,12 +61,8 @@ var Settings = (function () {
 		
 		var checkBirthday = function(d, done)
 		{
-			if (!controller.newInstance().birthday())
-			{
-				cr.asyncFail(crv.buttonTexts.birthdayRequiredForPublicAccess);
-				_this.ensureDateEditorVisible(_this.birthdaySection.editor);
-			}
-			else if (controller.newInstance().birthday() != controller.oldInstance().birthday())
+			if (cr.signedinUser == oldUser &&
+				controller.newInstance().birthday() != controller.oldInstance().birthday())
 			{
 				_this.promiseUpdateChanges()
 					.then(function()
@@ -75,6 +71,14 @@ var Settings = (function () {
 							done(d);
 						},
 						cr.asyncFail);
+			}
+			else if (!cr.signedinUser.birthday())
+			{
+				cr.asyncFail(crv.buttonTexts.birthdayRequiredForPublicAccess);
+				if (cr.signedinUser == oldUser)
+				{
+					_this.ensureDateEditorVisible(_this.birthdaySection.editor);
+				}
 			}
 			else
 			{
