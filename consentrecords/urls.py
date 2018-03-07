@@ -53,6 +53,7 @@ urlpatterns = [
     url(r'^services/', views.showServices),
     url(r'^users/', views.showUsers),
 
+    url(r'^user/forgotpassword/', views.forgotPassword),
     url(r'^user/passwordreset/([A-Fa-f0-9]{32})/', views.passwordReset),
     url(r'^user/setresetpassword/', views.setResetPassword),
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
