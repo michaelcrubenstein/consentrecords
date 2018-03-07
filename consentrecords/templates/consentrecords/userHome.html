@@ -421,7 +421,35 @@
 			/* needsSignin is a flag that determines if handling the state requires signin. */
 			var handleState = null;
 			var needsSignin = false;
-			{% if state %}
+			{% if state == "forgotpassword" %}
+				var handleState = function()
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+					if (!navigator.cookieEnabled)
+						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+					else
+					{
+						var panel = new ForgotPasswordPanel();
+						panel.showUp();
+					}
+				}
+				needsSignin = false;
+			{% elif state == "resetPassword" %}
+				var handleState = function()
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+					if (!navigator.cookieEnabled)
+						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+					else
+					{
+						var signUp = new ResetPasswordPanel("{{resetkey}}");
+						signUp.showUp();
+					}
+				}
+				needsSignin = false;
+			{% elif state %}
 			var stateString = "{{state}}"
 			if (stateString.startsWith("findNewExperience"))
 			{
@@ -754,22 +782,6 @@
 							});
 				}
 				needsSignin = true;
-			}
-			else if (stateString == "resetPassword")
-			{
-				var handleState = function()
-				{
-					firstPanel = new WelcomePanel();
-					firstPanel.showNow();
-					if (!navigator.cookieEnabled)
-						cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
-					else
-					{
-						var signUp = new ResetPasswordPanel("{{resetkey}}");
-						signUp.showUp();
-					}
-				}
-				needsSignin = false;
 			}
 			else if (stateString.startsWith("me"))
 			{

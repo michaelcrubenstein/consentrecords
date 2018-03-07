@@ -498,6 +498,21 @@ def passwordReset(request, resetKey):
     }
     return HttpResponse(template.render(args))
 
+@ensure_csrf_cookie
+def forgotPassword(request):
+    # Don't rely on authentication.
+    
+    LogRecord.emit(request.user, 'pathAdvisor/forgotpassword', str(request.user))
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    
+    args = {
+        'state': 'forgotpassword',
+        'jsversion': settings.JS_VERSION,
+        'cdn_url': settings.CDN_URL,
+    }
+    return HttpResponse(template.render(args))
+
 def acceptFollower(request, userPath=None):
     if request.method != "POST":
         raise Http404("acceptFollower only responds to POST methods")

@@ -689,7 +689,8 @@ var ForgotPasswordPanel = (function()
 						{
 							var successFunction = function()
 							{
-								$(signinPanel).hide("slide", {direction: "right"}, 0);
+								if (signinPanel)
+									$(signinPanel).hide("slide", {direction: "right"}, 0);
 								_this.hideRight(unblockClick);
 							}
 							_this.submit(successFunction, cr.syncFail);

@@ -39,6 +39,7 @@ urlpatterns = [
     url(r'^prompt/([^/]+)/', views.welcomePrompt),
     url(r'^wordcloud/', views.wordclouds),
 
+    url(r'^user/forgotpassword/', views.forgotPassword),
     url(r'^user/passwordreset/([A-Fa-f0-9]{32})/', views.passwordReset),
 
     url(r'^commentprompts/', views.showCommentPrompts),
