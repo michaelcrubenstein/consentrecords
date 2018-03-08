@@ -2176,10 +2176,12 @@ var EditItemPanel = (function () {
 		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
 	}
 	
-	EditItemPanel.prototype.appendOrderedTextEditor = function(section, container, sectionLabel, placeholder, data, dataType)
+	EditItemPanel.prototype.appendOrderedTextEditor = function(section, container, sectionLabel, placeholder, data, dataType, inputType)
 	{
 		var _this = this;
-		section.classed("string translation", true);
+		inputType = inputType !== undefined ? inputType : 'text';
+		
+		section.classed('string translation', true);
 		
 		var itemsDiv = crf.appendItemList(section);
 	
@@ -2187,7 +2189,7 @@ var EditItemPanel = (function () {
 		{
 			items.append('input')
 				.classed('growable', true)
-				.attr('type', 'text')
+				.attr('type', inputType)
 				.attr('placeholder', placeholder)
 				.property('value', function(d) { return d.text(); })
 				.on('focusout', function(d)
