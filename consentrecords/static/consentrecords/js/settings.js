@@ -47,10 +47,10 @@ var Settings = (function () {
 		minDate.setDate(1);
 
 		this.birthdaySection = this.appendDateSection(controller.newInstance(), 
-			controller.newInstance().birthday, crv.buttonTexts.birthday, minDate, new Date());
+			controller.newInstance().birthday, crv.buttonTexts.birthday, minDate, getUTCTodayDate());
 		this.birthdaySection.classed('first', true);
 		this.birthdaySection.editor.canShowNotSureReveal = false;
-		this.birthdaySection.editor.dateWheel.checkMinDate(minDate, new Date());
+		this.birthdaySection.editor.dateWheel.checkMinDate(minDate, getUTCTodayDate());
 		
 		var publicAccessSection = null;
 		var publicAccessSectionTextContainer = null;

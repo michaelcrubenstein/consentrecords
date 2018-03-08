@@ -800,11 +800,23 @@ var EngagementPanel = (function () {
 			user ? controller.newInstance().user().description() : crv.buttonTexts.nullString);
 		this.userSection.datum(user);
 		crf.appendRightChevrons(items);	
+		
+		var minDate = new Date();
+		minDate.setUTCFullYear(minDate.getUTCFullYear() - 50);
+		minDate.setMonth(0);
+		minDate.setDate(1);
 				 
+		var maxDate = new Date();
+		maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 50);
+		maxDate.setMonth(11);
+		maxDate.setDate(31);
+
 		this.startSection = this.appendDateSection(controller.newInstance(), controller.newInstance().start, crv.buttonTexts.start);
 		this.startEditor = this.startSection.editor;
+		this.startEditor.dateWheel.checkMinDate(minDate, maxDate);
 		this.endSection = this.appendDateSection(controller.newInstance(), controller.newInstance().end, crv.buttonTexts.end);
 		this.endEditor = this.endSection.editor;
+		this.endEditor.dateWheel.checkMinDate(minDate, maxDate);
 
 		/* Add a delete button. */
 		this.appendDeleteButton();
