@@ -825,7 +825,7 @@ var ExperienceCommentsPanel = (function() {
 				}
 				d3.event.preventDefault();
 			});
-		appendLeftChevronSVG(backButton).classed("chevron-left", true);
+		appendLeftChevronSVG(backButton).classed('chevron-left', true);
 		backButton.append('span').text(backText);
 
 		navContainer.appendTitle('');

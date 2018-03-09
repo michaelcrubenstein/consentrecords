@@ -22,7 +22,7 @@ function appendAddress(address)
 						if (this.text() && this.text().length > 0)
 						{
 							div.append('div')
-								.classed("address-line", true)
+								.classed('address-line', true)
 								.text(this.text());
 						}
 					});
@@ -49,22 +49,22 @@ function getMonthString(date)
 
 function appendSessionDescriptions(buttons)
 {
-	var leftText = buttons.append('div').classed("growable", true);
+	var leftText = buttons.append('div').classed('growable', true);
 	
 	leftText.append('div')
 		.text(function(d) { 
 			return d.offering().description();
 		});
 
-	leftText.append('div').classed("sub-text description-text", true)
+	leftText.append('div').classed('sub-text description-text', true)
 		.text(function(d) {
 			return d.description();
 		});
-	leftText.append('div').classed("sub-text description-text", true)
+	leftText.append('div').classed('sub-text description-text', true)
 		.text(function(d) {
 			return d.dateRange();
 		});
-	leftText.append('div').classed("sub-text description-text", true)
+	leftText.append('div').classed('sub-text description-text', true)
 		.text(function(d) {
 			var registrationDeadline = d.registrationDeadline();
 			if (registrationDeadline)
@@ -75,11 +75,11 @@ function appendSessionDescriptions(buttons)
 				return "";
 		});
 
-	leftText.append('div').classed("sub-text sub-paragraph description-text", true)
+	leftText.append('div').classed('sub-text sub-paragraph description-text', true)
 		.text(function(d) {
 			return d.organization().description();
 		});
-	leftText.append('div').classed("sub-text description-text", true)
+	leftText.append('div').classed('sub-text description-text', true)
 		.text(function(d) {
 			if (d.site().description() != d.organization().description())
 				return d.site().description();
@@ -177,19 +177,19 @@ function appendStringItem(obj, label, text, addBorder)
 	addBorder = (addBorder === undefined) ? true : addBorder;
 	var sectionObj = d3.select(obj);
 
-	sectionObj.classed("cell unique view", true);
+	sectionObj.classed('cell unique view', true);
 
 	var labelDiv = sectionObj.append("label")
 		.text(label);
 	var itemsDiv = crf.appendItemList(sectionObj)
-							 .classed("hover-items", true);
+							 .classed('hover-items', true);
 
 	if (addBorder)
-		sectionObj.append("div").classed("cell-border-below", true);	
+		sectionObj.append("div").classed('cell-border-below', true);	
 
 	var items = appendItems(itemsDiv, [text]);
 	items.append("div")
-		.classed("text-fill growable unselectable", true)
+		.classed('text-fill growable unselectable', true)
 		.text(function(d) { return d; });
 }
 

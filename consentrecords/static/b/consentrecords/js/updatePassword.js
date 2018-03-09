@@ -83,7 +83,7 @@ var UpdatePasswordPanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		appendLeftChevronSVG(backButton).classed('site-active-text chevron-left', true);
 		backButton.append("span").text(backButtonText);
 	
 		navContainer.appendTitle("Password");
@@ -194,7 +194,7 @@ var UpdateUsernamePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		appendLeftChevronSVG(backButton).classed('site-active-text chevron-left', true);
 		backButton.append("span").text(backButtonText);
 	
 		function onChange()

@@ -426,7 +426,7 @@ var ComparePathsPanel = (function () {
 
 		this.navContainer = this.appendNavContainer();
 		this.navContainer.nav
-			.classed("transparentTop", true);
+			.classed('transparentTop', true);
 
 		var settingsButton;
 		

@@ -138,7 +138,7 @@ var SharingPanel = (function() {
 		
 		/* Add one more button for the add Button item. */
 		sections
-			.append("button").classed("btn row-button add-item site-active-text", true)
+			.append("button").classed('btn row-button add-item site-active-text', true)
 			.on("click", function(d) {
 				_this.addAccessor("Sharing User", d);
 			})

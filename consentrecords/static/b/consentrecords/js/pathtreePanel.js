@@ -1307,12 +1307,12 @@ var AlertButton = (function() {
 				function() {
 					_this.onClick();
 				})
-			.classed("settings", true)
+			.classed('settings', true)
 			.style("display", this.user.privilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", imagePath);
 		this.button.append("span")
-			.classed("badge", true);
+			.classed('badge', true);
 	}
 	
 	AlertButton.prototype.node = function()
@@ -1543,12 +1543,12 @@ var PathlinesPanel = (function () {
 					}
 					d3.event.preventDefault();
 				})
-			.classed("settings", true)
+			.classed('settings', true)
 			.style("display", user.privilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", notificationsImagePath);
 		button.append("span")
-			.classed("badge", true)
+			.classed('badge', true)
 			.text(this.notificationsBadgeCount(user));
 	}
 	
@@ -1669,7 +1669,7 @@ var PathlinesPanel = (function () {
 
 		this.navContainer = this.appendNavContainer();
 		this.navContainer.nav
-			.classed("transparentTop", true);
+			.classed('transparentTop', true);
 
 		var settingsButton;
 		var notificationsButton;
@@ -1855,7 +1855,7 @@ var OtherPathPanel = (function () {
 
 		this.navContainer = this.appendNavContainer();
 		this.navContainer.nav
-			.classed("transparentTop", true);
+			.classed('transparentTop', true);
 
 		if (done)
 		{
