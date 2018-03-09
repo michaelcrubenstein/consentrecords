@@ -168,22 +168,19 @@ var FlagController = (function() {
 	{
 		var e = this.experience.end();
 		var s = this.experience.start();
-		var t;
+		var t = this.experience.timeframe();
 		var top, bottom;
 		
 		if (e)
 			top = new Date(e).getUTCFullYear();
 		else if (s)
 			top = (new Date().toISOString().substr(0, s.length) < s) ? "Goal" : "Now"
-		else {
-			t = this.experience.timeframe();
-			if (t == "Previous")
-				top = "Done";
-			else if (t == "Current")
-				top = "Now";
-			else
-				top = "Goal";
-		}
+		else if (t == "Previous")
+			top = "Done";
+		else if (t == "Current")
+			top = "Now";
+		else
+			top = "Goal";
 			
 		if (s)
 			bottom = new Date(s).getUTCFullYear();
