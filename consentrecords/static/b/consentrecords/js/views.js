@@ -902,21 +902,21 @@ var SiteNavContainer = (function() {
 	
 	SiteNavContainer.prototype.setBanner = function(title)
 	{
-		var h = this.nav.selectAll('div.site-banner');
+		var h = this.nav.selectAll('header.site-banner');
 		h.text(title);
 		this.sitePanel.headerText = title;
 	}
 	
 	SiteNavContainer.prototype.appendBanner = function(newTitle)
 	{
-		var h = this.nav.append('div').classed('site-banner', true);
+		var h = this.nav.append('header').classed('site-banner', true);
 		this.setBanner(newTitle);
 	}
 	
 	function SiteNavContainer(sitePanel)
 	{
 		this.sitePanel = sitePanel;
-		this.nav = sitePanel.panelDiv.append("nav")
+		this.nav = sitePanel.panelDiv.append('nav')
 					.attr("role", "navigation")
 		this.div = this.nav.append('div');
 	}

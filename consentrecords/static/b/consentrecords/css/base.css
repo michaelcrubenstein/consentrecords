@@ -294,11 +294,19 @@ panel.edit {
 	padding-left: 15px;
 	padding-right: 15px;
 	display: block;
-	font-size: 1.2em;
 	overflow-x: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	text-align: left;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+}
+
+.site-banner:only-of-type {
+	font-size: 1.2em;
 	font-weight: 600;
 	user-select: none;
 	-webkit-user-select: none;
