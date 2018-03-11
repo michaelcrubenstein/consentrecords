@@ -795,32 +795,6 @@
 			}
 		});
 		
-		function getFilter(node)
-		{
-			return function()
-			{
-				var val = this.value.toLocaleLowerCase();
-				if (val.length == 0)
-				{
-					/* Show all of the items. */
-					d3.select(node).selectAll("div")
-						.style("display", null);
-				}
-				else
-				{
-					/* Show the items whose description is this.value */
-					d3.select(node).selectAll("div")
-						.style("display", function(d)
-							{
-								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-									return null;
-								else
-									return "none";
-							});
-				}
-			}
-		}
-		
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 			return cr.submitSignout()
