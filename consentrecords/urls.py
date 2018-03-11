@@ -76,6 +76,9 @@ urlpatterns = [
     url(r'^api/(.*)/followingcounts/(.*)/', views.handleFollowingCounts),
     url(r'^api/(.*)/', views.handleURL),
     url(r'^api/$', views.handleURL),
+
+    url(r'^org/$', views.orgHome),
+    url(r'^org/(tisrael)/$', views.orgBase),
     
     url(r'^doc/features/', views.features),
 ]

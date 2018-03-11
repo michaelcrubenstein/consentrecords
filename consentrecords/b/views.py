@@ -121,32 +121,41 @@ def showLines(request):
     return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
-def orgHome(request):
-    logPage(request, 'pathAdvisor/orgHome')
+def orgBase(request, html):
+    logPage(request, 'pathAdvisor/%s' % html)
     
-    template = loader.get_template(templateDirectory + 'orgHome.html')
-    args = {
-        'user': request.user,
-        'jsversion': settings.JS_VERSION,
-        'cdn_url': settings.CDN_URL,
-    }
+    try:
+        template = loader.get_template(templateDirectory + 'org/%s.html' % html)
+        args = {
+            'user': request.user,
+            'jsversion': settings.JS_VERSION,
+            'cdn_url': settings.CDN_URL,
+        }
     
-    language = request.GET.get('language', 'en')
-    context = Context(language, request.user)
-    if request.user.is_authenticated:
-        user = context.user
-        if not user:
-            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id.hex
+        language = request.GET.get('language', 'en')
+        context = Context(language, request.user)
+        if request.user.is_authenticated:
+            user = context.user
+            if not user:
+                return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+            args['userID'] = user.id.hex
         
-    if settings.FACEBOOK_SHOW:
-        args['facebookIntegration'] = True
+        if settings.FACEBOOK_SHOW:
+            args['facebookIntegration'] = True
     
-    state = request.GET.get('state', None)
-    if state:
-        args['state'] = state
+        state = request.GET.get('state', None)
+        if state:
+            args['state'] = state
 
-    return HttpResponse(template.render(args))
+        return HttpResponse(template.render(args))
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponse(str(e))
+
+@ensure_csrf_cookie
+def orgHome(request):
+    return orgBase(request, 'orgHome')
 
 @ensure_csrf_cookie
 def find(request):

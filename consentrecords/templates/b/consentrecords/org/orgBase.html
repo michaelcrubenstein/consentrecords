@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
 
 	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-title" content="PathAdvisor Organization">
+	<meta name="apple-mobile-web-app-title" content={% block webAppTitle %}"PathAdvisor"{% endblock webAppTitle %}>
 	
 	{% if fbURL %}
     <meta property="og:url" content="{{fbURL}}">
@@ -17,7 +17,7 @@
     <meta property="og:description" content="{{fbDescription}}">
     {% endif %}
     
-    <title>PathAdvisor - Organization</title>
+    <title>{% block title %}PathAdvisor{% endblock title %}</title>
 
 	<link href="{% static "jqcloud2/dist/jqcloud.min.css" %}?v={{jsversion}}" rel="stylesheet">
 
@@ -52,9 +52,6 @@
     	.organization-section {
     		display: none;
     	}
-    	.username-label {
-    		padding-left: 15px;
-    	}
     </style>
 	</head>
 	
@@ -82,15 +79,16 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="initial" >
+  		<panel id="id_user_home_panel" class="initial site-panel" >
 			<nav role="navigation">
 				<div>
+				    <div class="site-title"></div>
 					<div class="right-link site-navbar-link site-active-text default-link sign-in-button">
 						<span id="sign-in-span">Sign&nbsp;In</span>
 					</div>
 				</div>
+				<header class="site-banner username-label"> </header>
 			</nav>
-			<h3 class="username-label"> </h3>
 			<div class="alert-container"></div>
 			<section class="button-section">
 				<section class="organization-section row-button-group">
@@ -165,7 +163,7 @@
 		{% endif %}
 		
 		/* Update the username label when a user signs in or out. */	
-		var usernameLabel = $(".username-label");
+		var usernameLabel = $("panel.initial .site-banner");
 		
 		cr.signedinUser.on("signin.cr changed.cr", usernameLabel[0], function(eventObject)
 		{
@@ -268,41 +266,6 @@
 			}
 		}
 		
-		function getFilter(node)
-		{
-			return function()
-			{
-				var val = this.value.toLocaleLowerCase();
-				if (val.length == 0)
-				{
-					/* Show all of the items. */
-					d3.select(node).selectAll("div")
-						.style("display", null);
-				}
-				else
-				{
-					/* Show the items whose description is this.value */
-					d3.select(node).selectAll("div")
-						.style("display", function(d)
-							{
-								if (d.description().toLocaleLowerCase().indexOf(val) >= 0)
-									return null;
-								else
-									return "none";
-							});
-				}
-			}
-		}
-		
-		function showFixedPanel(previousPanel, newNode)
-		{
-			var zIndex = parseInt($(previousPanel).css("z-index"))+1;
-			var panel = d3.select(newNode);
-			panel.style("z-index", zIndex);
-			
-			panel.showLeft().then(unblockClick);
-		}
-			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 			return cr.submitSignout()
@@ -353,6 +316,7 @@
 				.then(successFunction, cr.asyncFail);
 		}
 		
+		{% block showOrganizationPanel %}
 		/* Displays a panel in which the specified object's contents appear.
 		 */
 		function show_organization_panel(objectData, containerUUID, containerPanel) {
@@ -430,7 +394,7 @@
 					{
 						if (prepareClick('click', 'Manage Sessions'))
 						{
-							manage_session(organization, sitePanel.node());
+							manage_session(organization);
 						}
 					})
 					.classed('first', true);
@@ -449,6 +413,7 @@
 	
 			objectData.promiseData().then(successFunction, cr.asyncFail)
 		}
+		{% endblock showOrganizationPanel %}
 		
 		function pickChild(parent, data, previousPanelNode, header, successFunction)
 		{
@@ -533,8 +498,8 @@
 		
 		function enroll_inquiry(organization, previousPanelNode)
 		{
-			pickSessionFromOrganization(organization, previousPanelNode,
-				function(session, currentPanelNode)
+			pickSessionFromOrganization(organization,
+				function(session)
 				{
 					session.promiseInquiries().then(function()
 						{
@@ -824,7 +789,7 @@
 			pick_site(organization, previousPanelNode, pickSiteSuccess);
 		}
 		
-		function pickSessionFromOrganization(organization, previousPanelNode, sessionSuccess)
+		function pickSessionFromOrganization(organization, sessionSuccess)
 		{
 			function pickSessionSuccess(session, previousPanel)
 			{
@@ -833,7 +798,7 @@
 						{
 							try
 							{
-								sessionSuccess(session, previousPanel);
+								sessionSuccess(session);
 							}
 							catch(err) { cr.syncFail(err); }
 						},
@@ -842,17 +807,13 @@
 
 			var panel = new SessionsFromOrganizationPanel(organization, pickSessionSuccess);
 			panel.showLeft().always(unblockClick);
-// 			var pickOfferingSuccess = function(offering, pickOfferingPanel)
-// 			{
-// 				pick_session(offering, pickOfferingPanel, pickSessionSuccess);
-// 			}
-// 			pickOfferingFromOrganization(organization, previousPanelNode, pickOfferingSuccess);
 		}
 		
-		function manage_session(organization, panelDiv)
+		{% block manageSession %}
+		function manage_session(organization)
 		{
-			pickSessionFromOrganization(organization, panelDiv, 
-				function(session, previousPanel)
+			pickSessionFromOrganization(organization, 
+				function(session)
 				{
 					var controller = new SessionController(session.offering(), session, true);
 					controller.oldInstance(session);
@@ -860,11 +821,12 @@
 				    panel.showLeft().always(unblockClick);
 				});
 		}
+		{% endblock manageSession %}
 		
 		function record_participation(organization, previousNode)
 		{
-			pickSessionFromOrganization(organization, previousNode, 
-				function(session, previousPanel)
+			pickSessionFromOrganization(organization, 
+				function(session)
 				{
 					session.promiseEnrollments().then(
 						function()
