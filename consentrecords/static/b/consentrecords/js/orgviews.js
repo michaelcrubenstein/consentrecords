@@ -151,6 +151,7 @@ var ChildSearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	ChildSearchView.prototype.appendSearchArea = function()
@@ -207,6 +208,7 @@ var ChildrenPanel = (function () {
 						}
 					}
 					d3.event.preventDefault();
+					d3.event.stopPropagation();
 				});
 		addButton.text("+");
 		
@@ -474,6 +476,7 @@ var EnrollmentSearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	EnrollmentSearchView.prototype.fillItems = function(items)
@@ -945,6 +948,7 @@ var NewInquirySearchView = (function()
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	function NewInquirySearchView(sitePanel, parent)
@@ -1050,6 +1054,7 @@ var NewEnrollmentSearchView = (function()
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	function NewEnrollmentSearchView(sitePanel, parent)
@@ -1136,6 +1141,7 @@ var PickEngagementUserSearchView = (function()
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	function PickEngagementUserSearchView(sitePanel, parent, engagement)
@@ -1275,6 +1281,7 @@ var RootPanelSearchView = (function () {
 					cr.syncFail);
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	RootPanelSearchView.prototype.appendSearchArea = function()
@@ -1330,6 +1337,7 @@ var RootItemsPanel = (function () {
 						}
 					}
 					d3.event.preventDefault();
+					d3.event.stopPropagation();
 				});
 		addButton.text("+");
 	}
@@ -1549,6 +1557,7 @@ var NewGroupMemberSearchView = (function()
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	function NewGroupMemberSearchView(sitePanel, parent)
@@ -1622,6 +1631,7 @@ var GroupMemberSearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	GroupMemberSearchView.prototype.fillItems = function(items)
 	{
@@ -1709,6 +1719,7 @@ var InquirySearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	InquirySearchView.prototype.fillItems = function(items)
 	{
@@ -2258,6 +2269,7 @@ var PickPrimaryAdministratorPanel = (function() {
 					}
 				}
 				d3.event.preventDefault();
+				d3.event.stopPropagation();
 			})
 		    .text(crv.buttonTexts.done);
 		
@@ -2706,6 +2718,267 @@ var SessionsPanel = (function () {
 	}
 	
 	return SessionsPanel;
+	
+})();
+
+var DescendentSearchView = (function () {
+	DescendentSearchView.prototype = Object.create(PanelSearchView.prototype);
+	DescendentSearchView.prototype.constructor = DescendentSearchView;
+	
+	DescendentSearchView.prototype.pathType = null;
+	DescendentSearchView.prototype.textPath = null;
+	DescendentSearchView.prototype.parent = null;
+	
+	/* Overrides SearchView.searchPath */
+	DescendentSearchView.prototype.searchPath = function(val)
+	{
+		console.assert(this.pathType);	/* Make sure it is defined. */
+		console.assert(this.textPath);	/* Make sure it is defined. */
+		
+		var s = this.parent.urlPath() + '/' + this.pathType;
+		if (val.length == 0)
+			return s;
+		else
+		{
+			if (val.length < 3)
+				return s + '[' + this.textPath + '^="' + encodeURIComponent(val) + '"]';
+			else
+				return s + '[' + this.textPath + '*="' + encodeURIComponent(val) + '"]';
+		}
+	}
+	
+	DescendentSearchView.prototype.increment = function()
+	{
+		return 10;
+	}
+	
+	DescendentSearchView.prototype.fields = function()
+	{
+		return ["parents"];
+	}
+	
+	DescendentSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	DescendentSearchView.prototype.fillItems = function(items)
+	{
+		PanelSearchView.prototype.fillItems.call(this, items);
+		
+		var _this = this;
+		items.each(function(d)
+			{
+				setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
+					{
+						_this.getDataChunker.onItemDeleted();
+						$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
+						{
+							$(this).remove();
+						});
+					});
+				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
+					{
+						d3.select(eventObject.data).selectAll('div.description-text')
+							.text(d.description());
+					});
+			});
+	}
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	DescendentSearchView.prototype.onClickButton = function(d, i, button) {
+		var _this = this;
+		
+		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
+		{
+			try
+			{
+				showClickFeedback(button);
+				d.promiseData()
+					.then(function()
+						{
+							_this.showDescendent(d);
+						},
+						cr.syncFail);
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+
+		d3.event.preventDefault();
+		d3.event.stopPropagation();
+	}
+	
+	DescendentSearchView.prototype.appendSearchArea = function()
+	{
+		return PanelSearchView.prototype.appendSearchArea.call(this)
+			.classed('deletable-items', true);
+	}
+	
+	function DescendentSearchView(sitePanel, parent, placeholder) {
+		placeholder = placeholder !== undefined ? placeholder : crv.buttonTexts.search;
+		
+		this.parent = parent;
+		PanelSearchView.call(this, sitePanel, placeholder, GetDataChunker);
+	}
+	
+	return DescendentSearchView;
+})();
+
+var SessionFromOrganizationSearchView = (function () {
+	SessionFromOrganizationSearchView.prototype = Object.create(DescendentSearchView.prototype);
+	SessionFromOrganizationSearchView.prototype.constructor = SessionFromOrganizationSearchView;
+
+	SessionFromOrganizationSearchView.prototype.textPath = 'text';
+	SessionFromOrganizationSearchView.prototype.pathType = 'site/offering/session';
+	
+	SessionFromOrganizationSearchView.prototype.resultType = function()
+	{
+		return cr.Session;
+	}
+	
+	SessionFromOrganizationSearchView.prototype.controllerType = function()
+	{
+		return SessionController;
+	}
+	
+	SessionFromOrganizationSearchView.prototype.childPanelType = function()
+	{
+		return SessionPanel;
+	}
+	
+	SessionFromOrganizationSearchView.prototype.fillItems = function(items)
+	{
+		var descriptions = items.append('div')
+			.classed('description-text growable unselectable', true);
+		descriptions.append('div')
+			.classed('title', true)
+			.text(function(d) { return d.offering().description(); });
+		descriptions.append('div')
+			.text(function(d) { return d.site().description() != d.organization().description() ?
+									   d.site().description() :
+									   ""; });
+		descriptions.append('div')
+			.text(function(d) { return d.offering().description() != d.description() ?
+									   d.description() :
+									   ""; });
+	}
+	
+	SessionFromOrganizationSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (compareText.length === 0)
+			return true;
+			
+		var i = d.description().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
+		{
+			if (i == 0) return true;
+		}	
+		else
+		{
+			if (i >= 0) return true;
+		}
+		
+		/* If the offering name matches, then make this visible. */	
+		i = d.parent().description().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
+		{
+			if (i == 0) return true;
+		}	
+		else
+		{
+			if (i >= 0) return true;
+		}
+		
+		/* If the site name matches, then make this visible. */	
+		i = d.parent().parent().description().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
+		{
+			if (i == 0) return true;
+		}	
+		else
+		{
+			if (i >= 0) return true;
+		}
+			
+		return false;
+	}
+	
+	SessionFromOrganizationSearchView.prototype.showDescendent = function(d)
+	{
+		this.showSession(d)
+	}
+	
+	function SessionFromOrganizationSearchView(panel, parent) {
+		ChildSearchView.call(this, panel, parent);
+		this.showSession = panel.showSession;
+	}
+	
+	return SessionFromOrganizationSearchView;
+})();
+
+var DescendentsPanel = (function () {
+	DescendentsPanel.prototype = Object.create(EditPanel.prototype);
+	DescendentsPanel.prototype.constructor = DescendentsPanel;
+
+	DescendentsPanel.prototype.parent = null;
+	
+	DescendentsPanel.prototype.createRoot = function(objectData, header, onShow)
+	{
+		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
+
+		var _this = this;
+		var backButton = this.navContainer.appendLeftButton()
+			.classed('chevron-left-container', true)
+			.on('click', function()
+			{
+				_this.hide();
+			});
+		appendLeftChevronSVG(backButton).classed('chevron-left', true);
+		backButton.append('span').text("Back");
+
+		this.navContainer.appendTitle(header);
+
+		this.searchView = new (this.searchViewType)(this, this.parent);
+		$(this.node()).one('revealing.cr', function() {
+				if (_this.parent.id())
+				{
+					_this.searchView.search("");
+					if (_this.searchView.inputBox) 
+						_this.searchView.inputBox.focus();
+				}
+			});
+	}
+	
+	function DescendentsPanel(parent)
+	{
+		EditPanel.call(this);
+		this.parent = parent;
+	}
+	
+	return DescendentsPanel;
+	
+})();
+
+var SessionsFromOrganizationPanel = (function () {
+	SessionsFromOrganizationPanel.prototype = Object.create(DescendentsPanel.prototype);
+	SessionsFromOrganizationPanel.prototype.constructor = SessionsFromOrganizationPanel;
+
+	SessionsFromOrganizationPanel.prototype.searchViewType = SessionFromOrganizationSearchView;
+	
+	SessionsFromOrganizationPanel.prototype.savedItems = function()
+	{
+		return this.parent.sessions();
+	}
+	
+	function SessionsFromOrganizationPanel(organization, showSession, onShow) {
+		DescendentsPanel.call(this, organization);
+		this.showSession = showSession;
+		this.createRoot(organization, crv.buttonTexts.sessions, 'list', onShow);
+	}
+	
+	return SessionsFromOrganizationPanel;
 	
 })();
 

@@ -186,10 +186,10 @@ var FollowingPanel = (function() {
 		var _this = this;
 		var items = this._followingChunker.appendButtonContainers(foundObjects);
 
-		items.append('span').classed("left-expanding-div description-text growable unselectable", true)
+		items.append('span').classed('left-expanding-div description-text growable unselectable', true)
 			.text(_getDataDescription);
 		items.append('button')
-			.classed("compare-button", true)
+			.classed('compare-button', true)
 			.on("click", function(user) {
 				if (prepareClick('click', 'compare to: ' + user.description()))
 				{
@@ -301,7 +301,7 @@ var FollowingPanel = (function() {
 		var panel2Div = this.appendScrollArea();
 		
 		this._pendingSection = panel2Div.appendSections([user])
-				.classed("cell edit multiple", true);
+				.classed('cell edit multiple', true);
 
 		this._pendingSection.append("label")
 			.text("Pending Requests");
@@ -335,7 +335,7 @@ var FollowingPanel = (function() {
 			});
 			
 		this._followingSection = panel2Div.appendSections([user])
-				.classed("cell edit multiple", true);
+				.classed('cell edit multiple', true);
 
 		this._followingSection.append("label")
 			.text("Following");

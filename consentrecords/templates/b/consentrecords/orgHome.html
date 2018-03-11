@@ -27,6 +27,7 @@
     <link href="{% static "b/consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/findExperience.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -39,10 +40,6 @@
     <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <style>
-    	.consent-form-title {
-    	}
-    	.consent-record-accept-button {
-    	}
     	.button-section {
     		float: bottom;
     	}
@@ -55,74 +52,8 @@
     	.organization-section {
     		display: none;
     	}
-    	.level-2-panel {
-    		top: 0;
-    		z-index: 2;
-    	}
-    	.level-3-panel {
-    		top: 0;
-    		z-index: 3;
-    	}
-    	.level-4-panel {
-    		top: 0;
-    		z-index: 4;
-    	}
-    	panel#id_forgot_password_panel {
-    		background: white;
-    	}
     	.username-label {
     		padding-left: 15px;
-    	}
-    	.centered-right-glyph {
-			position: absolute;
-			top: 50%;
-			-moz-transform: translateY(-50%);
-			-webkit-transform: translateY(-50%);
-			transform: translateY(-50%);
-			float: right;
-			right: 12px;
-	   	}
-	   	.centered-right-2 {	/* To the left of a centered-right-glyph */
-			width: auto;
-			float: right;
-			margin-right: 24px;
-			text-align: right;
-	   	}
-    	.option-label {
-    		margin-top: 15px;
-    		margin-left: 15px;
-    	}
-    	.option-item {
-    		margin-top: 15px;
-    		margin-left: 45px;
-    	}
-    	panel.session {
-    		background: white;
-    	}
-    	panel.session header {
-			width: 100%;
-			padding: 6px 12px;
-			text-align: left;
-			font-weight: bold;
-    	}
-    	panel.session .organization {
-    		margin-left: 12px;
-    		padding-bottom: 5px;
-    		border-bottom: 1px solid #eee;
-    	}
-    	panel.session .organization>label {
-    		font-weight: normal;
-    	}
-    	panel.session .address-line {
-    		margin-left: 0px;
-    		font-size: smaller;
-    	}
-    	panel.session .more-info {
-			overflow: hidden;
-			width: auto;
-			display: block;
-    		font-size: smaller;
-    		padding: 6px 12px;
     	}
     </style>
 	</head>
@@ -300,6 +231,7 @@
 				}
 			}
 			e.preventDefault();
+			e.stopPropagation();
 		});
 
 		function checkSignin(previousPanel, done, message)
@@ -403,7 +335,7 @@
 					.append('li');
 				
 				divs.append('div')
-					.classed("growable unselectable site-active-text show-panel-button", true)
+					.classed('growable unselectable site-active-text show-panel-button', true)
 					.text(function(d) { return d.description(); });
 				
 				crf.appendRightChevrons(divs);
@@ -439,16 +371,13 @@
 	
 				var panel2Div = sitePanel.appendScrollArea();
 
-				var headerDiv = panel2Div.appendHeader();
-				function updatePanelHeader(eventObject)
-				{
-					d3.select(eventObject.data).text(this.description());
-				}
-				objectData.on("dataChanged.cr", headerDiv.node(), updatePanelHeader);
-				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
-				{
-					eventObject.data.off("dataChanged.cr", updatePanelHeader);
-				});
+				navContainer.appendBanner(objectData.description());
+				
+				setupOnViewEventHandler(objectData, 'dataChanged.cr', sitePanel.node(),
+					function (eventObject)
+						{
+							navContainer.setBanner(objectData.description());
+						});
 
 				sitePanel.showLeft().then(unblockClick);
 
@@ -897,24 +826,27 @@
 		
 		function pickSessionFromOrganization(organization, previousPanelNode, sessionSuccess)
 		{
-			var pickOfferingSuccess = function(offering, pickOfferingPanel)
+			function pickSessionSuccess(session, previousPanel)
 			{
-				function pickSessionSuccess(session, previousPanel)
-				{
-					session.promiseData()
-						.then(function()
+				session.promiseData()
+					.then(function()
+						{
+							try
 							{
-								try
-								{
-									sessionSuccess(session, previousPanel);
-								}
-								catch(err) { cr.syncFail(err); }
-							},
-							cr.syncFail);
-				}
-				pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+								sessionSuccess(session, previousPanel);
+							}
+							catch(err) { cr.syncFail(err); }
+						},
+						cr.syncFail);
 			}
-			pickOfferingFromOrganization(organization, previousPanelNode, pickOfferingSuccess);
+
+			var panel = new SessionsFromOrganizationPanel(organization, pickSessionSuccess);
+			panel.showLeft().always(unblockClick);
+// 			var pickOfferingSuccess = function(offering, pickOfferingPanel)
+// 			{
+// 				pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+// 			}
+// 			pickOfferingFromOrganization(organization, previousPanelNode, pickOfferingSuccess);
 		}
 		
 		function manage_session(organization, panelDiv)
@@ -925,7 +857,7 @@
 					var controller = new SessionController(session.offering(), session, true);
 					controller.oldInstance(session);
 				    var panel = new SessionPanel(controller, revealPanelLeft);
-				    revealPanelLeft(panel.node());
+				    panel.showLeft().always(unblockClick);
 				});
 		}
 		
@@ -975,6 +907,7 @@
 											syncFailFunction);
 									}
 									d3.event.preventDefault();
+									d3.event.stopPropagation();
 								});
 					
 							sitePanel.showLeft().then(unblockClick);

@@ -182,7 +182,7 @@ var crv = {
 		var parent = div.append('span');
 		var child = parent.append('span');
 		div.append('span')
-			.classed("help-block", true)
+			.classed('help-block', true)
 			.text("Loading...");
 		var opts = {
 		  lines: 13 // The number of lines to draw
@@ -482,7 +482,7 @@ function appendRowButtons(divs)
 		return divs.append("div");
 	else
 		return divs.append("div")
-				.classed("btn row-button", $(divs.node()).parents(".unique").length === 0);
+				.classed('btn row-button', $(divs.node()).parents(".unique").length === 0);
 }
 
 var crf = {
@@ -565,7 +565,7 @@ var crf = {
 				}
 			});
 		
-		items.classed("flex-deletable", true);						
+		items.classed('flex-deletable', true);						
 	
 		return items.append("button")
 			.text(crf.buttonNames.delete)
@@ -598,7 +598,7 @@ var crf = {
 	{
 		return items
 			.append("img")
-			.classed("site-chevron-right", true)
+			.classed('site-chevron-right', true)
 			.attr("src", rightChevronPath)
 			.attr("height", "18px");
 	},
@@ -674,7 +674,7 @@ function appendRightChevronSVG(container)
 function appendButtonDescriptions(buttons)
 {
 	return buttons.append("div")
-		.classed("description-text growable", true)
+		.classed('description-text growable', true)
 		.text(_getDataDescription);
 }
 
@@ -684,7 +684,7 @@ function appendButtonDescriptions(buttons)
 function appendDescriptions(items)
 {
 	return items.append("div")
-		.classed("description-text growable", true)
+		.classed('description-text growable', true)
 		.text(_getDataDescription)
 		.each(_pushTextChanged);
 }
@@ -694,7 +694,7 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
 	
 	var section = panel2Div.append("section")
-		.classed("cell multiple", true);
+		.classed('cell multiple', true);
 	
 	var itemsDiv = crf.appendItemList(section)
 		.classed('hover-items', true);
@@ -811,12 +811,12 @@ var SiteNavContainer = (function() {
 	
 	SiteNavContainer.prototype.appendButton = function()
 	{
-		return this.div.append("div").classed("site-navbar-link site-active-text", true);
+		return this.div.append("div").classed('site-navbar-link site-active-text', true);
 	}
 	
 	SiteNavContainer.prototype.appendLeftButton = function()
 	{
-		return this.div.append("div").classed("left-link site-navbar-link site-active-text", true);
+		return this.div.append("div").classed('left-link site-navbar-link site-active-text', true);
 	}
 	
 	SiteNavContainer.prototype.appendRightButton = function()
@@ -944,7 +944,7 @@ crv.SitePanel = (function () {
 		 */
 		this.panelDiv = rootPanel
 						.append("panel")
-						.classed("site-panel", true)
+						.classed('site-panel', true)
 						.datum(datum)
 						.attr("headerText", headerText)
 						.style('top', "{0}px".format($(window).innerHeight()))
@@ -989,7 +989,7 @@ crv.SitePanel = (function () {
     SitePanel.prototype.appendBottomNavContainer = function()
     {
     	var n = new SiteNavContainer(this);
-    	n.nav.classed("bottom", true);
+    	n.nav.classed('bottom', true);
     	return n;
     }
 	
@@ -1012,10 +1012,10 @@ crv.SitePanel = (function () {
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
 	{
-		var searchBar = this.panelDiv.append("div").classed("searchbar", true);
+		var searchBar = this.panelDiv.append("div").classed('searchbar', true);
 	
 		var searchCancelButton = searchBar.append("span")
-			.classed("search-cancel-button site-active-text", true);
+			.classed('search-cancel-button site-active-text', true);
 		searchCancelButton.append('span').text(crv.buttonTexts.cancel);
 	
 		var searchCancelButtonWidth = 0;
@@ -1026,11 +1026,11 @@ crv.SitePanel = (function () {
 			.css("padding-right", "0");
 	
 		var searchInputContainer = searchBar.append("div")
-			.classed("search-input-container", true);
+			.classed('search-input-container', true);
 		
 		var searchInput = searchInputContainer
 			.append("input")
-			.classed("search-input", true)
+			.classed('search-input', true)
 			.attr("placeholder", "Search");
 	
 		var lastText = "";	
@@ -1110,9 +1110,9 @@ crv.SitePanel = (function () {
 		var _this = this;
 		this.panelDiv.append('div').classed('alert-container', true);
 		var panel2Div = this.panelDiv
-			.append("div").classed("body", true)
+			.append("div").classed('body', true)
 			.append("div")
-			.append("div").classed("panel-fill", true)
+			.append("div").classed('panel-fill', true)
 			.style("overflow-y", "hidden");
 			
 		return panel2Div;
@@ -1150,7 +1150,7 @@ crv.SitePanel = (function () {
 	{
 		var _this = this;
 		this.mainDiv = this.panelDiv
-			.append("div").classed("panel-fill vertical-scrolling", true);
+			.append("div").classed('panel-fill vertical-scrolling', true);
 		
 		$(this.node()).on('revealing.cr', function()
 			{
@@ -1191,7 +1191,7 @@ crv.SitePanel = (function () {
 		var item = itemsDiv.append('li');
 			
 		item.append('div')
-			.classed("text-fill site-active-text growable unselectable", true)
+			.classed('text-fill site-active-text growable unselectable', true)
 			.text(text);
 				
 		return sectionDiv;	
@@ -1642,14 +1642,14 @@ var SearchView = (function () {
 	
 	SearchView.prototype.appendInput = function(containerNode, placeholder)
 	{
-		var searchBar = d3.select(containerNode).append("div").classed("searchbar", true);
+		var searchBar = d3.select(containerNode).append("div").classed('searchbar', true);
 	
 		var searchInputContainer = searchBar.append("div")
-			.classed("search-input-container", true);
+			.classed('search-input-container', true);
 		
 		return searchInputContainer
 			.append("input")
-			.classed("search-input", true)
+			.classed('search-input', true)
 			.attr("placeholder", placeholder);
 	}
 	
@@ -2128,7 +2128,7 @@ var EditItemPanel = (function () {
 	EditItemPanel.prototype.appendTranslationEditor = function(section, container, sectionLabel, placeholder, data, dataType)
 	{
 		var _this = this;
-		section.classed("string translation", true);
+		section.classed('string translation', true);
 		var itemsDiv = crf.appendItemList(section);
 	
 		function appendInputControls(items)
@@ -2455,7 +2455,7 @@ var PickFromListPanel = (function () {
 		this.navContainer.appendTitle(this.title);
 
 		var section = this.appendScrollArea().append("section")
-			.classed("cell multiple", true);
+			.classed('cell multiple', true);
 		var itemsDiv = crf.appendItemList(section)
 			.classed('hover-items checkable', true);
 			
@@ -2546,7 +2546,7 @@ var ConfirmPanel = (function() {
 	ConfirmPanel.prototype.appendButton = function()
 	{
 		return this.div.append('button')
-				.classed("site-active-text", true);
+				.classed('site-active-text', true);
 	}
 	
 	function ConfirmPanel() {
@@ -2594,7 +2594,7 @@ var GrantsPanel = (function() {
 				}
 				d3.event.preventDefault();
 			});
-		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		appendLeftChevronSVG(backButton).classed('site-active-text chevron-left', true);
 		backButton.append('span').text(backButtonText);
 		
 		return backButton;
@@ -2651,7 +2651,7 @@ var GrantsPanel = (function() {
 		crf.appendDeleteControls(items);
 
 		items.append("div")
-			.classed("description-text growable unselectable", true)
+			.classed('description-text growable unselectable', true)
 			.text(_getDataDescription)
 			.each(_pushTextChanged);
 

@@ -126,6 +126,14 @@ label {
   color: #843534;
 }
 
+.text-danger {
+	color:#a94442
+}
+
+a.text-danger:focus,a.text-danger:hover {
+	color:#843534
+}
+
 .close {
 	float: right;
 	font-size: 21px;
@@ -617,6 +625,15 @@ panel.list .description-text {
 
 li>div.description-text>div.documentation {
 	padding: .5em 1em;
+	font-size: 0.8em;
+	color: #666;
+}
+
+li>div.description-text>div.title {
+	font-weight: bold; 
+}
+
+li>div.description-text>div.title~div {
 	font-size: 0.8em;
 	color: #666;
 }

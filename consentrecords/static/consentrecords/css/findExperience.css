@@ -1,0 +1,31 @@
+/* The session panel is used to display a session that a user can inquire about in the
+	findExperience workflow.
+ */
+panel.session {
+	background: white;
+}
+panel.session header {
+	width: 100%;
+	padding: 6px 12px;
+	text-align: left;
+	font-weight: bold;
+}
+panel.session .organization {
+	margin-left: 12px;
+	padding-bottom: 5px;
+	border-bottom: 1px solid #eee;
+}
+panel.session .organization>label {
+	font-weight: normal;
+}
+panel.session .address-line {
+	margin-left: 0px;
+	font-size: smaller;
+}
+panel.session .more-info {
+	overflow: hidden;
+	width: auto;
+	display: block;
+	font-size: smaller;
+	padding: 6px 12px;
+}

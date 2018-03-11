@@ -470,7 +470,7 @@ var OrganizationLinkSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
+				var leftText = d3.select(this).append('div').classed('left-expanding-div description-text growable', true);
 				if (d instanceof cr.Site)
 				{
 					/* The organization name is either a value of d or, if d is a value
@@ -488,7 +488,7 @@ var OrganizationLinkSearchView = (function() {
 					}
 					else
 					{
-						orgDiv = leftText.append('div').classed("organization", true);		
+						orgDiv = leftText.append('div').classed('organization', true);		
 						orgDiv.append('div').text(orgValue.description());
 						orgDiv.append('div')
 							.classed('address-line', true)
@@ -742,14 +742,14 @@ var SiteLinkSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
+				var leftText = d3.select(this).append('div').classed('left-expanding-div description-text growable', true);
 				if (d instanceof cr.Offering)
 				{
 					leftText.append('div')
 						.classed('title', true).text(d.description());
 
 					var orgDiv = leftText.append('div')
-						.classed("organization", true);
+						.classed('organization', true);
 					orgDiv.append('div')
 						.classed('address-line', true)
 						.text(d.organization().description());
@@ -779,7 +779,7 @@ var SiteLinkSearchView = (function() {
 					}
 					else
 					{
-						orgDiv = leftText.append('div').classed("organization", true);		
+						orgDiv = leftText.append('div').classed('organization', true);		
 						orgDiv.append('div').text(orgValue.description());
 						orgDiv.append('div')
 							.classed('address-line', true)
@@ -1089,7 +1089,7 @@ var OfferingLinkSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
+				var leftText = d3.select(this).append('div').classed('left-expanding-div description-text growable', true);
 				if (d instanceof cr.Offering)
 				{
 					if (_this.experienceController.site() && _this.experienceController.site().id() == d.site().id())
@@ -1099,7 +1099,7 @@ var OfferingLinkSearchView = (function() {
 						leftText.append('div')
 							.classed('title', true).text(d.description());
 	
-						orgDiv = leftText.append('div').classed("organization", true);
+						orgDiv = leftText.append('div').classed('organization', true);
 						if (d.organization().id() !=
 							(_this.experienceController.organization() && _this.experienceController.organization().id()))
 							orgDiv.append('div').text(d.organization().description());
@@ -1716,8 +1716,8 @@ var NewExperiencePanel = (function () {
 		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
 		this.createRoot(this.title, showFunction);
-		this.panelDiv.classed("experience new-experience-panel", true);
-		this.mainDiv.classed("vertical-scrolling", false);
+		this.panelDiv.classed('experience new-experience-panel', true);
+		this.mainDiv.classed('vertical-scrolling', false);
 		
 		var hidePanel = function() { 
 				_this.hide()
@@ -1753,7 +1753,7 @@ var NewExperiencePanel = (function () {
 					function() {
 						_this.handleDeleteButtonClick();
 					})
-				.append("span").classed("text-danger", true).text("Delete");
+				.append("span").classed('text-danger', true).text("Delete");
 		}
 
 		var section;
