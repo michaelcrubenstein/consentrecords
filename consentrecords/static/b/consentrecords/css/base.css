@@ -126,6 +126,14 @@ label {
   color: #843534;
 }
 
+.text-danger {
+	color:#a94442
+}
+
+a.text-danger:focus,a.text-danger:hover {
+	color:#843534
+}
+
 .close {
 	float: right;
 	font-size: 21px;
