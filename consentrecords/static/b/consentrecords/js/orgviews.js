@@ -176,9 +176,17 @@ var ChildrenPanel = (function () {
 
 	ChildrenPanel.prototype.parent = null;
 	
-	ChildrenPanel.prototype.createRoot = function(objectData, header, onShow)
+	ChildrenPanel.prototype.appendHeader = function(objectData, header)
 	{
+		this.navContainer.appendTitle(header);
+	}
+	
+	ChildrenPanel.prototype.createRoot = function(objectData, header, onShow, backButtonText)
+	{
+		backButtonText = backButtonText !== undefined ? backButtonText : "Back";
+		
 		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
+		this.panelDiv.classed('list', true);
 
 		var _this = this;
 		var backButton = this.navContainer.appendLeftButton()
@@ -188,9 +196,9 @@ var ChildrenPanel = (function () {
 				_this.hide();
 			});
 		appendLeftChevronSVG(backButton).classed('chevron-left', true);
-		backButton.append('span').text("Back");
+		backButton.append('span').text(backButtonText);
 
-		this.navContainer.appendTitle(header);
+		this.appendHeader(objectData, header);
 
 		var addButton = this.navContainer.appendRightButton()
 				.classed('add-button', true)
@@ -526,7 +534,7 @@ var EnrollmentsPanel = (function () {
 	
 	function EnrollmentsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.enrollments, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.enrollments, onShow);
 	}
 	
 	return EnrollmentsPanel;
@@ -583,9 +591,22 @@ var EngagementsPanel = (function () {
 		return this.parent.engagements();
 	}
 	
-	function EngagementsPanel(parent, onShow) {
+	EngagementsPanel.prototype.appendHeader = function(objectData, header)
+	{
+		this.navContainer.appendTitle('');
+		var div = this.navContainer.nav.append('div').classed('detail', true);
+		div = div.append('div')
+		div.append('div').classed('flag-label', true).text(objectData.offering().description());
+		if (objectData.description() != objectData.offering().description())
+			div.append('div').text(objectData.description());
+		if (objectData.site().description() != objectData.organization().description())
+			div.append('div').text(objectData.site().description());
+		div.append('div').classed('sub-header', true).text(header);
+	}
+	
+	function EngagementsPanel(parent, onShow, backButtonText) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.engagements, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.engagements, onShow, backButtonText);
 	}
 	
 	return EngagementsPanel;
@@ -725,7 +746,7 @@ var PeriodsPanel = (function () {
 
 	function PeriodsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.periods, "list", onShow);
+		this.createRoot(parent, crv.buttonTexts.periods, onShow);
 	}
 	
 	return PeriodsPanel;
@@ -1491,7 +1512,7 @@ var GroupsPanel = (function () {
 	
 	function GroupsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.groups, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.groups, onShow);
 	}
 	
 	return GroupsPanel;
@@ -1680,7 +1701,7 @@ var GroupMembersPanel = (function () {
 	
 	function GroupMembersPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.members, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.members, onShow);
 	}
 	
 	return GroupMembersPanel;
@@ -1768,7 +1789,7 @@ var InquiriesPanel = (function () {
 	
 	function InquiriesPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.inquiries, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.inquiries, onShow);
 	}
 	
 	return InquiriesPanel;
@@ -1905,7 +1926,7 @@ var OfferingsPanel = (function () {
 	
 	function OfferingsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.offerings, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.offerings, onShow);
 	}
 	
 	return OfferingsPanel;
@@ -2714,7 +2735,7 @@ var SessionsPanel = (function () {
 	
 	function SessionsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.sessions, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.sessions, onShow);
 	}
 	
 	return SessionsPanel;
@@ -2975,7 +2996,7 @@ var SessionsFromOrganizationPanel = (function () {
 	function SessionsFromOrganizationPanel(organization, showSession, onShow) {
 		DescendentsPanel.call(this, organization);
 		this.showSession = showSession;
-		this.createRoot(organization, crv.buttonTexts.sessions, 'list', onShow);
+		this.createRoot(organization, organization.description(), 'list', onShow);
 	}
 	
 	return SessionsFromOrganizationPanel;
@@ -3090,7 +3111,7 @@ var SitesPanel = (function () {
 	
 	function SitesPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.sites, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.sites, onShow);
 	}
 	
 	return SitesPanel;
