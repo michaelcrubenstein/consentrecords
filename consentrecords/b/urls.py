@@ -20,7 +20,6 @@ from consentrecords.b import views
 urlpatterns = [
     
     url(r'^$', views.home),
-    url(r'^org/$', views.orgHome),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^find/', views.find),
     url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
@@ -47,4 +46,6 @@ urlpatterns = [
     url(r'^services/', views.showServices),
     url(r'^users/', views.showUsers),
 
+    url(r'^org/$', views.orgHome),
+    url(r'^org/(tisrael)/$', views.orgBase),
 ]
