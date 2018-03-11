@@ -621,6 +621,15 @@ li>div.description-text>div.documentation {
 	color: #666;
 }
 
+li>div.description-text>div.title {
+	font-weight: bold; 
+}
+
+li>div.description-text>div.title~div {
+	font-size: 0.8em;
+	color: #666;
+}
+
 .cell.edit.translation li select {
 	width: 80px;
 	margin-right: 12px;

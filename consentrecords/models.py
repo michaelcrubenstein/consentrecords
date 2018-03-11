@@ -247,6 +247,11 @@ def _filterClause(tokens, user, qsType, accessType, prefix=''):
                 return Q((prefix+'pk', tokens[2]))
             else:
                 raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
+    elif fieldName == 'text' and 'textQuery' in qsType.__dict__:
+        if len(tokens) != 3:
+            raise ValueError("unrecognized path contents after element '%s' within [] for %s" % (tokens[0], "".join(tokens)))
+        else:
+            return qsType.textQuery(prefix, tokens[1], tokens[2])
     else:
         raise ValueError("unrecognized path contents within [] for %s (expecting one of (%s))" % ("".join(tokens), ", ".join(qsType.elementMap.keys())))
 
@@ -5072,6 +5077,21 @@ class Session(ChildInstance, dbmodels.Model):
 
     def __str__(self):
         return self.description()
+        
+    def textQuery(prefix, symbol, testValue):
+        if symbol == '^=':
+            operator = 'istartswith'
+        elif symbol == '*=':
+            operator = 'iregex'
+            testValue = '[[:<:]]' + testValue
+        elif symbol == '=':
+            operator = 'iexact'
+        else:
+            raise ValueError("unrecognized operator for text query: %s" % (symbol))        
+        
+        return Q(('%snames__text__%s' % (prefix, operator), testValue)) | \
+               Q(('%sparent__names__text__%s' % (prefix, operator), testValue)) | \
+               Q(('%sparent__parent__names__text__%s' % (prefix, operator), testValue))
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
@@ -5134,7 +5154,7 @@ class Session(ChildInstance, dbmodels.Model):
             
             data['periods'] = [i.getData([], context) for i in self.currentPeriods]
             data['periods'].sort(key=lambda s: s['description'])
-                
+        
         if 'parents' in fields:
             if 'offering' in fields:
                 data['offering'] = self.parent.getData([], context)
@@ -5163,11 +5183,24 @@ class Session(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
+	# Order sessions by site name, offering name and session name.
     def order_by(queryset, context):
-        return queryset.filter(Q(names__deleteTransaction__isnull=True)& 
-                               (Q(names__languageCode=context.languageCode)|(Q(names__languageCode='en')&~Q(names__parent__names__languageCode=context.languageCode))))\
-                       .order_by('names__text')
-    
+        w1=When(names__languageCode=context.languageCode, names__deleteTransaction__isnull=True, then='names__text')
+        pw1=When(parent__names__languageCode=context.languageCode, parent__names__deleteTransaction__isnull=True, then='parent__names__text')
+        ppw1=When(parent__parent__names__languageCode=context.languageCode, parent__parent__names__deleteTransaction__isnull=True, then='parent__parent__names__text')
+        if context.languageCode=='en':
+            return queryset.annotate(ordering=Min(Case(w1)), pOrdering=Min(Case(pw1)), ppOrdering=Min(Case(ppw1))).order_by('ppOrdering', 'pOrdering', 'ordering')
+        else:
+            w2=When(names__languageCode='en', names__deleteTransaction__isnull=True, then='names__text')
+            pw2=When(parent__names__languageCode='en', parent__names__deleteTransaction__isnull=True, then='parent__names__text')
+            ppw2=When(parent__parent__names__languageCode='en', parent__parent__names__deleteTransaction__isnull=True, then='parent__parent__names__text')
+            return queryset.annotate(ordering=Min(Case(w1)), orderingen=Min(Case(w2)),
+            	pOrdering=Min(Case(pw1)), pOrderingen=Min(Case(pw2)),
+            	ppOrdering=Min(Case(ppw1)), ppOrderingen=Min(Case(ppw2)))\
+                .order_by(Case(When(ppOrdering__isnull=False, then='ppOrdering'), default='ppOrderingen'),
+                	Case(When(pOrdering__isnull=False, then='pOrdering'), default='pOrderingen'),
+                	Case(When(ordering__isnull=False, then='ordering'), default='orderingen'))
+        
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:
             name.markDeleted(context)

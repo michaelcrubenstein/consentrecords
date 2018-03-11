@@ -231,6 +231,7 @@
 				}
 			}
 			e.preventDefault();
+			e.stopPropagation();
 		});
 
 		function checkSignin(previousPanel, done, message)
@@ -370,16 +371,13 @@
 	
 				var panel2Div = sitePanel.appendScrollArea();
 
-				var headerDiv = panel2Div.appendHeader();
-				function updatePanelHeader(eventObject)
-				{
-					d3.select(eventObject.data).text(this.description());
-				}
-				objectData.on("dataChanged.cr", headerDiv.node(), updatePanelHeader);
-				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
-				{
-					eventObject.data.off("dataChanged.cr", updatePanelHeader);
-				});
+				navContainer.appendBanner(objectData.description());
+				
+				setupOnViewEventHandler(objectData, 'dataChanged.cr', sitePanel.node(),
+					function (eventObject)
+						{
+							navContainer.setBanner(objectData.description());
+						});
 
 				sitePanel.showLeft().then(unblockClick);
 
@@ -828,24 +826,27 @@
 		
 		function pickSessionFromOrganization(organization, previousPanelNode, sessionSuccess)
 		{
-			var pickOfferingSuccess = function(offering, pickOfferingPanel)
+			function pickSessionSuccess(session, previousPanel)
 			{
-				function pickSessionSuccess(session, previousPanel)
-				{
-					session.promiseData()
-						.then(function()
+				session.promiseData()
+					.then(function()
+						{
+							try
 							{
-								try
-								{
-									sessionSuccess(session, previousPanel);
-								}
-								catch(err) { cr.syncFail(err); }
-							},
-							cr.syncFail);
-				}
-				pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+								sessionSuccess(session, previousPanel);
+							}
+							catch(err) { cr.syncFail(err); }
+						},
+						cr.syncFail);
 			}
-			pickOfferingFromOrganization(organization, previousPanelNode, pickOfferingSuccess);
+
+			var panel = new SessionsFromOrganizationPanel(organization, pickSessionSuccess);
+			panel.showLeft().always(unblockClick);
+// 			var pickOfferingSuccess = function(offering, pickOfferingPanel)
+// 			{
+// 				pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+// 			}
+// 			pickOfferingFromOrganization(organization, previousPanelNode, pickOfferingSuccess);
 		}
 		
 		function manage_session(organization, panelDiv)
@@ -856,7 +857,7 @@
 					var controller = new SessionController(session.offering(), session, true);
 					controller.oldInstance(session);
 				    var panel = new SessionPanel(controller, revealPanelLeft);
-				    revealPanelLeft(panel.node());
+				    panel.showLeft().always(unblockClick);
 				});
 		}
 		
@@ -906,6 +907,7 @@
 											syncFailFunction);
 									}
 									d3.event.preventDefault();
+									d3.event.stopPropagation();
 								});
 					
 							sitePanel.showLeft().then(unblockClick);
