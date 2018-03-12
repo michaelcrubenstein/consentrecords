@@ -984,8 +984,12 @@ var PathView = (function() {
 	{
 		var containerBounds = this.containerDiv.getBoundingClientRect();
 		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
-		var svgHeight = containerBounds.height;
+		var pathwayBorder = pathwayBounds.height - $(this.svg.node()).height();
+		/* Initialize svgHeight to the maximum height the svg can be without causing any scrolling. */
+		var svgHeight = containerBounds.height - pathwayBounds.top - pathwayBorder;
 		
+		/* If the last flag is beyond svgHeight, then increase svgHeight so that all of the flags
+			can be seen by scrolling. */
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
 		var flagHeights = (lastFlag.size() ? lastFlag.datum().y2 + this.experienceGroupDY : this.experienceGroupDY) * this.emToPX + this.bottomNavHeight;
 		if (svgHeight < flagHeights)
