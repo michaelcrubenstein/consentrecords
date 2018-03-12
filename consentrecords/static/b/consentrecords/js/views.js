@@ -1133,11 +1133,6 @@ crv.SitePanel = (function () {
 		if (this.mainDiv)
 		{
 			var mainNode = $(this.mainDiv.node());
-			mainNode.css('height', "{0}px".format(mainNode.getFillHeight()))
-				.one('resize.cr', function(eventObject)
-				{
-					eventObject.stopPropagation();
-				});
 			
 			/* Since calculateHeight is first called within revealing.cr, 
 				resize handlers should be set up in subsequent revealing.cr handlers.
@@ -1309,7 +1304,8 @@ crv.SitePanel = (function () {
 			$('.site-panel').css('height', '{0}px'.format($(window).innerHeight()))
 				.each(function()
 				{
-					this.sitePanel.calculateHeight();
+					if (this.sitePanel)
+						this.sitePanel.calculateHeight();
 					$(this).trigger('resize.cr');
 				});
 		});
@@ -1685,7 +1681,7 @@ var PanelSearchView = (function() {
 	
 	PanelSearchView.prototype.appendSearchArea = function()
 	{
-		return crf.appendItemList(this.sitePanel.appendScrollArea())
+		return crf.appendItemList(this.sitePanel.mainDiv || this.sitePanel.appendScrollArea())
 			.classed('hover-items', true);
 	}
 	
@@ -1784,7 +1780,6 @@ var EditPanel = (function() {
 	{
 		crv.SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
 		this.navContainer = this.appendNavContainer();
-		this.appendScrollArea();
 	}
 
 	function EditPanel()
@@ -2364,6 +2359,7 @@ var EditItemPanel = (function () {
 		canCancel = (canCancel !== undefined) ? canCancel : true;
 		var _this = this;
 		EditPanel.prototype.createRoot.call(this, null, header, onShow);
+		this.appendScrollArea();
 
 		if (canCancel)
 		{

@@ -212,7 +212,8 @@ body {
 body>panel {
 	height: 100%;
 	width: 100%;
-	display: block;
+	display: flex;
+	flex-direction: column;
 	position: fixed;
 	overflow-y: hidden;
 }
@@ -237,6 +238,7 @@ panel.initial {
 .panel-fill {
 	position: relative;
 	width: 100%;
+	flex-grow: 100;
 }
 
 .vertical-scrolling {

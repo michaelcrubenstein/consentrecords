@@ -2223,6 +2223,8 @@ var PickPrimaryAdministratorPanel = (function() {
 	{
 		var _this = this;
 		EditPanel.prototype.createRoot.call(this, organization, title, revealPanelLeft);
+		this.appendScrollArea();
+
 		this.navContainer.appendLeftButton()
 			.on('click', function()
 				{
