@@ -1169,10 +1169,12 @@ def updateUsername(request):
     
     try:
         with transaction.atomic():
-            results = userviews.updateUsernameResults(request)
             languageCode = request.POST.get('languageCode', 'en')
             context = Context(languageCode, request.user)
             emails = context.user.currentEmailsQuerySet
+
+            results = userviews.updateUsernameResults(request)
+            context.authUser = request.user
             emails[0].update({'text': request.user.email}, context, {})
     except Exception as e:
         logger = logging.getLogger(__name__)
