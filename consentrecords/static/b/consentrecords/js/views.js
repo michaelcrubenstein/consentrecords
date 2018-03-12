@@ -1309,7 +1309,8 @@ crv.SitePanel = (function () {
 			$('.site-panel').css('height', '{0}px'.format($(window).innerHeight()))
 				.each(function()
 				{
-					this.sitePanel.calculateHeight();
+					if (this.sitePanel)
+						this.sitePanel.calculateHeight();
 					$(this).trigger('resize.cr');
 				});
 		});
