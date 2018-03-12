@@ -5830,8 +5830,15 @@ class User(SecureRootInstance, dbmodels.Model):
             raise ValueError('first email for user contains no text')
         elif not _isEmail(data['emails'][0]['text']):
             raise ValueError('text of first email for user is not a valid email address')
+        elif User.objects.filter(deleteTransaction__isnull=True, 
+                                   emails__text__in=map(lambda e: e['text'].lower(), data['emails']), 
+                                   emails__deleteTransaction__isnull=True).exists():
+            raise ValueError('this email address is already assigned to a user')
         
         User.validateBirthday(data, 'birthday')
+        
+        # Force all email addresses to lowercase
+        for e in data['emails']: e['text'] = e['text'].lower()
         
         email = data['emails'][0]['text']
         firstName = _orNone(data, 'first name')

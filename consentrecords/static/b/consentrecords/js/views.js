@@ -531,7 +531,8 @@ var crf = {
 					var $button = $this.parent().children('button:last-of-type');
 					
 					$this.parent().stop();
-					$button.css('opacity', 1);
+					$button.css('display', '')
+						   .css('opacity', 1);
 					$this.children().animateRotate(90, 180, 600, 'swing');
 					$this.parent().animate({'width': $this.parent().parent().innerWidth()},
 											 {duration: 600,
@@ -570,6 +571,7 @@ var crf = {
 		return items.append("button")
 			.text(crf.buttonNames.delete)
 			.style('opacity', 0)
+			.style('display', 'none')
 			.on('blur', function(e)
 			{
 				var deleteButton = $(this.parentNode).find("button:first-of-type");
@@ -585,7 +587,8 @@ var crf = {
 								.promise()
 								.done(function()
 									{
-										confirmButtons.css('opacity', 0);
+										confirmButtons.css('opacity', 0)
+											.css('display', 'none');
 									});
 			})
 			.on('click', onClick);
