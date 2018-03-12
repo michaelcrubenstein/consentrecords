@@ -932,7 +932,6 @@ var PathView = (function() {
 			.attr('fill', this.pathBackground);
 			
 		this.loadingMessage = crv.appendLoadingMessage(this.pathwayContainer.node())
-			.style('position', 'absolute')
 			.style('left', '0')
 			.style('top', '{0}px'.format(this.experienceGroupDY * this.emToPX));
 		

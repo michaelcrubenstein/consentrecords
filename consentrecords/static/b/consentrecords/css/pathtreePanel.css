@@ -31,6 +31,10 @@ div.pathlines {
 	top: 45px;
 }
 
+div.pathlines>.loading {
+	position: absolute;
+}
+
 svg.pathway {
 	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
 	font-size: 12px;
