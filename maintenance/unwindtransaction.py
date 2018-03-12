@@ -249,7 +249,7 @@ def printTransaction(t):
                t.createdUsers, t.changedUsers, 
                t.deletedUsers, t.userHistories)
     
-    authUsers = list(filter(lambda au: not au.is_anonymous, 
+    authUsers = list(filter(lambda au: not au.is_anonymous and User.getAuthorizedUserQuerySet(au).count() == 1, 
                             map(lambda u: u.authUser, t.createdUsers.all())))
         
     for au in authUsers:
@@ -397,7 +397,7 @@ if __name__ == "__main__":
             revertChanged(t.changedUserUserGrantRequests)
             revertDeleted(t.deletedUserUserGrantRequests)
 
-            authUsers = list(filter(lambda au: not au.is_anonymous, 
+            authUsers = list(filter(lambda au: not au.is_anonymous and User.getAuthorizedUserQuerySet(au).count() == 1, 
                                     map(lambda u: u.authUser, t.createdUsers.all())))
         
             n, d = t.delete()
