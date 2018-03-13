@@ -524,17 +524,19 @@ var crf = {
 			.classed('delete', true)
 			.on('click', function(e)
 			{
-				if ($(this).css("opacity") > 0 &&
+				if ($(this).css('opacity') > 0 &&
 					prepareClick('click', 'delete button'))
 				{
 					var $this = $(this);
-					var $button = $this.parent().children('button:last-of-type');
+					var $parent = $this.parent();
+					var $button = $parent.children('button:last-of-type');
 					
-					$this.parent().stop();
-					$button.css('display', '')
-						   .css('opacity', 1);
+					$parent.stop();
+					$button.css('display', '');
+					$parent.width(crf.getDeletableItemWidth($parent));
+					
 					$this.children().animateRotate(90, 180, 600, 'swing');
-					$this.parent().animate({'width': $this.parent().parent().innerWidth()},
+					$parent.animate({'width': $parent.parent().innerWidth()},
 											 {duration: 600,
 											  easing: 'swing',
 											  done: function () 
@@ -568,27 +570,24 @@ var crf = {
 		
 		items.classed('flex-deletable', true);						
 	
-		return items.append("button")
+		return items.append('button')
 			.text(crf.buttonNames.delete)
-			.style('opacity', 0)
 			.style('display', 'none')
 			.on('blur', function(e)
 			{
-				var deleteButton = $(this.parentNode).find("button:first-of-type");
+				var deleteButton = $(this.parentNode).find('button:first-of-type');
 				deleteButton.children().animateRotate(180, 90, 400);
 
+				var $parent = $(this.parentNode);
 				var confirmButtons = $(this);
-				var rightHiddenWidth = confirmButtons.outerWidth();
-				var newWidth = confirmButtons.parent().parent().innerWidth() + 
-							   rightHiddenWidth;
-				confirmButtons.parent().animate({'width': newWidth},
-										 {duration: 400,
-										  easing: 'swing'})
+				var newWidth = crf.getDeletableItemWidth($parent);
+				$parent.animate({'width': newWidth},
+								{duration: 400, easing: 'swing'})
 								.promise()
 								.done(function()
 									{
-										confirmButtons.css('opacity', 0)
-											.css('display', 'none');
+										confirmButtons.css('display', 'none');
+										$parent.width($parent.parent().innerWidth());
 									});
 			})
 			.on('click', onClick);
@@ -606,20 +605,24 @@ var crf = {
 			.attr("height", "18px");
 	},
 	
+	getDeletableItemWidth: function($parent)
+	{
+		var confirmButtons = $parent.children('button:last-of-type');
+		var rightHiddenWidth = confirmButtons.css('display') == 'none' ? 0 : confirmButtons.outerWidth();
+		return $parent.parent().innerWidth() + 
+							   rightHiddenWidth;
+	},
+	
 	showDeleteControls: function(dials, duration)
 	{
 		duration = duration !== undefined ? duration : 400;
 		
 		dials.animate({opacity: 1}, duration);
 		
-		var confirmButtons = dials.parent().children('button:last-of-type');
-		
 		/* Calculate the widths after a timeout so that metrics are guaranteed to be correct. */
 		setTimeout(function()
 			{
-				var rightHiddenWidth = confirmButtons.outerWidth();
-				var newWidth = dials.parent().parent().innerWidth() + 
-							   rightHiddenWidth;
+				var newWidth = crf.getDeletableItemWidth(dials.parent());
 				dials.parent().animate({left: "0px", width: newWidth}, {duration:duration});
 			});
 	},
@@ -639,11 +642,7 @@ var crf = {
 		var newLeft = dialWidth + parseInt(dials.css('padding-left'));
 		
 		/* Extend each item by the width of its confirm delete button. */
-		var confirmButtons = dials.parent().children('button:last-of-type');
-		var rightHiddenWidth = confirmButtons.outerWidth();
-		var newWidth = newLeft + 
-					   dials.parent().parent().innerWidth() + 
-					   rightHiddenWidth;
+		var newWidth = newLeft + crf.getDeletableItemWidth(dials.parent());
 		dials.parent().animate({left: -newLeft, width: newWidth}, duration);
 		dials.animate({opacity: 0}, duration);
 	}
