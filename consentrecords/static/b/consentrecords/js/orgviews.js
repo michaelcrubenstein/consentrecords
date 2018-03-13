@@ -3166,6 +3166,8 @@ var UserPanel = (function () {
 		var emailsEditor = new OrderedTextEditor(this.emailsSection, crv.buttonTexts.email, 
 									 controller.newInstance(), controller.newInstance().emails(),
 									 cr.UserEmail, 'email');
+		if (controller.newInstance().emails().length == 0)
+			emailsEditor.appendNewItem();
 
 		this.firstNameSection = this.appendTextSection(controller.newInstance(), controller.newInstance().firstName, crv.buttonTexts.firstName, 'text')
 			.classed('first', true);
