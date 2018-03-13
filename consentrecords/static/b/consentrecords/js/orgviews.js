@@ -386,9 +386,9 @@ var AddressPanel = (function () {
 			.classed('cell edit multiple', true);
 		this.namesSection.append('label')
 			.text(crv.buttonTexts.streets);
-		this.appendOrderedTextEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.streets, crv.buttonTexts.street, 
-									 controller.newInstance().streets(),
-									 cr.Street);
+		new OrderedTextEditor(this.namesSection, crv.buttonTexts.streets, 
+									 controller.newInstance(), controller.newInstance().streets(),
+									 cr.Street, 'text');
 
 		this.citySection = this.appendTextSection(controller.newInstance(), controller.newInstance().city, crv.buttonTexts.city, 'text');
 		this.citySection.classed('first', true);
@@ -3163,8 +3163,8 @@ var UserPanel = (function () {
 			.classed('cell edit multiple', true);
 		this.emailsSection.append('label')
 			.text(crv.buttonTexts.emails);
-		this.appendOrderedTextEditor(this.emailsSection, controller.newInstance(), crv.buttonTexts.emails, crv.buttonTexts.email, 
-									 controller.newInstance().emails(),
+		var emailsEditor = new OrderedTextEditor(this.emailsSection, crv.buttonTexts.email, 
+									 controller.newInstance(), controller.newInstance().emails(),
 									 cr.UserEmail, 'email');
 
 		this.firstNameSection = this.appendTextSection(controller.newInstance(), controller.newInstance().firstName, crv.buttonTexts.firstName, 'text')
