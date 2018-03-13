@@ -1192,6 +1192,27 @@ var PickEngagementUserPanel = (function()
 		this.appendBackButton();
 
 		this.navContainer.appendTitle(title);
+		
+		var newUserButton = this.navContainer.appendRightButton()
+			.on('click', function()
+			{
+				if (prepareClick('click', 'New User'))
+				{
+					try {
+						var controller = new UserController(null);
+						var panel = new UserPanel(controller, this.addPanelTitle);
+						setupOneViewEventHandler(controller.newInstance(), 'added.cr', panel.node(), function(eventObject)
+							{
+								_this.searchView.inputText(controller.newInstance().emails()[0].text());
+								_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+							}); 
+						panel.showUp().then(unblockClick);
+					} catch(err) { cr.syncFail(err); }
+				}
+				d3.event.preventDefault();
+				d3.event.stopPropagation();
+			});
+		newUserButton.append('span').text("New User");
 
 		this.searchView = new PickEngagementUserSearchView(this, parent, engagement);
 		$(this.node()).one('revealing.cr', function() { 
