@@ -275,7 +275,12 @@ def printTransaction(t):
 
 if __name__ == "__main__":
     with transaction.atomic():
-        t = Transaction.objects.order_by('-creation_time')[0]
+        if '-id' in sys.argv:
+            id = sys.argv[sys.argv.index('-id') + 1]
+            t = Transaction.objects.get(id=id)
+            print('id: %s' % id)
+        else:
+            t = Transaction.objects.order_by('-creation_time')[0]
         
         printTransaction(t)
         if '-yes' in sys.argv:
