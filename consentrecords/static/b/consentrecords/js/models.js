@@ -268,13 +268,17 @@ cr.submitSignout = function()
 			.promise();
 	}
 
-cr.updateUsername = function(newUsername, password)
+cr.updateUsername = function(user, newUsername, password)
 	{
-		return $.post(cr.urls.updateUsername, {newUsername: newUsername, 
-										password: password})
+		var url = cr.urls.updateUsername;
+		if (user)
+			url += "user/{0}/".format(user.id());
+			
+		return $.post(url, {newUsername: newUsername, 
+							password: password})
 		        .then(function(json)
 				{
-					cr.signedinUser.emails()[0].updateData({text: newUsername}, {});
+					user.emails()[0].updateData({text: newUsername}, {});
 				},
 				cr.thenFail);
 	}

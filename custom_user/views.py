@@ -254,21 +254,17 @@ def newUser(request):
         logger.error("%s" % traceback.format_exc())
         return HttpResponseBadRequest(reason=str(e))
 
-def updateUsernameResults(request):
-    if request.method != "POST":
-        raise Exception("UpdateUsername only responds to POST requests")
+def updateUsernameResults(request, newUsername):
     if not request.user.is_authenticated():
         raise Exception("The current login is invalid")
         
     POST = request.POST;
     password = POST.get('password', '')
-    newUsername = POST.get('newUsername', '')
     
     testUser = authenticate(username=request.user.email, password=password)
     if testUser is not None:
         if testUser.is_active:
-            testUser.email = newUsername
-            testUser.save(using=get_user_model().objects._db)
+            testUser.updateEmail(newUsername)
             login(request, testUser)
         else:
             raise AccountDisabledError()

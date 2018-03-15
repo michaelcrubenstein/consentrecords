@@ -3179,16 +3179,29 @@ var UserPanel = (function () {
 
 		this.createRoot(crv.buttonTexts.user, onShow);
 
-		this.emailsSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit multiple', true);
-		this.emailsSection.append('label')
-			.text(crv.buttonTexts.emails);
-		var emailsEditor = new OrderedTextEditor(this.emailsSection, crv.buttonTexts.email, 
-									 controller.newInstance(), controller.newInstance().emails(),
-									 cr.UserEmail, 'email');
-		if (controller.newInstance().emails().length == 0)
-			emailsEditor.appendNewItem();
+		if (!controller.oldInstance())
+		{
+			var emailsSection = this.mainDiv.append('section')
+				.datum(controller.newInstance())
+				.classed('cell edit multiple', true);
+			emailsSection.append('label')
+				.text(crv.buttonTexts.emails);
+			
+			var emailsEditor = new OrderedTextEditor(emailsSection, crv.buttonTexts.email, 
+										 controller.newInstance(), controller.newInstance().emails(),
+										 cr.UserEmail, 'email');
+			if (controller.newInstance().emails().length == 0)
+				emailsEditor.appendNewItem();
+		}
+		else
+		{
+			this.navContainer.appendBanner(controller.oldInstance().emails()[0].text());
+			setupOnViewEventHandler(controller.oldInstance().emails()[0], "changed.cr", _this.node(), 
+				function()
+				{
+					_this.navContainer.setBanner(controller.oldInstance().emails()[0].text());
+				});
+		}
 
 		this.firstNameSection = this.appendTextSection(controller.newInstance(), controller.newInstance().firstName, crv.buttonTexts.firstName, 'text')
 			.classed('first', true);
@@ -3240,6 +3253,16 @@ var UserPanel = (function () {
 		if (controller.newInstance().id() && controller.newInstance().privilege() == 'administer')
 		{
 			var _this = this;
+			
+			this.appendActionButton(crv.buttonTexts.changeEmail, function() {
+					if (prepareClick('click', 'Change Email'))
+					{
+						showClickFeedback(this);
+						var panel = new UpdateUsernamePanel(controller.oldInstance(), crv.buttonTexts.user);
+						_this.revealSubPanel(panel);
+					}
+				})
+			.classed('first', true);
 			this.appendActionButton("Reset Password", function() {
 				if (prepareClick('click', "Reset Password"))
 				{
