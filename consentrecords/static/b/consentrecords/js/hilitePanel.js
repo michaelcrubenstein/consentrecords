@@ -597,23 +597,6 @@ var PathHeadersHilitePanel = (function()
 	function PathHeadersHilitePanel(pathPanel)
 	{
 		HilitePanel.apply(this, [pathPanel, pathPanel.pathtree.guideGroup.node()]);
-		
-		var _this = this;
-		this.helpSpanNode = d3.select(this.panelNode).append('span')
-			.classed('hilite-help', true)
-			.text(this.helpText)
-			.node();
-		this.gotItNode = d3.select(this.panelNode).append('span')
-			.classed('hilite-got-it', true)
-			.text(this.gotIt)
-			.on('click', function()
-				{
-					_this.onClose();
-				})
-			.node();
-		this.emToPx = parseFloat($(this.helpSpanNode).css('font-size'));
-		this.helpMaxWidth = $(this.helpSpanNode).outerWidth();
-		this.gotItWidth = $(this.gotItNode).outerWidth();
 	}
 	
 	return PathHeadersHilitePanel;
