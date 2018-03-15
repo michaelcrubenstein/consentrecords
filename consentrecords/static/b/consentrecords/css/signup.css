@@ -173,6 +173,17 @@
 		width: calc(100% - 30px);
 	}
 	
+	input.base-input,
+	panel.sign-in input[type=email],
+	panel.sign-in input[type=password]
+	 {
+		border: none;
+		outline: none;
+		border-bottom: 1.5px solid #222;
+		border-radius: 0px;
+		font-size: 14px;
+	}
+
 	panel.sign-in {
 		background-color: white;
 	}
