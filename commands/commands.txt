@@ -370,3 +370,12 @@ sudo reboot
 
 grep -n 'Be The Change Projects' config.yml
 grep -n 'Be The Change Projects' ~/eb_django_app/.elasticbeanstalk/consentrecords-prod.env.yml
+
+##################################################################
+# Start a python session for examining the database:
+##################################################################
+
+python3 manage.py shell
+from consentrecords.models import *
+from custom_user.models import *
+from monitor.models import *
