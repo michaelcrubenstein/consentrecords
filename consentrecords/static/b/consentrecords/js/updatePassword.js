@@ -207,7 +207,8 @@ var UpdateUsernamePanel = (function () {
 						syncFailFunction("The password is required.");
 					else
 					{
-						cr.updateUsername(newUsernameInput.property('value'),
+						cr.updateUsername(user, 
+										  newUsernameInput.property('value'),
 										  currentPasswordInput.value)
 						.then(function()
 							  {
@@ -239,7 +240,7 @@ var UpdateUsernamePanel = (function () {
 						.classed('form-simple form-signin', true);
 		form.append('div')
 			.classed('help-block', true)
-			.text("Current Email: " + cr.signedinUser.emails()[0].text());
+			.text("Current Email: " + user.emails()[0].text());
 		
 		form.append('label').attr('for', 'id_newusername').attr('class', 'sr-only').text('New Email');
 		var newUsernameInput = form.append('input')

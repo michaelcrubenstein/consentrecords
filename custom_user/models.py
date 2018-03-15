@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.contrib.auth.models import Group, Permission
 
@@ -63,6 +64,10 @@ class AuthUser(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
+        
+    def updateEmail(self, newEmail):
+        self.email = newEmail
+        self.save(using=get_user_model().objects._db)
 
     def __unicode__(self):
         return self.email

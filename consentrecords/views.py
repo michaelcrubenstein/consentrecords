@@ -1163,19 +1163,41 @@ def setResetPassword(request):
             
     return JsonResponse(results)
 
-def updateUsername(request):
+def updateUsername(request, urlPath=None):
     if request.method != "POST":
         raise Http404("updateUsername only responds to POST methods")
     
     try:
         with transaction.atomic():
+            newUsername = request.POST.get('newUsername', '').lower()
             languageCode = request.POST.get('languageCode', 'en')
             context = Context(languageCode, request.user)
-            emails = context.user.currentEmailsQuerySet
-
-            results = userviews.updateUsernameResults(request)
-            context.authUser = request.user
-            emails[0].update({'text': request.user.email}, context, {})
+            
+            if not urlPath:
+                root = context.user
+            else:
+                tokens = cssparser.tokenizeHTML(urlPath)
+                qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+                if qs.count() == 0:
+                    raise ValueError("path was not recognized: %s" % path)
+                else:
+                    root = qs[0]
+                    if qsType != User:
+                        raise ValueError("item to update is not a user: %s" % root.description(context.languageCode))
+                    if not context.canAdminister(root):
+                        raise PermissionDenied("you do not have permission to update this user's email")
+            
+            emails = root.currentEmailsQuerySet
+            
+            if root.id == context.user.id:
+                results = userviews.updateUsernameResults(request, newUsername)
+                context.authUser = request.user
+            else:
+                root.authUser.updateEmail(newUsername)
+                results = {}
+                
+            emails[0].update({'text': newUsername}, context, {})
+               
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
