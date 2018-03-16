@@ -93,8 +93,8 @@ var crv = {
 		endTime: "End Time",
 		enrollment: "Enrollment",
 		enrollments: "Enrollments",
-		engagement: "Engagement",
-		engagements: "Engagements",
+		engagement: "Participant",
+		engagements: "Participants",
 		experiencePrompt: "Experience Prompt",
 		experiencePrompts: "Experience Prompts",
 		firstName: "First Name",
@@ -182,7 +182,7 @@ var crv = {
 		var parent = div.append('span');
 		var child = parent.append('span');
 		div.append('span')
-			.classed("help-block", true)
+			.classed('help-block', true)
 			.text("Loading...");
 		var opts = {
 		  lines: 13 // The number of lines to draw
@@ -482,7 +482,7 @@ function appendRowButtons(divs)
 		return divs.append("div");
 	else
 		return divs.append("div")
-				.classed("btn row-button", $(divs.node()).parents(".unique").length === 0);
+				.classed('btn row-button', $(divs.node()).parents(".unique").length === 0);
 }
 
 var crf = {
@@ -503,11 +503,9 @@ var crf = {
 			{
 				containers.each(function(e)
 					{
+						/* oldLeft may be less than zero if the delete buttons are hidden off to the left. */
 						var oldLeft = parseInt($(this).css('left'));
-						var newWidth = $(this).parent().innerWidth() - oldLeft;
-						var $button = $(this).children('button:last-of-type')
-						if ($button[0] != document.activeElement)
-							newWidth += $button.outerWidth();
+						var newWidth = crf.getDeletableItemWidth($(this)) - oldLeft;
 						$(this).innerWidth(newWidth);
 					});
 			});
@@ -524,16 +522,19 @@ var crf = {
 			.classed('delete', true)
 			.on('click', function(e)
 			{
-				if ($(this).css("opacity") > 0 &&
+				if ($(this).css('opacity') > 0 &&
 					prepareClick('click', 'delete button'))
 				{
 					var $this = $(this);
-					var $button = $this.parent().children('button:last-of-type');
+					var $parent = $this.parent();
+					var $button = $parent.children('button:last-of-type');
 					
-					$this.parent().stop();
-					$button.css('opacity', 1);
+					$parent.stop();
+					$button.css('display', '');
+					$parent.width(crf.getDeletableItemWidth($parent));
+					
 					$this.children().animateRotate(90, 180, 600, 'swing');
-					$this.parent().animate({'width': $this.parent().parent().innerWidth()},
+					$parent.animate({'width': $parent.parent().innerWidth()},
 											 {duration: 600,
 											  easing: 'swing',
 											  done: function () 
@@ -565,27 +566,26 @@ var crf = {
 				}
 			});
 		
-		items.classed("flex-deletable", true);						
+		items.classed('flex-deletable', true);						
 	
-		return items.append("button")
+		return items.append('button')
 			.text(crf.buttonNames.delete)
-			.style('opacity', 0)
+			.style('display', 'none')
 			.on('blur', function(e)
 			{
-				var deleteButton = $(this.parentNode).find("button:first-of-type");
+				var deleteButton = $(this.parentNode).find('button:first-of-type');
 				deleteButton.children().animateRotate(180, 90, 400);
 
+				var $parent = $(this.parentNode);
 				var confirmButtons = $(this);
-				var rightHiddenWidth = confirmButtons.outerWidth();
-				var newWidth = confirmButtons.parent().parent().innerWidth() + 
-							   rightHiddenWidth;
-				confirmButtons.parent().animate({'width': newWidth},
-										 {duration: 400,
-										  easing: 'swing'})
+				var newWidth = crf.getDeletableItemWidth($parent);
+				$parent.animate({'width': newWidth},
+								{duration: 400, easing: 'swing'})
 								.promise()
 								.done(function()
 									{
-										confirmButtons.css('opacity', 0);
+										confirmButtons.css('display', 'none');
+										$parent.width($parent.parent().innerWidth());
 									});
 			})
 			.on('click', onClick);
@@ -598,9 +598,17 @@ var crf = {
 	{
 		return items
 			.append("img")
-			.classed("site-chevron-right", true)
+			.classed('site-chevron-right', true)
 			.attr("src", rightChevronPath)
 			.attr("height", "18px");
+	},
+	
+	getDeletableItemWidth: function($parent)
+	{
+		var confirmButtons = $parent.children('button:last-of-type');
+		var rightHiddenWidth = confirmButtons.css('display') == 'none' ? 0 : confirmButtons.outerWidth();
+		return $parent.parent().innerWidth() + 
+							   rightHiddenWidth;
 	},
 	
 	showDeleteControls: function(dials, duration)
@@ -609,14 +617,10 @@ var crf = {
 		
 		dials.animate({opacity: 1}, duration);
 		
-		var confirmButtons = dials.parent().children('button:last-of-type');
-		
 		/* Calculate the widths after a timeout so that metrics are guaranteed to be correct. */
 		setTimeout(function()
 			{
-				var rightHiddenWidth = confirmButtons.outerWidth();
-				var newWidth = dials.parent().parent().innerWidth() + 
-							   rightHiddenWidth;
+				var newWidth = crf.getDeletableItemWidth(dials.parent());
 				dials.parent().animate({left: "0px", width: newWidth}, {duration:duration});
 			});
 	},
@@ -636,11 +640,7 @@ var crf = {
 		var newLeft = dialWidth + parseInt(dials.css('padding-left'));
 		
 		/* Extend each item by the width of its confirm delete button. */
-		var confirmButtons = dials.parent().children('button:last-of-type');
-		var rightHiddenWidth = confirmButtons.outerWidth();
-		var newWidth = newLeft + 
-					   dials.parent().parent().innerWidth() + 
-					   rightHiddenWidth;
+		var newWidth = newLeft + crf.getDeletableItemWidth(dials.parent());
 		dials.parent().animate({left: -newLeft, width: newWidth}, duration);
 		dials.animate({opacity: 0}, duration);
 	}
@@ -674,7 +674,7 @@ function appendRightChevronSVG(container)
 function appendButtonDescriptions(buttons)
 {
 	return buttons.append("div")
-		.classed("description-text growable", true)
+		.classed('description-text growable', true)
 		.text(_getDataDescription);
 }
 
@@ -684,7 +684,7 @@ function appendButtonDescriptions(buttons)
 function appendDescriptions(items)
 {
 	return items.append("div")
-		.classed("description-text growable", true)
+		.classed('description-text growable', true)
 		.text(_getDataDescription)
 		.each(_pushTextChanged);
 }
@@ -694,7 +694,7 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
 	
 	var section = panel2Div.append("section")
-		.classed("cell multiple", true);
+		.classed('cell multiple', true);
 	
 	var itemsDiv = crf.appendItemList(section)
 		.classed('hover-items', true);
@@ -811,12 +811,12 @@ var SiteNavContainer = (function() {
 	
 	SiteNavContainer.prototype.appendButton = function()
 	{
-		return this.div.append("div").classed("site-navbar-link site-active-text", true);
+		return this.div.append("div").classed('site-navbar-link site-active-text', true);
 	}
 	
 	SiteNavContainer.prototype.appendLeftButton = function()
 	{
-		return this.div.append("div").classed("left-link site-navbar-link site-active-text", true);
+		return this.div.append("div").classed('left-link site-navbar-link site-active-text', true);
 	}
 	
 	SiteNavContainer.prototype.appendRightButton = function()
@@ -902,21 +902,21 @@ var SiteNavContainer = (function() {
 	
 	SiteNavContainer.prototype.setBanner = function(title)
 	{
-		var h = this.nav.selectAll('div.site-banner');
+		var h = this.nav.selectAll('header.site-banner');
 		h.text(title);
 		this.sitePanel.headerText = title;
 	}
 	
 	SiteNavContainer.prototype.appendBanner = function(newTitle)
 	{
-		var h = this.nav.append('div').classed('site-banner', true);
+		var h = this.nav.append('header').classed('site-banner', true);
 		this.setBanner(newTitle);
 	}
 	
 	function SiteNavContainer(sitePanel)
 	{
 		this.sitePanel = sitePanel;
-		this.nav = sitePanel.panelDiv.append("nav")
+		this.nav = sitePanel.panelDiv.append('nav')
 					.attr("role", "navigation")
 		this.div = this.nav.append('div');
 	}
@@ -944,7 +944,7 @@ crv.SitePanel = (function () {
 		 */
 		this.panelDiv = rootPanel
 						.append("panel")
-						.classed("site-panel", true)
+						.classed('site-panel', true)
 						.datum(datum)
 						.attr("headerText", headerText)
 						.style('top', "{0}px".format($(window).innerHeight()))
@@ -989,7 +989,7 @@ crv.SitePanel = (function () {
     SitePanel.prototype.appendBottomNavContainer = function()
     {
     	var n = new SiteNavContainer(this);
-    	n.nav.classed("bottom", true);
+    	n.nav.classed('bottom', true);
     	return n;
     }
 	
@@ -1012,10 +1012,10 @@ crv.SitePanel = (function () {
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
 	{
-		var searchBar = this.panelDiv.append("div").classed("searchbar", true);
+		var searchBar = this.panelDiv.append("div").classed('searchbar', true);
 	
 		var searchCancelButton = searchBar.append("span")
-			.classed("search-cancel-button site-active-text", true);
+			.classed('search-cancel-button site-active-text', true);
 		searchCancelButton.append('span').text(crv.buttonTexts.cancel);
 	
 		var searchCancelButtonWidth = 0;
@@ -1026,11 +1026,11 @@ crv.SitePanel = (function () {
 			.css("padding-right", "0");
 	
 		var searchInputContainer = searchBar.append("div")
-			.classed("search-input-container", true);
+			.classed('search-input-container', true);
 		
 		var searchInput = searchInputContainer
 			.append("input")
-			.classed("search-input", true)
+			.classed('search-input', true)
 			.attr("placeholder", "Search");
 	
 		var lastText = "";	
@@ -1110,9 +1110,9 @@ crv.SitePanel = (function () {
 		var _this = this;
 		this.panelDiv.append('div').classed('alert-container', true);
 		var panel2Div = this.panelDiv
-			.append("div").classed("body", true)
+			.append("div").classed('body', true)
 			.append("div")
-			.append("div").classed("panel-fill", true)
+			.append("div").classed('panel-fill', true)
 			.style("overflow-y", "hidden");
 			
 		return panel2Div;
@@ -1133,11 +1133,6 @@ crv.SitePanel = (function () {
 		if (this.mainDiv)
 		{
 			var mainNode = $(this.mainDiv.node());
-			mainNode.css('height', "{0}px".format(mainNode.getFillHeight()))
-				.one('resize.cr', function(eventObject)
-				{
-					eventObject.stopPropagation();
-				});
 			
 			/* Since calculateHeight is first called within revealing.cr, 
 				resize handlers should be set up in subsequent revealing.cr handlers.
@@ -1150,7 +1145,7 @@ crv.SitePanel = (function () {
 	{
 		var _this = this;
 		this.mainDiv = this.panelDiv
-			.append("div").classed("panel-fill vertical-scrolling", true);
+			.append("div").classed('panel-fill vertical-scrolling', true);
 		
 		$(this.node()).on('revealing.cr', function()
 			{
@@ -1191,7 +1186,7 @@ crv.SitePanel = (function () {
 		var item = itemsDiv.append('li');
 			
 		item.append('div')
-			.classed("text-fill site-active-text growable unselectable", true)
+			.classed('text-fill site-active-text growable unselectable', true)
 			.text(text);
 				
 		return sectionDiv;	
@@ -1309,7 +1304,8 @@ crv.SitePanel = (function () {
 			$('.site-panel').css('height', '{0}px'.format($(window).innerHeight()))
 				.each(function()
 				{
-					this.sitePanel.calculateHeight();
+					if (this.sitePanel)
+						this.sitePanel.calculateHeight();
 					$(this).trigger('resize.cr');
 				});
 		});
@@ -1642,14 +1638,14 @@ var SearchView = (function () {
 	
 	SearchView.prototype.appendInput = function(containerNode, placeholder)
 	{
-		var searchBar = d3.select(containerNode).append("div").classed("searchbar", true);
+		var searchBar = d3.select(containerNode).append("div").classed('searchbar', true);
 	
 		var searchInputContainer = searchBar.append("div")
-			.classed("search-input-container", true);
+			.classed('search-input-container', true);
 		
 		return searchInputContainer
 			.append("input")
-			.classed("search-input", true)
+			.classed('search-input', true)
 			.attr("placeholder", placeholder);
 	}
 	
@@ -1685,7 +1681,7 @@ var PanelSearchView = (function() {
 	
 	PanelSearchView.prototype.appendSearchArea = function()
 	{
-		return crf.appendItemList(this.sitePanel.appendScrollArea())
+		return crf.appendItemList(this.sitePanel.mainDiv || this.sitePanel.appendScrollArea())
 			.classed('hover-items', true);
 	}
 	
@@ -1784,7 +1780,6 @@ var EditPanel = (function() {
 	{
 		crv.SitePanel.prototype.createRoot.call(this, objectData, header, "edit", onShow);
 		this.navContainer = this.appendNavContainer();
-		this.appendScrollArea();
 	}
 
 	function EditPanel()
@@ -1792,6 +1787,200 @@ var EditPanel = (function() {
 	}
 	
 	return EditPanel;
+})();
+
+var MultipleEditor = (function() {
+	MultipleEditor.prototype.container = null;
+	
+	MultipleEditor.prototype.onConfirmDelete = function(d, deleteControl)
+	{
+		/* Test case: Delete an existing value in a cell that has multiple values. */
+		if (prepareClick('click', 'confirm delete: ' + d.description()))
+		{
+			try {
+				cr.removeElement(this.data, d);
+				removeItem($(deleteControl).parents('li')[0], unblockClick);
+			} catch(err) { cr.syncFail(err); }
+		}
+	}
+	
+	MultipleEditor.prototype.appendItemControls = function(itemsDiv, items)
+	{
+		var _this = this;
+		
+		crf.appendDeleteControls(items);
+		this.appendInputControls(items);
+		crf.appendConfirmDeleteControls(items, function(d)
+			{
+				_this.onConfirmDelete(d, this);
+			});
+		var dials = $(itemsDiv.node()).find('li>button:first-of-type');
+		crf.showDeleteControls(dials, 0);
+		items.each(function(d)
+			{
+				setupOneViewEventHandler(d, 'deleted.cr', this, function(eventObject)
+					{
+						var item = d3.select(eventObject.data);
+						item.remove();
+					});
+			});
+	}
+
+	MultipleEditor.prototype.appendNewItem = function()
+	{
+		var newValue = new this.dataType();
+		newValue.setDefaultValues();
+		if ('position' in newValue)
+			newValue.position(this.data.length ? parseInt(this.data[this.data.length - 1].position()) + 1 : 0);
+			
+		this.data.push(newValue);
+		newValue.parent(this.parent);
+	
+		var itemsDiv = this.container.selectAll('ol');
+		var item = itemsDiv.append('li')
+			.datum(newValue);
+		this.appendItemControls(itemsDiv, item);
+		itemsDiv.style('display', null);
+		var input = item.selectAll('input');
+		if (input.node())
+			input.node().focus();
+	}
+	
+	/** Adds a row to a multiple item within a panel to add another item of that type. */
+	MultipleEditor.prototype.appendAddButton = function()
+	{
+		var _this = this;
+		/* Add one more button for the add Button item. */
+		var buttonDiv = this.container.append('div')
+			.classed('add-value site-active-text', true)
+			.on("click", function(cell) {
+				if (prepareClick('click', "add {0}".format(_this.placeholder)))
+				{
+					try
+					{
+						_this.appendNewItem();							
+						unblockClick();
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
+				}
+				d3.event.preventDefault();
+			});
+		buttonDiv.append('div')
+			.classed('overlined', !this.container.classed('first'))
+			.text("Add {0}".format(this.placeholder));
+	}
+
+	function MultipleEditor(container, placeholder, parent, data, dataType)
+	{
+		this.container = container;
+		this.placeholder = placeholder;
+		this.parent = parent;
+		this.data = data;
+		this.dataType = dataType;
+	}
+	
+	return MultipleEditor;
+})();
+
+var TranslationsEditor = (function() {
+	TranslationsEditor.prototype = Object.create(MultipleEditor.prototype);
+	TranslationsEditor.prototype.constructor = TranslationsEditor;
+	
+	TranslationsEditor.prototype.appendInputControls = function(items)
+	{
+		items.append('input')
+			.classed('growable', true)
+			.attr('type', 'text')
+			.attr('placeholder', this.placeholder)
+			.property('value', function(d) { return d.text(); })
+			.on('focusout', function(d)
+				{
+					d.text(this.value);
+				});
+
+		var languageSelect = items.append("select");
+		languageSelect.selectAll('option')
+			.data(crv.languages)
+			.enter()
+			.append('option')
+			.text(function(d) { return d.name; });
+			
+		languageSelect.each(function(d)
+		{
+			for (var i = 0; i < crv.languages.length; ++i)
+			{
+				if (crv.languages[i].code == d.language())
+				{
+					this.selectedIndex = i;
+					break;
+				}
+			}
+		});
+		
+		languageSelect.on('change', function(d)
+			{
+				d.language(crv.languages[this.selectedIndex].code);
+			});
+	}
+
+	function TranslationsEditor(container, placeholder, parent, data, dataType)
+	{
+		container.classed('string translation', true);
+
+		MultipleEditor.call(this, container, placeholder, parent, data, dataType);
+		
+		var itemsDiv = crf.appendItemList(container);
+	
+		itemsDiv.classed('deletable-items', true);
+		var items = appendItems(itemsDiv, data);
+		
+		this.appendItemControls(itemsDiv, items);
+
+		this.appendAddButton();
+	}
+	return TranslationsEditor;
+})();
+
+var OrderedTextEditor = (function() {
+	OrderedTextEditor.prototype = Object.create(MultipleEditor.prototype);
+	OrderedTextEditor.prototype.constructor = OrderedTextEditor;
+	
+	OrderedTextEditor.prototype.appendInputControls = function(items)
+	{
+		items.append('input')
+			.classed('growable', true)
+			.attr('type', this.inputType)
+			.attr('placeholder', this.placeholder)
+			.property('value', function(d) { return d.text(); })
+			.on('focusout', function(d)
+				{
+					d.text(this.value);
+				});
+	}
+	
+	function OrderedTextEditor(container, placeholder, parent, data, dataType, inputType)
+	{
+		inputType = inputType !== undefined ? inputType : 'text';
+		
+		MultipleEditor.call(this, container, placeholder, parent, data, dataType);
+		this.inputType = inputType;
+
+		container.classed('string translation', true);
+		
+		var itemsDiv = crf.appendItemList(container);
+	
+		itemsDiv.classed('deletable-items', true);
+		var items = appendItems(itemsDiv, data);
+		
+		this.appendItemControls(itemsDiv, items);
+
+		this.appendAddButton();
+	}
+	
+	return OrderedTextEditor;
 })();
 
 var EditItemPanel = (function () {
@@ -1815,84 +2004,7 @@ var EditItemPanel = (function () {
 		return this.controller().save();
 	}
 	
-	EditItemPanel.prototype.onConfirmDelete = function(data, d, deleteControl)
-	{
-		/* Test case: Delete an existing value in a cell that has multiple values. */
-		if (prepareClick('click', 'confirm delete: ' + d.description()))
-		{
-			try {
-				cr.removeElement(data, d);
-				removeItem($(deleteControl).parents('li')[0], unblockClick);
-			} catch(err) { cr.syncFail(err); }
-		}
-	}
-	
-	EditItemPanel.prototype.appendItemControls = function(itemsDiv, items, data, appendInputControls)
-	{
-		var _this = this;
-		
-		crf.appendDeleteControls(items);
-		appendInputControls(items);
-		crf.appendConfirmDeleteControls(items, function(d)
-			{
-				_this.onConfirmDelete(data, d, this);
-			});
-		var dials = $(itemsDiv.node()).find('li>button:first-of-type');
-		crf.showDeleteControls(dials, 0);
-		items.each(function(d)
-			{
-				setupOneViewEventHandler(d, 'deleted.cr', this, function(eventObject)
-					{
-						var item = d3.select(eventObject.data);
-						item.remove();
-					});
-			});
-	}
-
-	
 	/** Adds a row to a multiple item within a panel to add another item of that type. */
-	EditItemPanel.prototype.appendAddButton = function(sectionObj, container, data, dataType, name, appendInputControls)
-	{
-		var _this = this;
-		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div")
-			.classed('add-value site-active-text', true)
-			.on("click", function(cell) {
-				if (prepareClick('click', "add {0}".format(name)))
-				{
-					try
-					{
-						var newValue = new dataType();
-						newValue.setDefaultValues();
-						if ('position' in newValue)
-							newValue.position(data.length ? parseInt(data[data.length - 1].position()) + 1 : 0);
-							
-						data.push(newValue);
-						newValue.parent(container);
-					
-						var itemsDiv = sectionObj.selectAll('ol');
-						var item = itemsDiv.append('li')
-							.datum(newValue);
-						_this.appendItemControls(itemsDiv, item, data, appendInputControls);
-						itemsDiv.style('display', null);
-						var input = item.selectAll('input');
-						if (input.node())
-							input.node().focus();
-							
-						unblockClick();
-					}
-					catch(err)
-					{
-						cr.syncFail(err);
-					}
-				}
-				d3.event.preventDefault();
-			});
-		buttonDiv.append('div')
-			.classed('overlined', !sectionObj.classed('first'))
-			.text("Add {0}".format(name));
-	}
-
 	/** Adds a section that contains a unique text block. 
 		instanceProperty is a function that can get or set its value.
 	 */
@@ -2121,91 +2233,10 @@ var EditItemPanel = (function () {
 			.classed('cell edit multiple', true);
 		section.append('label')
 			.text(sectionLabel);
-		this.appendTranslationEditor(section, instance, sectionLabel, placeholder, data, dataType);
+		new TranslationsEditor(section, placeholder, instance, data, dataType)
 		return section;
 	}
 
-	EditItemPanel.prototype.appendTranslationEditor = function(section, container, sectionLabel, placeholder, data, dataType)
-	{
-		var _this = this;
-		section.classed("string translation", true);
-		var itemsDiv = crf.appendItemList(section);
-	
-		function appendInputControls(items)
-		{
-			items.append('input')
-				.classed('growable', true)
-				.attr('type', 'text')
-				.attr('placeholder', placeholder)
-				.property('value', function(d) { return d.text(); })
-				.on('focusout', function(d)
-					{
-						d.text(this.value);
-					});
-
-			var languageSelect = items.append("select");
-			languageSelect.selectAll('option')
-				.data(crv.languages)
-				.enter()
-				.append('option')
-				.text(function(d) { return d.name; });
-				
-			languageSelect.each(function(d)
-			{
-				for (var i = 0; i < crv.languages.length; ++i)
-				{
-					if (crv.languages[i].code == d.language())
-					{
-						this.selectedIndex = i;
-						break;
-					}
-				}
-			});
-			
-			languageSelect.on('change', function(d)
-				{
-					d.language(crv.languages[this.selectedIndex].code);
-				});
-		}
-	
-		itemsDiv.classed('deletable-items', true);
-		var items = appendItems(itemsDiv, data);
-		
-		this.appendItemControls(itemsDiv, items, data, appendInputControls);
-
-		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
-	}
-	
-	EditItemPanel.prototype.appendOrderedTextEditor = function(section, container, sectionLabel, placeholder, data, dataType, inputType)
-	{
-		var _this = this;
-		inputType = inputType !== undefined ? inputType : 'text';
-		
-		section.classed('string translation', true);
-		
-		var itemsDiv = crf.appendItemList(section);
-	
-		function appendInputControls(items)
-		{
-			items.append('input')
-				.classed('growable', true)
-				.attr('type', inputType)
-				.attr('placeholder', placeholder)
-				.property('value', function(d) { return d.text(); })
-				.on('focusout', function(d)
-					{
-						d.text(this.value);
-					});
-		}
-	
-		itemsDiv.classed('deletable-items', true);
-		var items = appendItems(itemsDiv, data);
-		
-		this.appendItemControls(itemsDiv, items, data, appendInputControls);
-
-		this.appendAddButton(section, container, data, dataType, placeholder, appendInputControls);
-	}
-	
 	/** 
 		returns the d3 object that contains the value.
 	 */
@@ -2364,6 +2395,7 @@ var EditItemPanel = (function () {
 		canCancel = (canCancel !== undefined) ? canCancel : true;
 		var _this = this;
 		EditPanel.prototype.createRoot.call(this, null, header, onShow);
+		this.appendScrollArea();
 
 		if (canCancel)
 		{
@@ -2455,7 +2487,7 @@ var PickFromListPanel = (function () {
 		this.navContainer.appendTitle(this.title);
 
 		var section = this.appendScrollArea().append("section")
-			.classed("cell multiple", true);
+			.classed('cell multiple', true);
 		var itemsDiv = crf.appendItemList(section)
 			.classed('hover-items checkable', true);
 			
@@ -2546,7 +2578,7 @@ var ConfirmPanel = (function() {
 	ConfirmPanel.prototype.appendButton = function()
 	{
 		return this.div.append('button')
-				.classed("site-active-text", true);
+				.classed('site-active-text', true);
 	}
 	
 	function ConfirmPanel() {
@@ -2594,7 +2626,7 @@ var GrantsPanel = (function() {
 				}
 				d3.event.preventDefault();
 			});
-		appendLeftChevronSVG(backButton).classed("site-active-text chevron-left", true);
+		appendLeftChevronSVG(backButton).classed('site-active-text chevron-left', true);
 		backButton.append('span').text(backButtonText);
 		
 		return backButton;
@@ -2651,7 +2683,7 @@ var GrantsPanel = (function() {
 		crf.appendDeleteControls(items);
 
 		items.append("div")
-			.classed("description-text growable unselectable", true)
+			.classed('description-text growable unselectable', true)
 			.text(_getDataDescription)
 			.each(_pushTextChanged);
 

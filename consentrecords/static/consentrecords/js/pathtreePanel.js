@@ -932,7 +932,6 @@ var PathView = (function() {
 			.attr('fill', this.pathBackground);
 			
 		this.loadingMessage = crv.appendLoadingMessage(this.pathwayContainer.node())
-			.style('position', 'absolute')
 			.style('left', '0')
 			.style('top', '{0}px'.format(this.experienceGroupDY * this.emToPX));
 		
@@ -985,8 +984,12 @@ var PathView = (function() {
 	{
 		var containerBounds = this.containerDiv.getBoundingClientRect();
 		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
-		var svgHeight = containerBounds.height;
+		var pathwayBorder = pathwayBounds.height - $(this.svg.node()).height();
+		/* Initialize svgHeight to the maximum height the svg can be without causing any scrolling. */
+		var svgHeight = containerBounds.height - pathwayBounds.top - pathwayBorder;
 		
+		/* If the last flag is beyond svgHeight, then increase svgHeight so that all of the flags
+			can be seen by scrolling. */
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
 		var flagHeights = (lastFlag.size() ? lastFlag.datum().y2 + this.experienceGroupDY : this.experienceGroupDY) * this.emToPX + this.bottomNavHeight;
 		if (svgHeight < flagHeights)
@@ -1307,12 +1310,12 @@ var AlertButton = (function() {
 				function() {
 					_this.onClick();
 				})
-			.classed("settings", true)
+			.classed('settings', true)
 			.style("display", this.user.privilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", imagePath);
 		this.button.append("span")
-			.classed("badge", true);
+			.classed('badge', true);
 	}
 	
 	AlertButton.prototype.node = function()
@@ -1543,12 +1546,12 @@ var PathlinesPanel = (function () {
 					}
 					d3.event.preventDefault();
 				})
-			.classed("settings", true)
+			.classed('settings', true)
 			.style("display", user.privilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", notificationsImagePath);
 		button.append("span")
-			.classed("badge", true)
+			.classed('badge', true)
 			.text(this.notificationsBadgeCount(user));
 	}
 	
@@ -1669,7 +1672,7 @@ var PathlinesPanel = (function () {
 
 		this.navContainer = this.appendNavContainer();
 		this.navContainer.nav
-			.classed("transparentTop", true);
+			.classed('transparentTop', true);
 
 		var settingsButton;
 		var notificationsButton;
@@ -1855,7 +1858,7 @@ var OtherPathPanel = (function () {
 
 		this.navContainer = this.appendNavContainer();
 		this.navContainer.nav
-			.classed("transparentTop", true);
+			.classed('transparentTop', true);
 
 		if (done)
 		{

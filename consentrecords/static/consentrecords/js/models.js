@@ -268,13 +268,17 @@ cr.submitSignout = function()
 			.promise();
 	}
 
-cr.updateUsername = function(newUsername, password)
+cr.updateUsername = function(user, newUsername, password)
 	{
-		return $.post(cr.urls.updateUsername, {newUsername: newUsername, 
-										password: password})
+		var url = cr.urls.updateUsername;
+		if (user)
+			url += "user/{0}/".format(user.id());
+			
+		return $.post(url, {newUsername: newUsername, 
+							password: password})
 		        .then(function(json)
 				{
-					cr.signedinUser.emails()[0].updateData({text: newUsername}, {});
+					user.emails()[0].updateData({text: newUsername}, {});
 				},
 				cr.thenFail);
 	}
@@ -6348,6 +6352,7 @@ cr.Session = (function() {
 		    if (newValue != this._offering)
 		    {
 				this._offering = newValue;
+				this.parent(newValue);
 			}
 			return this;
 		}
@@ -6505,6 +6510,7 @@ cr.Session = (function() {
 			this._offering = new cr.Offering();
 			this._offering.setData(d['offering']);
 			this._offering = crp.pushInstance(this._offering);
+			this.parent(this._offering);
 		}
 		if ('site' in d)
 		{
@@ -6536,6 +6542,15 @@ cr.Session = (function() {
 			this._engagements = source._engagements;
 		if (!this._periods && source._periods)
 			this._periods = source._periods;
+		if (!this.offering && source._offering)
+		{
+			this._offering = source._offering;
+			this.parent(source._offering);
+		}
+		if (!this.site && source.site)
+			this.site = source.site;
+		if (!this._organization && source._organization)
+			this._organization = source._organization;
 		return this;
     }
     
@@ -6564,6 +6579,10 @@ cr.Session = (function() {
 		
 		newInstance._registrationDeadline = this._registrationDeadline;
 		newInstance._canRegister = this._canRegister;
+		
+		newInstance._offering = this._offering;
+		newInstance._site = this._site;
+		newInstance._organization = this._organization;
 
 		if (duplicateForEdit)
 		{
@@ -6674,7 +6693,7 @@ cr.Session = (function() {
 	
     Session.prototype.promiseData = function(fields)
     {
-    	fields = fields !== undefined ? fields : ['periods'];
+    	fields = fields !== undefined ? fields : ['parents', 'periods'];
     	/* Do not get the inquiries, enrollments or engagements, as these may number in the thousands. */
     	return cr.IInstance.prototype.promiseData.call(this, fields);
     }

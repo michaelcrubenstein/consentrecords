@@ -48,8 +48,8 @@ var Signup = (function () {
 		var navContainer = this.appendNavContainer();
 
 		var panel2Div = this.appendScrollArea()
-			.classed("vertical-scrolling", false)
-			.classed("no-scrolling", true);
+			.classed('vertical-scrolling', false)
+			.classed('no-scrolling', true);
 		
 		this.dots = new DotsNavigator(panel2Div, 2);
 		this.dots.datum = this;	
@@ -312,11 +312,11 @@ var SigninPanel = (function()
 	SigninPanel.prototype.checkenabled = function() {			
 		if (!this.canSubmit())
 		{
-			this.signinButton.classed("site-disabled-text", true);
+			this.signinButton.classed('site-disabled-text', true);
 		}
 		else
 		{
-			this.signinButton.classed("site-disabled-text", false);
+			this.signinButton.classed('site-disabled-text', false);
 		}
 	},
 	
