@@ -503,11 +503,9 @@ var crf = {
 			{
 				containers.each(function(e)
 					{
+						/* oldLeft may be less than zero if the delete buttons are hidden off to the left. */
 						var oldLeft = parseInt($(this).css('left'));
-						var newWidth = $(this).parent().innerWidth() - oldLeft;
-						var $button = $(this).children('button:last-of-type')
-						if ($button[0] != document.activeElement)
-							newWidth += $button.outerWidth();
+						var newWidth = crf.getDeletableItemWidth($(this)) - oldLeft;
 						$(this).innerWidth(newWidth);
 					});
 			});
