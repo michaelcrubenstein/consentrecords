@@ -26,6 +26,7 @@
     <link href="{% static "consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/findExperience.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -37,74 +38,6 @@
     <link href="{% static "custom_user/css/formsimple.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
 
-    <style>
-    	.button-section {
-    		float: bottom;
-    	}
-    	.level-2-panel {
-    		top: 0;
-    		z-index: 2;
-    	}
-    	.level-3-panel {
-    		top: 0;
-    		z-index: 3;
-    	}
-    	.level-4-panel {
-    		top: 0;
-    		z-index: 4;
-    	}
-    	.centered-right-glyph {
-			position: absolute;
-			top: 50%;
-			-moz-transform: translateY(-50%);
-			-webkit-transform: translateY(-50%);
-			transform: translateY(-50%);
-			float: right;
-			right: 12px;
-	   	}
-	   	.centered-right-2 {	/* To the left of a centered-right-glyph */
-			width: auto;
-			float: right;
-			margin-right: 24px;
-			text-align: right;
-	   	}
-    	.option-label {
-    		margin-top: 15px;
-    		margin-left: 15px;
-    	}
-    	.option-item {
-    		margin-top: 15px;
-    		margin-left: 45px;
-    	}
-    	panel.session {
-    		background: white;
-    	}
-    	panel.session header {
-			width: 100%;
-			padding: 6px 12px;
-			text-align: left;
-			font-weight: bold;
-    	}
-    	panel.session .organization {
-    		margin-left: 12px;
-    		padding-bottom: 5px;
-    		border-bottom: 1px solid #eee;
-    	}
-    	panel.session .organization>label {
-    		font-weight: normal;
-    	}
-    	panel.session .address-line {
-    		margin-left: 0px;
-    		font-size: smaller;
-    	}
-    	panel.session .more-info {
-			overflow: hidden;
-			width: auto;
-			display: block;
-    		font-size: smaller;
-    		padding: 6px 12px;
-    	}
-    </style>
 	</head>
 	
   	<body class="site-body">
@@ -862,32 +795,6 @@
 			}
 		});
 		
-		function getFilter(node)
-		{
-			return function()
-			{
-				var val = this.value.toLocaleLowerCase();
-				if (val.length == 0)
-				{
-					/* Show all of the items. */
-					d3.select(node).selectAll("div")
-						.style("display", null);
-				}
-				else
-				{
-					/* Show the items whose description is this.value */
-					d3.select(node).selectAll("div")
-						.style("display", function(d)
-							{
-								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-									return null;
-								else
-									return "none";
-							});
-				}
-			}
-		}
-		
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 			return cr.submitSignout()
@@ -937,7 +844,7 @@
 
 			setMetaProperties(session, targetHRef);
 			var fbDiv = shareDiv.div.append("div")
-				.classed("fb-share-button", true)
+				.classed('fb-share-button', true)
 				.attr("data-href", targetHRef)
 				.attr("data-layout", "button_count");
 			var fbImage = fbDiv.append("img")

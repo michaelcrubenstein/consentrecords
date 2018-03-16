@@ -1,0 +1,33 @@
+{% extends "b/consentrecords/org/orgBase.html" %}
+
+{% block webAppTitle %}"Temple Israel Community Conversations"{% endblock webAppTitle %}
+
+{% block title %}Temple Israel Community Conversations{% endblock title %}
+
+		{% block showOrganizationPanel %}
+		/* Displays a panel in which the specified object's contents appear.
+		 */
+		function show_organization_panel(organization, containerUUID, containerPanel) {
+			successFunction = function ()
+			{
+				manage_session(organization);
+			}
+	
+			organization.promiseData().then(successFunction, cr.asyncFail)
+		}
+		{% endblock showOrganizationPanel %}
+		
+
+		{% block manageSession %}
+		function manage_session(organization)
+		{
+			pickSessionFromOrganization(organization, 
+				function(session)
+				{
+					var panel = new EngagementsPanel(session, revealPanelLeft, organization.description());
+					panel.showLeft().then(unblockClick);
+				});
+		}
+		{% endblock manageSession %}
+		
+

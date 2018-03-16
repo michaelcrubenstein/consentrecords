@@ -151,6 +151,7 @@ var ChildSearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	ChildSearchView.prototype.appendSearchArea = function()
@@ -175,9 +176,17 @@ var ChildrenPanel = (function () {
 
 	ChildrenPanel.prototype.parent = null;
 	
-	ChildrenPanel.prototype.createRoot = function(objectData, header, onShow)
+	ChildrenPanel.prototype.appendHeader = function(objectData, header)
 	{
+		this.navContainer.appendTitle(header);
+	}
+	
+	ChildrenPanel.prototype.createRoot = function(objectData, header, onShow, backButtonText)
+	{
+		backButtonText = backButtonText !== undefined ? backButtonText : "Back";
+		
 		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
+		this.panelDiv.classed('list', true);
 
 		var _this = this;
 		var backButton = this.navContainer.appendLeftButton()
@@ -187,9 +196,9 @@ var ChildrenPanel = (function () {
 				_this.hide();
 			});
 		appendLeftChevronSVG(backButton).classed('chevron-left', true);
-		backButton.append('span').text("Back");
+		backButton.append('span').text(backButtonText);
 
-		this.navContainer.appendTitle(header);
+		this.appendHeader(objectData, header);
 
 		var addButton = this.navContainer.appendRightButton()
 				.classed('add-button', true)
@@ -207,6 +216,7 @@ var ChildrenPanel = (function () {
 						}
 					}
 					d3.event.preventDefault();
+					d3.event.stopPropagation();
 				});
 		addButton.text("+");
 		
@@ -376,9 +386,9 @@ var AddressPanel = (function () {
 			.classed('cell edit multiple', true);
 		this.namesSection.append('label')
 			.text(crv.buttonTexts.streets);
-		this.appendOrderedTextEditor(this.namesSection, controller.newInstance(), crv.buttonTexts.streets, crv.buttonTexts.street, 
-									 controller.newInstance().streets(),
-									 cr.Street);
+		new OrderedTextEditor(this.namesSection, crv.buttonTexts.streets, 
+									 controller.newInstance(), controller.newInstance().streets(),
+									 cr.Street, 'text');
 
 		this.citySection = this.appendTextSection(controller.newInstance(), controller.newInstance().city, crv.buttonTexts.city, 'text');
 		this.citySection.classed('first', true);
@@ -474,6 +484,7 @@ var EnrollmentSearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	EnrollmentSearchView.prototype.fillItems = function(items)
@@ -523,7 +534,7 @@ var EnrollmentsPanel = (function () {
 	
 	function EnrollmentsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.enrollments, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.enrollments, onShow);
 	}
 	
 	return EnrollmentsPanel;
@@ -580,9 +591,22 @@ var EngagementsPanel = (function () {
 		return this.parent.engagements();
 	}
 	
-	function EngagementsPanel(parent, onShow) {
+	EngagementsPanel.prototype.appendHeader = function(objectData, header)
+	{
+		this.navContainer.appendTitle('');
+		var div = this.navContainer.nav.append('div').classed('detail', true);
+		div = div.append('div')
+		div.append('div').classed('flag-label', true).text(objectData.offering().description());
+		if (objectData.description() != objectData.offering().description())
+			div.append('div').text(objectData.description());
+		if (objectData.site().description() != objectData.organization().description())
+			div.append('div').text(objectData.site().description());
+		div.append('div').classed('sub-header', true).text(header);
+	}
+	
+	function EngagementsPanel(parent, onShow, backButtonText) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.engagements, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.engagements, onShow, backButtonText);
 	}
 	
 	return EngagementsPanel;
@@ -722,7 +746,7 @@ var PeriodsPanel = (function () {
 
 	function PeriodsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.periods, "list", onShow);
+		this.createRoot(parent, crv.buttonTexts.periods, onShow);
 	}
 	
 	return PeriodsPanel;
@@ -945,6 +969,7 @@ var NewInquirySearchView = (function()
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	function NewInquirySearchView(sitePanel, parent)
@@ -1050,6 +1075,7 @@ var NewEnrollmentSearchView = (function()
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	function NewEnrollmentSearchView(sitePanel, parent)
@@ -1136,6 +1162,7 @@ var PickEngagementUserSearchView = (function()
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	function PickEngagementUserSearchView(sitePanel, parent, engagement)
@@ -1165,6 +1192,27 @@ var PickEngagementUserPanel = (function()
 		this.appendBackButton();
 
 		this.navContainer.appendTitle(title);
+		
+		var newUserButton = this.navContainer.appendRightButton()
+			.on('click', function()
+			{
+				if (prepareClick('click', 'New User'))
+				{
+					try {
+						var controller = new UserController(null);
+						var panel = new UserPanel(controller, this.addPanelTitle);
+						setupOneViewEventHandler(controller.newInstance(), 'added.cr', panel.node(), function(eventObject)
+							{
+								_this.searchView.inputText(controller.newInstance().emails()[0].text());
+								_this.searchView.restartSearchTimeout(_this.searchView.inputCompareText());
+							}); 
+						panel.showUp().then(unblockClick);
+					} catch(err) { cr.syncFail(err); }
+				}
+				d3.event.preventDefault();
+				d3.event.stopPropagation();
+			});
+		newUserButton.append('span').text("New User");
 
 		this.searchView = new PickEngagementUserSearchView(this, parent, engagement);
 		$(this.node()).one('revealing.cr', function() { 
@@ -1275,6 +1323,7 @@ var RootPanelSearchView = (function () {
 					cr.syncFail);
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	RootPanelSearchView.prototype.appendSearchArea = function()
@@ -1330,6 +1379,7 @@ var RootItemsPanel = (function () {
 						}
 					}
 					d3.event.preventDefault();
+					d3.event.stopPropagation();
 				});
 		addButton.text("+");
 	}
@@ -1483,7 +1533,7 @@ var GroupsPanel = (function () {
 	
 	function GroupsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.groups, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.groups, onShow);
 	}
 	
 	return GroupsPanel;
@@ -1549,6 +1599,7 @@ var NewGroupMemberSearchView = (function()
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	
 	function NewGroupMemberSearchView(sitePanel, parent)
@@ -1622,6 +1673,7 @@ var GroupMemberSearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	GroupMemberSearchView.prototype.fillItems = function(items)
 	{
@@ -1670,7 +1722,7 @@ var GroupMembersPanel = (function () {
 	
 	function GroupMembersPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.members, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.members, onShow);
 	}
 	
 	return GroupMembersPanel;
@@ -1709,6 +1761,7 @@ var InquirySearchView = (function () {
 			catch (err) { cr.syncFail(err); }
 		}
 		d3.event.preventDefault();
+		d3.event.stopPropagation();
 	}
 	InquirySearchView.prototype.fillItems = function(items)
 	{
@@ -1757,7 +1810,7 @@ var InquiriesPanel = (function () {
 	
 	function InquiriesPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.inquiries, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.inquiries, onShow);
 	}
 	
 	return InquiriesPanel;
@@ -1894,7 +1947,7 @@ var OfferingsPanel = (function () {
 	
 	function OfferingsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.offerings, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.offerings, onShow);
 	}
 	
 	return OfferingsPanel;
@@ -2191,6 +2244,8 @@ var PickPrimaryAdministratorPanel = (function() {
 	{
 		var _this = this;
 		EditPanel.prototype.createRoot.call(this, organization, title, revealPanelLeft);
+		this.appendScrollArea();
+
 		this.navContainer.appendLeftButton()
 			.on('click', function()
 				{
@@ -2258,6 +2313,7 @@ var PickPrimaryAdministratorPanel = (function() {
 					}
 				}
 				d3.event.preventDefault();
+				d3.event.stopPropagation();
 			})
 		    .text(crv.buttonTexts.done);
 		
@@ -2702,10 +2758,271 @@ var SessionsPanel = (function () {
 	
 	function SessionsPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.sessions, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.sessions, onShow);
 	}
 	
 	return SessionsPanel;
+	
+})();
+
+var DescendentSearchView = (function () {
+	DescendentSearchView.prototype = Object.create(PanelSearchView.prototype);
+	DescendentSearchView.prototype.constructor = DescendentSearchView;
+	
+	DescendentSearchView.prototype.pathType = null;
+	DescendentSearchView.prototype.textPath = null;
+	DescendentSearchView.prototype.parent = null;
+	
+	/* Overrides SearchView.searchPath */
+	DescendentSearchView.prototype.searchPath = function(val)
+	{
+		console.assert(this.pathType);	/* Make sure it is defined. */
+		console.assert(this.textPath);	/* Make sure it is defined. */
+		
+		var s = this.parent.urlPath() + '/' + this.pathType;
+		if (val.length == 0)
+			return s;
+		else
+		{
+			if (val.length < 3)
+				return s + '[' + this.textPath + '^="' + encodeURIComponent(val) + '"]';
+			else
+				return s + '[' + this.textPath + '*="' + encodeURIComponent(val) + '"]';
+		}
+	}
+	
+	DescendentSearchView.prototype.increment = function()
+	{
+		return 10;
+	}
+	
+	DescendentSearchView.prototype.fields = function()
+	{
+		return ["parents"];
+	}
+	
+	DescendentSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	DescendentSearchView.prototype.fillItems = function(items)
+	{
+		PanelSearchView.prototype.fillItems.call(this, items);
+		
+		var _this = this;
+		items.each(function(d)
+			{
+				setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
+					{
+						_this.getDataChunker.onItemDeleted();
+						$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
+						{
+							$(this).remove();
+						});
+					});
+				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
+					{
+						d3.select(eventObject.data).selectAll('div.description-text')
+							.text(d.description());
+					});
+			});
+	}
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	DescendentSearchView.prototype.onClickButton = function(d, i, button) {
+		var _this = this;
+		
+		if (prepareClick('click', 'pick {0}: {1}'.format(this.pathType, d.description())))
+		{
+			try
+			{
+				showClickFeedback(button);
+				d.promiseData()
+					.then(function()
+						{
+							_this.showDescendent(d);
+						},
+						cr.syncFail);
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+
+		d3.event.preventDefault();
+		d3.event.stopPropagation();
+	}
+	
+	DescendentSearchView.prototype.appendSearchArea = function()
+	{
+		return PanelSearchView.prototype.appendSearchArea.call(this)
+			.classed('deletable-items', true);
+	}
+	
+	function DescendentSearchView(sitePanel, parent, placeholder) {
+		placeholder = placeholder !== undefined ? placeholder : crv.buttonTexts.search;
+		
+		this.parent = parent;
+		PanelSearchView.call(this, sitePanel, placeholder, GetDataChunker);
+	}
+	
+	return DescendentSearchView;
+})();
+
+var SessionFromOrganizationSearchView = (function () {
+	SessionFromOrganizationSearchView.prototype = Object.create(DescendentSearchView.prototype);
+	SessionFromOrganizationSearchView.prototype.constructor = SessionFromOrganizationSearchView;
+
+	SessionFromOrganizationSearchView.prototype.textPath = 'text';
+	SessionFromOrganizationSearchView.prototype.pathType = 'site/offering/session';
+	
+	SessionFromOrganizationSearchView.prototype.resultType = function()
+	{
+		return cr.Session;
+	}
+	
+	SessionFromOrganizationSearchView.prototype.controllerType = function()
+	{
+		return SessionController;
+	}
+	
+	SessionFromOrganizationSearchView.prototype.childPanelType = function()
+	{
+		return SessionPanel;
+	}
+	
+	SessionFromOrganizationSearchView.prototype.fillItems = function(items)
+	{
+		var descriptions = items.append('div')
+			.classed('description-text growable unselectable', true);
+		descriptions.append('div')
+			.classed('title', true)
+			.text(function(d) { return d.offering().description(); });
+		descriptions.append('div')
+			.text(function(d) { return d.site().description() != d.organization().description() ?
+									   d.site().description() :
+									   ""; });
+		descriptions.append('div')
+			.text(function(d) { return d.offering().description() != d.description() ?
+									   d.description() :
+									   ""; });
+	}
+	
+	SessionFromOrganizationSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (compareText.length === 0)
+			return true;
+			
+		var i = d.description().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
+		{
+			if (i == 0) return true;
+		}	
+		else
+		{
+			if (i >= 0) return true;
+		}
+		
+		/* If the offering name matches, then make this visible. */	
+		i = d.parent().description().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
+		{
+			if (i == 0) return true;
+		}	
+		else
+		{
+			if (i >= 0) return true;
+		}
+		
+		/* If the site name matches, then make this visible. */	
+		i = d.parent().parent().description().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
+		{
+			if (i == 0) return true;
+		}	
+		else
+		{
+			if (i >= 0) return true;
+		}
+			
+		return false;
+	}
+	
+	SessionFromOrganizationSearchView.prototype.showDescendent = function(d)
+	{
+		this.showSession(d)
+	}
+	
+	function SessionFromOrganizationSearchView(panel, parent) {
+		ChildSearchView.call(this, panel, parent);
+		this.showSession = panel.showSession;
+	}
+	
+	return SessionFromOrganizationSearchView;
+})();
+
+var DescendentsPanel = (function () {
+	DescendentsPanel.prototype = Object.create(EditPanel.prototype);
+	DescendentsPanel.prototype.constructor = DescendentsPanel;
+
+	DescendentsPanel.prototype.parent = null;
+	
+	DescendentsPanel.prototype.createRoot = function(objectData, header, onShow)
+	{
+		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
+
+		var _this = this;
+		var backButton = this.navContainer.appendLeftButton()
+			.classed('chevron-left-container', true)
+			.on('click', function()
+			{
+				_this.hide();
+			});
+		appendLeftChevronSVG(backButton).classed('chevron-left', true);
+		backButton.append('span').text("Back");
+
+		this.navContainer.appendTitle(header);
+
+		this.searchView = new (this.searchViewType)(this, this.parent);
+		$(this.node()).one('revealing.cr', function() {
+				if (_this.parent.id())
+				{
+					_this.searchView.search("");
+					if (_this.searchView.inputBox) 
+						_this.searchView.inputBox.focus();
+				}
+			});
+	}
+	
+	function DescendentsPanel(parent)
+	{
+		EditPanel.call(this);
+		this.parent = parent;
+	}
+	
+	return DescendentsPanel;
+	
+})();
+
+var SessionsFromOrganizationPanel = (function () {
+	SessionsFromOrganizationPanel.prototype = Object.create(DescendentsPanel.prototype);
+	SessionsFromOrganizationPanel.prototype.constructor = SessionsFromOrganizationPanel;
+
+	SessionsFromOrganizationPanel.prototype.searchViewType = SessionFromOrganizationSearchView;
+	
+	SessionsFromOrganizationPanel.prototype.savedItems = function()
+	{
+		return this.parent.sessions();
+	}
+	
+	function SessionsFromOrganizationPanel(organization, showSession, onShow) {
+		DescendentsPanel.call(this, organization);
+		this.showSession = showSession;
+		this.createRoot(organization, organization.description(), 'list', onShow);
+	}
+	
+	return SessionsFromOrganizationPanel;
 	
 })();
 
@@ -2817,7 +3134,7 @@ var SitesPanel = (function () {
 	
 	function SitesPanel(parent, onShow) {
 		ChildrenPanel.call(this, parent, onShow);
-		this.createRoot(parent, crv.buttonTexts.sites, 'list', onShow);
+		this.createRoot(parent, crv.buttonTexts.sites, onShow);
 	}
 	
 	return SitesPanel;
@@ -2862,14 +3179,29 @@ var UserPanel = (function () {
 
 		this.createRoot(crv.buttonTexts.user, onShow);
 
-		this.emailsSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit multiple', true);
-		this.emailsSection.append('label')
-			.text(crv.buttonTexts.emails);
-		this.appendOrderedTextEditor(this.emailsSection, controller.newInstance(), crv.buttonTexts.emails, crv.buttonTexts.email, 
-									 controller.newInstance().emails(),
-									 cr.UserEmail, 'email');
+		if (!controller.oldInstance())
+		{
+			var emailsSection = this.mainDiv.append('section')
+				.datum(controller.newInstance())
+				.classed('cell edit multiple', true);
+			emailsSection.append('label')
+				.text(crv.buttonTexts.emails);
+			
+			var emailsEditor = new OrderedTextEditor(emailsSection, crv.buttonTexts.email, 
+										 controller.newInstance(), controller.newInstance().emails(),
+										 cr.UserEmail, 'email');
+			if (controller.newInstance().emails().length == 0)
+				emailsEditor.appendNewItem();
+		}
+		else
+		{
+			this.navContainer.appendBanner(controller.oldInstance().emails()[0].text());
+			setupOnViewEventHandler(controller.oldInstance().emails()[0], "changed.cr", _this.node(), 
+				function()
+				{
+					_this.navContainer.setBanner(controller.oldInstance().emails()[0].text());
+				});
+		}
 
 		this.firstNameSection = this.appendTextSection(controller.newInstance(), controller.newInstance().firstName, crv.buttonTexts.firstName, 'text')
 			.classed('first', true);
@@ -2921,6 +3253,16 @@ var UserPanel = (function () {
 		if (controller.newInstance().id() && controller.newInstance().privilege() == 'administer')
 		{
 			var _this = this;
+			
+			this.appendActionButton(crv.buttonTexts.changeEmail, function() {
+					if (prepareClick('click', 'Change Email'))
+					{
+						showClickFeedback(this);
+						var panel = new UpdateUsernamePanel(controller.oldInstance(), crv.buttonTexts.user);
+						_this.revealSubPanel(panel);
+					}
+				})
+			.classed('first', true);
 			this.appendActionButton("Reset Password", function() {
 				if (prepareClick('click', "Reset Password"))
 				{

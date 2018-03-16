@@ -30,7 +30,7 @@ var DotsNavigator = (function () {
 		
 		this.value = newValue;
 		var li = this.div.selectAll("ol > li");
-		li.classed("active", function(d, i) { return i == newValue; });
+		li.classed('active', function(d, i) { return i == newValue; });
 	
 		if (newValue > 0)
 			this.backButton.selectAll("span").text("Back");
@@ -182,7 +182,7 @@ var DotsNavigator = (function () {
 	{
 		var isEnabled = this.isForwardEnabled();
 		this.doneButton
-			.classed("site-disabled-text", !isEnabled);
+			.classed('site-disabled-text', !isEnabled);
 	}
 	
 	function DotsNavigator(panel2Div, numDots) {
@@ -202,7 +202,7 @@ var DotsNavigator = (function () {
 			.data(dotIndexes)
 			.enter()
 			.append('li')
-			.classed("active", function(d, i) { return i == 0; });
+			.classed('active', function(d, i) { return i == 0; });
 			
 		this.panels = panel2Div.selectAll('panel')
 			.data(dotIndexes)

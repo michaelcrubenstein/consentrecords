@@ -8,14 +8,14 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	var site = session.site();
 	
 	var sitePanel = new crv.SitePanel();
-	sitePanel.createRoot(session, offering.description(), "session");
+	sitePanel.createRoot(session, offering.description(), 'session');
 	var panel = sitePanel.node();
 	
 	var navContainer = sitePanel.appendNavContainer();
 
 	var backButton = navContainer.appendLeftButton()
-		.on("click", function() { sitePanel.hideRightEvent(); });
-	backButton.append("span").text(crv.buttonTexts.done);
+		.on('click', function() { sitePanel.hideRightEvent(); });
+	backButton.append('span').text(crv.buttonTexts.done);
 	
 	var header = "Find a New Experience";
 	navContainer.appendTitle(header);
@@ -29,16 +29,16 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	if (organization)
 	{
-		var orgDiv = panel2Div.append("section");
-		orgDiv.classed("organization", true);
+		var orgDiv = panel2Div.append('section');
+		orgDiv.classed('organization', true);
 
-		var labelDiv = orgDiv.append("label")
+		var labelDiv = orgDiv.append('label')
 			.text(organization.description());
 
 		if (site.description() && (site.description() !== organization.description()))
 		{
 			orgDiv.append('div')
-				.classed("address-line", true)
+				.classed('address-line', true)
 				.text(site.description());
 		}
 		
@@ -75,7 +75,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		firstDiv = nextDiv;
 
 	var cellDiv = panel2Div.append("section")
-		.classed("cell", true);
+		.classed('cell', true);
 	
 	offering.promiseData()
 		.then(function()
@@ -100,7 +100,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 
 					var items = appendItems(itemsDiv, offeringServices);
 					appendButtonDescriptions(items);
-					cellDiv.append("div").classed("cell-border-below", true);
+					cellDiv.append("div").classed('cell-border-below', true);
 				}
 				
 				var newText = offering.ageRange();
@@ -122,10 +122,10 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				{
 					var webSiteDiv = panel2Div.append("section");
 					var labelDiv = webSiteDiv.append("div")
-						.classed("more-info", true);
+						.classed('more-info', true);
 					var link = labelDiv
 						.append("a")
-						.classed("site-active-text", true)
+						.classed('site-active-text', true)
 						.attr("href", newText)
 						.attr("target", "_blank")
 						.text("More Info");

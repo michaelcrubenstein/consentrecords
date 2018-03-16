@@ -28,7 +28,7 @@ var Settings = (function () {
 		EditItemPanel.call(this, controller);
 		
 		this.createRoot("Settings", onShow, false);
-		this.panelDiv.classed("settings", true);
+		this.panelDiv.classed('settings', true);
 
 		var firstNameSection = this.appendTextSection(controller.newInstance(), 
 			controller.newInstance().firstName, crv.buttonTexts.firstName, 'text');
@@ -883,8 +883,8 @@ var NotificationsPanel = (function () {
 		
 		var sections = this.mainDiv.append('section')
 		    .datum(user.notifications())
-			.classed("cell edit", true)
-			.classed("multiple", true);
+			.classed('cell edit', true)
+			.classed('multiple', true);
 			
 		this.noItemsDiv = sections.append('div')
 			.classed('no-results', true)

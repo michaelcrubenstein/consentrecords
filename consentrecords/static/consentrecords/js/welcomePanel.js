@@ -704,7 +704,7 @@ var WelcomePanel = (function () {
 			.on('input', function() { _this.checkenabled(); })
 			.node();
 		this.passwordOK = passwordGroup.append('span')
-			.classed("success-feedback", true)
+			.classed('success-feedback', true)
 			.node();
 		
 		var confirmGroup = div.append('div');
@@ -729,7 +729,7 @@ var WelcomePanel = (function () {
 				})
 			.node();
 		this.confirmOK = confirmGroup.append('span')
-			.classed("success-feedback", true)
+			.classed('success-feedback', true)
 			.node();
 
 		this.signupButton = div.append('div').append('button')
@@ -754,13 +754,13 @@ var WelcomePanel = (function () {
 	WelcomePanel.prototype.checkenabled = function() {			
 		if (!this.canSubmit())
 		{
-			this.signupButton.classed("site-disabled-text", true)
-				.classed("site-active-text", false);
+			this.signupButton.classed('site-disabled-text', true)
+				.classed('site-active-text', false);
 		}
 		else
 		{
-			this.signupButton.classed("site-disabled-text", false)
-				.classed("site-active-text", true);
+			this.signupButton.classed('site-disabled-text', false)
+				.classed('site-active-text', true);
 		}
 
 		if (!validateEmail($(this.emailInput).val()))

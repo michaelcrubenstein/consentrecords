@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
 
 	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-title" content="PathAdvisor Organization">
+	<meta name="apple-mobile-web-app-title" content={% block webAppTitle %}"PathAdvisor"{% endblock webAppTitle %}>
 	
 	{% if fbURL %}
     <meta property="og:url" content="{{fbURL}}">
@@ -17,32 +17,30 @@
     <meta property="og:description" content="{{fbDescription}}">
     {% endif %}
     
-    <title>PathAdvisor - Organization</title>
+    <title>{% block title %}PathAdvisor{% endblock title %}</title>
 
 	<link href="{% static "jqcloud2/dist/jqcloud.min.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "switchery/css/switchery.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/showSharing.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/showFollowing.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/signup.css" %}?v={{jsversion}}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/wordclouds.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/tagPoolView.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/findExperience.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showSharing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showFollowing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/signup.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/wordclouds.css" %}?v={{jsversion}}" rel="stylesheet">
     
     <link href="{% static "custom_user/css/formsimple.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <style>
-    	.consent-form-title {
-    	}
-    	.consent-record-accept-button {
-    	}
     	.button-section {
     		float: bottom;
     	}
@@ -54,75 +52,6 @@
     	}
     	.organization-section {
     		display: none;
-    	}
-    	.level-2-panel {
-    		top: 0;
-    		z-index: 2;
-    	}
-    	.level-3-panel {
-    		top: 0;
-    		z-index: 3;
-    	}
-    	.level-4-panel {
-    		top: 0;
-    		z-index: 4;
-    	}
-    	panel#id_forgot_password_panel {
-    		background: white;
-    	}
-    	.username-label {
-    		padding-left: 15px;
-    	}
-    	.centered-right-glyph {
-			position: absolute;
-			top: 50%;
-			-moz-transform: translateY(-50%);
-			-webkit-transform: translateY(-50%);
-			transform: translateY(-50%);
-			float: right;
-			right: 12px;
-	   	}
-	   	.centered-right-2 {	/* To the left of a centered-right-glyph */
-			width: auto;
-			float: right;
-			margin-right: 24px;
-			text-align: right;
-	   	}
-    	.option-label {
-    		margin-top: 15px;
-    		margin-left: 15px;
-    	}
-    	.option-item {
-    		margin-top: 15px;
-    		margin-left: 45px;
-    	}
-    	panel.session {
-    		background: white;
-    	}
-    	panel.session header {
-			width: 100%;
-			padding: 6px 12px;
-			text-align: left;
-			font-weight: bold;
-    	}
-    	panel.session .organization {
-    		margin-left: 12px;
-    		padding-bottom: 5px;
-    		border-bottom: 1px solid #eee;
-    	}
-    	panel.session .organization>label {
-    		font-weight: normal;
-    	}
-    	panel.session .address-line {
-    		margin-left: 0px;
-    		font-size: smaller;
-    	}
-    	panel.session .more-info {
-			overflow: hidden;
-			width: auto;
-			display: block;
-    		font-size: smaller;
-    		padding: 6px 12px;
     	}
     </style>
 	</head>
@@ -151,15 +80,16 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="initial" >
+  		<panel id="id_user_home_panel" class="initial site-panel" >
 			<nav role="navigation">
 				<div>
+				    <div class="site-title"></div>
 					<div class="right-link site-navbar-link site-active-text default-link sign-in-button">
 						<span id="sign-in-span">Sign&nbsp;In</span>
 					</div>
 				</div>
+				<header class="site-banner username-label"> </header>
 			</nav>
-			<h3 class="username-label"> </h3>
 			<div class="alert-container"></div>
 			<section class="button-section">
 				<section class="organization-section row-button-group">
@@ -183,37 +113,40 @@
 	<script src="{% static "switchery/js/switchery.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "uuid/uuid.3.0.0.js" %}?v={{jsversion}}"></script>
 	<script src="{% static "jqcloud2/dist/jqcloud.min.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/models.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/controllers.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/views.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/getDataChunker.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/dateinput.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/dotsnavigator.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/findExperience.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/hilitePanel.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/pathtreePanel.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/showFollowing.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/showSharing.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/signup.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/settings.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
-	<script src="{% static "consentrecords/js/wordclouds.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/models.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/controllers.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/views.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/dateinput.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/dotsnavigator.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/findExperience.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/hilitePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/orgviews.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/quickAddExperiencePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/searchPaths.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/comparePathsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/showFollowing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/showSharing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/signup.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/settings.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/wordclouds.js" %}?v={{jsversion}}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		jsVersionPathSuffix = '?v={{jsversion}}';
-		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}' + jsVersionPathSuffix;
-		addImagePath = '{% static "consentrecords/png/add.png" %}' + jsVersionPathSuffix;
-		settingsImagePath = '{% static "consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
-		shareImagePath = '{% static "consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
-		deleteButtonPath = '{% static "consentrecords/png/delete.png" %}' + jsVersionPathSuffix;
+		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}' + jsVersionPathSuffix;
+		addImagePath = '{% static "b/consentrecords/png/add.png" %}' + jsVersionPathSuffix;
+		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
+		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
+		deleteButtonPath = '{% static "b/consentrecords/png/delete.png" %}' + jsVersionPathSuffix;
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection
@@ -234,7 +167,7 @@
 		{% endif %}
 		
 		/* Update the username label when a user signs in or out. */	
-		var usernameLabel = $(".username-label");
+		var usernameLabel = $("panel.initial .site-banner");
 		
 		cr.signedinUser.on("signin.cr changed.cr", usernameLabel[0], function(eventObject)
 		{
@@ -300,6 +233,7 @@
 				}
 			}
 			e.preventDefault();
+			e.stopPropagation();
 		});
 
 		function checkSignin(previousPanel, done, message)
@@ -336,41 +270,6 @@
 			}
 		}
 		
-		function getFilter(node)
-		{
-			return function()
-			{
-				var val = this.value.toLocaleLowerCase();
-				if (val.length == 0)
-				{
-					/* Show all of the items. */
-					d3.select(node).selectAll("div")
-						.style("display", null);
-				}
-				else
-				{
-					/* Show the items whose description is this.value */
-					d3.select(node).selectAll("div")
-						.style("display", function(d)
-							{
-								if (d.description().toLocaleLowerCase().indexOf(val) >= 0)
-									return null;
-								else
-									return "none";
-							});
-				}
-			}
-		}
-		
-		function showFixedPanel(previousPanel, newNode)
-		{
-			var zIndex = parseInt($(previousPanel).css("z-index"))+1;
-			var panel = d3.select(newNode);
-			panel.style("z-index", zIndex);
-			
-			panel.showLeft().then(unblockClick);
-		}
-			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 			return cr.submitSignout()
@@ -403,7 +302,7 @@
 					.append('li');
 				
 				divs.append('div')
-					.classed("growable unselectable site-active-text show-panel-button", true)
+					.classed('growable unselectable site-active-text show-panel-button', true)
 					.text(function(d) { return d.description(); });
 				
 				crf.appendRightChevrons(divs);
@@ -421,6 +320,7 @@
 				.then(successFunction, cr.asyncFail);
 		}
 		
+		{% block showOrganizationPanel %}
 		/* Displays a panel in which the specified object's contents appear.
 		 */
 		function show_organization_panel(objectData, containerUUID, containerPanel) {
@@ -439,16 +339,13 @@
 	
 				var panel2Div = sitePanel.appendScrollArea();
 
-				var headerDiv = panel2Div.appendHeader();
-				function updatePanelHeader(eventObject)
-				{
-					d3.select(eventObject.data).text(this.description());
-				}
-				objectData.on("dataChanged.cr", headerDiv.node(), updatePanelHeader);
-				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
-				{
-					eventObject.data.off("dataChanged.cr", updatePanelHeader);
-				});
+				navContainer.appendBanner(objectData.description());
+				
+				setupOnViewEventHandler(objectData, 'dataChanged.cr', sitePanel.node(),
+					function (eventObject)
+						{
+							navContainer.setBanner(objectData.description());
+						});
 
 				sitePanel.showLeft().then(unblockClick);
 
@@ -501,7 +398,7 @@
 					{
 						if (prepareClick('click', 'Manage Sessions'))
 						{
-							manage_session(organization, sitePanel.node());
+							manage_session(organization);
 						}
 					})
 					.classed('first', true);
@@ -520,6 +417,7 @@
 	
 			objectData.promiseData().then(successFunction, cr.asyncFail)
 		}
+		{% endblock showOrganizationPanel %}
 		
 		function pickChild(parent, data, previousPanelNode, header, successFunction)
 		{
@@ -604,8 +502,8 @@
 		
 		function enroll_inquiry(organization, previousPanelNode)
 		{
-			pickSessionFromOrganization(organization, previousPanelNode,
-				function(session, currentPanelNode)
+			pickSessionFromOrganization(organization,
+				function(session)
 				{
 					session.promiseInquiries().then(function()
 						{
@@ -895,44 +793,44 @@
 			pick_site(organization, previousPanelNode, pickSiteSuccess);
 		}
 		
-		function pickSessionFromOrganization(organization, previousPanelNode, sessionSuccess)
+		function pickSessionFromOrganization(organization, sessionSuccess)
 		{
-			var pickOfferingSuccess = function(offering, pickOfferingPanel)
+			function pickSessionSuccess(session, previousPanel)
 			{
-				function pickSessionSuccess(session, previousPanel)
-				{
-					session.promiseData()
-						.then(function()
+				session.promiseData()
+					.then(function()
+						{
+							try
 							{
-								try
-								{
-									sessionSuccess(session, previousPanel);
-								}
-								catch(err) { cr.syncFail(err); }
-							},
-							cr.syncFail);
-				}
-				pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+								sessionSuccess(session);
+							}
+							catch(err) { cr.syncFail(err); }
+						},
+						cr.syncFail);
 			}
-			pickOfferingFromOrganization(organization, previousPanelNode, pickOfferingSuccess);
+
+			var panel = new SessionsFromOrganizationPanel(organization, pickSessionSuccess);
+			panel.showLeft().always(unblockClick);
 		}
 		
-		function manage_session(organization, panelDiv)
+		{% block manageSession %}
+		function manage_session(organization)
 		{
-			pickSessionFromOrganization(organization, panelDiv, 
-				function(session, previousPanel)
+			pickSessionFromOrganization(organization, 
+				function(session)
 				{
 					var controller = new SessionController(session.offering(), session, true);
 					controller.oldInstance(session);
 				    var panel = new SessionPanel(controller, revealPanelLeft);
-				    revealPanelLeft(panel.node());
+				    panel.showLeft().always(unblockClick);
 				});
 		}
+		{% endblock manageSession %}
 		
 		function record_participation(organization, previousNode)
 		{
-			pickSessionFromOrganization(organization, previousNode, 
-				function(session, previousPanel)
+			pickSessionFromOrganization(organization, 
+				function(session)
 				{
 					session.promiseEnrollments().then(
 						function()
@@ -975,6 +873,7 @@
 											syncFailFunction);
 									}
 									d3.event.preventDefault();
+									d3.event.stopPropagation();
 								});
 					
 							sitePanel.showLeft().then(unblockClick);

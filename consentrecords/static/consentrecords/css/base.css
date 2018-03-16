@@ -126,6 +126,14 @@ label {
   color: #843534;
 }
 
+.text-danger {
+	color:#a94442
+}
+
+a.text-danger:focus,a.text-danger:hover {
+	color:#843534
+}
+
 .close {
 	float: right;
 	font-size: 21px;
@@ -204,7 +212,8 @@ body {
 body>panel {
 	height: 100%;
 	width: 100%;
-	display: block;
+	display: flex;
+	flex-direction: column;
 	position: fixed;
 	overflow-y: hidden;
 }
@@ -229,6 +238,7 @@ panel.initial {
 .panel-fill {
 	position: relative;
 	width: 100%;
+	flex-grow: 100;
 }
 
 .vertical-scrolling {
@@ -286,17 +296,61 @@ panel.edit {
 	padding-left: 15px;
 	padding-right: 15px;
 	display: block;
-	font-size: 1.2em;
 	overflow-x: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	text-align: left;
-	font-weight: 600;
 	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
 	-o-user-select: none;
+}
+
+.site-banner:only-of-type {
+	font-size: 1.2em;
+	font-weight: 600;
+}
+
+panel>nav div.detail {
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+	font-size: 12px;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	cursor: default;
+	border-bottom: 1px solid #e7e7e7;
+}
+
+panel>nav div.detail > div {
+	flex-grow: 100;
+	padding-left: 15px;
+}
+
+panel>nav div.detail > div > div {
+	opacity: 0.7;
+}
+
+panel>nav div.detail > div > div:first-child {
+	font-weight: 600;
+	font-size: 1.2em;
+	opacity: 1.0;
+}
+
+panel>nav div.detail > div > div:last-child {
+	padding-bottom: 6px;
+}
+
+panel>nav div.detail > div > div.sub-header {
+    padding-top: 6px;
+    font-size: medium;
+	font-weight: 600;
+	opacity: 1.0;
 }
 
 panel>nav .left-link {
@@ -617,6 +671,15 @@ panel.list .description-text {
 
 li>div.description-text>div.documentation {
 	padding: .5em 1em;
+	font-size: 0.8em;
+	color: #666;
+}
+
+li>div.description-text>div.title {
+	font-weight: bold; 
+}
+
+li>div.description-text>div.title~div {
 	font-size: 0.8em;
 	color: #666;
 }
