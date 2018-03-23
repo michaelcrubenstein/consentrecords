@@ -2709,8 +2709,10 @@ var SessionPanel = (function () {
 		this.startSection = this.appendDateSection(controller.newInstance(), controller.newInstance().start, crv.buttonTexts.start);
 		this.startEditor = this.startSection.editor;
 		this.startEditor.dateWheel.checkMinDate(minDate, maxDate);
+		
 		this.endSection = this.appendDateSection(controller.newInstance(), controller.newInstance().end, crv.buttonTexts.end);
 		this.endEditor = this.endSection.editor;
+		this.endEditor.dateWheel.checkMinDate(minDate, maxDate);
 
 		this.canRegisterSection = this.appendEnumerationPickerSection(controller.newInstance(), controller.newInstance().canRegister, crv.buttonTexts.canRegister, PickCanRegisterPanel)
 		this.canRegisterSection.classed('first', true);
