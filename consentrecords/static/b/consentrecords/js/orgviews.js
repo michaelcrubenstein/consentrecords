@@ -2691,12 +2691,24 @@ var SessionPanel = (function () {
 									 controller.newInstance().names(),
 									 cr.SessionName);
 									 
+		var minDate = new Date();
+		minDate.setUTCFullYear(minDate.getUTCFullYear() - 50);
+		minDate.setMonth(0);
+		minDate.setDate(1);
+				 
+		var maxDate = new Date();
+		maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 50);
+		maxDate.setMonth(11);
+		maxDate.setDate(31);
+
 		this.registrationDeadlineSection = this.appendDateSection(controller.newInstance(), controller.newInstance().registrationDeadline, crv.buttonTexts.registrationDeadline);
 		this.registrationDeadlineEditor = this.registrationDeadlineSection.editor;
 		this.registrationDeadlineSection.classed('first', true);
+		this.registrationDeadlineEditor.dateWheel.checkMinDate(minDate, maxDate);
 		
 		this.startSection = this.appendDateSection(controller.newInstance(), controller.newInstance().start, crv.buttonTexts.start);
 		this.startEditor = this.startSection.editor;
+		this.startEditor.dateWheel.checkMinDate(minDate, maxDate);
 		this.endSection = this.appendDateSection(controller.newInstance(), controller.newInstance().end, crv.buttonTexts.end);
 		this.endEditor = this.endSection.editor;
 
