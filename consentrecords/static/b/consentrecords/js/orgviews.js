@@ -72,7 +72,7 @@ var ChildSearchView = (function () {
 	
 	ChildSearchView.prototype.fields = function()
 	{
-		return ["parents"];
+		return ['parents'];
 	}
 	
 	ChildSearchView.prototype.textCleared = function()
@@ -562,6 +562,11 @@ var EngagementSearchView = (function () {
 		return EngagementPanel;
 	}
 	
+	EngagementSearchView.prototype.fields = function()
+	{
+		return ['parents', 'user'];
+	}
+	
 	EngagementSearchView.prototype.fillItems = function(items)
 	{
 		ChildSearchView.prototype.fillItems.call(this, items);
@@ -570,6 +575,27 @@ var EngagementSearchView = (function () {
 				return d.user();
 			}, 
 			function(items) { return items.insert('div', 'button:last-of-type'); });
+
+		var _this = this;
+		
+		items.each(function(d)
+			{
+				var leftText = d3.select(this).select('div');
+				
+				var user = d.user();
+				if (user)
+				{
+					leftText.classed('detail', true).text('');
+					var userName = user.fullName();
+					var userDescription = user.description();
+				
+					var containerDiv = leftText.append('div');
+					if (userName) containerDiv.append('div').text(userName);
+					if (userDescription) containerDiv.append('div').text(userDescription);
+				}
+				else
+					throw new Error("Engagement has no user.");
+			});
 	}
 	
 	function EngagementSearchView(sitePanel, parent) {
@@ -596,7 +622,7 @@ var EngagementsPanel = (function () {
 		this.navContainer.appendTitle('');
 		var div = this.navContainer.nav.append('div').classed('detail', true);
 		div = div.append('div')
-		div.append('div').classed('flag-label', true).text(objectData.offering().description());
+		div.append('div').text(objectData.offering().description());
 		if (objectData.description() != objectData.offering().description())
 			div.append('div').text(objectData.description());
 		if (objectData.site().description() != objectData.organization().description())

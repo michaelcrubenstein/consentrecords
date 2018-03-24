@@ -847,17 +847,18 @@ var ExperienceCommentsPanel = (function() {
 			.classed('no-scrolling', true);
 
 		this.detailGroup = this.mainDiv.append('div')
-			.classed('detail', true)
+			.classed('banner', true)
 			.datum(fd);
-		this.detailTextGroup = this.detailGroup.append('div');
+		this.detailTextGroup = this.detailGroup.append('div')
+			.classed('detail', true);
 		
 		function resizeDetail()
 		{
 			fd.appendElements(_this.detailTextGroup, 12);
 			if (backText != fd.experience.parent().parent().caption())
 			{
-				var containerDiv = _this.detailTextGroup.select('div');
-				containerDiv.insert('div', ':first-child')
+				/* Test case: Display an answered question notification detail */
+				_this.detailTextGroup.insert('div', ':first-child')
 					.classed('user-label', true)
 					.text(fd.experience.parent().parent().caption());
 			}
