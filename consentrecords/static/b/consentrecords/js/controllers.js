@@ -907,6 +907,13 @@ var OfferingController = (function() {
 	function OfferingController(parent, source, duplicateForEdit)
 	{
 		ChildController.call(this, parent, source || cr.Offering, duplicateForEdit);
+		
+		/* Set the newInstance's cached parents based on the parent. */
+		if (parent)
+		{
+			this.newInstance().site(parent);
+			this.newInstance().organization(parent.parent());
+		}
 	}
 	
 	return OfferingController;
@@ -1028,6 +1035,18 @@ var SessionController = (function() {
 	function SessionController(parent, source, duplicateForEdit)
 	{
 		ChildController.call(this, parent, source || cr.Session, duplicateForEdit);
+		
+		/* Set the newInstance's cached parents based on the parent. */
+		if (parent)
+		{
+			this.newInstance().offering(parent);
+			var site = parent.parent();
+			if (site)
+			{
+				this.newInstance().site(site);
+				this.newInstance().organization(site.parent());
+			}
+		}
 	}
 	
 	return SessionController;

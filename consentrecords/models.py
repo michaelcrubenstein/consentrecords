@@ -1744,7 +1744,13 @@ class Engagement(ChildInstance, dbmodels.Model):
         return querySet.select_related('user')
         
     def select_related(querySet, fields=[]):
-        qs = querySet.select_related('user')
+        if 'user' in fields:
+            qs = querySet.prefetch_related(Prefetch('user',
+                                              queryset=User.select_related(User.objects.filter(deleteTransaction__isnull=True)),
+                                              to_attr='currentUser'))
+        else:
+            qs = querySet.select_related('user')
+            
         if 'offering' in fields:
             qs = qs.prefetch_related(Prefetch('parent__parent',
                                               queryset=Offering.select_head_related(Offering.objects.filter(deleteTransaction__isnull=True)),
@@ -1763,7 +1769,10 @@ class Engagement(ChildInstance, dbmodels.Model):
         data = self.headData(context)
         if context.canRead(self):
             if self.user:
-                data['user'] = self.user.headData(context)
+                if 'user' in fields:
+                    data['user'] = self.currentUser.getData([], context)
+                else:
+                    data['user'] = self.user.headData(context)
             if self.start:
                 data['start'] = self.start
             if self.end:
@@ -5183,7 +5192,7 @@ class Session(ChildInstance, dbmodels.Model):
     def filterForGetData(qs, user, accessType):
         return SecureRootInstance.readableQuerySet(qs, user, 'parent__parent__parent')
 
-	# Order sessions by site name, offering name and session name.
+    # Order sessions by site name, offering name and session name.
     def order_by(queryset, context):
         w1=When(names__languageCode=context.languageCode, names__deleteTransaction__isnull=True, then='names__text')
         pw1=When(parent__names__languageCode=context.languageCode, parent__names__deleteTransaction__isnull=True, then='parent__names__text')
@@ -5195,11 +5204,11 @@ class Session(ChildInstance, dbmodels.Model):
             pw2=When(parent__names__languageCode='en', parent__names__deleteTransaction__isnull=True, then='parent__names__text')
             ppw2=When(parent__parent__names__languageCode='en', parent__parent__names__deleteTransaction__isnull=True, then='parent__parent__names__text')
             return queryset.annotate(ordering=Min(Case(w1)), orderingen=Min(Case(w2)),
-            	pOrdering=Min(Case(pw1)), pOrderingen=Min(Case(pw2)),
-            	ppOrdering=Min(Case(ppw1)), ppOrderingen=Min(Case(ppw2)))\
+                pOrdering=Min(Case(pw1)), pOrderingen=Min(Case(pw2)),
+                ppOrdering=Min(Case(ppw1)), ppOrderingen=Min(Case(ppw2)))\
                 .order_by(Case(When(ppOrdering__isnull=False, then='ppOrdering'), default='ppOrderingen'),
-                	Case(When(pOrdering__isnull=False, then='pOrdering'), default='pOrderingen'),
-                	Case(When(ordering__isnull=False, then='ordering'), default='orderingen'))
+                    Case(When(pOrdering__isnull=False, then='pOrdering'), default='pOrderingen'),
+                    Case(When(ordering__isnull=False, then='ordering'), default='orderingen'))
         
     def markDeleted(self, context):
         for name in self.currentNamesQuerySet:

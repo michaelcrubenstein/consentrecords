@@ -312,9 +312,19 @@ panel.edit {
 	font-weight: 600;
 }
 
-panel>nav div.detail {
+div.detail {
 	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
 	font-size: 12px;
+	opacity: 0.7;
+}
+
+div.detail > div > div:first-child {
+	font-weight: 600;
+	font-size: 1.2em;
+	opacity: 1.0;
+}
+
+panel>nav div.detail {
 	display: flex;
 	align-items: center;
 	width: 100%;
@@ -330,16 +340,6 @@ panel>nav div.detail {
 panel>nav div.detail > div {
 	flex-grow: 100;
 	padding-left: 15px;
-}
-
-panel>nav div.detail > div > div {
-	opacity: 0.7;
-}
-
-panel>nav div.detail > div > div:first-child {
-	font-weight: 600;
-	font-size: 1.2em;
-	opacity: 1.0;
 }
 
 panel>nav div.detail > div > div:last-child {

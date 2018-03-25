@@ -5389,6 +5389,13 @@ cr.Path = (function() {
 		return this;
 	}
 	
+	Path.prototype.setDefaultValues = function()
+	{
+		cr.PublicGrantable.prototype.setDefaultValues.call(this);
+		this._experiences = [];
+		this._engagements = [];
+	}
+	
 	/* Copies all of the data associated with this instance prior to making changes.
 	 */
 	Path.prototype.duplicateData = function(newInstance, duplicateForEdit)
@@ -5408,7 +5415,16 @@ cr.Path = (function() {
 		return this;
 	}
 	
-	/* Returns a dictionary that describes all of the operations needed to change
+	/* Appends to initialData all of the operations needed to create a new
+		instance.
+	 */
+	Path.prototype.appendData = function(initialData)
+	{
+		cr.PublicGrantable.prototype.appendData.call(this, initialData);
+		this.appendList(this.experiences(), initialData, 'experiences');
+	}
+	
+	/* Appends to changes all of the operations needed to change
 		the data in this object to the data in the revision.
 	 */
 	Path.prototype.appendChanges = function(revision, changes)
@@ -7221,6 +7237,7 @@ cr.User = (function() {
 		this._notifications = [];
 		this._path = new cr.Path();
 		this._path.parent(this);
+		this._path.setDefaultValues();
 		this._userGrantRequests = [];
 		this._tipLevel = null;
 	}
@@ -7293,8 +7310,8 @@ cr.User = (function() {
 		return this;
 	}
 	
-	/* Returns a dictionary that describes all of the operations needed to change
-		the data in this object to the data in the revision.
+	/* Appends to initialData all of the operations needed to create a new
+		instance.
 	 */
 	User.prototype.appendData = function(initialData)
 	{
@@ -7315,12 +7332,15 @@ cr.User = (function() {
 		}
 		else
 		{
-			this.path(new Path());
+			this.path(new cr.Path());
 			this.path().setDefaultValues();
 		}
 		this.appendList(this.emails(), initialData, 'emails');
 	}
 	
+	/* Appends to changes all of the operations needed to change
+		the data in this object to the data in the revision.
+	 */
 	User.prototype.appendChanges = function(revision, changes)
 	{
 		changes = cr.PublicGrantable.prototype.appendChanges.call(this, revision, changes);

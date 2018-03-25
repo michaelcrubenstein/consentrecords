@@ -847,17 +847,18 @@ var ExperienceCommentsPanel = (function() {
 			.classed('no-scrolling', true);
 
 		this.detailGroup = this.mainDiv.append('div')
-			.classed('detail', true)
+			.classed('banner', true)
 			.datum(fd);
-		this.detailTextGroup = this.detailGroup.append('div');
+		this.detailTextGroup = this.detailGroup.append('div')
+			.classed('detail', true);
 		
 		function resizeDetail()
 		{
 			fd.appendElements(_this.detailTextGroup, 12);
 			if (backText != fd.experience.parent().parent().caption())
 			{
-				var containerDiv = _this.detailTextGroup.select('div');
-				containerDiv.insert('div', ':first-child')
+				/* Test case: Display an answered question notification detail */
+				_this.detailTextGroup.insert('div', ':first-child')
 					.classed('user-label', true)
 					.text(fd.experience.parent().parent().caption());
 			}
@@ -865,12 +866,14 @@ var ExperienceCommentsPanel = (function() {
 		
 		function changeEventHandler(eventObject, newValue)
 		{
-			fd.colorHTMLElement(_this.detailGroup.node());
-			fd.colorHTMLElement(navContainer.nav.node());
-			resizeDetail();
+			try
+			{
+				fd.colorHTMLElement(_this.detailGroup.node());
+				fd.colorHTMLElement(navContainer.nav.node());
+				resizeDetail();
+			}
+			catch(err) { cr.asyncFail(err); }
 		}
-		
-		setTimeout(changeEventHandler);
 		
 		/* Update the contents of the top banner if the contents of the experience are changed. */
 		fd.setupChangeEventHandler(this.mainDiv.node(), changeEventHandler);
@@ -1099,18 +1102,21 @@ var ExperienceCommentsPanel = (function() {
 		
 		if (fd.experience.id())
 		{
-			var fields =['comments'];
+			var fields =['comments', 'services', 'custom services'];
 			if (fd.experience.privilege() == 'administer')
 			{
 				fields.push('user grants');
 				fields.push('group grants');
 			}
 			this.promise = fd.experience.promiseData(fields)
-				.then(function(comments)
+				.then(function()
 					{
 						var r = $.Deferred();
 						setTimeout(function()
 							{
+								/* changeEventHandler is dependent on the data, so put it here. */
+								changeEventHandler();
+
 			/* Put the call to loadComments in a setTimeout to ensure that the panel's css 
 				is set up before the comments are loaded. The panel's css won't be set up 
 				if the comments are already loaded.
@@ -1125,6 +1131,7 @@ var ExperienceCommentsPanel = (function() {
 		{
 			this.promise = $.Deferred();
 			this.promise.resolve();
+			setTimeout(changeEventHandler)
 		}
 
 		$(this.mainDiv.node()).on('resize.cr', function()

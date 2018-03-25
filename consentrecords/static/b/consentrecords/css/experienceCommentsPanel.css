@@ -7,9 +7,7 @@ panel.comments div.panel-fill {
 	background: white;
 }
 
-panel.comments div.detail {
-	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
-	font-size: 12px;
+panel.comments div.banner {
 	display: flex;
 	align-items: center;
 	width: 100%;
@@ -22,26 +20,21 @@ panel.comments div.detail {
 	border-bottom: 1px solid #e7e7e7;
 }
 
-panel.comments div.detail > div {
+panel.comments div.banner > div {
 	flex-grow: 100;
 	padding-left: 15px;
 }
 
-panel.comments div.detail > div > div {
-	opacity: 0.7;
-}
-
-panel.comments div.detail > div > div:first-child {
-	opacity: 1.0;
+panel.comments div.banner > div > div:first-child {
 	padding-top: 6px;
 	padding-bottom: 6px;
 }
 
-panel.comments div.detail > div > div:last-child {
+panel.comments div.banner > div > div:last-child {
 	padding-bottom: 6px;
 }
 
-panel.comments div.detail > svg {
+panel.comments div.banner > svg {
 	margin-left: 15px;
 	margin-right: 15px;
 	fill: #777;
@@ -50,11 +43,6 @@ panel.comments div.detail > svg {
 panel.comments .user-label {
 	font-weight: 600;
 	font-size: 1.3em;
-}
-
-panel.comments .flag-label {
-	font-weight: 600;
-	font-size: 1.2em;
 }
 
 panel.comments svg line {

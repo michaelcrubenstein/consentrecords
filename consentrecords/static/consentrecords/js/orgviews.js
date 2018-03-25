@@ -72,7 +72,7 @@ var ChildSearchView = (function () {
 	
 	ChildSearchView.prototype.fields = function()
 	{
-		return ["parents"];
+		return ['parents'];
 	}
 	
 	ChildSearchView.prototype.textCleared = function()
@@ -89,24 +89,6 @@ var ChildSearchView = (function () {
 		crf.appendConfirmDeleteControls(items);
 
 		crf.showDeleteControls($(deleteControls[0]), 0);
-		
-		var _this = this;
-		items.each(function(d)
-			{
-				setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
-					{
-						_this.getDataChunker.onItemDeleted();
-						$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
-						{
-							$(this).remove();
-						});
-					});
-				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
-					{
-						d3.select(eventObject.data).selectAll('div.description-text')
-							.text(d.description());
-					});
-			});
 	}
 	
 	ChildSearchView.prototype.isButtonVisible = function(button, d, compareText)
@@ -562,6 +544,11 @@ var EngagementSearchView = (function () {
 		return EngagementPanel;
 	}
 	
+	EngagementSearchView.prototype.fields = function()
+	{
+		return ['parents', 'user'];
+	}
+	
 	EngagementSearchView.prototype.fillItems = function(items)
 	{
 		ChildSearchView.prototype.fillItems.call(this, items);
@@ -570,6 +557,27 @@ var EngagementSearchView = (function () {
 				return d.user();
 			}, 
 			function(items) { return items.insert('div', 'button:last-of-type'); });
+
+		var _this = this;
+		
+		items.each(function(d)
+			{
+				var leftText = d3.select(this).select('div');
+				
+				var user = d.user();
+				if (user)
+				{
+					leftText.classed('detail', true).text('');
+					var userName = user.fullName();
+					var userDescription = user.description();
+				
+					var containerDiv = leftText.append('div');
+					if (userName) containerDiv.append('div').text(userName);
+					if (userDescription) containerDiv.append('div').text(userDescription);
+				}
+				else
+					throw new Error("Engagement has no user.");
+			});
 	}
 	
 	function EngagementSearchView(sitePanel, parent) {
@@ -596,7 +604,7 @@ var EngagementsPanel = (function () {
 		this.navContainer.appendTitle('');
 		var div = this.navContainer.nav.append('div').classed('detail', true);
 		div = div.append('div')
-		div.append('div').classed('flag-label', true).text(objectData.offering().description());
+		div.append('div').text(objectData.offering().description());
 		if (objectData.description() != objectData.offering().description())
 			div.append('div').text(objectData.description());
 		if (objectData.site().description() != objectData.organization().description())
@@ -1199,8 +1207,8 @@ var PickEngagementUserPanel = (function()
 				if (prepareClick('click', 'New User'))
 				{
 					try {
-						var controller = new UserController(null);
-						var panel = new UserPanel(controller, this.addPanelTitle);
+						var controller = new ContactUserController(null);
+						var panel = new ContactUserPanel(controller, this.addPanelTitle);
 						setupOneViewEventHandler(controller.newInstance(), 'added.cr', panel.node(), function(eventObject)
 							{
 								_this.searchView.inputText(controller.newInstance().emails()[0].text());
@@ -3187,12 +3195,11 @@ var UserPanel = (function () {
 		return false;
 	}
 	
-	function UserPanel(controller, onShow) {
+	UserPanel.prototype.createRoot = function(controller, header, onShow)
+	{
+		EditItemPanel.prototype.createRoot.call(this, header, onShow);
+		
 		var _this = this;
-		EditItemPanel.call(this, controller);
-
-		this.createRoot(crv.buttonTexts.user, onShow);
-
 		if (!controller.oldInstance())
 		{
 			var emailsSection = this.mainDiv.append('section')
@@ -3309,8 +3316,146 @@ var UserPanel = (function () {
 		}
 	}
 	
+	function UserPanel(controller, onShow) {
+		EditItemPanel.call(this, controller);
+
+		this.createRoot(controller, crv.buttonTexts.user, onShow);
+	}
+	
 	return UserPanel;
 })();
+
+var ContactUserController = (function () {
+	ContactUserController.prototype = Object.create(UserController.prototype);
+	ContactUserController.prototype.constructor = ContactUserController;
+	
+	ContactUserController.prototype._phoneNumber = null;
+	ContactUserController.prototype._address = null;
+	ContactUserController.prototype.services = null;
+
+	ContactUserController.prototype.appendData = function(initialData)
+	{
+		var r1 = null;
+		var r2 = null;
+		
+		var _this = this;
+		function appendService(experience, name)
+		{
+			experience.description(name);
+			var s = _this.services.find(
+				function(s) { 
+					return s.names().find(function(n) { return n.text() == name})
+				});
+			if (s)
+			{
+				var experienceService = new cr.ExperienceService();
+				experienceService.parent(experience);
+				experienceService.description(s.description());
+				experienceService.service(s);
+				experienceService.position(0);
+				experience.experienceServices().push(experienceService);
+			}
+			else
+			{
+				var experienceCustomService = new cr.ExperienceCustomService();
+				experienceCustomService.description(name);
+				experienceCustomService.name(name);
+				experienceCustomService.position(0);
+				experience.customServices().push(experienceCustomService);
+			}
+		}
+		
+		if (this._phoneNumber != null)
+		{
+			var path = this.newInstance().path();
+				
+			var experience = new cr.Experience();
+			experience.parent(path);
+			experience.setDefaultValues();
+			experience.timeframe('Current');
+			
+			experience.customSite(this._phoneNumber);
+			
+			appendService(experience, "Phone");
+			path.experiences().push(experience);
+		}
+		
+		if (this._address != null)
+		{
+			var path = this.newInstance().path();
+				
+			var experience = new cr.Experience();
+			experience.parent(path);
+			experience.setDefaultValues();
+			experience.timeframe('Current');
+			
+			experience.customSite(this._address);
+			
+			appendService(experience, "Housing");
+			path.experiences().push(experience);
+		}
+		
+		UserController.prototype.appendData.apply(this, arguments);
+	}
+
+	function ContactUserController()
+	{
+		UserController.apply(this, arguments);
+	}
+	
+	return ContactUserController;
+})();
+
+/* A contact user specified a phone number and an address. */
+var ContactUserPanel = (function () {
+	ContactUserPanel.prototype = Object.create(UserPanel.prototype);
+	ContactUserPanel.prototype.constructor = ContactUserPanel;
+	
+	ContactUserPanel.prototype.createRoot = function()
+	{
+		UserPanel.prototype.createRoot.apply(this, arguments);
+		
+		if (!this.controller().oldInstance())
+		{
+			function phoneNumber(value)
+			{
+				if (value === undefined)
+					return this._phoneNumber;
+				else
+					this._phoneNumber = value;
+			}
+			function address(value)
+			{
+				if (value === undefined)
+					return this._address;
+				else
+					this._address = value;
+			}
+			
+			var _this = this;
+			cr.Service.servicesPromise().then(
+				function(services)
+				{
+					_this.controller().services = services;
+				
+					_this.appendTextSection(_this.controller(), phoneNumber, "Phone Number", 'text')
+						.classed('first', true);
+			
+					_this.appendTextSection(_this.controller(), address, "Address", 'text')
+						.classed('first', true);
+				},
+				cr.asyncFail);
+		}
+	}
+	
+	function ContactUserPanel()
+	{
+		UserPanel.apply(this, arguments);
+	}
+	
+	return ContactUserPanel;
+})();
+
 
 var UserSearchView = (function () {
 	UserSearchView.prototype = Object.create(RootPanelSearchView.prototype);
@@ -3327,12 +3472,12 @@ var UserSearchView = (function () {
 	
 	UserSearchView.prototype.controllerType = function()
 	{
-		return UserController;
+		return ContactUserController;
 	}
 	
 	UserSearchView.prototype.childPanelType = function()
 	{
-		return UserPanel;
+		return ContactUserPanel;
 	}
 	
 	UserSearchView.prototype.fillItems = function(items)
