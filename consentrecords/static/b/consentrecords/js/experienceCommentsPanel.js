@@ -866,9 +866,13 @@ var ExperienceCommentsPanel = (function() {
 		
 		function changeEventHandler(eventObject, newValue)
 		{
-			fd.colorHTMLElement(_this.detailGroup.node());
-			fd.colorHTMLElement(navContainer.nav.node());
-			resizeDetail();
+			try
+			{
+				fd.colorHTMLElement(_this.detailGroup.node());
+				fd.colorHTMLElement(navContainer.nav.node());
+				resizeDetail();
+			}
+			catch(err) { cr.asyncFail(err); }
 		}
 		
 		setTimeout(changeEventHandler);
