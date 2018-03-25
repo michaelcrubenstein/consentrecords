@@ -2791,6 +2791,12 @@ var GrantsPanel = (function() {
 		}
 	}
 
+	GrantsPanel.prototype.createRoot = function(objectData, header, onShow)
+	{
+		EditPanel.prototype.createRoot.call(this, objectData, header, onShow);
+		this.appendScrollArea();
+	}
+
 	function GrantsPanel(grantor)
 	{
 		this.grantor = grantor;
