@@ -89,24 +89,6 @@ var ChildSearchView = (function () {
 		crf.appendConfirmDeleteControls(items);
 
 		crf.showDeleteControls($(deleteControls[0]), 0);
-		
-		var _this = this;
-		items.each(function(d)
-			{
-				setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
-					{
-						_this.getDataChunker.onItemDeleted();
-						$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
-						{
-							$(this).remove();
-						});
-					});
-				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
-					{
-						d3.select(eventObject.data).selectAll('div.description-text')
-							.text(d.description());
-					});
-			});
 	}
 	
 	ChildSearchView.prototype.isButtonVisible = function(button, d, compareText)

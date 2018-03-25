@@ -1423,6 +1423,17 @@ var SearchOptionsView = (function () {
 	{
 		appendDescriptions(items)
 			.classed('unselectable', true);
+
+		items.selectAll('div.descriptionText').each(function(d)
+			{
+				if (d)
+				{
+					setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
+						{
+							eventObject.data.textContent = d.description();
+						});
+				}
+			});
 	}
 	
 	/* Show the objects that have been found. In this implementation, the objects appear as a list of buttons. */
@@ -1434,6 +1445,21 @@ var SearchOptionsView = (function () {
 				_this.onClickButton(d, i, this);
 			});
 			
+		items.each(function(d)
+			{
+				if (d)
+				{
+					setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
+						{
+							_this.getDataChunker.onItemDeleted();
+							$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
+							{
+								$(this).remove();
+							});
+						});
+				}
+			});
+
 		this.fillItems(items);
 
 		this.constrainFoundObjects();
