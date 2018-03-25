@@ -476,6 +476,18 @@ crn.Notification = (function() {
 		this.notification.parent().update({'notifications': [{'delete': this.notification.id()}]});
 	}
 	
+	/* Returns the fields needed to display the experience. */
+	Notification.prototype.experienceDisplayFields = function(experience)
+	{
+		var fields = ['comments', 'services', 'custom services'];
+		if (experience.privilege() == 'administer')
+		{
+			fields.push('user grants');
+			fields.push('group grants');
+		}
+		return fields;
+	}
+	
 	function Notification(d)
 	{
 		this.notification = d;
@@ -582,7 +594,6 @@ crn.ExperienceCommentRequested = (function() {
 		var path = args[0];
 		
 		var _this = this;
-		var _this = this;
 		var spinnerSpan = this.appendSpinner(buttonNode);
 		var textSpan = this.appendTextSpan(buttonNode, spinnerSpan, 
 			_this.buttonText.format("", args[1].description()));
@@ -605,32 +616,39 @@ crn.ExperienceCommentRequested = (function() {
 										showClickFeedback(this);
 					
 										var experienceInstance = crp.getInstance(args[1].id());
-										var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance), "Notifications");
-										$(newPanel.mainDiv).on('revealing.cr', function()
-										{
-											newPanel.startEditing();
-											try 
-											{
-												newPanel.promise = newPanel.promise.then(function()
+										experienceInstance.promiseData(_this.experienceDisplayFields(experienceInstance))
+											.then(function()
+												{
+													try
 													{
-														try
+														var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance), "Notifications");
+														$(newPanel.mainDiv).on('revealing.cr', function()
 														{
-															var comments = experienceInstance.comments();
-															var commentInstanceID = args[2].id();
-															var comment = comments.find(function(v) { return v.id() == commentInstanceID; });
+															newPanel.startEditing();
+															try 
+															{
+																newPanel.promise = newPanel.promise.then(function()
+																	{
+																		try
+																		{
+																			var comments = experienceInstance.comments();
+																			var commentInstanceID = args[2].id();
+																			var comment = comments.find(function(v) { return v.id() == commentInstanceID; });
 	
-															newPanel.focusOnComment(comment.id());
-														}
-														catch (err) { cr.asyncFail(err); }
-													});
-											}
-											catch(err)
-											{
-												cr.asyncFail(err);
-											}
-										});
-										newPanel.showLeft()
-											.always(unblockClick);
+																			newPanel.focusOnComment(comment.id());
+																		}
+																		catch (err) { cr.asyncFail(err); }
+																	});
+															}
+															catch(err)
+															{
+																cr.asyncFail(err);
+															}
+														});
+														newPanel.showLeft()
+															.always(unblockClick);
+													} catch(err) { cr.syncFail(err); }
+												}, cr.syncFail);
 									}
 									catch(err)
 									{
@@ -712,10 +730,19 @@ crn.ExperienceQuestionAnswered = (function() {
 												.then(function()
 													{
 														var experienceInstance = crp.getInstance(args[1].id());
-														var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance), "Notifications");
+														experienceInstance.promiseData(_this.experienceDisplayFields(experienceInstance))
+															.then(function()
+															{
+																try
+																{
+																	var newPanel = new ExperienceCommentsPanel(new FlagController(experienceInstance), "Notifications");
 												
-														newPanel.showLeft()
-															.always(unblockClick);
+																	newPanel.showLeft()
+																		.always(unblockClick);
+																}
+																catch(err) { cr.syncFail(err); }
+															},
+															cr.syncFail);
 													},
 													cr.syncFail);
 										}
