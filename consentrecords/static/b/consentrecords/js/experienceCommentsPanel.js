@@ -875,8 +875,6 @@ var ExperienceCommentsPanel = (function() {
 			catch(err) { cr.asyncFail(err); }
 		}
 		
-		setTimeout(changeEventHandler);
-		
 		/* Update the contents of the top banner if the contents of the experience are changed. */
 		fd.setupChangeEventHandler(this.mainDiv.node(), changeEventHandler);
 		
@@ -1104,18 +1102,21 @@ var ExperienceCommentsPanel = (function() {
 		
 		if (fd.experience.id())
 		{
-			var fields =['comments'];
+			var fields =['comments', 'services', 'custom services'];
 			if (fd.experience.privilege() == 'administer')
 			{
 				fields.push('user grants');
 				fields.push('group grants');
 			}
 			this.promise = fd.experience.promiseData(fields)
-				.then(function(comments)
+				.then(function()
 					{
 						var r = $.Deferred();
 						setTimeout(function()
 							{
+								/* changeEventHandler is dependent on the data, so put it here. */
+								changeEventHandler();
+
 			/* Put the call to loadComments in a setTimeout to ensure that the panel's css 
 				is set up before the comments are loaded. The panel's css won't be set up 
 				if the comments are already loaded.
@@ -1130,6 +1131,7 @@ var ExperienceCommentsPanel = (function() {
 		{
 			this.promise = $.Deferred();
 			this.promise.resolve();
+			setTimeout(changeEventHandler)
 		}
 
 		$(this.mainDiv.node()).on('resize.cr', function()
