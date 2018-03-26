@@ -175,7 +175,8 @@ var ChildrenPanel = (function () {
 			.classed('chevron-left-container', true)
 			.on('click', function()
 			{
-				_this.hide();
+				if (prepareClick('click', backButtonText))
+					_this.hide();
 			});
 		appendLeftChevronSVG(backButton).classed('chevron-left', true);
 		backButton.append('span').text(backButtonText);
@@ -2865,7 +2866,7 @@ var DescendentSearchView = (function () {
 				d.promiseData()
 					.then(function()
 						{
-							_this.showDescendent(d);
+							_this.showDescendent(d).always(unblockClick);
 						},
 						cr.syncFail);
 			}
@@ -2973,7 +2974,7 @@ var SessionFromOrganizationSearchView = (function () {
 	
 	SessionFromOrganizationSearchView.prototype.showDescendent = function(d)
 	{
-		this.showSession(d)
+		return this.showSession(d)
 	}
 	
 	function SessionFromOrganizationSearchView(panel, parent) {
