@@ -5,6 +5,8 @@ panel.site-panel.comments>nav {
 
 panel.comments div.panel-fill {
 	background: white;
+	display: flex;
+	flex-direction: column;
 }
 
 panel.comments div.banner {
@@ -72,6 +74,8 @@ section.comments {
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: hidden;
+	flex-grow: 100;
+	flex-shrink: 100;
 	-webkit-overflow-scrolling: touch;
 }
 

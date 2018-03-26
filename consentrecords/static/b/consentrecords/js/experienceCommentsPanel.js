@@ -258,7 +258,6 @@ var ZoomPanel = (function () {
 				{
 					_this.clearInput();
 					_this.checkInputNodeSize();
-					_this.parentPanel.resizeCommentsSection();
 					_this.revealInput();
 				}
 				else
@@ -319,7 +318,6 @@ var AskQuestionPanel = (function () {
 							{
 								_this.clearInput();
 								_this.checkInputNodeSize();
-								_this.parentPanel.resizeCommentsSection();
 								_this.revealInput();
 								_this.parentPanel.showLastComment();
 								bootstrap_alert.close();
@@ -537,7 +535,6 @@ var ExperienceCommentsPanel = (function() {
 									_this.editButton.text(crv.buttonTexts.editComments);
 									_this.inEditMode = false;
 								}
-								_this.resizeCommentsSection();
 							});
 		
 		var deleteControls = crf.appendDeleteControls(items);
@@ -746,33 +743,10 @@ var ExperienceCommentsPanel = (function() {
 				{
 					_this.askPanel.hideRight();
 				});
-			this.resizeCommentsSection();
-/* 
-			var resizeQuestionBoxes = function()
-				{
-					var newQuestionHMargin = ($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width())
-					var newQuestionWidth = $(newQuestionDiv.node()).width() - newQuestionHMargin;
-					var askWidth = $(askButton.node()).outerWidth(true);
-					if (_this.postButtonNode && $(_this.postButtonNode).outerWidth(true) > askWidth)
-						askWidth = $(_this.postButtonNode).outerWidth(true);
-					newQuestionWidth -= askWidth;
-				
-					$(newQuestionInput.node()).width(newQuestionWidth);
-					commentPromptsDiv
-						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
-				}
-						
-			$(this.mainDiv.node()).on('resize.cr', resizeQuestionBoxes);
- */
-			
+			var askHeight = this.askPanel.inputHeight();
+			var newCommentDiv = $(this.mainDiv.node()).children('section.new-comment');
+			newCommentDiv.css('margin-bottom', '{0}px'.format(askHeight))
 		}
-	}
-	
-	ExperienceCommentsPanel.prototype.resizeCommentsSection = function()
-	{
-		var $commentsDiv = $(this.commentsSection);
-		var askHeight = this.askPanel ? this.askPanel.inputHeight() : 0;
-		$commentsDiv.height($commentsDiv.getFillHeight() - askHeight);
 	}
 	
 	ExperienceCommentsPanel.prototype.showLastComment = function()
@@ -854,7 +828,7 @@ var ExperienceCommentsPanel = (function() {
 		
 		function resizeDetail()
 		{
-			fd.appendElements(_this.detailTextGroup, 12);
+			fd.appendElements(_this.detailTextGroup);
 			if (backText != fd.experience.parent().parent().caption())
 			{
 				/* Test case: Display an answered question notification detail */
@@ -1044,7 +1018,6 @@ var ExperienceCommentsPanel = (function() {
 			{
 				this.style.height = 0;
 				this.style.height = (this.scrollHeight) + 'px';
-				_this.resizeCommentsSection();
 				if (this.value)
 					$(_this.postButtonNode).css('display', '');
 				else
@@ -1134,16 +1107,10 @@ var ExperienceCommentsPanel = (function() {
 			setTimeout(changeEventHandler)
 		}
 
-		$(this.mainDiv.node()).on('resize.cr', function()
-			{
-				_this.resizeCommentsSection();
-			});
-			
 		$(_this.node()).on('revealing.cr', function()
 			{
 				if (fd.experience.canWrite())
 					_this.editButton.style('display', commentList.selectAll('li').size() ? '' : 'none');
-				_this.resizeCommentsSection();
 			});
 			
 		this.promise = this.promise
@@ -1151,8 +1118,6 @@ var ExperienceCommentsPanel = (function() {
 				{
 					try
 					{
-						$(_this.mainDiv.node()).on('resize.cr', resizeDetail);	
-			
 						var f = function()
 							{
 								commentList.selectAll('textarea')
