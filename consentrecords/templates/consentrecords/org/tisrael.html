@@ -4,16 +4,56 @@
 
 {% block title %}Temple Israel Community Conversations{% endblock title %}
 
+		{% block loadOrganizations %}
+		function load_organizations()
+		{
+			var orgSection = d3.select(this);
+			var successFunction = function(newInstances)
+			{
+				/* Default orgSection style is "none", so override it if there are organizations to show. */
+				orgSection.style("display", newInstances.length > 0 ? "block" : null);
+				
+				var divs = orgSection.append('ol')
+					.classed('cell-items', true)
+					.selectAll('li')
+					.data(newInstances)
+					.enter()
+					.append('li');
+				
+				divs.append('div')
+					.classed('growable unselectable site-active-text show-panel-button', true)
+					.text(function(d) { return d.description(); });
+				
+				crf.appendRightChevrons(divs);
+					
+				divs.on("click", function(d) {
+					if (prepareClick('click', 'show organization ' + d.description()))
+					{
+						show_organization_panel(d)
+							.always(unblockClick);
+					}
+				});
+				
+				if (newInstances.length > 0)
+					show_organization_panel(newInstances[0]);
+			}
+			
+			var path = cr.signedinUser.urlPath()+'/group/organization[name>text*="{{organizationName}}"]';
+			cr.getData({path: path, resultType: cr.Organization, fields: ['none']})
+				.then(successFunction, cr.asyncFail);
+		}
+		{% endblock loadOrganizations %}
+		
 		{% block showOrganizationPanel %}
 		/* Displays a panel in which the specified object's contents appear.
 		 */
-		function show_organization_panel(organization, containerUUID, containerPanel) {
+		function show_organization_panel(organization) {
 			successFunction = function ()
 			{
 				manage_session(organization);
 			}
 	
-			organization.promiseData().then(successFunction, cr.asyncFail)
+			return organization.promiseData().then(successFunction, cr.asyncFail);
 		}
 		{% endblock showOrganizationPanel %}
 		
@@ -21,13 +61,47 @@
 		{% block manageSession %}
 		function manage_session(organization)
 		{
-			pickSessionFromOrganization(organization, 
+			return pickSessionFromOrganization(organization, 
 				function(session)
 				{
 					var panel = new EngagementsPanel(session, revealPanelLeft, organization.description());
-					panel.showLeft().then(unblockClick);
+					return panel.showLeft();
 				});
 		}
 		{% endblock manageSession %}
+		
+		{% block pickSessionFromOrganization %}
+		function pickSessionFromOrganization(organization, sessionSuccess)
+		{
+			{% if siteName %}
+				var path = 'organization/{0}/site[name>text="{1}"]/offering[name>text="{2}"]/session[name>text="{3}"]'.format(organization.id(), '{{siteName}}', '{{offeringName}}', '{{sessionName}}');
+				cr.getData({path: path, 
+							resultType: cr.Session,
+							fields: ['parents', 'periods']}).then(
+					function(sessions)
+					{
+						return sessionSuccess(sessions[0]);
+					},
+					cr.asyncFail);
+			{% else %}
+				function pickSessionSuccess(session, previousPanel)
+				{
+					return session.promiseData()
+						.then(function()
+							{
+								try
+								{
+									return sessionSuccess(session);
+								}
+								catch(err) { return cr.chainFail(err); }
+							},
+							cr.chainFail);
+				}
+
+				var panel = new SessionsFromOrganizationPanel(organization, pickSessionSuccess);
+				return panel.showLeft();
+			{% endif %}
+		}
+		{% endblock pickSessionFromOrganization %}
 		
 

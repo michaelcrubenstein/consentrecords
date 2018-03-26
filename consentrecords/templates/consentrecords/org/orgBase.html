@@ -196,15 +196,6 @@
 			hide_organizations.call(orgSection[0]);
 		};
 		
-		/* Initialize all of the objects that are dependent on whether or not the user is
-			signed in.
-		 */
-		if (!cr.signedinUser.id())
-		{
-			clearUserElements();
-		}
-		/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
-
 		/* Handle a click event on the sign-in button to either sign in or sign out
 			the current user.
 		 */
@@ -236,40 +227,32 @@
 			e.stopPropagation();
 		});
 
-		function checkSignin(previousPanel, done, message)
+		function checkSignin(previousPanel)
 		{
-			if (prepareClick('click', message))
-			{
-				showClickFeedback(this);
-				if (cr.signedinUser.id())
-					done();
-				else
-				{
-					var onSignin = function(eventObject)
-					{
-						this.off("signinCanceled.cr", onSigninCanceled);
-						if (prepareClick('onSignin'))
-							done();
-					};
-					
-					var onSigninCanceled = function(eventObject)
-					{
-						this.off("signin.cr", onSignin);
-					}
-					
-					cr.signedinUser.one("signin.cr", null, onSignin);
-					cr.signedinUser.one("signinCanceled.cr", null, onSigninCanceled);
-					
-					var panel = new SigninPanel();
-					panel.showLeft().then(function()
-								{
-									panel.initializeFocus();
-									unblockClick();
-								});
-				}
-			}
+			var panel = new SigninPanel();
+			panel.showLeft().then(function()
+						{
+							panel.initializeFocus();
+						});
 		}
 		
+		/* Initialize all of the objects that are dependent on whether or not the user is
+			signed in.
+		 */
+		if (!cr.signedinUser.id())
+		{
+			clearUserElements();
+			if (!navigator.cookieEnabled)
+			{
+				cr.asyncFail(new Error(crv.buttonTexts.cookiesRequired));
+			}
+			else
+			{
+				checkSignin(function() {});
+			}
+		}
+		/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
+
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 			return cr.submitSignout()
@@ -286,6 +269,7 @@
 			orgSection.selectAll("li").remove();
 		}
 		
+		{% block loadOrganizations %}
 		function load_organizations()
 		{
 			var orgSection = d3.select(this);
@@ -310,7 +294,7 @@
 				divs.on("click", function(d) {
 					if (prepareClick('click', 'show organization ' + d.description()))
 					{
-						show_organization_panel(d, null, d3.select("body>panel").node());
+						show_organization_panel(d);
 					}
 				});
 			}
@@ -319,11 +303,12 @@
 			cr.getData({path: path, resultType: cr.Organization, fields: ['none']})
 				.then(successFunction, cr.asyncFail);
 		}
+		{% endblock loadOrganizations %}
 		
 		{% block showOrganizationPanel %}
 		/* Displays a panel in which the specified object's contents appear.
 		 */
-		function show_organization_panel(objectData, containerUUID, containerPanel) {
+		function show_organization_panel(objectData) {
 			successFunction = function ()
 			{
 				var b;
@@ -793,6 +778,7 @@
 			pick_site(organization, previousPanelNode, pickSiteSuccess);
 		}
 		
+		{% block pickSessionFromOrganization %}
 		function pickSessionFromOrganization(organization, sessionSuccess)
 		{
 			function pickSessionSuccess(session, previousPanel)
@@ -812,6 +798,7 @@
 			var panel = new SessionsFromOrganizationPanel(organization, pickSessionSuccess);
 			panel.showLeft().always(unblockClick);
 		}
+		{% endblock pickSessionFromOrganization %}
 		
 		{% block manageSession %}
 		function manage_session(organization)

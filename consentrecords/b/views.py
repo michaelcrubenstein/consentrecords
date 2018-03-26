@@ -121,11 +121,11 @@ def showLines(request):
     return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
-def orgBase(request, html):
-    logPage(request, 'pathAdvisor/%s' % html)
+def orgBase(request, organizationName=None, siteName=None, offeringName=None, sessionName=None):
+    logPage(request, 'pathAdvisor/%s' % organizationName)
     
     try:
-        template = loader.get_template(templateDirectory + 'org/%s.html' % html)
+        template = loader.get_template(templateDirectory + 'org/%s.html' % 'tIsrael')
         args = {
             'user': request.user,
             'jsversion': settings.JS_VERSION,
@@ -146,6 +146,18 @@ def orgBase(request, html):
         state = request.GET.get('state', None)
         if state:
             args['state'] = state
+            
+        if organizationName:
+        	args['organizationName'] = organizationName
+        	
+        if siteName:
+            args['siteName'] = siteName
+            
+        if offeringName:
+            args['offeringName'] = offeringName
+            
+        if sessionName:
+            args['sessionName'] = sessionName
 
         return HttpResponse(template.render(args))
     except Exception as e:
