@@ -47,5 +47,6 @@ urlpatterns = [
     url(r'^users/', views.showUsers),
 
     url(r'^org/$', views.orgHome),
-    url(r'^org/(tisrael)/$', views.orgBase),
+    url(r'^org/organization/(.*)/site/(.*)/offering/(.*)/session/(.*)/$', views.orgBase),
+    url(r'^org/organization/(.*)/$', views.orgBase),
 ]
