@@ -2086,7 +2086,7 @@ var EditItemPanel = (function () {
 		return inputs;
 	}
 	
-	EditItemPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText, minDate, maxDate, placeholder)
+	EditItemPanel.prototype.appendDateSection = function(instance, instanceProperty, labelText, minDate, maxDate, monthRequired, placeholder)
 	{
 		placeholder = (placeholder !== undefined) 
 			? placeholder : crv.buttonTexts.nonePlaceholder;
@@ -2099,7 +2099,7 @@ var EditItemPanel = (function () {
 			.text(labelText);
 		section.editor = this.appendDateEditor(section, placeholder,
 											   instanceProperty.call(instance),
-											   minDate, maxDate);
+											   minDate, maxDate, monthRequired);
 		
 		var handler = function(eventObject)
 		{
@@ -2147,7 +2147,7 @@ var EditItemPanel = (function () {
 		}
 	}
 	
-	EditItemPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate)
+	EditItemPanel.prototype.appendDateEditor = function(section, placeholder, value, minDate, maxDate, monthRequired)
 	{
 		/* If minDate is not defined, set it to January 1, 50 years ago. */
 		if (minDate === undefined)
@@ -2166,6 +2166,8 @@ var EditItemPanel = (function () {
 			maxDate.setDate(31);
 		}
 		
+		monthRequired = monthRequired !== undefined ? monthRequired : true;
+		
 		var _this = this;
 		var itemsDiv = crf.appendItemList(section)
 			.classed('overlined', true);
@@ -2178,7 +2180,7 @@ var EditItemPanel = (function () {
 					dateSpan.text(getLocaleDateString(newDate));
 				else
 					dateSpan.text(placeholder);
-			}, minDate, maxDate);
+			}, minDate, maxDate, monthRequired);
 
 		var reveal = new VerticalReveal(dateWheel.node());
 		reveal.hide();

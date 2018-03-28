@@ -1922,7 +1922,7 @@ var NewExperiencePanel = (function () {
 		
 			this.startDateContainer = this.appendDateSection(this.controller().newInstance(),
 				this.controller().newInstance().start,
-				"Start", new Date(birthday), getUTCTodayDate(), "Not Sure");
+				"Start", new Date(birthday), getUTCTodayDate(), false, "Not Sure");
 			this.startHidable = this.startDateContainer.editor;
 			var startDateWheel = this.startHidable.dateWheel;
 			
@@ -1966,7 +1966,7 @@ var NewExperiencePanel = (function () {
 		
 			this.endDateContainer = this.appendDateSection(this.controller().newInstance(),
 				this.controller().newInstance().end,
-				"End", new Date(birthday), getUTCTodayDate(), "Not Sure");
+				"End", new Date(birthday), getUTCTodayDate(), false, "Not Sure");
 			
 			this.endHidable = this.endDateContainer.editor;
 			var endDateWheel = this.endHidable.dateWheel;
