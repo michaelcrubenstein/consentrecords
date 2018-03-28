@@ -123,6 +123,8 @@ def _validateDate(data, key):
     elif re.search('^[0-9]{4}-[0-1][0-9]$', s):
         if int(s[5:7]) <= 12:
             return
+    elif re.search('^[0-9]{4}$', s):
+    	return;
     
     raise ValueError('Invalid date string: %s' % s)
         

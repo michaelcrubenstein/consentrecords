@@ -101,6 +101,39 @@ var DateWheel = (function () {
 		$(node).scrollTop(value * itemHeight);
 	}
 	
+	DateWheel.prototype.selectedMonth = function(value)
+	{
+		if (value === undefined)
+		{
+			return this._getSelectedIndex(this.monthNode) + (this.monthRequired ? 1 : 0);
+		}
+		else
+		{	
+			this._setSelectedIndex(this.monthNode, value - (this.monthRequired ? 1 : 0));
+		}
+	}
+	
+	DateWheel.prototype.disablePreviousMonths = function(minMonth)
+	{
+		var _this = this;
+		var f;
+		if (this.monthRequired)
+		{
+			f = function(d, i)
+			{
+				_this._setIsDisabled(this, i < minMonth - 1);
+			}
+		}
+		else
+		{
+			f = function(d, i)
+			{
+				_this._setIsDisabled(this, i < minMonth && i > 0);
+			}
+		}
+		this.monthPickerList.selectAll('li').each(f);
+	}
+
 	DateWheel.prototype._getIsIndexDisabled = function(node, i)
 	{
 		var li = $(node.childNodes.item(i));
@@ -122,15 +155,17 @@ var DateWheel = (function () {
     	var _this = this;
     	if (this.minDate && this.oldYear == this.minDate.getUTCFullYear())
     	{
-    		minMonth = this.minDate.getUTCMonth();
-    		this.monthPickerList.selectAll('li').each(function(d, i)
-    			{
-    				_this._setIsDisabled(this, i < minMonth);
-    			});
-    		if (this.oldMonth < minMonth + 1)
+    		var minMonth = this.minDate.getUTCMonth() + 1;
+    		this.disablePreviousMonths(minMonth);
+    		
+    		var needToReset = (this.oldMonth < minMonth);
+    		if (!this.monthRequired && this.oldMonth == 0)
+    			needToReset = false;
+    		
+    		if (needToReset)
     		{
-    			this.oldMonth = minMonth + 1;
-    			this._setSelectedIndex(this.monthNode, minMonth);
+    			this.oldMonth = minMonth;
+    			this.selectedMonth(this.oldMonth);
     		}
     	}
     	else
@@ -174,6 +209,11 @@ var DateWheel = (function () {
     		{
     			this.oldDay = minDay;
     		}
+    	}
+    	else if (this.oldMonth == 0)
+    	{
+    		this.dayPickerList.selectAll('li').classed('disabled',
+    			function(d, i) { return i > 0; });
     	}
     	else
     	{
@@ -241,15 +281,22 @@ var DateWheel = (function () {
 			var m = this.oldMonth;
 			var y = this.oldYear;
 			var d = this.oldDay;
-			if (m < 10)
-				m = "0{0}".format(m);
-			if (!d)	/* d could be 0 or undefined */
-				return "{0}-{1}".format(y, m);
+			if (!m)
+			{
+				return '{0}'.format(y);
+			}
 			else
 			{
-				if (d < 10)
-					d = "0{0}".format(d);
-				return "{0}-{1}-{2}".format(y, m, d);
+				if (m < 10)
+					m = '0{0}'.format(m);
+				if (!d)	/* d could be 0 or undefined */
+					return '{0}-{1}'.format(y, m);
+				else
+				{
+					if (d < 10)
+						d = '0{0}'.format(d);
+					return '{0}-{1}-{2}'.format(y, m, d);
+				}
 			}
 		}
 		else if (typeof(newValue) != "string")
@@ -265,7 +312,7 @@ var DateWheel = (function () {
 			this._onYearChanged();
 			
 			this.oldMonth = parseInt(newValue.substring(5, 7));
-			this._setSelectedIndex(this.monthNode, this.oldMonth - 1);
+			this.selectedMonth(this.oldMonth);
 			
 			if (newValue.length > 8)
 			{
@@ -302,7 +349,7 @@ var DateWheel = (function () {
 	{
 		this._setSelectedIndex(this.yearNode, 
 			this._getMaxYear() - this.oldYear);
-		this._setSelectedIndex(this.monthNode, this.oldMonth - 1);
+		this.selectedMonth(this.oldMonth);
 		this._setSelectedIndex(this.dayNode, this.oldDay);
 		
 		this.restartAlignment();
@@ -382,7 +429,7 @@ var DateWheel = (function () {
 				);
     }
     
-	function DateWheel(container, showDate, minDate, maxDate)
+	function DateWheel(container, showDate, minDate, maxDate, monthRequired)
 	{
 		console.assert(container);
 		console.assert(showDate);
@@ -393,6 +440,7 @@ var DateWheel = (function () {
 		var _this = this;
 		this.showDate = showDate;
 		this.isClear = false;
+		this.monthRequired = monthRequired;
 
 		var d3Container = d3.select(container);
 		var datePickerContainer = d3Container.append('div')
@@ -447,7 +495,7 @@ var DateWheel = (function () {
 				 */
 				if ($(this).css('display') != 'none')
 				{
-					var newMonth = _this._getSelectedIndex(_this.monthNode) + 1;
+					var newMonth = _this.selectedMonth();
 					if (newMonth != _this.oldMonth)
 					{
 						_this.isClear = false;
@@ -480,6 +528,11 @@ var DateWheel = (function () {
 		$(this.dayNode).click(unClear);
 				
 		var months = Date.CultureInfo.monthNames;
+		if (!monthRequired)
+		{
+			months = ['(no month)'].concat(months);
+		}
+		
 		this.monthPickerList.selectAll('li')
 			.data(months)
 			.enter()
@@ -495,7 +548,10 @@ var DateWheel = (function () {
 		
 		/* Initialize oldYear, oldMonth and oldDay to reasonable values */
 		this.oldYear = currentDate.getUTCFullYear();
-		this.oldMonth = currentDate.getUTCMonth() + 1;
+		if (monthRequired)
+			this.oldMonth = currentDate.getUTCMonth() + 1;
+		else
+			this.oldMonth = 0;	/* no month */
 		this.oldDay = 0;	/* no day */
 	}
 	
