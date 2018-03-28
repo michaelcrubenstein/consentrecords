@@ -97,7 +97,15 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getStartDate = function()
 	{
-		return this.experience.start() || this.getTimeframeText() || this.goalDateString;
+		var s = this.experience.start();
+		if (s)
+		{
+			if (s.length == 4)
+				s += "-01";
+			if (s.length == 7)
+				s += "-01";
+		}
+		return s || this.getTimeframeText() || this.goalDateString;
 	}
 	
 	FlagController.prototype.getTimeframe = function()
@@ -125,7 +133,19 @@ var FlagController = (function() {
 	FlagController.prototype.getEndDate = function()
 	{
 		var s = this.experience.end();
-		if (s) return s;
+		if (s)
+		{
+			if (s.length == 4)
+				s = s + "-12";
+			if (s.length == 7)
+			{
+				var y = parseInt(s.substring(0, 4));
+				var m = parseInt(s.substring(5, 7));
+				var daysInMonth = (new Date(y, m, 0)).getDate();
+				s = s + "-{0}".format(daysInMonth);
+			}
+			return s;
+		}
 		
 		var timeframe = this.getTimeframe();
 		s = this.experience.start();
@@ -149,11 +169,11 @@ var FlagController = (function() {
 		var text = this.getTimeframe();
 		if (!text)
 			return text;
-		else if (text == "Previous")
+		else if (text == 'Previous')
 			return this.previousDateString;
-		else if (text == "Current")
+		else if (text == 'Current')
 			return getUTCTodayDate().toISOString().substr(0, 10);
-		else if (text == "Goal")
+		else if (text == 'Goal')
 			return this.goalDateString;
 		else
 			throw new Error("Unrecognized timeframe");

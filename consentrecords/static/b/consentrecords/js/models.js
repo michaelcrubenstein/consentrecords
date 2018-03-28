@@ -8059,7 +8059,9 @@ function getUTCTodayDate()
 /* Given an ISO Date string, return a locale date string */
 function getLocaleDateString(s)
 {
-	if (s.length == 7)
+	if (s.length == 4)
+		return s;
+	else if (s.length == 7)
 		return Date.CultureInfo.monthNames[parseInt(s.substr(5)) - 1] + " " + s.substr(0, 4);
 	else if (s.length == 10)
 	{
