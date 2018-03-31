@@ -147,17 +147,23 @@ def orgBase(request, organizationName=None, siteName=None, offeringName=None, se
         if state:
             args['state'] = state
             
+        webAppTitle = ''    
         if organizationName:
-        	args['organizationName'] = organizationName
-        	
+            args['organizationName'] = organizationName
+            args['webAppTitle'] = organizationName
+            
         if siteName:
             args['siteName'] = siteName
             
         if offeringName:
             args['offeringName'] = offeringName
+            webAppTitle += ('/' if webAppTitle else '') + offeringName
             
         if sessionName:
             args['sessionName'] = sessionName
+            webAppTitle += ('(%s)' if webAppTitle else '%s') % sessionName
+
+        args['webAppTitle'] = webAppTitle or 'PathAdvisor Organizations'
 
         return HttpResponse(template.render(args))
     except Exception as e:

@@ -1,6 +1,6 @@
 {% extends "b/consentrecords/org/orgBase.html" %}
 
-{% block webAppTitle %}"Temple Israel Community Conversations"{% endblock webAppTitle %}
+{% block webAppTitle %}"{{ webAppTitle }}"{% endblock webAppTitle %}
 
 {% block title %}Temple Israel Community Conversations{% endblock title %}
 
@@ -38,7 +38,11 @@
 					show_organization_panel(newInstances[0]);
 			}
 			
+			{% if organizationName %}
 			var path = cr.signedinUser.urlPath()+'/group/organization[name>text*="{{organizationName}}"]';
+			{% else %}
+			var path = cr.signedinUser.urlPath()+'/group/organization';
+			{% endif %}
 			cr.getData({path: path, resultType: cr.Organization, fields: ['none']})
 				.then(successFunction, cr.asyncFail);
 		}
