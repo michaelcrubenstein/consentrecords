@@ -184,6 +184,11 @@ var FlagController = (function() {
 		return this.getStartDate() < otherFD.getEndDate();
 	}
 	
+	FlagController.prototype.startsBeforeOtherStart = function(otherFD)
+	{
+		return this.getStartDate() < otherFD.getStartDate();
+	}
+	
 	FlagController.prototype.getYearArray = function()
 	{
 		var e = this.experience.end();
@@ -815,9 +820,11 @@ var PathView = (function() {
 		for (var i = 0; i < numColumns; ++i)
 			columns[i] = [];
 
+		/* Build up the column arrays with FlagControllers */
 		var nextY = 0;
 		g.each(function(fd, i)
 			{
+				/* Set the x value so that it is as close to the column as possible. */
 				fd.x = _this.guideHSpacing * (fd.column);
 				var column = columns[fd.column];
 				column.push(fd);
@@ -834,21 +841,48 @@ var PathView = (function() {
 				fd.y = nextY;
 				nextY += _this.flagHeightEM + _this.flagSpacingEM;
 			});
-			
-		g.each(function(fd, i)
+		
+		var gData = g.data();
+		for (var i = 0; i < gData.length; ++i)
+		{
+			fd = gData[i];
+			fd.y2 = fd.y + _this.flagHeightEM;
+			for (var j = i + 1; j < gData.length; ++j)
 			{
-				fd.y2 = fd.y + _this.flagHeightEM;
-				var parent = d3.select(this.parentNode);
-				for (var j = i + 1; j < g.size(); ++j)
+				var nextDatum = gData[j];
+				if (fd.startsBeforeOtherEnd(nextDatum))
+					fd.y2 = nextDatum.y + _this.flagHeightEM;
+				else
 				{
-					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
-					nextDatum = n.datum();
-					if (fd.startsBeforeOtherEnd(nextDatum))
-						fd.y2 = nextDatum.y + _this.flagHeightEM;
-					else
-						break;
+					/* If the year of fd is less than the year of the previous datum,
+						then increment every subsequent
+						fd.y and every previous fd.y2 that is greater than fd.y2 by
+						1/2 flagHeightEM. Then add 1/2 flagHeight to fd.y2. */
+					if (fd.startsBeforeOtherStart(gData[j-1]))
+					{
+						var spacing = _this.flagHeightEM / 2;
+						for (var k = 0; k < i; ++k)
+							if (fd.startsBeforeOtherStart(gData[k]))
+							{
+								var newSpacing = _this.flagHeightEM / 2 + 
+									(gData[k].y2 - (gData[j-1].y + _this.flagHeightEM));
+								if (spacing < newSpacing)
+									spacing = newSpacing;
+							}
+						for (var k = 0; k < i; ++k)
+							if (gData[k].startsBeforeOtherStart(fd))
+								gData[k].y2 += spacing;
+						var delta = (fd.y2 + spacing + _this.flagSpacingEM) - gData[j].y;
+						if (delta > 0)
+							for (var k = j; k < gData.length; ++k)
+								gData[k].y += delta;
+						
+						fd.y2 += spacing;
+					}
+					break;
 				}
-			});
+			}
+		}	
 	}
 	
 	/** Returns the column in this pathview for displaying the specified FlagController */
