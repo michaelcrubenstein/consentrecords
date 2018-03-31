@@ -139,7 +139,7 @@ def showLines(request):
 
 @ensure_csrf_cookie
 def orgBase(request, organizationName=None, siteName=None, offeringName=None, sessionName=None):
-    logPage(request, 'pathAdvisor/%s' % organizationName)
+    logPage(request, 'pathAdvisor/%s' % (organizationName or 'org'))
     
     try:
         template = loader.get_template(templateDirectory + 'org/%s.html' % 'tisrael')
@@ -184,7 +184,7 @@ def orgBase(request, organizationName=None, siteName=None, offeringName=None, se
 
 @ensure_csrf_cookie
 def orgHome(request):
-    return orgBase(request, 'orgHome')
+    return orgBase(request)
 
 @ensure_csrf_cookie
 def find(request):
