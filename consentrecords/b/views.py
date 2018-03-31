@@ -125,7 +125,7 @@ def orgBase(request, organizationName=None, siteName=None, offeringName=None, se
     logPage(request, 'pathAdvisor/%s' % organizationName)
     
     try:
-        template = loader.get_template(templateDirectory + 'org/%s.html' % 'tIsrael')
+        template = loader.get_template(templateDirectory + 'org/%s.html' % 'tisrael')
         args = {
             'user': request.user,
             'jsversion': settings.JS_VERSION,
