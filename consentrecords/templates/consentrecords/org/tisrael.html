@@ -34,8 +34,10 @@
 					}
 				});
 				
-				if (newInstances.length > 0)
-					show_organization_panel(newInstances[0]);
+				{% if organizationName %}
+					if (newInstances.length > 0)
+						show_organization_panel(newInstances[0]);
+				{% endif %}
 			}
 			
 			{% if organizationName %}
