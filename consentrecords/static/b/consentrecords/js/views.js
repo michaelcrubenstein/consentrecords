@@ -742,23 +742,6 @@ function appendItem(container, d, doneDelete)
 }
 
 /* Returns the set of objects that contain the description of each data element */
-function appendViewCellItems(container, cell, clickFunction)
-{
-	// Remove any lingering contents.
-	container.selectAll('li').remove();
-
-	var items = appendItems(container, cell.data);
-	
-	appendDescriptions(items);
-		
-	crf.appendRightChevrons(items);
-
-	items.on("click", clickFunction);
-	
-	return items;
-}
-
-/* Returns the set of objects that contain the description of each data element */
 function appendEditCellItems(itemsDiv, cell, clickFunction)
 {
 	// Remove any lingering contents.
