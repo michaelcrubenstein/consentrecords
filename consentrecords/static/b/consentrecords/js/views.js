@@ -689,25 +689,6 @@ function appendDescriptions(items)
 		.each(_pushTextChanged);
 }
 
-function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
-{
-	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
-	
-	var section = panel2Div.append("section")
-		.classed('cell multiple', true);
-	
-	var itemsDiv = crf.appendItemList(section)
-		.classed('hover-items', true);
-
-	var items = itemsDiv.selectAll("li")
-				.data(rootObjects)
-				.enter()
-				.append("li");
-
-	return appendViewButtons(items, fill)
-		.on("click", buttonClicked);
-}
-
 /* Adds the contents of the specified items. By default, 
 	the contents consist of the text for each item. */
 function appendViewButtons(items, fill)
@@ -1158,6 +1139,26 @@ crv.SitePanel = (function () {
 		return this.mainDiv;
 	}
 	
+	/* Append a set of buttons in a section. */
+	SitePanel.prototype.appendButtons = function(rootObjects, buttonClicked, fill)
+	{
+		fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
+	
+		var section = this.mainDiv.append('section')
+			.classed('cell multiple', true);
+	
+		var itemsDiv = crf.appendItemList(section)
+			.classed('hover-items', true);
+
+		var items = itemsDiv.selectAll('li')
+					.data(rootObjects)
+					.enter()
+					.append('li');
+
+		return appendViewButtons(items, fill)
+			.on('click', buttonClicked);
+	}
+
 	SitePanel.prototype.appendActionButton = function(text, onClick)
 	{
 		var sectionDiv = this.mainDiv.append('section')

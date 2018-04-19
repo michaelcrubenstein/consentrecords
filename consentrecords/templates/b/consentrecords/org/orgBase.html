@@ -426,7 +426,7 @@
 			sitePanel.appendSearchBar(show_matching_descriptions);
 
 			var panel2Div = sitePanel.appendScrollArea();
-			appendButtons(panel2Div, data, function(d) {
+			sitePanel.appendButtons(data, function(d) {
 					if (prepareClick('click', 'header: ' + d.description()))
 					{
 						try
@@ -510,7 +510,7 @@
 
 							sitePanel.showLeft().then(unblockClick);
 		
-							var items = appendButtons(panel2Div, session.inquiries(), function(inquiry)
+							var items = sitePanel.appendButtons(session.inquiries(), function(inquiry)
 								{
 									if (prepareClick('click', 'add enrollment'))
 									{
@@ -628,8 +628,8 @@
 					{
 						if (inputBox.value.toLocaleLowerCase() == startVal)
 						{
-							panel2Div.selectAll("section").remove();
-							var buttons = appendButtons(panel2Div, userObjects, 
+							panel2Div.selectAll('section').remove();
+							var buttons = sitePanel.appendButtons(userObjects, 
 								function(user) {
 									pickedUser = user;
 									if (prepareClick('click', 'organization: ' + organization.description()))
@@ -836,7 +836,7 @@
 
 							var panel2Div = sitePanel.appendScrollArea();
 
-							var items = appendButtons(panel2Div, session.enrollments(), 
+							var items = sitePanel.appendButtons(session.enrollments(), 
 								function(enrollment)
 									{
 										if (prepareClick('click', 'add Experience by enrollment'))
