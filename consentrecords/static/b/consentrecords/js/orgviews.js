@@ -2866,7 +2866,7 @@ var DescendentSearchView = (function () {
 				d.promiseData()
 					.then(function()
 						{
-							_this.showDescendent(d).always(unblockClick);
+							_this.showSession(d).always(unblockClick);
 						},
 						cr.syncFail);
 			}
@@ -2971,12 +2971,7 @@ var SessionFromOrganizationSearchView = (function () {
 			
 		return false;
 	}
-	
-	SessionFromOrganizationSearchView.prototype.showDescendent = function(d)
-	{
-		return this.showSession(d)
-	}
-	
+		
 	function SessionFromOrganizationSearchView(panel, parent) {
 		ChildSearchView.call(this, panel, parent);
 		this.showSession = panel.showSession;
