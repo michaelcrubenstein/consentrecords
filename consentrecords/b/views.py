@@ -456,7 +456,7 @@ def userSettings(request):
 
 @ensure_csrf_cookie
 def wordclouds(request):
-    LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
+    LogRecord.emit(request.user, 'pathAdvisor/wordclouds/', None)
     
     try:
         template = loader.get_template(templateDirectory + 'wordclouds.html')
