@@ -2392,32 +2392,46 @@ var ExperienceSecurityPanel = (function () {
 		this.isHiddenDocumentationContainer = docSection.append('div')
 			.text(experienceController.newInstance().isHidden() ? this.hiddenDocumentation : this.visibleDocumentation);
 
-		$(this.isHiddenControl.node()).on('change', function()
+		function saveValue()
+		{
+			var newChecked = _this.isHiddenControl.node().checked;
+			if (prepareClick('click', 
+							 newChecked ? 
+								'is hidden hiding' : 
+								'is hidden showing'))
 			{
-				var newChecked = _this.isHiddenControl.node().checked;
-				if (prepareClick('click', 
-								 newChecked ? 
-								 	'is hidden hiding' : 
-								 	'is hidden showing'))
-				{
-					experienceController.newInstance().isHidden(newChecked);
-					_this.checkHiddenControlVisibility(400, unblockClick);
-					experienceController.save(false)
-						.then(function()
-							{
-							},
-							function(err)
-							{
-								newChecked = !newChecked;
-								experienceController.newInstance().isHidden(newChecked);
-								_this.isHiddenControl.node().checked(!newChecked);
-								_this.checkHiddenControlVisibility(400);
-								cr.asyncFail(err);
-							});
-				}
-				else
-					_this.isHiddenControl.node().checked = !newChecked;
-			});
+				experienceController.newInstance().isHidden(newChecked);
+				_this.checkHiddenControlVisibility(400, unblockClick);
+				experienceController.save(false)
+					.then(function()
+						{
+						},
+						function(err)
+						{
+							newChecked = !newChecked;
+							experienceController.newInstance().isHidden(newChecked);
+							_this.isHiddenControl.node().checked = newChecked;
+							
+							$(_this.isHiddenControl.node()).off('change', saveValue);
+							
+							_this.changedCheckboxEditor(_this.isHiddenControl.node());
+				
+							$(_this.isHiddenControl.node()).on('change', saveValue);
+							_this.checkHiddenControlVisibility(400);
+							cr.asyncFail(err);
+						});
+			}
+			else
+			{
+				_this.isHiddenControl.node().checked = !newChecked;
+				$(_this.isHiddenControl.node()).off('change', saveValue);
+				
+				_this.changedCheckboxEditor(_this.isHiddenControl.node());
+				
+				$(_this.isHiddenControl.node()).on('change', saveValue);
+			}
+		}
+		$(this.isHiddenControl.node()).on('change', saveValue);
 		
 		this.privileges =  [
 			{name: cr.privileges.read, id: "", accessRecords: [], accessors: []}];
