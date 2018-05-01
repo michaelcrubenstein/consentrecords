@@ -30,7 +30,7 @@ var FlagController = (function() {
 		      (e.customServices() &&
 		       e.customServices().length &&
 		       e.customServices()[0].description()))) ||
-		    "None";
+		    crv.buttonTexts.none;
 	}
 	
 	FlagController.prototype.subHeading = function()

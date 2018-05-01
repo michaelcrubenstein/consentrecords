@@ -117,6 +117,7 @@ var crv = {
 		names: "Names",
 		name: "Name",
 		no: "No",
+		none: "None",
 		nonePlaceholder: "(None)",
 		noPublicAccess: "Hidden",
 		nullString: "(None)",
@@ -774,6 +775,12 @@ crv.SectionView = (function () {
 		return this.div;
 	}
 	
+	SectionView.prototype.appendLabel = function(text)
+	{
+		return this.div.append('label')
+			.text(text);
+	}
+	
 	SectionView.prototype.appendItemList = function()
 	{
 		return this.div.append('ol')
@@ -1381,7 +1388,7 @@ var SearchOptionsView = (function () {
 	
 	SearchOptionsView.prototype.clearListPanel = function()
 	{
-		this.listElement.selectAll("li").remove();
+		this.listElement.selectAll('li').remove();
 	}
 	
 	SearchOptionsView.prototype.sortFoundObjects = function(foundObjects)
@@ -1481,6 +1488,11 @@ var SearchOptionsView = (function () {
 	SearchOptionsView.prototype.fields = function()
 	{
 		return ["parents"];
+	}
+	
+	SearchOptionsView.prototype.resultType = function()
+	{
+		throw new Error("need to override SearchOptionsView.resultType");
 	}
 	
 	SearchOptionsView.prototype.increment = function()
@@ -2025,12 +2037,6 @@ var EditItemSectionView = (function () {
 	EditItemSectionView.prototype = Object.create(crv.SectionView.prototype);
 	EditItemSectionView.prototype.constructor = EditItemSectionView;
 	
-	EditItemSectionView.prototype.appendLabel = function(text)
-	{
-		return this.div.append('label')
-			.text(text);
-	}
-	
 	/** 
 		returns the d3 object that contains the value.
 	 */
@@ -2052,12 +2058,6 @@ var EditItemSectionView = (function () {
 var EditItemsSectionView = (function () {
 	EditItemsSectionView.prototype = Object.create(crv.SectionView.prototype);
 	EditItemsSectionView.prototype.constructor = EditItemsSectionView;
-	
-	EditItemsSectionView.prototype.appendLabel = function(text)
-	{
-		return this.div.append('label')
-			.text(text);
-	}
 	
 	function EditItemsSectionView(sitePanel, instance)
 	{
@@ -2774,14 +2774,16 @@ var GrantsPanel = (function() {
 	}
 	
 	/*** Appends the controls for each item that shows a user or group that has a specified privilege.
+		userItemsFilter is a function that returns true if the item references a user.
 	 */
-	GrantsPanel.prototype.appendUserControls = function(sectionView, items)
+	GrantsPanel.prototype.appendUserControls = function(sectionView, items, userItemsFilter)
 	{
 		crf.appendDeleteControls(items);
 
 		sectionView.appendDescriptions(items).classed('unselectable', true);
 
-		appendInfoButtons(items, function(d) { return d.grantee(); });
+		var userItems = userItemsFilter ? items.filter(userItemsFilter) : items;
+		appendInfoButtons(userItems, function(d) { return d.grantee(); });
 
 		crf.appendConfirmDeleteControls(items);
 		this.checkDeleteControlVisibility(items);

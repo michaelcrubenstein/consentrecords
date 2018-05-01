@@ -2,12 +2,6 @@ var AccessRequestSectionView = (function () {
 	AccessRequestSectionView.prototype = Object.create(UserSectionView.prototype);
 	AccessRequestSectionView.prototype.constructor = AccessRequestSectionView;
 	
-	AccessRequestSectionView.prototype.appendLabel = function(text)
-	{
-		return this.div.append('label')
-			.text(text);
-	}
-	
 	AccessRequestSectionView.prototype.getUser = function(d)
 	{
 		return d.grantee();
@@ -27,7 +21,7 @@ var AccessRequestSectionView = (function () {
 	{
 		UserSectionView.call(this, sitePanel);
 		this.div.datum(instance)
-			.classed('cell edit multiple', true);
+			.classed('cell edit multiple hover-items', true);
 	}
 	
 	return AccessRequestSectionView;
@@ -168,7 +162,7 @@ var SharingPanel = (function() {
 	
 		this.readSectionView = new SharingSectionView(this)
 			.datum(this.privileges[0])
-			.classed('cell multiple edit', true);
+			.classed('cell multiple edit hover-items', true);
 			
 		itemCells = this.readSectionView.appendItemList()
 			.classed('deletable-items', true);
@@ -178,7 +172,7 @@ var SharingPanel = (function() {
 		
 		items = appendItems(itemCells, function(d) { return d.accessors });
 		
-		this.appendUserControls(this.readSectionView, items);
+		this.appendUserControls(this.readSectionView, items, function(d) { return d instanceof cr.UserUserGrant; });
 		
 		/* Add one more button for the add Button item. */
 		this.readSectionView

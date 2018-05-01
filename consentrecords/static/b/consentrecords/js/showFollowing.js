@@ -99,6 +99,108 @@ var RequestFollowPanel = (function() {
 	return RequestFollowPanel;
 })();
 
+var FollowingSearchView = (function() {
+	FollowingSearchView.prototype = Object.create(SearchOptionsView.prototype);
+	FollowingSearchView.prototype.constructor = FollowingSearchView;
+	
+	FollowingSearchView.prototype.onClickButton = function(user, i, button) {
+		if (prepareClick('click', 'user: ' + user.description()))
+		{
+			try
+			{
+				showClickFeedback(button);
+				showUser(user);
+			}
+			catch (err) { cr.syncFail(err); }
+		}
+		d3.event.preventDefault();
+		d3.event.stopPropagation();
+	}
+
+	FollowingSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		return true;
+	}
+	
+	FollowingSearchView.prototype.searchPath = function(val)
+	{
+		return 'user[user grant>grantee={0}]'.format(this.user.id());
+	}
+	
+	/* Overwrite this function to use a different set of fields for the getData or selectAll operation
+		sent to the middle tier.
+	 */
+	FollowingSearchView.prototype.fields = function()
+	{
+		return ['none'];
+	}
+	
+	FollowingSearchView.prototype.resultType = function()
+	{
+		return cr.User;
+	}
+	
+	FollowingSearchView.prototype.noResultString = function()
+	{
+		return crv.buttonTexts.none;
+	}
+	
+	FollowingSearchView.prototype.fillItems = function(items)
+	{
+		var _this = this;
+		SearchOptionsView.prototype.fillItems.call(this, items);
+		
+		items.append('button')
+			.classed('compare-button', true)
+			.on('click', function(user) {
+				if (prepareClick('click', 'compare to: ' + user.description()))
+				{
+					user.promiseData(['path'])
+						.then(function()
+						{
+							try
+							{
+								new ComparePathsPanel(_this.user, user)
+									.showUp()
+									.always(unblockClick);
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						},
+						cr.syncFail);
+				}
+				d3.event.preventDefault();
+				d3.event.stopPropagation();
+			})
+			.append('img')
+			.attr('src', compareImagePath);
+
+		crf.appendRightChevrons(items);
+	}
+	
+	FollowingSearchView.prototype.appendSearchArea = function()
+	{
+		return this.sectionView.appendItemList()
+			.classed('hover-items deletable-items', true);
+	}
+	
+	FollowingSearchView.prototype.inputText = function(val)
+	{
+		return "";
+	}
+	
+
+	function FollowingSearchView(sectionView, user)
+	{
+		this.user = user;
+		SearchOptionsView.call(this, sectionView);
+	}
+	
+	return FollowingSearchView;
+})();
+
 /* FollowingPanel is used to identify and manage the users that the currently logged-in
 	user is following. */
 var FollowingPanel = (function() {
@@ -180,65 +282,6 @@ var FollowingPanel = (function() {
 		return true;
 	}
 	
-	FollowingPanel.prototype.showFollowingObjects = function(foundObjects)
-	{
-		var _this = this;
-		var items = this._followingChunker.appendButtonContainers(foundObjects);
-
-		items.append('span').classed('left-expanding-div description-text growable unselectable', true)
-			.text(_getDataDescription);
-		items.append('button')
-			.classed('compare-button', true)
-			.on("click", function(user) {
-				if (prepareClick('click', 'compare to: ' + user.description()))
-				{
-					user.promiseData(['path'])
-						.then(function()
-						{
-							try
-							{
-								new ComparePathsPanel(_this.user, user, _this.node())
-									.showUp()
-									.always(unblockClick);
-							}
-							catch(err)
-							{
-								cr.syncFail(err);
-							}
-						},
-						cr.syncFail);
-				}
-				d3.event.preventDefault();
-				d3.event.stopPropagation();
-			})
-			.append("img")
-			.attr("src", compareImagePath);
-
-		crf.appendRightChevrons(items);
-
-		items
-			.on("click", function(user)
-			{
-				if (prepareClick('click', 'show user'))
-				{
-					showUser(user);
-				}
-			});
-			
-		return items;
-	}
-
-	FollowingPanel.prototype.getFollowingRequestsDone = function(foundObjects, startVal)
-	{
-		if (this._foundFollowingRequests === null)
-			this._foundFollowingRequests = foundObjects;
-		else
-			this._foundFollowingRequests = this._foundFollowingRequests.concat(foundObjects);
-		this.showFollowingObjects(foundObjects);
-		this._noFollowingResultsDiv.style('display', this._foundFollowingRequests.length === 0 ? null : 'none');
-		return true;
-	}
-	
 	function FollowingPanel(user) {
 		var header = "Following";
 		this.user = user;
@@ -299,15 +342,13 @@ var FollowingPanel = (function() {
 		
 		var panel2Div = this.appendScrollArea();
 		
-		this._pendingSection = panel2Div.appendSections([user])
-				.classed('cell edit multiple', true);
+		this._pendingSection = new UserSectionView(this, user);
 
-		this._pendingSection.append("label")
-			.text("Pending Requests");
-		var itemsDiv = crf.appendItemList(this._pendingSection)
+		this._pendingSection.appendLabel("Pending Requests");
+		var itemsDiv = this._pendingSection.appendItemList(this._pendingSection)
 			.classed('hover-items deletable-items', true);
-		this._noPendingResultsDiv = this._pendingSection.append("div")
-			.text("None")
+		this._noPendingResultsDiv = this._pendingSection.append('div')
+			.text(crv.buttonTexts.none)
 			.style("display", "none")
 		this._pendingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getPendingRequestsDone(foundObjects, startVal); });
@@ -333,23 +374,14 @@ var FollowingPanel = (function() {
 				d3.event.preventDefault();
 			});
 			
-		this._followingSection = new EditItemsSectionView(this, user);
-		this._followingSection.appendLabel("Following");panel2Div.appendSections([user])
-		itemsDiv = this._followingSection.appendItemList()
-			.classed('hover-items', true);
-		this._noFollowingResultsDiv = this._followingSection.append("div")
-			.text("None")
-			.style("display", "none")
-		this._followingChunker = new GetDataChunker(itemsDiv.node(), 
-			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
-		this._followingChunker.path = 'user[user grant>grantee={0}]'.format(this.user.id());
-		this._followingChunker.fields = ["none"];
-		this._followingChunker.resultType = cr.User;
+		this._followingSection = new UserSectionView(this, user);
+		this._followingSection.appendLabel("Following");
+		this._followingSearchView = new FollowingSearchView(this._followingSection, user);
 		
-		$(this.node()).one("revealing.cr", function()
+		$(this.node()).one('revealing.cr', function()
 			{
 				_this._pendingChunker.start("");			
-				_this._followingChunker.start("");
+				_this._followingSearchView.startSearchTimeout("");
 			});	
 	}
 	
