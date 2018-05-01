@@ -115,16 +115,20 @@ var GetDataChunker = (function() {
 					end: this._start + this.increment(),
 					fields: this.fields})
 			.then(function(instances) 
-						{ 
-							/* this._curSearchID is set to 0 if the scrollCheck is cleared, which occurs when
-								this is destroyed. If it is destroyed, there may be an asynchronous call hanging out,
-								which is handled here.
-							 */
-							if (_this._curSearchID == curSearchCount)
+						{
+							try
 							{
-								if (_this._onFoundInstances(instances, startVal))
-									_this._restart(instances, startVal);
+								/* this._curSearchID is set to 0 if the scrollCheck is cleared, which occurs when
+									this is destroyed. If it is destroyed, there may be an asynchronous call hanging out,
+									which is handled here.
+								 */
+								if (_this._curSearchID == curSearchCount)
+								{
+									if (_this._onFoundInstances(instances, startVal))
+										_this._restart(instances, startVal);
+								}
 							}
+							catch(err) { cr.asyncFail(err); }
 						},
 					cr.asyncFail);
 	}
