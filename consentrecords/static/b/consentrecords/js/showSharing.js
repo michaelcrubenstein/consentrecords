@@ -366,7 +366,7 @@ var AdministratorPanel = (function() {
 								_this.navContainer.centerTitle();
 							});
 		
-		this.appendUserControls(sectionView, items);
+		this.appendUserControls(sectionView, items, function(d) { return d instanceof cr.UserUserGrant; });
 		
 		this.editButton.style('display', itemCells.selectAll('li').size() ? '' : 'none');
 		this.navContainer.centerTitle();
