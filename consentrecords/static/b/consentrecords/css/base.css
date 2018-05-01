@@ -950,11 +950,6 @@ ol.deletable-items>li>button:first-child
 	margin-right: 0px;
 }
 
-/** styles for the contents of the notification. */
-ol.deletable-items>li>p {
-	margin-bottom: 6px;
-}
-
 /** styles for the confirm delete control. */
 ol.deletable-items>li>button:last-child {
 	position: relative;

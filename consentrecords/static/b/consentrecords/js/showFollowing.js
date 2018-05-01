@@ -84,10 +84,9 @@ var RequestFollowPanel = (function() {
 		var docDiv = docSection.append('div')
 			.text(this.emailDocumentation);
 
-		var sectionPanel = panel2Div.append('section')
-			.classed('cell edit unique', true);
+		var sectionView = new EditItemSectionView(this, user);
 			
-		var itemsDiv = crf.appendItemList(sectionPanel);
+		var itemsDiv = sectionView.appendItemList();
 
 		var divs = itemsDiv.append('li');	// So that each item appears on its own row.
 			
@@ -119,7 +118,7 @@ var FollowingPanel = (function() {
 		var _this = this;
 		var items = this._pendingChunker.appendButtonContainers(foundObjects);
 		crf.appendDeleteControls(items);
-		appendButtonDescriptions(items);
+		this._followingSection.appendButtonDescriptions(items);
 		crf.appendConfirmDeleteControls(items, function(d)
 			{
 				var _thisItem = $(this).parents('li')[0];
@@ -334,12 +333,9 @@ var FollowingPanel = (function() {
 				d3.event.preventDefault();
 			});
 			
-		this._followingSection = panel2Div.appendSections([user])
-				.classed('cell edit multiple', true);
-
-		this._followingSection.append("label")
-			.text("Following");
-		itemsDiv = crf.appendItemList(this._followingSection)
+		this._followingSection = new EditItemsSectionView(this, user);
+		this._followingSection.appendLabel("Following");panel2Div.appendSections([user])
+		itemsDiv = this._followingSection.appendItemList()
 			.classed('hover-items', true);
 		this._noFollowingResultsDiv = this._followingSection.append("div")
 			.text("None")

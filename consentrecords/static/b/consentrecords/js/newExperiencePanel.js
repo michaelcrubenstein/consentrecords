@@ -71,7 +71,7 @@ var MultiTypeOptionView = (function() {
 			.classed('hover-items search', true);
 	}
 	
-	function MultiTypeOptionView(containerNode, experienceController)
+	function MultiTypeOptionView(sectionView, containerNode, experienceController)
 	{
 		this.containerNode = containerNode;
 		if (containerNode)
@@ -81,7 +81,7 @@ var MultiTypeOptionView = (function() {
 
 			this.experienceController = experienceController;
 		}
-		SearchOptionsView.call(this, containerNode, GetDataChunker)
+		SearchOptionsView.call(this, sectionView)
 	}
 	
 	return MultiTypeOptionView;
@@ -341,7 +341,7 @@ var ExperienceDatumSearchView = (function() {
 			return false;
 	}
 
-	function ExperienceDatumSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
+	function ExperienceDatumSearchView(sectionView, containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
 		console.assert(containerNode);
 		
@@ -349,12 +349,12 @@ var ExperienceDatumSearchView = (function() {
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.initialTypeName;
 		this.sitePanel = sitePanel;
-		MultiTypeOptionView.call(this, containerNode, experienceController);
+		MultiTypeOptionView.call(this, sectionView, containerNode, experienceController);
 		
 		var _this = this;
 
 		this.inputBox = inputNode;
-		$(this.inputBox).on("input", function() { 
+		$(this.inputBox).on('input', function() { 
 				try { _this.textChanged(); }
 				catch(err) { cr.asyncFail(err); }
 			});
@@ -377,6 +377,51 @@ var ExperienceDatumSearchView = (function() {
 	}
 	
 	return ExperienceDatumSearchView;
+})();
+
+var OrganizationLinkSectionView = (function() {
+	OrganizationLinkSectionView.prototype = Object.create(crv.SectionView.prototype);
+	OrganizationLinkSectionView.prototype.constructor = OrganizationLinkSectionView;
+	
+	OrganizationLinkSectionView.prototype.appendDescription = function(div, d)
+	{
+		if (d instanceof cr.Site)
+		{
+			/* The organization name is either a value of d or, if d is a value
+			   of an Offering, then the organization name is the value of the offering.
+			 */
+			var orgValue;
+			if (d.parent() && d.parent() instanceof cr.Offering)
+				orgValue = d.parent.organization();
+			else
+				orgValue = d.organization();
+				
+			if (orgValue.description() == d.description())
+			{
+				div.textContent = d.description();
+			}
+			else
+			{
+				orgDiv = d3.select(div).append('div').classed('organization', true);		
+				orgDiv.append('div').text(orgValue.description());
+				orgDiv.append('div')
+					.classed('address-line', true)
+					.text(d.description());
+			}
+		}
+		else
+		{
+			div.textContent = d.description();
+		}
+	}
+	
+	function OrganizationLinkSectionView(sitePanel)
+	{
+		crv.SectionView.call(this, sitePanel);
+		this.classed('cell picker organization', true);
+	}
+	
+	return OrganizationLinkSectionView;
 })();
 
 /* Displays site or organization */
@@ -464,56 +509,85 @@ var OrganizationLinkSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	OrganizationLinkSearchView.prototype.fillItems = function(buttons)
-	{
-		var _this = this;
-		
-		buttons.each(function(d)
-			{
-				var leftText = d3.select(this).append('div').classed('left-expanding-div description-text growable', true);
-				if (d instanceof cr.Site)
-				{
-					/* The organization name is either a value of d or, if d is a value
-					   of an Offering, then the organization name is the value of the offering.
-					 */
-					var orgValue;
-					if (d.parent() && d.parent() instanceof cr.Offering)
-						orgValue = d.parent.organization();
-					else
-						orgValue = d.organization();
-						
-					if (orgValue.description() == d.description())
-					{
-						leftText.text(d.description());
-					}
-					else
-					{
-						orgDiv = leftText.append('div').classed('organization', true);		
-						orgDiv.append('div').text(orgValue.description());
-						orgDiv.append('div')
-							.classed('address-line', true)
-							.text(d.description());
-					}
-				}
-				else
-				{
-					leftText.text(d.description());
-				}
-			});
-	}
-	
 	OrganizationLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
 		return this.inputText() != (this.experienceController.organizationName() || "");
 	}
 	
-	function OrganizationLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
+	function OrganizationLinkSearchView(sectionView, containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
-		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
+		ExperienceDatumSearchView.call(this, sectionView, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
 	return OrganizationLinkSearchView;
+})();
+
+var SiteLinkSectionView = (function() {
+	SiteLinkSectionView.prototype = Object.create(crv.SectionView.prototype);
+	SiteLinkSectionView.prototype.constructor = SiteLinkSectionView;
+	
+	SiteLinkSectionView.prototype.appendDescription = function(div, d)
+	{
+		var leftText = d3.select(div);
+		
+		if (d instanceof cr.Offering)
+		{
+			leftText.append('div')
+				.classed('title', true).text(d.description());
+
+			var orgDiv = leftText.append('div')
+				.classed('organization', true);
+			orgDiv.append('div')
+				.classed('address-line', true)
+				.text(d.organization().description());
+				
+			if (d.site().description() != d.organization().description())
+			{
+				orgDiv.append('div')
+					.classed('address-line', true)
+					.text(d.site().description());
+			}
+		}
+		else if (d instanceof cr.Site)
+		{
+			/* The organization name is either a value of d or, if d is a value
+			   of an Offering, then the organization name is the value of the offering.
+			 */
+			var orgValue;
+			if (d.parent() && d.parent() instanceof cr.Offering)
+				orgValue = d.parent().organization();
+			else
+				orgValue = d.organization();
+				
+			if (orgValue.description() == d.description() ||
+				orgValue.id() == (this.sitePanel.controller().organization() && 
+				                  this.sitePanel.controller().organization().id()))
+			{
+				div.textContent = d.description();
+			}
+			else
+			{
+				orgDiv = leftText.append('div').classed('organization', true);		
+				orgDiv.append('div').text(orgValue.description());
+				orgDiv.append('div')
+					.classed('address-line', true)
+					.text(d.description());
+			}
+		}
+		else
+		{
+			div.textContent = d.description();
+		}
+	}
+	
+	function SiteLinkSectionView(sitePanel)
+	{
+		crv.SectionView.call(this, sitePanel);
+		this.classed('cell picker site', true);
+	}
+	
+	return SiteLinkSectionView;
 })();
 
 /* Displays organization, site, offering */
@@ -691,7 +765,7 @@ var SiteLinkSearchView = (function() {
 			{
 				return cr.Site;
 			}
-			else if (this.typeName === "Organization")
+			else if (this.typeName === 'Organization')
 			{
 				return cr.Organization;
 			}
@@ -708,7 +782,7 @@ var SiteLinkSearchView = (function() {
 			if (this.experienceController.organization())
 			{
 				if (searchText)
-					this.typeNames = ['Site', "Offering"];
+					this.typeNames = ['Site', 'Offering'];
 				else
 					this.typeNames = ['Site'];
 			}
@@ -720,13 +794,13 @@ var SiteLinkSearchView = (function() {
 		else if (this.experienceController.experienceServices().length > 0)
 		{
 			if (searchText)
-				this.typeNames = ["Offering", 'Site', "Organization"];
+				this.typeNames = ['Offering', 'Site', 'Organization'];
 			else
 				this.typeNames = [""];
 		}
 		else if (searchText)
 		{
-			this.typeNames = ['Site', "Organization"];
+			this.typeNames = ['Site', 'Organization'];
 		}
 		else
 		{
@@ -736,78 +810,70 @@ var SiteLinkSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	SiteLinkSearchView.prototype.fillItems = function(buttons)
-	{
-		var _this = this;
-		
-		buttons.each(function(d)
-			{
-				var leftText = d3.select(this).append('div').classed('left-expanding-div description-text growable', true);
-				if (d instanceof cr.Offering)
-				{
-					leftText.append('div')
-						.classed('title', true).text(d.description());
-
-					var orgDiv = leftText.append('div')
-						.classed('organization', true);
-					orgDiv.append('div')
-						.classed('address-line', true)
-						.text(d.organization().description());
-						
-					if (d.site().description() != d.organization().description())
-					{
-						orgDiv.append('div')
-							.classed('address-line', true)
-							.text(d.site().description());
-					}
-				}
-				else if (d instanceof cr.Site)
-				{
-					/* The organization name is either a value of d or, if d is a value
-					   of an Offering, then the organization name is the value of the offering.
-					 */
-					var orgValue;
-					if (d.parent() && d.parent() instanceof cr.Offering)
-						orgValue = d.parent().organization();
-					else
-						orgValue = d.organization();
-						
-					if (orgValue.description() == d.description() ||
-						orgValue.id() == (_this.experienceController.organization() && _this.experienceController.organization().id()))
-					{
-						leftText.text(d.description());
-					}
-					else
-					{
-						orgDiv = leftText.append('div').classed('organization', true);		
-						orgDiv.append('div').text(orgValue.description());
-						orgDiv.append('div')
-							.classed('address-line', true)
-							.text(d.description());
-					}
-				}
-				else
-				{
-					leftText.text(d.description());
-				}
-			});
-	}
-	
 	SiteLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
 		return this.inputText() != (this.experienceController.siteName() || "");
 	}
 	
-	function SiteLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
+	function SiteLinkSearchView(sectionView, containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
-		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
+		ExperienceDatumSearchView.call(this, sectionView, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
 	return SiteLinkSearchView;
 })();
 
 /* Typenames can be "Offering" or "Offering from Site" or "Service". The return types can be Offerings. */
+var OfferingLinkSectionView = (function() {
+	OfferingLinkSectionView.prototype = Object.create(crv.SectionView.prototype);
+	OfferingLinkSectionView.prototype.constructor = OfferingLinkSectionView;
+	
+	OfferingLinkSectionView.prototype.appendDescription = function(div, d)
+	{
+		var leftText = d3.select(div);
+		
+		if (d instanceof cr.Offering)
+		{
+			var controller = this.sitePanel.controller();
+			if (controller.site() && controller.site().id() == d.site().id())
+				leftText.text(d.description());
+			else
+			{
+				leftText.append('div')
+					.classed('title', true).text(d.description());
+
+				orgDiv = leftText.append('div').classed('organization', true);
+				if (d.organization().id() !=
+					(controller.organization() && controller.organization().id()))
+					orgDiv.append('div').text(d.organization().description());
+				if (d.site().description() != d.organization().description())
+				{
+					orgDiv.append('div')
+						.classed('address-line', true)
+						.text(d.site().description());
+				}
+			}
+		}
+		else if (d instanceof cr.Service)
+		{
+			leftText.text(d.description());
+		}
+		else
+		{
+			leftText.text(d.description());
+		}
+	}
+	
+	function OfferingLinkSectionView(sitePanel)
+	{
+		crv.SectionView.call(this, sitePanel);
+		this.classed('cell picker offering', true);
+	}
+	
+	return OfferingLinkSectionView;
+})();
+
 var OfferingLinkSearchView = (function() {
 	OfferingLinkSearchView.prototype = Object.create(ExperienceDatumSearchView.prototype);
 	OfferingLinkSearchView.prototype.constructor = OfferingLinkSearchView;
@@ -1083,54 +1149,15 @@ var OfferingLinkSearchView = (function() {
 		this.typeName = this.typeNames[0];
 	}
 	
-	OfferingLinkSearchView.prototype.fillItems = function(buttons)
-	{
-		var _this = this;
-		
-		buttons.each(function(d)
-			{
-				var leftText = d3.select(this).append('div').classed('left-expanding-div description-text growable', true);
-				if (d instanceof cr.Offering)
-				{
-					if (_this.experienceController.site() && _this.experienceController.site().id() == d.site().id())
-						leftText.text(d.description());
-					else
-					{
-						leftText.append('div')
-							.classed('title', true).text(d.description());
-	
-						orgDiv = leftText.append('div').classed('organization', true);
-						if (d.organization().id() !=
-							(_this.experienceController.organization() && _this.experienceController.organization().id()))
-							orgDiv.append('div').text(d.organization().description());
-						if (d.site().description() != d.organization().description())
-						{
-							orgDiv.append('div')
-								.classed('address-line', true)
-								.text(d.site().description());
-						}
-					}
-				}
-				else if (d instanceof cr.Service)
-				{
-					leftText.text(d.description());
-				}
-				else
-				{
-					leftText.text(d.description());
-				}
-			});
-	}
-	
 	OfferingLinkSearchView.prototype.isDirtyText = function()
 	{
 		/* inputText returns an empty string. Make sure test is not 'null' */
 		return this.inputText() != (this.experienceController.offeringName() || "");
 	}
 	
-	function OfferingLinkSearchView(containerNode, sitePanel, experienceController, inputNode, helpNode)
+	function OfferingLinkSearchView(sectionView, containerNode, sitePanel, experienceController, inputNode, helpNode)
 	{
-		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experienceController, inputNode, helpNode);
+		ExperienceDatumSearchView.call(this, sectionView, containerNode, sitePanel, experienceController, inputNode, helpNode);
 	}
 	
 	return OfferingLinkSearchView;
@@ -1648,20 +1675,20 @@ var NewExperiencePanel = (function () {
 			$(this.optionPanel.node()).children().map(function(e) { return $(this).outerWidth(); })
 				.toArray().reduce(function(a, b) { return a + b; }, 0))
 		{
-			$(this.startDateContainer.selectAll('label').node()).width('auto');
-			$(this.endDateContainer.selectAll('label').node()).width('auto');
+			$(this.startDateContainer.labelNode()).width('auto');
+			$(this.endDateContainer.labelNode()).width('auto');
 			
-			this.startDateContainer.selectAll('ol').style('text-align', null);
-			this.endDateContainer.selectAll('ol').style('text-align', null);
+			this.startDateContainer.itemList().style('text-align', null);
+			this.endDateContainer.itemList().style('text-align', null);
 		}
 		else
 		{
 			var width = $(this.optionPanel.select('label').node()).width();
-			$(this.startDateContainer.selectAll('label').node()).width(width);
-			$(this.endDateContainer.selectAll('label').node()).width(width);
+			$(this.startDateContainer.labelNode()).width(width);
+			$(this.endDateContainer.labelNode()).width(width);
 			
-			this.startDateContainer.selectAll('ol').style('text-align', 'left');
-			this.endDateContainer.selectAll('ol').style('text-align', 'left');
+			this.startDateContainer.itemList().style('text-align', 'left');
+			this.endDateContainer.itemList().style('text-align', 'left');
 		}
 	}
 		
@@ -1976,8 +2003,7 @@ var NewExperiencePanel = (function () {
 			});
 		
 			/* The organization section. */
-			section = panel2Div.append('section')
-				.classed('cell picker organization', true);
+			section = new OrganizationLinkSectionView(this);
 				
 			this.organizationInput = section.append('input')
 				.classed('organization', true)
@@ -1988,13 +2014,12 @@ var NewExperiencePanel = (function () {
 			
 			searchContainer = section.append('div');
 			
-			this.organizationSearchView = new OrganizationLinkSearchView(searchContainer.node(), 
+			this.organizationSearchView = new OrganizationLinkSearchView(section, searchContainer.node(), 
 																	 this, experienceController, 
 																	 this.organizationInput.node(), 
 																	 organizationHelp.node());
 		
-			section = panel2Div.append('section')
-				.classed('cell picker site', true);
+			section = new SiteLinkSectionView(this);
 				
 			this.siteInput = section.append('input')
 				.classed('site', true)
@@ -2004,13 +2029,12 @@ var NewExperiencePanel = (function () {
 		
 			searchContainer = section.append('div');
 			
-			this.siteSearchView = new SiteLinkSearchView(searchContainer.node(), 
+			this.siteSearchView = new SiteLinkSearchView(section, searchContainer.node(), 
 													 this, experienceController, 
 													 this.siteInput.node(), 
 													 siteHelp.node());
 		
-			section = panel2Div.append('section')
-				.classed('cell picker offering', true);
+			section = new OfferingLinkSectionView(this);
 				
 			this.offeringInput = section.append('input')
 				.classed('offering', true)
@@ -2020,7 +2044,7 @@ var NewExperiencePanel = (function () {
 			
 			searchContainer = section.append('div');
 			
-			this.offeringSearchView = new OfferingLinkSearchView(searchContainer.node(), 
+			this.offeringSearchView = new OfferingLinkSearchView(section, searchContainer.node(), 
 															 this, experienceController, 
 															 this.offeringInput.node(), 
 															 offeringHelp.node());
@@ -2237,7 +2261,7 @@ var ExperienceSecurityPanel = (function () {
 		return r;
 	}
 
-	ExperienceSecurityPanel.prototype.addAccessRecord = function(accessorLevel, path)
+	ExperienceSecurityPanel.prototype.addAccessRecord = function(sectionView, accessorLevel, path)
 	{
 		var _this = this;
 		
@@ -2249,7 +2273,7 @@ var ExperienceSecurityPanel = (function () {
 					userGrant.grantee(grantees[0]);
 					userGrant.parent(_this.grantor);
 					_this.grantor.userGrants().push(userGrant);
-					_this.onGrantAdded(accessorLevel.itemsDiv, userGrant);
+					_this.onGrantAdded(sectionView, accessorLevel.itemsDiv, userGrant);
 					var r2 = $.Deferred();
 					r2.resolve(userGrant);
 					return r2;
@@ -2260,7 +2284,7 @@ var ExperienceSecurityPanel = (function () {
 	ExperienceSecurityPanel.prototype.loadAccessRecords = function(panel2Div, grantor)
 	{
 		var _this = this;
-		var sections, itemCells, items;
+		var itemCells, items;
 		var accessRequestSection, accessRequestList;
 		
 		// Sort the access records by type.
@@ -2277,27 +2301,20 @@ var ExperienceSecurityPanel = (function () {
 			}
 		}
 	
-		var key = 0;
-		sections = panel2Div.selectAll('section')
-			.data(this.privileges, function(d) {
-				/* Ensure that this operation appends without replacing any items. */
-				key += 1;
-				return key;
-			  })
-			.enter()
-			.append('section')
+		var sectionView = new crv.SectionView(this)
+			.datum(this.privileges[0])
 			.classed('cell multiple edit', true);
 		
 		/* Place this docSection inside the other section so that it gets hidden by the
 			associated VerticalReveal.
 		 */	
-		var docSection = sections.append('section')
+		var docSection = sectionView.append('section')
 			.classed('cell documentation first', true);
 
 		var docDiv = docSection.append('div');
 		docDiv.text(this.helpText);
 		
-		itemCells = crf.appendItemList(sections)
+		itemCells = sectionView.appendItemList()
 			.classed('deletable-items', true);
 	
 		// Reference the views back to the privileges objects.
@@ -2310,19 +2327,19 @@ var ExperienceSecurityPanel = (function () {
 								_this.navContainer.centerTitle();
 							});
 		
-		this.appendUserControls(items);
+		this.appendUserControls(sectionView, items);
 		
 		this.editButton.style('display', itemCells.selectAll('li').size() ? '' : 'none');
 		this.navContainer.centerTitle();
-		this.reveal = new VerticalReveal(sections.node());
+		this.reveal = new VerticalReveal(sectionView.node());
 		if (!panel2Div.datum().isHidden())
 			this.reveal.hide({duration: 0});
 			
 		/* Add one more button for the add Button item. */
-		sections
+		sectionView
 			.append('button').classed('btn row-button add-item site-active-text', true)
 			.on('click', function(d) {
-				_this.addAccessor("Sharing User", d);
+				_this.addAccessor(sectionView, "Sharing User", d);
 			})
 			.append('div').text("Add User");
 		
