@@ -1786,9 +1786,9 @@ var EditPanel = (function() {
 
 	EditPanel.prototype.navContainer = null;
 	
-	EditPanel.prototype.appendCheckboxEditor = function(section, value)
+	EditPanel.prototype.appendCheckboxEditor = function(sectionView, value)
 	{
-		var itemsDiv = crf.appendItemList(section);
+		var itemsDiv = sectionView.appendItemList();
 		var items = itemsDiv.append('li');
 
 		items.append('span').classed('growable', true);
@@ -2011,16 +2011,16 @@ var OrderedTextEditor = (function() {
 				});
 	}
 	
-	function OrderedTextEditor(container, placeholder, parent, data, dataType, inputType)
+	function OrderedTextEditor(sectionView, placeholder, parent, data, dataType, inputType)
 	{
 		inputType = inputType !== undefined ? inputType : 'text';
 		
-		MultipleEditor.call(this, container, placeholder, parent, data, dataType);
+		MultipleEditor.call(this, sectionView, placeholder, parent, data, dataType);
 		this.inputType = inputType;
 
-		container.classed('string translation', true);
+		sectionView.classed('string translation', true);
 		
-		var itemsDiv = crf.appendItemList(container);
+		var itemsDiv = sectionView.appendItemList();
 	
 		itemsDiv.classed('deletable-items', true);
 		var items = appendItems(itemsDiv, data);
@@ -2425,16 +2425,16 @@ var EditItemPanel = (function () {
 		return section;
 	}
 	
-	EditItemPanel.prototype.appendEnumerationEditor = function(section, newValue)
+	EditItemPanel.prototype.appendEnumerationEditor = function(sectionView, newValue)
 	{
-		var itemsDiv = section.appendItemList(section);
+		var itemsDiv = sectionView.appendItemList();
 
 		var items = itemsDiv.append('li');
 
 		var divs = items.append('div')
 			.classed('description-text growable unselectable', true);
 			
-		section.appendDescription(divs.node(), newValue);
+		sectionView.appendDescription(divs.node(), newValue);
 		
 		if (newValue instanceof cr.IInstance)
 		{
@@ -2442,7 +2442,7 @@ var EditItemPanel = (function () {
 				{
 					setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
 						{
-							section.appendDescription(eventObject.data, this);
+							sectionView.appendDescription(eventObject.data, this);
 						});
 				})
 		}

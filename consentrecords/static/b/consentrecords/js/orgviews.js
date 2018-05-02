@@ -368,12 +368,9 @@ var AddressPanel = (function () {
 		this.createRoot(crv.buttonTexts.address, onShow);
 		
 		/* Fill in the controls for editing */
-		this.namesSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit multiple', true);
-		this.namesSection.append('label')
-			.text(crv.buttonTexts.streets);
-		new OrderedTextEditor(this.namesSection, crv.buttonTexts.streets, 
+		this.namesSection = new EditItemsSectionView(this, controller.newInstance());
+		this.namesSection.appendLabel(crv.buttonTexts.streets);
+		new OrderedTextEditor(this.namesSection, crv.buttonTexts.street, 
 									 controller.newInstance(), controller.newInstance().streets(),
 									 cr.Street, 'text');
 
@@ -885,7 +882,6 @@ var EngagementPanel = (function () {
 
 		/* Fill in the controls for editing */
 		this.userSection = new EditUserSectionView(this, controller.newInstance())
-			.datum(controller.newInstance())
 			.classed('first', true)
 			.on('click', 
 				function(cell) {
@@ -1499,8 +1495,7 @@ var EnumerationSectionEditor = (function() {
     	var _this = this;
 		this.textContainer = null;
 		
-		this.section = sitePanel.mainDiv.append('section')
-			.classed('cell edit unique', true)
+		this.section = new EditItemSectionView(sitePanel, container)
 			.datum(container)
 			.on('click', 
 				function() {
@@ -1527,8 +1522,7 @@ var EnumerationSectionEditor = (function() {
 					}
 			});
 		
-		this.section.append('label')
-			.text(label);
+		this.section.appendLabel(label);
 		
 		var oldValue = valueFunction.call(container);	
 		var oldDescription = oldValue ? 
@@ -1787,6 +1781,7 @@ var GroupMembersPanel = (function () {
 
 	GroupMembersPanel.prototype.addPanelTitle = "Add Group Member";
 	GroupMembersPanel.prototype.searchViewType = GroupMemberSearchView;
+	GroupMembersPanel.prototype.sectionViewType = UserSectionView;
 	
 	GroupMembersPanel.prototype.savedItems = function()
 	{
@@ -2091,9 +2086,8 @@ var OrganizationPanel = (function () {
 				 
 		var publicAccessTextContainer = null;
 		
-		this.publicAccessSection = this.mainDiv.append('section')
-			.classed('cell edit unique first', true)
-			.datum(controller.newInstance())
+		this.publicAccessSection = new EditItemSectionView(this, controller.newInstance())
+			.classed('first', true)
 			.on('click', 
 				function(d) {
 					if (prepareClick('click', 'pick ' + _this.publicAccessLabel))
@@ -2117,8 +2111,7 @@ var OrganizationPanel = (function () {
 					}
 			});
 	
-		this.publicAccessSection.append('label')
-			.text(_this.publicAccessLabel);
+		this.publicAccessSection.appendLabel(_this.publicAccessLabel);
 			
 		var items = this.appendEnumerationEditor(this.publicAccessSection, this.publicAccessDescription());
 			
@@ -3163,9 +3156,8 @@ var SitePanel = (function () {
 		this.webSiteSection = this.appendTextSection(controller.newInstance(), cr.Site.prototype.webSite, crv.buttonTexts.webSite, 'text');
 		this.webSiteSection.classed('first', true);
 				 
-		this.addressSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit unique first', true)
+		this.addressSection = new EditItemSectionView(this, controller.newInstance())
+			.classed('first', true)
 			.on('click', function(d) {
 				if (prepareClick('click', 'Address'))
 				{
@@ -3186,8 +3178,7 @@ var SitePanel = (function () {
 					catch(err) { cr.syncFail(err); }
 				}
 			});
-		this.addressSection.append('label')
-			.text(crv.buttonTexts.address);
+		this.addressSection.appendLabel(crv.buttonTexts.address);
 		this.appendEnumerationEditor(this.addressSection, controller.newInstance().address().description() || crv.buttonTexts.nullString);
 		crf.appendRightChevrons(this.addressSection.selectAll('li'));	
 
@@ -3318,9 +3309,8 @@ var UserPanel = (function () {
 		
 		var publicAccessTextContainer = null;
 		
-		this.publicAccessSection = this.mainDiv.append('section')
-			.classed('cell edit unique first', true)
-			.datum(controller.newInstance())
+		this.publicAccessSection = new EditItemSectionView(this, controller.newInstance())
+			.classed('first', true)
 			.on('click', 
 				function(d) {
 					if (prepareClick('click', crv.buttonTexts.publicAccess))
@@ -3344,8 +3334,7 @@ var UserPanel = (function () {
 					}
 			});
 	
-		this.publicAccessSection.append('label')
-			.text(crv.buttonTexts.publicAccess);
+		this.publicAccessSection.appendLabel(crv.buttonTexts.publicAccess);
 			
 		var items = this.appendEnumerationEditor(this.publicAccessSection, this.publicAccessDescription());
 			

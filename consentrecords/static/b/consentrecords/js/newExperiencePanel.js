@@ -2127,11 +2127,10 @@ var NewExperiencePanel = (function () {
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
 			
-		this.isHiddenSection = this.mainDiv.append('section')
-			.classed('cell edit unique first', true);
+		this.isHiddenSection = new EditItemSectionView(this, experienceController.newInstance())
+			.classed('first', true);
 		
-		this.isHiddenSection.append('label')
-			.text(crv.buttonTexts.hiddenExperience);
+		this.isHiddenSection.appendLabel(crv.buttonTexts.hiddenExperience);
 			
 		this.isHiddenControl = this.appendCheckboxEditor(this.isHiddenSection, experienceController.newInstance().isHidden(), "checkbox");
 		
@@ -2395,11 +2394,10 @@ var ExperienceSecurityPanel = (function () {
 
 		this.appendEditButton();
 		
-		var isHiddenSection = this.mainDiv.append('section')
-			.classed('cell edit unique first', true);
+		var isHiddenSection = new EditItemSectionView(this, experienceController.newInstance())
+			.classed('first', true);
 		
-		isHiddenSection.append('label')
-			.text(crv.buttonTexts.hiddenExperience);
+		isHiddenSection.appendLabel(crv.buttonTexts.hiddenExperience);
 			
 		this.isHiddenControl = this.appendCheckboxEditor(isHiddenSection, experienceController.newInstance().isHidden());
 		
