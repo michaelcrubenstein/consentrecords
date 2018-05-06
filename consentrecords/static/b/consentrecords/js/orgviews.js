@@ -1670,7 +1670,7 @@ var NewGroupMemberPanel = (function()
 		navContainer.appendTitle(title);
 
 		this.appendScrollArea();
-		this.sectionView = new crv.SectionView(this);
+		this.sectionView = new UserSectionView(this);
 		this.searchView = new NewGroupMemberSearchView(this.sectionView, this, parent);
 		$(this.node()).one('revealing.cr', function() { 
 				_this.searchView.textCleared(); 
