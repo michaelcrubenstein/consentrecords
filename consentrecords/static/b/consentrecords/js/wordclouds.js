@@ -8,30 +8,7 @@ var WordcloudPathsResultsView = (function () {
 	{
 		return "";
 	}
-	
-	WordcloudPathsResultsView.prototype.fillItems = function(buttons)
-	{
-		var _this = this;
 		
-		buttons.each(function(d)
-			{
-				var leftText = d3.select(this);
-				
-				var screenName = d.name();
-				var user = d.user();
-				var userName = user && user.fullName();
-				var userDescription = user && user.description();
-				var ageDescription = d.birthday() && new AgeCalculator(d.birthday()).toString();			
-				
-				if (screenName) leftText.append('div').text(screenName);
-				if (userName && userName != screenName) leftText.append('div').text(userName);
-				/* Only include the email address if there is no userName or screenName */
-				if (userDescription && !userName && !screenName) leftText.append('div').text(userDescription);
-				if (d.birthday())
-					leftText.append('div').text(ageDescription);
-			});
-	}
-	
 	WordcloudPathsResultsView.prototype.containsQuery = function(fc, queryServices) {
 		var offering = fc.experience.offering();
 		if (offering && offering.id())
@@ -121,8 +98,7 @@ var WordcloudPathsResultsView = (function () {
 	
 	WordcloudPathsResultsView.prototype.appendSearchArea = function()
 	{
-		return d3.select(this.panel.resultContainerNode)
-			.append('ol')
+		return this.sectionView.appendItemList()
 			.classed('hover-items search', true);
 	}
 	
@@ -139,15 +115,13 @@ var WordcloudPathsResultsView = (function () {
 		return cr.Path;
 	}
 	
-	function WordcloudPathsResultsView(panel)
+	function WordcloudPathsResultsView(sectionView, panel)
 	{
 		if (!panel)
 			throw new Error("panel is not specified");
 
-		var _this = this;
-
 		this.panel = panel;
-		SearchOptionsView.call(this, panel.resultContainerNode);
+		SearchOptionsView.call(this, sectionView);
 	}
 	
 	return WordcloudPathsResultsView;
@@ -177,13 +151,13 @@ var WordcloudPathsPanel = (function () {
 		
 		this.appendScrollArea();
 		
-		this.resultContainerNode = this.mainDiv.append('div')
-			.classed('results-container', true)
-			.node();
+		this.sectionView = new UserSectionView(this)
+			.classed('results-container', true);
+		this.resultContainerNode = this.sectionView.node();
 			
 		setTimeout(function()
 			{
-				_this.pathResultsView = new WordcloudPathsResultsView(_this);
+				_this.pathResultsView = new WordcloudPathsResultsView(_this.sectionView, _this);
 				_this.pathResultsView.startSearchTimeout("", 0);
 			});
 	}

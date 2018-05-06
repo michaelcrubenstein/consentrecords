@@ -36,6 +36,7 @@
     <link href="{% static "b/consentrecords/css/showSharing.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/signup.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/welcomePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/wordclouds.css" %}?v={{jsversion}}" rel="stylesheet">
     
     <link href="{% static "custom_user/css/formsimple.css" %}?v={{jsversion}}" rel="stylesheet">
     <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
@@ -68,7 +69,11 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="wordcloud_panel" >
+  		<panel class='wordcloud' id='wordcloud_panel' >
+  			<panel class='panel-fill'>
+  				<section class='wordcloud' >
+  				</section>
+  			</panel>
 		</panel>
 		
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
@@ -200,12 +205,13 @@
 				});
 			if (update)
 				{
-					$('#wordcloud_panel').jQCloud('update', words);
+					$('section.wordcloud').jQCloud('update', words);
 				}
 			else
 			{
-				$('#wordcloud_panel').jQCloud(words,
-					{autoResize: true});
+				$('section.wordcloud').jQCloud(words,
+					{autoResize: true,
+					 removeOverflowing: false});
 			}
 		}
 		

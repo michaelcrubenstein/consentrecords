@@ -125,7 +125,7 @@ def orgBase(request, organizationName=None, siteName=None, offeringName=None, se
     logPage(request, 'pathAdvisor/%s' % (organizationName or 'org'))
     
     try:
-        template = loader.get_template(templateDirectory + 'org/%s.html' % 'tisrael')
+        template = loader.get_template(templateDirectory + 'org/%s.html' % ('tisrael' if organizationName else 'orgBase'))
         args = {
             'user': request.user,
             'jsversion': settings.JS_VERSION,
@@ -456,7 +456,7 @@ def userSettings(request):
 
 @ensure_csrf_cookie
 def wordclouds(request):
-    LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
+    LogRecord.emit(request.user, 'pathAdvisor/wordclouds/', None)
     
     try:
         template = loader.get_template(templateDirectory + 'wordclouds.html')

@@ -54,7 +54,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	{
 		if (cellData)
 		{
-			var deadlineDiv = panel2Div.append("section");
+			var deadlineDiv = panel2Div.append('section');
 			appendStringItem(deadlineDiv.node(), cellName, cellData);
 			return deadlineDiv;
 		}
@@ -74,7 +74,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	if (!firstDiv)
 		firstDiv = nextDiv;
 
-	var cellDiv = panel2Div.append("section")
+	var cellDiv = panel2Div.append('section')
 		.classed('cell', true);
 	
 	offering.promiseData()
@@ -106,21 +106,21 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				var newText = offering.ageRange();
 				if (newText)
 				{
-					var agesDiv = panel2Div.append("section");
+					var agesDiv = panel2Div.append('section');
 					appendStringItem(agesDiv.node(), "Ages", newText);
 				}
 				
 				var newText = offering.gradeRange();
 				if (newText)
 				{
-					var gradesDiv = panel2Div.append("section");
+					var gradesDiv = panel2Div.append('section');
 					appendStringItem(gradesDiv.node(), "Grades", newText);
 				}
 				
 				var newText = offering.webSite();
 				if (newText)
 				{
-					var webSiteDiv = panel2Div.append("section");
+					var webSiteDiv = panel2Div.append('section');
 					var labelDiv = webSiteDiv.append("div")
 						.classed('more-info', true);
 					var link = labelDiv
@@ -374,11 +374,11 @@ var PickExperienceOfferingPanel = (function() {
 			return "There are no upcoming opportunities for {0}.".format(this.tag.description());
 		}
 	
-		function SV(sitePanel, user, tag)
+		function SV(sectionView, sitePanel, user, tag)
 		{
 			this.tag = tag;
 			this.user = user;
-			PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+			PanelSearchView.call(this, sectionView, sitePanel, "Search");
 		}
 	
 		return SV;
@@ -454,10 +454,10 @@ var FindExperienceSearchView = (function () {
 		this.startSearchTimeout("");
 	}
 	
-	function FindExperienceSearchView(sitePanel, user, offeringID) {
+	function FindExperienceSearchView(sectionView, sitePanel, user, offeringID) {
 		this.offeringID = offeringID;
 		this.user = user;
-		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+		PanelSearchView.call(this, sectionView, sitePanel, "Search");
 	}
 	
 	return FindExperienceSearchView;

@@ -5749,12 +5749,16 @@ class User(SecureRootInstance, dbmodels.Model):
                                    emails__text=authUser.email, 
                                    emails__deleteTransaction__isnull=True)
     
+    def headData(self, context):
+        data = super(User, self).headData(context)
+        if self.firstName: data['first name'] = self.firstName
+        if self.lastName: data['last name'] = self.lastName
+        return data
+               
     def getData(self, fields, context):
         data = super(User, self).getData(fields, context)
         
         if self.birthday: data['birthday'] = self.birthday
-        if self.firstName: data['first name'] = self.firstName
-        if self.lastName: data['last name'] = self.lastName
         if 'system access' in fields:
             if context.is_administrator:
                 data['system access'] = 'administer'

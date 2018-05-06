@@ -161,15 +161,15 @@ var SearchPathsResultsView = (function () {
 		return cr.Path;
 	}
 	
-	function SearchPathsResultsView(searchPathsPanel)
+	function SearchPathsResultsView(sectionView, searchPathsPanel)
 	{
-		if (!searchPathsPanel)
-			throw new Error("searchPathsPanel is not specified");
+		console.assert(sectionView);
+		console.assert(searchPathsPanel);
 
 		var _this = this;
 
 		this.searchPathsPanel = searchPathsPanel;
-		SearchOptionsView.call(this, searchPathsPanel.resultContainerNode);
+		SearchOptionsView.call(this, sectionView);
 
 		this.inputBox = searchPathsPanel.searchInput;
 	}
@@ -826,12 +826,16 @@ var SearchPathsPanel = (function () {
 		
 		$(mainDiv.node()).on("resize.cr", handleResize);
 		
+		this.sectionView = new crv.SectionView(this)
+			.classed('results-container', true);
+		this.resultContainerNode = this.sectionView.node();
+
 		setTimeout(function()
 			{
 				_this.panelDiv.style('top', "{0}px".format($(window).height()));
 				_this.panelDiv.style('display', 'block');
 
-				_this.searchPathsResultsView = new SearchPathsResultsView(_this);
+				_this.searchPathsResultsView = new SearchPathsResultsView(_this.sectionView, _this);
 				
 				ServiceFlagController.controllersPromise()
 					.done(function(services, controllers)
@@ -857,11 +861,6 @@ var SearchPathsPanel = (function () {
 					_this.checkResultsScrolling();
 					});
 			});
-			
-		this.resultContainerNode = this.mainDiv.append('div')
-			.classed('results-container', true)
-			.node();
-			
 	}
 	
 	return SearchPathsPanel;

@@ -426,7 +426,7 @@
 			sitePanel.appendSearchBar(show_matching_descriptions);
 
 			var panel2Div = sitePanel.appendScrollArea();
-			appendButtons(panel2Div, data, function(d) {
+			sitePanel.appendButtons(data, function(d) {
 					if (prepareClick('click', 'header: ' + d.description()))
 					{
 						try
@@ -510,7 +510,7 @@
 
 							sitePanel.showLeft().then(unblockClick);
 		
-							var items = appendButtons(panel2Div, session.inquiries(), function(inquiry)
+							var items = sitePanel.appendButtons(session.inquiries(), function(inquiry)
 								{
 									if (prepareClick('click', 'add enrollment'))
 									{
@@ -601,7 +601,7 @@
 				
 				if (val.length == 0)
 				{
-					panel2Div.selectAll("section").remove();
+					panel2Div.selectAll('section').remove();
 				}
 				else
 				{
@@ -614,27 +614,17 @@
 						session.promiseData().then(checkCellsSuccess, syncFailFunction);
 					};
 					
-					var pickOfferingSuccess = function(offering, offeringPanelDiv)
-					{
-						pick_session(offering, offeringPanelDiv, pickSessionSuccess);
-					}
-					
-					var pickSiteSuccess = function(site, sitePanelDiv)
-					{
-						pick_offering(site, sitePanelDiv, pickOfferingSuccess);
-					}
-					
 					var selectAllSuccess = function(userObjects)
 					{
 						if (inputBox.value.toLocaleLowerCase() == startVal)
 						{
-							panel2Div.selectAll("section").remove();
-							var buttons = appendButtons(panel2Div, userObjects, 
+							panel2Div.selectAll('section').remove();
+							var buttons = sitePanel.appendButtons(userObjects, 
 								function(user) {
 									pickedUser = user;
 									if (prepareClick('click', 'organization: ' + organization.description()))
 									{
-										pick_site(organization, sitePanel.node(), pickSiteSuccess);
+										pickSessionFromOrganization(organization, pickSessionSuccess);
 									}
 									d3.event.preventDefault();
 								});
@@ -746,27 +736,19 @@
 		
 		function pick_inquiry_site(organization, panelDiv)
 		{
-			function pickSiteSuccess(site, pickSitePanel)
+			function pickSessionSuccess(session, previousPanel)
 			{
-				var pickOfferingSuccess = function(offering, pickOfferingPanel)
+				try
 				{
-					function pickSessionSuccess(session, previousPanel)
-					{
-						try
-						{
-							var panel = new NewInquiryPanel(session, "Record Inquiry");
-							panel.showLeft().then(unblockClick);
-						}
-						catch(err) 
-						{
-							cr.syncFail(err);
-						}
-					}
-					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+					var panel = new NewInquiryPanel(session, "Record Inquiry");
+					panel.showLeft().then(unblockClick);
 				}
-				pick_offering(site, pickSitePanel, pickOfferingSuccess);
+				catch(err) 
+				{
+					cr.syncFail(err);
+				}
 			}
-			pick_site(organization, panelDiv, pickSiteSuccess);
+			pickSessionFromOrganization(organization, pickSessionSuccess);
 		}
 		
 		function pickOfferingFromOrganization(organization, previousPanelNode, offeringSuccess)
@@ -783,7 +765,7 @@
 		{
 			function pickSessionSuccess(session, previousPanel)
 			{
-				session.promiseData()
+				return session.promiseData()
 					.then(function()
 						{
 							try
@@ -809,7 +791,7 @@
 					var controller = new SessionController(session.offering(), session, true);
 					controller.oldInstance(session);
 				    var panel = new SessionPanel(controller, revealPanelLeft);
-				    panel.showLeft().always(unblockClick);
+				    return panel.showLeft();
 				});
 		}
 		{% endblock manageSession %}
@@ -836,7 +818,7 @@
 
 							var panel2Div = sitePanel.appendScrollArea();
 
-							var items = appendButtons(panel2Div, session.enrollments(), 
+							var items = sitePanel.appendButtons(session.enrollments(), 
 								function(enrollment)
 									{
 										if (prepareClick('click', 'add Experience by enrollment'))
