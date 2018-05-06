@@ -134,18 +134,18 @@ div.query-container>div.query-tag-pool {
 	height: calc(100% - 20px);
 }
 
-div.results-container {
+.results-container {
 	width: 100%;
 	overflow-y: scroll;
 	-webkit-overflow-scrolling: touch;
 }
 
-div.results-container li {
+.results-container li {
 	background-color: white;
 	padding: 6px 12px;
 }
 
-div.results-container li div {
+.results-container li div {
 	display: block;
 	color: #444;
 	font-size: smaller;
@@ -156,7 +156,7 @@ div.results-container li div {
 	cursor: pointer;
 }
 
-div.results-container li div:first-child
+.results-container li div:first-child
 {
 	color: #333;
 	text-align: left;

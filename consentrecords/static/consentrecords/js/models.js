@@ -2591,7 +2591,7 @@ cr.Address = (function() {
 		cr.IInstance.prototype.setData.call(this, d);
 		this._city = 'city' in d ? d['city'] : "";
 		this._state = 'state' in d ? d['state'] : "";
-		this._zipCode = 'zipCode' in d ? d['zipCode'] : "";
+		this._zipCode = 'zip code' in d ? d['zip code'] : "";
 		this.setChildren(d, 'streets', cr.Street, this.streets);
     }
     

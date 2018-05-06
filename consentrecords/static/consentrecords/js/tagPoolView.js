@@ -152,6 +152,9 @@ var VerticalReveal = (function() {
 			if (done) done();
 			jNode.css('padding-top', "0px")
 				 .css('padding-bottom', "0px");
+			var r = $.Deferred()
+			r.resolve();
+			return r;
 		}
 		else if (args.newHeight == 'auto')
 		{
@@ -160,14 +163,17 @@ var VerticalReveal = (function() {
 				but I didn't test that. */
 			var outerHeight = jNode.outerHeight(false);
 			jNode.height(oldHeight);
-			jNode.stop().animate({height: outerHeight, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
-			
+			return jNode.stop().animate({height: outerHeight, "padding-top": "0px", "padding-bottom": "0px"}, 
+				{duration: duration, easing: 'swing', step: step, done: done})
+				.promise();
 		}
 		else
 		{
 			var height = jNode.height();
 			jNode.height(oldHeight);
-			jNode.stop().animate({height: height, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
+			return jNode.stop().animate({height: height, "padding-top": "0px", "padding-bottom": "0px"}, 
+				{duration: duration, easing: 'swing', step: step, done: done})
+				.promise();
 		}
 	}
 	
@@ -195,19 +201,23 @@ var VerticalReveal = (function() {
 			if (done) done();
 			jNode.children().css('display', 'none');
 			this._isVisible = false;
+			var r = $.Deferred()
+			r.resolve();
+			return r;
 		}
 		else
 		{
 			var _this = this;
-			jNode.css('padding-top', oldPaddingTop)
+			return jNode.css('padding-top', oldPaddingTop)
 				 .css('padding-bottom', oldPaddingBottom)
 				 .height(oldHeight)
 				 .animate({height: '0px', 'padding-top': '0px', 'padding-bottom': '0px'}, {duration: duration, easing: 'swing', step: step, done: 
-				function() {
-					jNode.children().css('display', 'none');
-					_this._isVisible = false;
-					if (done) done();
-				}});
+						function() {
+							jNode.children().css('display', 'none');
+							_this._isVisible = false;
+							if (done) done();
+						}})
+				.promise();
 		}
 	}
 			

@@ -1,3 +1,33 @@
+var AccessRequestSectionView = (function () {
+	AccessRequestSectionView.prototype = Object.create(UserSectionView.prototype);
+	AccessRequestSectionView.prototype.constructor = AccessRequestSectionView;
+	
+	AccessRequestSectionView.prototype.getUser = function(d)
+	{
+		return d.grantee();
+	}
+	
+	AccessRequestSectionView.prototype.appendDescription = function(div, d)
+	{
+		UserSectionView.prototype.appendDescription.call(this, div, d);
+		
+		var leftDivs = d3.select(div);
+		var itemButtonDivs = leftDivs.append('div');
+		this.sitePanel.appendApplyButtons(itemButtonDivs);
+		this.sitePanel.appendIgnoreButtons(itemButtonDivs);
+	}
+	
+	function AccessRequestSectionView(sitePanel, instance)
+	{
+		UserSectionView.call(this, sitePanel);
+		this.div.datum(instance)
+			.classed('cell edit multiple hover-items', true);
+	}
+	
+	return AccessRequestSectionView;
+	
+})();
+
 var SharingPanel = (function() {
 	SharingPanel.prototype = Object.create(GrantsPanel.prototype);
 	SharingPanel.prototype.constructor = SharingPanel;
@@ -24,7 +54,7 @@ var SharingPanel = (function() {
 					{
 						var accessorLevel = _this.privileges[_this.readPrivilegeIndex];
 					
-						_this.addAccessRecord(accessorLevel, d.grantee().urlPath())
+						_this.addAccessRecord(_this.readSectionView, accessorLevel, d.grantee().urlPath())
 							.then(function()
 								{
 									/* Since this item was deleted as part of adding access,  
@@ -70,12 +100,10 @@ var SharingPanel = (function() {
 		var sections, itemCells, items;
 		var accessRequestSection, accessRequestList;
 		
-		accessRequestSection = panel2Div.append('section')
-			.datum(this.grantor)
-			.classed('cell multiple edit', true);
+		accessRequestSection = new AccessRequestSectionView(this, this.grantor);
 		accessRequestSection.append('label')
 			.text("Access Requests");
-		accessRequestList = crf.appendItemList(accessRequestSection);
+		accessRequestList = accessRequestSection.appendItemList();
 			
 		items = appendItems(accessRequestList, user.userGrantRequests(),
 			function()
@@ -84,18 +112,11 @@ var SharingPanel = (function() {
 			});
 		accessRequestSection.style('display', items.size() ? '' : 'none');
 		
-		var leftDivs = items.append('div')
-			.classed('growable', true);
-			
-		var texts = appendButtonDescriptions(leftDivs)
-			.each(_pushTextChanged);
+		accessRequestSection.appendDescriptions(items);	
+
 		var infoButtonDivs = appendInfoButtons(items, function(d) { return d.grantee(); });
-		
-		var itemButtonDivs = leftDivs.append('div');
-		this.appendApplyButtons(itemButtonDivs);
-		this.appendIgnoreButtons(itemButtonDivs);
-			
-		var docSection = _this.mainDiv.append('section')
+					
+		var docSection = new crv.SectionView(this)
 			.classed('cell documentation', true);
 
 		var docDiv = docSection.append('div');
@@ -115,18 +136,11 @@ var SharingPanel = (function() {
 			}
 		}
 	
-		var key = 0;
-		sections = panel2Div.selectAll('section')
-			.data(this.privileges, function(d) {
-				/* Ensure that this operation appends without replacing any items. */
-				key += 1;
-				return key;
-			  })
-			.enter()
-			.append('section')
-			.classed('cell multiple edit', true);
+		this.readSectionView = new GrantSectionView(this)
+			.datum(this.privileges[0])
+			.classed('cell multiple edit hover-items', true);
 			
-		itemCells = crf.appendItemList(sections)
+		itemCells = this.readSectionView.appendItemList()
 			.classed('deletable-items', true);
 	
 		// Reference the views back to the privileges objects.
@@ -134,15 +148,15 @@ var SharingPanel = (function() {
 		
 		items = appendItems(itemCells, function(d) { return d.accessors });
 		
-		this.appendUserControls(items);
+		this.appendUserControls(this.readSectionView, items, function(d) { return d instanceof cr.UserUserGrant; });
 		
 		/* Add one more button for the add Button item. */
-		sections
-			.append("button").classed('btn row-button add-item site-active-text', true)
-			.on("click", function(d) {
-				_this.addAccessor("Sharing User", d);
+		this.readSectionView
+			.append('button').classed('btn row-button add-item site-active-text', true)
+			.on('click', function(d) {
+				_this.addAccessor(this.readSectionView, "Sharing User", d);
 			})
-			.append("div").text("Add User");
+			.append('div').text("Add User");
 		
 	}
 
@@ -305,24 +319,17 @@ var AdministratorPanel = (function() {
 			}
 		}
 	
-		var docSection = _this.mainDiv.append('section')
+		var docSection = new crv.SectionView(this)
 			.classed('cell documentation', true);
 
 		var docDiv = docSection.append('div');
 		docDiv.text(this.helpText);
 		
-		var key = 0;
-		sections = panel2Div.selectAll('section')
-			.data(this.privileges, function(d) {
-				/* Ensure that this operation appends without replacing any items. */
-				key += 1;
-				return key;
-			  })
-			.enter()
-			.append('section')
+		var sectionView = new crv.SectionView(this)
+			.datum(this.privileges[0])
 			.classed('cell multiple edit', true);
 			
-		itemCells = crf.appendItemList(sections)
+		itemCells = sectionView.appendItemList()
 			.classed('deletable-items', true);
 	
 		// Reference the views back to the privileges objects.
@@ -335,16 +342,16 @@ var AdministratorPanel = (function() {
 								_this.navContainer.centerTitle();
 							});
 		
-		this.appendUserControls(items);
+		this.appendUserControls(sectionView, items, function(d) { return d instanceof cr.UserUserGrant; });
 		
 		this.editButton.style('display', itemCells.selectAll('li').size() ? '' : 'none');
 		this.navContainer.centerTitle();
 		
 		/* Add one more button for the add Button item. */
-		sections
+		sectionView
 			.append('button').classed('btn row-button add-item site-active-text', true)
 			.on('click', function(d) {
-				_this.addAccessor("New Administrator", d);
+				_this.addAccessor(sectionView, "New Administrator", d);
 			})
 			.append('div').text("Add Administrator");
 		
