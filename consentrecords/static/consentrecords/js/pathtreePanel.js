@@ -420,7 +420,7 @@ var PathView = (function() {
 							  
 	PathView.prototype.handleChangedExperience = function(r, fd)
 	{
-		setupOnViewEventHandler(fd.experience, "changed.cr", r, function(eventObject)
+		setupOnViewEventHandler(fd.experience, 'changed.cr', r, function(eventObject)
 		{
 			fd.colorElement(eventObject.data);
 		});
@@ -431,7 +431,7 @@ var PathView = (function() {
 	 */
 	PathView.prototype.setupServiceTriggers = function(r, fd, handler)
 	{
-		setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr", r, handler);
+		setupOnViewEventHandler(fd.experience, 'experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr', r, handler);
 	}
 	
 	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
@@ -652,11 +652,11 @@ var PathView = (function() {
 							d.column = _this.getColumn(d);
 							_this.transitionPositions();
 						});
-					setupOnViewEventHandler($(d), "selectedChanged.cr", this, function(eventObject)
+					setupOnViewEventHandler($(d), 'selectedChanged.cr', this, function(eventObject)
 						{
 							var g = d3.select(eventObject.data);
 							g.classed('selected', d.selected());
-							g.selectAll('tspan').attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
+							g.selectAll('text').attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
 						});
 				});
 					
@@ -677,37 +677,25 @@ var PathView = (function() {
 					_this.handleChangedExperience(this, d);
 					_this.setupColorWatchTriggers(this, d);
 				});
-		var text = g.append('text').classed('flag-label', true);
-		text.append('tspan')
-			.attr('x', this.textDetailLeftMargin)
-			.attr('dy', this.flagLineOneDY)
+		var text = g.append('text').classed('flag-label', true)
 			.attr('fill', function(d) { return d.fontColor(); })
 			.each(function(d)
 				{
-					setupOnViewEventHandler(d.experience, "changed.cr", this, function(eventObject)
+					var f = function(eventObject)
 					{
 						d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
-					});
-					_this.setupServiceTriggers(this, d, function(eventObject)
-						{
-							d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
-						});
+						_this.setupWidths();
+					}
+					setupOnViewEventHandler(d.experience, 'changed.cr', this, f)
+					_this.setupServiceTriggers(this, d, f);
 				});
+		
 		text.append('tspan')
 			.attr('x', this.textDetailLeftMargin)
-			.attr('dy', this.flagLineTwoDY)
-			.attr('fill', function(d) { return d.fontColor(); })
-			.each(function(d)
-				{
-					setupOnViewEventHandler(d.experience, "changed.cr", this, function(eventObject)
-					{
-						d3.select(eventObject.data).attr('fill', d.fontColor());
-					});
-					_this.setupServiceTriggers(this, d, function(eventObject)
-						{
-							d3.select(eventObject.data).attr('fill', d.fontColor());
-						});
-				});
+			.attr('dy', this.flagLineOneDY);
+		text.append('tspan')
+			.attr('x', this.textDetailLeftMargin)
+			.attr('dy', this.flagLineTwoDY);
 		
 		g.each(function() { _this._setFlagText(this); });
 		
