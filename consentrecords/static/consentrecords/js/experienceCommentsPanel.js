@@ -765,7 +765,7 @@ var ExperienceCommentsPanel = (function() {
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
-		var panel2Div = this.appendScrollArea();
+		this.appendScrollArea();
 
 		var backButton = navContainer.appendLeftButton()
 			.classed('chevron-left-container', true)
@@ -884,9 +884,7 @@ var ExperienceCommentsPanel = (function() {
 						{
 							if (prepareClick('click', 'Sharing'))
 							{
-								var experienceController = new ExperienceController(fd.experience.parent(), fd.experience, true);
-								experienceController.oldInstance(fd.experience);
-								var panel = new ExperienceSecurityPanel(experienceController, _this.title, revealPanelUp);
+								var panel = new ExperienceSecurityPanel(fd.experience, _this.title, revealPanelUp);
 								panel.showUp()
 									.then(unblockClick, cr.syncFail);
 							}

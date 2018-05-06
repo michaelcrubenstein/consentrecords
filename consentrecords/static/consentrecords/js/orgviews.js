@@ -142,11 +142,11 @@ var ChildSearchView = (function () {
 			.classed('deletable-items', true);
 	}
 	
-	function ChildSearchView(sitePanel, parent, placeholder) {
+	function ChildSearchView(sectionView, sitePanel, parent, placeholder) {
 		placeholder = placeholder !== undefined ? placeholder : crv.buttonTexts.search;
 		
 		this.parent = parent;
-		PanelSearchView.call(this, sitePanel, placeholder, GetDataChunker);
+		PanelSearchView.call(this, sectionView, sitePanel, placeholder);
 	}
 	
 	return ChildSearchView;
@@ -157,6 +157,8 @@ var ChildrenPanel = (function () {
 	ChildrenPanel.prototype.constructor = ChildrenPanel;
 
 	ChildrenPanel.prototype.parent = null;
+	
+	ChildrenPanel.prototype.sectionViewType = crv.SectionView;
 	
 	ChildrenPanel.prototype.appendHeader = function(objectData, header)
 	{
@@ -203,7 +205,9 @@ var ChildrenPanel = (function () {
 				});
 		addButton.text("+");
 		
-		this.searchView = new (this.searchViewType)(this, this.parent);
+		this.appendScrollArea();
+		this.sectionView = new (this.sectionViewType)(this);
+		this.searchView = new (this.searchViewType)(this.sectionView, this, this.parent);
 		$(this.node()).one('revealing.cr', function() {
 				if (_this.parent.id())
 				{
@@ -321,11 +325,11 @@ var PickStatePanel = (function () {
 		return d.code;
 	}
 
-	PickStatePanel.prototype.datumDescription = function(d)
+	PickStatePanel.prototype.appendSectionView = function()
 	{
-		return d.name;
+		return new PickNamedItemSectionView(this);
 	}
-	
+
 	PickStatePanel.prototype.getDescription = function(storedValue)
 	{
 		return storedValue || crv.buttonTexts.nullString;
@@ -364,12 +368,9 @@ var AddressPanel = (function () {
 		this.createRoot(crv.buttonTexts.address, onShow);
 		
 		/* Fill in the controls for editing */
-		this.namesSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit multiple', true);
-		this.namesSection.append('label')
-			.text(crv.buttonTexts.streets);
-		new OrderedTextEditor(this.namesSection, crv.buttonTexts.streets, 
+		this.namesSection = new EditItemsSectionView(this, controller.newInstance());
+		this.namesSection.appendLabel(crv.buttonTexts.streets);
+		new OrderedTextEditor(this.namesSection, crv.buttonTexts.street, 
 									 controller.newInstance(), controller.newInstance().streets(),
 									 cr.Street, 'text');
 
@@ -381,6 +382,23 @@ var AddressPanel = (function () {
 	}
 	
 	return AddressPanel;
+})();
+
+var PickNamedItemSectionView = (function() {
+	PickNamedItemSectionView.prototype = Object.create(PickFromListSectionView.prototype);
+	PickNamedItemSectionView.prototype.constructor = PickNamedItemSectionView;
+	
+	PickNamedItemSectionView.prototype.datumDescription = function(d)
+	{
+		return d.name;
+	}
+	
+	function PickNamedItemSectionView(sitePanel)
+	{
+		PickFromListSectionView.call(this, sitePanel);
+	}
+	
+	return PickNamedItemSectionView;
 })();
 
 var PickCanRegisterPanel = (function () {
@@ -406,12 +424,12 @@ var PickCanRegisterPanel = (function () {
 	{
 		return d.code;
 	}
-
-	PickCanRegisterPanel.prototype.datumDescription = function(d)
-	{
-		return d.name;
-	}
 	
+	PickFromListPanel.prototype.appendSectionView = function()
+	{
+		return new PickNamedItemSectionView(this);
+	}
+
 	PickCanRegisterPanel.prototype.createRoot = function(user, initialValue)
 	{
 		this.initialValue = initialValue;
@@ -480,8 +498,8 @@ var EnrollmentSearchView = (function () {
 			function(items) { return items.insert('div', 'button:last-of-type'); });
 	}
 	
-	function EnrollmentSearchView(sitePanel, parent) {
-		ChildSearchView.call(this, sitePanel, parent);
+	function EnrollmentSearchView(sectionView, sitePanel, parent) {
+		ChildSearchView.call(this, sectionView, sitePanel, parent);
 	}
 	
 	return EnrollmentSearchView;
@@ -558,31 +576,10 @@ var EngagementSearchView = (function () {
 				return d.user();
 			}, 
 			function(items) { return items.insert('div', 'button:last-of-type'); });
-
-		var _this = this;
-		
-		items.each(function(d)
-			{
-				var leftText = d3.select(this).select('div');
-				
-				var user = d.user();
-				if (user)
-				{
-					leftText.classed('detail', true).text('');
-					var userName = user.fullName();
-					var userDescription = user.description();
-				
-					var containerDiv = leftText.append('div');
-					if (userName) containerDiv.append('div').text(userName);
-					if (userDescription) containerDiv.append('div').text(userDescription);
-				}
-				else
-					throw new Error("Engagement has no user.");
-			});
 	}
 	
-	function EngagementSearchView(sitePanel, parent) {
-		ChildSearchView.call(this, sitePanel, parent);
+	function EngagementSearchView(sectionView, sitePanel, parent) {
+		ChildSearchView.call(this, sectionView, sitePanel, parent);
 	}
 	
 	return EngagementSearchView;
@@ -593,6 +590,7 @@ var EngagementsPanel = (function () {
 	EngagementsPanel.prototype.constructor = EngagementsPanel;
 
 	EngagementsPanel.prototype.addPanelTitle = "Add Engagement";
+	EngagementsPanel.prototype.sectionViewType = UserSectionView;
 	EngagementsPanel.prototype.searchViewType = EngagementSearchView;
 	
 	EngagementsPanel.prototype.savedItems = function()
@@ -650,11 +648,11 @@ var PickWeekdayPanel = (function () {
 		return d.code;
 	}
 
-	PickWeekdayPanel.prototype.datumDescription = function(d)
+	PickWeekdayPanel.prototype.appendSectionView = function()
 	{
-		return d.name;
+		return new PickNamedItemSectionView(this);
 	}
-	
+
 	PickWeekdayPanel.prototype.createRoot = function(user, initialValue)
 	{
 		this.initialValue = initialValue;
@@ -733,8 +731,8 @@ var PeriodSearchView = (function () {
 		return PeriodPanel;
 	}
 	
-	function PeriodSearchView(sitePanel, parent) {
-		ChildSearchView.call(this, sitePanel, parent, null);
+	function PeriodSearchView(sectionView, sitePanel, parent) {
+		ChildSearchView.call(this, sectionView, sitePanel, parent, null);
 	}
 	
 	return PeriodSearchView;
@@ -759,6 +757,44 @@ var PeriodsPanel = (function () {
 	}
 	
 	return PeriodsPanel;
+})();
+
+var EditUserSectionView = (function () {
+	EditUserSectionView.prototype = Object.create(EditItemSectionView.prototype);
+	EditUserSectionView.prototype.constructor = EditUserSectionView;
+	
+	EditUserSectionView.prototype.appendDescription = function(div, d)
+	{
+		var descriptions = d3.select(div);
+		descriptions.selectAll('div').remove();
+		descriptions.text('');
+		
+		var user = d.user();
+		if (user)
+		{
+			var userName = user.fullName();
+			var userDescription = user.description();
+			descriptions.classed('detail', userName && userDescription);
+		
+			var containerDiv = descriptions.append('div');
+			if (userName) containerDiv.append('div').text(userName);
+			if (userDescription) containerDiv.append('div').text(userDescription);
+		}
+		else
+		{
+			descriptions.classed('detail', false);
+			descriptions.text(crv.buttonTexts.nullString);
+		}
+	}
+	
+	function EditUserSectionView(sitePanel, instance)
+	{
+		EditItemSectionView.call(this, sitePanel, instance);
+	
+		var _this = this;
+	}
+	
+	return EditUserSectionView;
 })();
 
 var EngagementPanel = (function () {
@@ -800,10 +836,11 @@ var EngagementPanel = (function () {
 
 		this.createRoot(crv.buttonTexts.engagement, onShow);
 		
+		var user = controller.newInstance().user();
+
 		/* Fill in the controls for editing */
-		this.userSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit unique first', true)
+		this.userSection = new EditUserSectionView(this, controller.newInstance())
+			.classed('first', true)
 			.on('click', 
 				function(cell) {
 					if (prepareClick('click', 'pick user'))
@@ -815,8 +852,8 @@ var EngagementPanel = (function () {
 						
 							$(panel.node()).on('itemPicked.cr', function(eventObject, newUser)
 								{
-									controller.newInstance().user(newUser);
-									_this.userSection.selectAll('li>div').text(newUser.description());
+									controller.newInstance().user(newUser)
+										.triggerChanged();
 								});
 						}
 						catch(err)
@@ -826,12 +863,8 @@ var EngagementPanel = (function () {
 					}
 			});
 
-		this.userSection.append('label')
-			.text(crv.buttonTexts.user);
-		var user = controller.newInstance().user();
-		var items = this.appendEnumerationEditor(this.userSection, 
-			user ? controller.newInstance().user().description() : crv.buttonTexts.nullString);
-		this.userSection.datum(user);
+		this.userSection.appendLabel(crv.buttonTexts.user);
+		var items = this.appendEnumerationEditor(this.userSection, controller.newInstance());
 		crf.appendRightChevrons(items);	
 		
 		var minDate = new Date();
@@ -906,9 +939,9 @@ var PickUserSearchView = (function () {
 		return i == 0;
 	}
 	
-	function PickUserSearchView(sitePanel, parent) {
+	function PickUserSearchView(sectionView, sitePanel, parent) {
 		this.parent = parent;
-		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+		PanelSearchView.call(this, sectionView, sitePanel, "Search");
 	}
 	
 	return PickUserSearchView;
@@ -981,9 +1014,9 @@ var NewInquirySearchView = (function()
 		d3.event.stopPropagation();
 	}
 	
-	function NewInquirySearchView(sitePanel, parent)
+	function NewInquirySearchView(sectionView, sitePanel, parent)
 	{
-		PickUserSearchView.call(this, sitePanel, parent);
+		PickUserSearchView.call(this, sectionView, sitePanel, parent);
 	}
 	
 	return NewInquirySearchView;
@@ -1009,7 +1042,9 @@ var NewInquiryPanel = (function()
 
 		navContainer.appendTitle(title);
 
-		this.searchView = new NewInquirySearchView(this, parent);
+		this.appendScrollArea();
+		this.sectionView = new crv.SectionView(this);
+		this.searchView = new NewInquirySearchView(this.sectionView, this, parent);
 		$(this.node()).one('revealing.cr', function() { 
 				_this.searchView.textCleared(); 
 				_this.searchView.inputBox.focus();
@@ -1087,9 +1122,9 @@ var NewEnrollmentSearchView = (function()
 		d3.event.stopPropagation();
 	}
 	
-	function NewEnrollmentSearchView(sitePanel, parent)
+	function NewEnrollmentSearchView(sectionView, sitePanel, parent)
 	{
-		PickUserSearchView.call(this, sitePanel, parent);
+		PickUserSearchView.call(this, sectionView, sitePanel, parent);
 	}
 	
 	return NewEnrollmentSearchView;
@@ -1115,7 +1150,9 @@ var NewEnrollmentPanel = (function()
 
 		navContainer.appendTitle(title);
 
-		this.searchView = new NewEnrollmentSearchView(this, parent);
+		this.appendScrollArea();
+		this.sectionView = new crv.SectionView(this);
+		this.searchView = new NewEnrollmentSearchView(this.sectionView, this, parent);
 		$(this.node()).one('revealing.cr', function() { 
 				_this.searchView.textCleared(); 
 				_this.searchView.inputBox.focus();
@@ -1174,9 +1211,9 @@ var PickEngagementUserSearchView = (function()
 		d3.event.stopPropagation();
 	}
 	
-	function PickEngagementUserSearchView(sitePanel, parent, engagement)
+	function PickEngagementUserSearchView(sectionView, sitePanel, parent, engagement)
 	{
-		PickUserSearchView.call(this, sitePanel, parent);
+		PickUserSearchView.call(this, sectionView, sitePanel, parent);
 		this.engagement = engagement;
 	}
 	
@@ -1223,7 +1260,9 @@ var PickEngagementUserPanel = (function()
 			});
 		newUserButton.append('span').text("New User");
 
-		this.searchView = new PickEngagementUserSearchView(this, parent, engagement);
+		this.appendScrollArea();
+		this.sectionView = new UserSectionView(this);
+		this.searchView = new PickEngagementUserSearchView(this.sectionView, this, parent, engagement);
 		$(this.node()).one('revealing.cr', function() { 
 				_this.searchView.textCleared(); 
 				_this.searchView.inputBox.focus();
@@ -1285,15 +1324,6 @@ var RootPanelSearchView = (function () {
 				setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
 					{
 						_this.getDataChunker.onItemDeleted();
-						$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
-						{
-							$(this).remove();
-						});
-					});
-				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
-					{
-						d3.select(eventObject.data).selectAll('div.description-text')
-							.text(d.description());
 					});
 			});
 	}
@@ -1341,8 +1371,8 @@ var RootPanelSearchView = (function () {
 			.classed('deletable-items', true);
 	}
 	
-	function RootPanelSearchView(sitePanel) {
-		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	function RootPanelSearchView(sectionView, sitePanel) {
+		PanelSearchView.call(this, sectionView, sitePanel, "Search");
 	}
 	
 	return RootPanelSearchView;
@@ -1402,7 +1432,9 @@ var RootItemsPanel = (function () {
 		var _this = this;
 		if (this.searchViewType)
 		{
-			this.searchView = new (this.searchViewType)(this);
+			this.appendScrollArea();
+			this.sectionView = new crv.SectionView(this);
+			this.searchView = new (this.searchViewType)(this.sectionView, this);
 			$(this.node()).one('revealing.cr', function() { 
 					_this.searchView.search(""); 
 					_this.searchView.inputBox.focus();
@@ -1421,8 +1453,7 @@ var EnumerationSectionEditor = (function() {
     	var _this = this;
 		this.textContainer = null;
 		
-		this.section = sitePanel.mainDiv.append('section')
-			.classed('cell edit unique', true)
+		this.section = new EditItemSectionView(sitePanel, container)
 			.datum(container)
 			.on('click', 
 				function() {
@@ -1449,8 +1480,7 @@ var EnumerationSectionEditor = (function() {
 					}
 			});
 		
-		this.section.append('label')
-			.text(label);
+		this.section.appendLabel(label);
 		
 		var oldValue = valueFunction.call(container);	
 		var oldDescription = oldValue ? 
@@ -1521,8 +1551,8 @@ var GroupChildSearchView = (function () {
 		return GroupPanel;
 	}
 	
-	function GroupChildSearchView(groupPanel, parent) {
-		ChildSearchView.call(this, groupPanel, parent);
+	function GroupChildSearchView(sectionView, groupPanel, parent) {
+		ChildSearchView.call(this, sectionView, groupPanel, parent);
 	}
 	
 	return GroupChildSearchView;
@@ -1611,9 +1641,9 @@ var NewGroupMemberSearchView = (function()
 		d3.event.stopPropagation();
 	}
 	
-	function NewGroupMemberSearchView(sitePanel, parent)
+	function NewGroupMemberSearchView(sectionView, sitePanel, parent)
 	{
-		PickUserSearchView.call(this, sitePanel, parent);
+		PickUserSearchView.call(this, sectionView, sitePanel, parent);
 	}
 	
 	return NewGroupMemberSearchView;
@@ -1639,7 +1669,9 @@ var NewGroupMemberPanel = (function()
 
 		navContainer.appendTitle(title);
 
-		this.searchView = new NewGroupMemberSearchView(this, parent);
+		this.appendScrollArea();
+		this.sectionView = new UserSectionView(this);
+		this.searchView = new NewGroupMemberSearchView(this.sectionView, this, parent);
 		$(this.node()).one('revealing.cr', function() { 
 				_this.searchView.textCleared(); 
 				_this.searchView.inputBox.focus();
@@ -1694,8 +1726,8 @@ var GroupMemberSearchView = (function () {
 			function(items) { return items.insert('div', 'button:last-of-type'); });
 	}
 	
-	function GroupMemberSearchView(sitePanel, parent) {
-		ChildSearchView.call(this, sitePanel, parent);
+	function GroupMemberSearchView(sectionView, sitePanel, parent) {
+		ChildSearchView.call(this, sectionView, sitePanel, parent);
 	}
 	
 	return GroupMemberSearchView;
@@ -1707,6 +1739,7 @@ var GroupMembersPanel = (function () {
 
 	GroupMembersPanel.prototype.addPanelTitle = "Add Group Member";
 	GroupMembersPanel.prototype.searchViewType = GroupMemberSearchView;
+	GroupMembersPanel.prototype.sectionViewType = UserSectionView;
 	
 	GroupMembersPanel.prototype.savedItems = function()
 	{
@@ -1782,8 +1815,8 @@ var InquirySearchView = (function () {
 			function(items) { return items.insert('div', 'button:last-of-type'); });
 	}
 	
-	function InquirySearchView(sitePanel, parent) {
-		ChildSearchView.call(this, sitePanel, parent);
+	function InquirySearchView(sectionView, sitePanel, parent) {
+		ChildSearchView.call(this, sectionView, sitePanel, parent);
 	}
 	
 	return InquirySearchView;
@@ -1935,8 +1968,8 @@ var OfferingChildSearchView = (function () {
 		return OfferingPanel;
 	}
 	
-	function OfferingChildSearchView(offeringPanel, parent) {
-		ChildSearchView.call(this, offeringPanel, parent);
+	function OfferingChildSearchView(sectionView, offeringPanel, parent) {
+		ChildSearchView.call(this, sectionView, offeringPanel, parent);
 	}
 	
 	return OfferingChildSearchView;
@@ -2011,9 +2044,8 @@ var OrganizationPanel = (function () {
 				 
 		var publicAccessTextContainer = null;
 		
-		this.publicAccessSection = this.mainDiv.append('section')
-			.classed('cell edit unique first', true)
-			.datum(controller.newInstance())
+		this.publicAccessSection = new EditItemSectionView(this, controller.newInstance())
+			.classed('first', true)
 			.on('click', 
 				function(d) {
 					if (prepareClick('click', 'pick ' + _this.publicAccessLabel))
@@ -2037,8 +2069,7 @@ var OrganizationPanel = (function () {
 					}
 			});
 	
-		this.publicAccessSection.append('label')
-			.text(_this.publicAccessLabel);
+		this.publicAccessSection.appendLabel(_this.publicAccessLabel);
 			
 		var items = this.appendEnumerationEditor(this.publicAccessSection, this.publicAccessDescription());
 			
@@ -2071,14 +2102,14 @@ var PickPublicAccessPanel = (function () {
 	
 	PickPublicAccessPanel.prototype.data = function()
 	{
-		return [{description: OrganizationPanel.prototype.readLabel},
-				{description: OrganizationPanel.prototype.hiddenLabel}
+		return [{name: OrganizationPanel.prototype.readLabel},
+				{name: OrganizationPanel.prototype.hiddenLabel}
 			   ];
 	}
 	
-	PickPublicAccessPanel.prototype.datumDescription = function(d)
+	PickPublicAccessPanel.prototype.appendSectionView = function()
 	{
-		return d.description;
+		return new PickNamedItemSectionView(this);
 	}
 	
 	PickPublicAccessPanel.prototype.createRoot = function(organization, oldDescription)
@@ -2181,10 +2212,10 @@ var PickInquiryAccessGroupSearchView = (function () {
 		}
 	}
 	
-	function PickInquiryAccessGroupSearchView(sitePanel, organization, oldDescription) {
+	function PickInquiryAccessGroupSearchView(sectionView, sitePanel, organization, oldDescription) {
 		this.organization = organization;
 		this.oldDescription = oldDescription;
-		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+		PanelSearchView.call(this, sectionView, sitePanel, "Search");
 	}
 	
 	return PickInquiryAccessGroupSearchView;
@@ -2208,7 +2239,9 @@ var PickInquiryAccessGroupPanel = (function()
 
 		this.navContainer.appendTitle(title);
 
-		this.searchView = new PickInquiryAccessGroupSearchView(this, organization, oldDescription);
+		this.appendScrollArea();
+		this.sectionView = new crv.SectionView(this);
+		this.searchView = new PickInquiryAccessGroupSearchView(this.sectionView, this, organization, oldDescription);
 		$(this.node()).one('revealing.cr', function() {
 				_this.searchView.inputText(oldDescription);
 				_this.searchView.inputBox.focus();
@@ -2378,8 +2411,8 @@ var OrganizationSearchView = (function () {
 		return OrganizationPanel;
 	}
 	
-	function OrganizationSearchView(sitePanel) {
-		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	function OrganizationSearchView(sectionView, sitePanel) {
+		RootPanelSearchView.call(this, sectionView, sitePanel);
 	}
 	
 	return OrganizationSearchView;
@@ -2438,11 +2471,11 @@ var PickStagePanel = (function () {
 		return d.code;
 	}
 
-	PickStagePanel.prototype.datumDescription = function(d)
+	PickStagePanel.prototype.appendSectionView = function()
 	{
-		return d.name;
+		return new PickNamedItemSectionView(this);
 	}
-	
+
 	PickStagePanel.prototype.getDescription = function(storedValue)
 	{
 		if (storedValue)
@@ -2633,8 +2666,8 @@ var ServiceSearchView = (function () {
 		return ServicePanel;
 	}
 	
-	function ServiceSearchView(sitePanel) {
-		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	function ServiceSearchView(sectionView, sitePanel) {
+		RootPanelSearchView.call(this, sectionView, sitePanel);
 	}
 	
 	return ServiceSearchView;
@@ -2760,8 +2793,8 @@ var SessionSearchView = (function () {
 		return SessionPanel;
 	}
 	
-	function SessionSearchView(sessionPanel, parent) {
-		ChildSearchView.call(this, sessionPanel, parent);
+	function SessionSearchView(sectionView, sessionPanel, parent) {
+		ChildSearchView.call(this, sectionView, sessionPanel, parent);
 	}
 	
 	return SessionSearchView;
@@ -2838,18 +2871,10 @@ var DescendentSearchView = (function () {
 		var _this = this;
 		items.each(function(d)
 			{
+				/* Reset the data chunker if an item is deleted. */
 				setupOnViewEventHandler(d, 'deleted.cr', this, function(eventObject)
 					{
 						_this.getDataChunker.onItemDeleted();
-						$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
-						{
-							$(this).remove();
-						});
-					});
-				setupOnViewEventHandler(d, 'changed.cr', this, function(eventObject)
-					{
-						d3.select(eventObject.data).selectAll('div.description-text')
-							.text(d.description());
 					});
 			});
 	}
@@ -2866,7 +2891,7 @@ var DescendentSearchView = (function () {
 				d.promiseData()
 					.then(function()
 						{
-							_this.showDescendent(d).always(unblockClick);
+							_this.showSession(d).always(unblockClick);
 						},
 						cr.syncFail);
 			}
@@ -2883,14 +2908,44 @@ var DescendentSearchView = (function () {
 			.classed('deletable-items', true);
 	}
 	
-	function DescendentSearchView(sitePanel, parent, placeholder) {
+	function DescendentSearchView(sectionView, sitePanel, parent, placeholder) {
 		placeholder = placeholder !== undefined ? placeholder : crv.buttonTexts.search;
 		
 		this.parent = parent;
-		PanelSearchView.call(this, sitePanel, placeholder, GetDataChunker);
+		PanelSearchView.call(this, sectionView, sitePanel, placeholder);
 	}
 	
 	return DescendentSearchView;
+})();
+
+var SessionFromOrganizationSectionView = (function() {
+	SessionFromOrganizationSectionView.prototype = Object.create(crv.SectionView.prototype);
+	SessionFromOrganizationSectionView.prototype.constructor = SessionFromOrganizationSectionView;
+	
+	SessionFromOrganizationSectionView.prototype.appendDescription = function(div, d)
+	{
+		var descriptions = d3.select(div);
+		descriptions.classed('unselectable', true);
+		
+		descriptions.append('div')
+			.classed('title', true)
+			.text(function(d) { return d.offering().description(); });
+		descriptions.append('div')
+			.text(function(d) { return d.site().description() != d.organization().description() ?
+									   d.site().description() :
+									   ""; });
+		descriptions.append('div')
+			.text(function(d) { return d.offering().description() != d.description() ?
+									   d.description() :
+									   ""; });
+	}
+	
+	function SessionFromOrganizationSectionView(sitePanel)
+	{
+		crv.SectionView.call(this, sitePanel);
+	}
+	
+	return SessionFromOrganizationSectionView;
 })();
 
 var SessionFromOrganizationSearchView = (function () {
@@ -2913,23 +2968,6 @@ var SessionFromOrganizationSearchView = (function () {
 	SessionFromOrganizationSearchView.prototype.childPanelType = function()
 	{
 		return SessionPanel;
-	}
-	
-	SessionFromOrganizationSearchView.prototype.fillItems = function(items)
-	{
-		var descriptions = items.append('div')
-			.classed('description-text growable unselectable', true);
-		descriptions.append('div')
-			.classed('title', true)
-			.text(function(d) { return d.offering().description(); });
-		descriptions.append('div')
-			.text(function(d) { return d.site().description() != d.organization().description() ?
-									   d.site().description() :
-									   ""; });
-		descriptions.append('div')
-			.text(function(d) { return d.offering().description() != d.description() ?
-									   d.description() :
-									   ""; });
 	}
 	
 	SessionFromOrganizationSearchView.prototype.isButtonVisible = function(button, d, compareText)
@@ -2971,14 +3009,9 @@ var SessionFromOrganizationSearchView = (function () {
 			
 		return false;
 	}
-	
-	SessionFromOrganizationSearchView.prototype.showDescendent = function(d)
-	{
-		return this.showSession(d)
-	}
-	
-	function SessionFromOrganizationSearchView(panel, parent) {
-		ChildSearchView.call(this, panel, parent);
+		
+	function SessionFromOrganizationSearchView(sectionView, panel, parent) {
+		DescendentSearchView.call(this, sectionView, panel, parent);
 		this.showSession = panel.showSession;
 	}
 	
@@ -3007,7 +3040,10 @@ var DescendentsPanel = (function () {
 
 		this.navContainer.appendTitle(header);
 
-		this.searchView = new (this.searchViewType)(this, this.parent);
+		this.appendScrollArea();
+		this.sectionView = new (this.sectionViewType)(this);
+		this.searchView = new (this.searchViewType)(this.sectionView, this, this.parent);
+		
 		$(this.node()).one('revealing.cr', function() {
 				if (_this.parent.id())
 				{
@@ -3032,6 +3068,7 @@ var SessionsFromOrganizationPanel = (function () {
 	SessionsFromOrganizationPanel.prototype = Object.create(DescendentsPanel.prototype);
 	SessionsFromOrganizationPanel.prototype.constructor = SessionsFromOrganizationPanel;
 
+	SessionsFromOrganizationPanel.prototype.sectionViewType = SessionFromOrganizationSectionView;
 	SessionsFromOrganizationPanel.prototype.searchViewType = SessionFromOrganizationSearchView;
 	
 	SessionsFromOrganizationPanel.prototype.savedItems = function()
@@ -3077,9 +3114,8 @@ var SitePanel = (function () {
 		this.webSiteSection = this.appendTextSection(controller.newInstance(), cr.Site.prototype.webSite, crv.buttonTexts.webSite, 'text');
 		this.webSiteSection.classed('first', true);
 				 
-		this.addressSection = this.mainDiv.append('section')
-			.datum(controller.newInstance())
-			.classed('cell edit unique first', true)
+		this.addressSection = new EditItemSectionView(this, controller.newInstance())
+			.classed('first', true)
 			.on('click', function(d) {
 				if (prepareClick('click', 'Address'))
 				{
@@ -3100,8 +3136,7 @@ var SitePanel = (function () {
 					catch(err) { cr.syncFail(err); }
 				}
 			});
-		this.addressSection.append('label')
-			.text(crv.buttonTexts.address);
+		this.addressSection.appendLabel(crv.buttonTexts.address);
 		this.appendEnumerationEditor(this.addressSection, controller.newInstance().address().description() || crv.buttonTexts.nullString);
 		crf.appendRightChevrons(this.addressSection.selectAll('li'));	
 
@@ -3136,8 +3171,8 @@ var SiteChildSearchView = (function () {
 		return SitePanel;
 	}
 	
-	function SiteChildSearchView(sitePanel, parent) {
-		ChildSearchView.call(this, sitePanel, parent);
+	function SiteChildSearchView(sectionView, sitePanel, parent) {
+		ChildSearchView.call(this, sectionView, sitePanel, parent);
 	}
 	
 	return SiteChildSearchView;
@@ -3232,9 +3267,8 @@ var UserPanel = (function () {
 		
 		var publicAccessTextContainer = null;
 		
-		this.publicAccessSection = this.mainDiv.append('section')
-			.classed('cell edit unique first', true)
-			.datum(controller.newInstance())
+		this.publicAccessSection = new EditItemSectionView(this, controller.newInstance())
+			.classed('first', true)
 			.on('click', 
 				function(d) {
 					if (prepareClick('click', crv.buttonTexts.publicAccess))
@@ -3258,8 +3292,7 @@ var UserPanel = (function () {
 					}
 			});
 	
-		this.publicAccessSection.append('label')
-			.text(crv.buttonTexts.publicAccess);
+		this.publicAccessSection.appendLabel(crv.buttonTexts.publicAccess);
 			
 		var items = this.appendEnumerationEditor(this.publicAccessSection, this.publicAccessDescription());
 			
@@ -3488,8 +3521,8 @@ var UserSearchView = (function () {
 			function(items) { return items.insert('div', 'button:last-of-type'); });
 	}
 	
-	function UserSearchView(sitePanel) {
-		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	function UserSearchView(sectionView, sitePanel) {
+		RootPanelSearchView.call(this, sectionView, sitePanel);
 	}
 	
 	return UserSearchView;
@@ -3560,8 +3593,8 @@ var CommentPromptSearchView = (function () {
 		return CommentPromptPanel;
 	}
 	
-	function CommentPromptSearchView(sitePanel) {
-		RootPanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
+	function CommentPromptSearchView(sectionView, sitePanel) {
+		RootPanelSearchView.call(this, sectionView, sitePanel);
 	}
 	
 	return CommentPromptSearchView;
@@ -3582,348 +3615,5 @@ var CommentPromptsPanel = (function () {
 	
 	return CommentPromptsPanel;
 	
-})();
-
-var LinkSearchView = (function () {
-	LinkSearchView.prototype = Object.create(PanelSearchView.prototype);
-	LinkSearchView.prototype.constructor = LinkSearchView;
-
-	LinkSearchView.prototype.increment = function() { return 20; }
-
-	LinkSearchView.prototype.fields = function() { return []; }
-
-	LinkSearchView.prototype.isButtonVisible = function(button, d, compareText)
-	{
-		if (compareText.length === 0)
-			return true;
-		
-		if (!d)	/* The first item */
-			return true;
-		
-		var i = d.description().toLocaleLowerCase().indexOf(compareText);
-		return i == 0;
-	}
-
-	LinkSearchView.prototype.textCleared = function()
-	{
-		PanelSearchView.prototype.textCleared.call(this);
-		this.startSearchTimeout("");
-	}
-
-	LinkSearchView.prototype.appendButtonContainers = function(foundObjects)
-	{
-		var _this = this;
-		if (this.buttons().size() == 0)
-		{
-			var items = this.getDataChunker.appendButtonContainers([null]);
-			items.on('click', function(d, i) {
-				_this.onClickButton(null, i, this);
-			})
-			items.append('div')
-				.classed('description-text growable', true)
-				.text(crv.buttonTexts.nullString);
-		}
-		var items = SearchOptionsView.prototype.appendButtonContainers.call(this, foundObjects);
-		items.filter(function(d, i)
-			{
-				return d.description() == _this.oldDescription;
-			})
-			.insert('span', ':first-child')
-				.classed('checked', true)
-				.text(crv.buttonTexts.checkmark);
-		return items;
-	}
-
-	/* Overrides SearchView.prototype.onClickButton */
-	LinkSearchView.prototype.onClickButton = function(d, i, button) {
-		var _this = this;
-	
-		if (prepareClick('click', d ? d.description() : "Picked (None)"))
-		{
-			showClickFeedback(button);
-			$(_this.sitePanel.node()).trigger('itemPicked.cr', d);
-			_this.sitePanel.hide();
-		}
-	}
-
-	function LinkSearchView(sitePanel, oldDescription) {
-		this.oldDescription = oldDescription;
-		PanelSearchView.call(this, sitePanel, "Search", GetDataChunker);
-	}
-
-	return LinkSearchView;
-})();
-
-var PickOrganizationPanel = (function()
-{
-	PickOrganizationPanel.prototype = Object.create(crv.SitePanel.prototype);
-	PickOrganizationPanel.prototype.constructor = PickOrganizationPanel;
-
-	PickOrganizationPanel.prototype.createRoot = function(organization, oldDescription)
-	{
-		var _this = this;
-		crv.SitePanel.prototype.createRoot.call(this, null, crv.buttonTexts.pickOrganization, 'list', revealPanelLeft);
-		this.navContainer = this.appendNavContainer();
-
-		this.appendBackButton();
-
-		this.navContainer.appendTitle(crv.buttonTexts.pickOrganization);
-
-		this.searchView = new PickOrganizationPanel.SV(this, organization, oldDescription);
-		$(this.node()).one('revealing.cr', function() {
-				_this.searchView.inputText(oldDescription);
-				_this.searchView.inputBox.focus();
-			});
-		return this;
-	}
-	function PickOrganizationPanel()
-	{
-		crv.SitePanel.call(this);
-	}
-	
-	PickOrganizationPanel.SV = (function () {
-		SV.prototype = Object.create(LinkSearchView.prototype);
-		SV.prototype.constructor = SV;
-
-		/* Overrides SearchView.searchPath */
-		SV.prototype.searchPath = function(val)
-		{
-			var s = "organization";
-			if (val.length == 0)
-				return s;
-			else
-			{
-				return s + '[name>text^="' + encodeURIComponent(val) + '"]';
-			}
-		}
-	
-		SV.prototype.resultType = function() { return cr.Organization; }
-	
-		function SV(sitePanel, oldDescription) {
-			LinkSearchView.call(this, sitePanel, oldDescription);
-		}
-	
-		return SV;
-	})();
-
-	return PickOrganizationPanel;
-})();
-
-var PickSitePanel = (function()
-{
-	PickSitePanel.prototype = Object.create(crv.SitePanel.prototype);
-	PickSitePanel.prototype.constructor = PickSitePanel;
-
-	PickSitePanel.prototype.createRoot = function(site, oldDescription)
-	{
-		var _this = this;
-		crv.SitePanel.prototype.createRoot.call(this, null, crv.buttonTexts.pickSite, 'list', revealPanelLeft);
-		this.navContainer = this.appendNavContainer();
-
-		this.appendBackButton();
-
-		this.navContainer.appendTitle(crv.buttonTexts.pickSite);
-
-		this.searchView = new PickSitePanel.SV(this, site, oldDescription);
-		$(this.node()).one('revealing.cr', function() {
-				_this.searchView.inputText(oldDescription);
-				_this.searchView.inputBox.focus();
-			});
-		return this;
-	}
-	function PickSitePanel()
-	{
-		crv.SitePanel.call(this);
-	}
-	
-	PickSitePanel.SV = (function () {
-		SV.prototype = Object.create(LinkSearchView.prototype);
-		SV.prototype.constructor = SV;
-
-		/* Overrides SearchView.searchPath */
-		SV.prototype.searchPath = function(val)
-		{
-			var s = "site";
-			if (val.length == 0)
-				return s;
-			else
-			{
-				return s + '[name>text^="' + encodeURIComponent(val) + '"]';
-			}
-		}
-	
-		SV.prototype.resultType = function() { return cr.Site; }
-	
-		function SV(sitePanel, oldDescription) {
-			LinkSearchView.call(this, sitePanel, oldDescription);
-		}
-	
-		return SV;
-	})();
-
-	return PickSitePanel;
-})();
-
-var PickOfferingPanel = (function()
-{
-	PickOfferingPanel.prototype = Object.create(crv.SitePanel.prototype);
-	PickOfferingPanel.prototype.constructor = PickOfferingPanel;
-
-	PickOfferingPanel.prototype.createRoot = function(offering, oldDescription)
-	{
-		var _this = this;
-		crv.SitePanel.prototype.createRoot.call(this, null, crv.buttonTexts.pickOffering, 'list', revealPanelLeft);
-		this.navContainer = this.appendNavContainer();
-
-		this.appendBackButton();
-
-		this.navContainer.appendTitle(crv.buttonTexts.pickOffering);
-
-		this.searchView = new PickOfferingPanel.SV(this, offering, oldDescription);
-		$(this.node()).one('revealing.cr', function() {
-				_this.searchView.inputText(oldDescription);
-				_this.searchView.inputBox.focus();
-			});
-		return this;
-	}
-	function PickOfferingPanel()
-	{
-		crv.SitePanel.call(this);
-	}
-	
-	PickOfferingPanel.SV = (function () {
-		SV.prototype = Object.create(LinkSearchView.prototype);
-		SV.prototype.constructor = SV;
-
-		/* Overrides SearchView.searchPath */
-		SV.prototype.searchPath = function(val)
-		{
-			var s = "offering";
-			if (val.length == 0)
-				return s;
-			else
-			{
-				return s + '[name>text^="' + encodeURIComponent(val) + '"]';
-			}
-		}
-	
-		SV.prototype.resultType = function() { return cr.Offering; }
-	
-		function SV(sitePanel, oldDescription) {
-			LinkSearchView.call(this, sitePanel, oldDescription);
-		}
-	
-		return SV;
-	})();
-
-	return PickOfferingPanel;
-})();
-
-var PickServicePanel = (function()
-{
-	PickServicePanel.prototype = Object.create(crv.SitePanel.prototype);
-	PickServicePanel.prototype.constructor = PickServicePanel;
-
-	PickServicePanel.prototype.createRoot = function(service, oldDescription)
-	{
-		var _this = this;
-		crv.SitePanel.prototype.createRoot.call(this, null, crv.buttonTexts.pickService, 'list', revealPanelLeft);
-		this.navContainer = this.appendNavContainer();
-
-		this.appendBackButton();
-
-		this.navContainer.appendTitle(crv.buttonTexts.pickService);
-
-		this.searchView = new PickServicePanel.SV(this, service, oldDescription);
-		$(this.node()).one('revealing.cr', function() {
-				_this.searchView.inputText(oldDescription);
-				_this.searchView.inputBox.focus();
-			});
-		return this;
-	}
-	
-	function PickServicePanel()
-	{
-		crv.SitePanel.call(this);
-	}
-	
-	PickServicePanel.SV = (function () {
-		SV.prototype = Object.create(LinkSearchView.prototype);
-		SV.prototype.constructor = SV;
-
-		/* Overrides SearchView.searchPath */
-		SV.prototype.searchPath = function(val)
-		{
-			var s = "service";
-			if (val.length == 0)
-				return s;
-			else
-			{
-				return s + '[name>text^="' + encodeURIComponent(val) + '"]';
-			}
-		}
-	
-		SV.prototype.resultType = function() { return cr.Offering; }
-	
-		function SV(servicePanel, oldDescription) {
-			LinkSearchView.call(this, servicePanel, oldDescription);
-		}
-	
-		return SV;
-	})();
-
-	return PickServicePanel;
-})();
-
-var PickTimeframePanel = (function () {
-	PickTimeframePanel.prototype = Object.create(PickFromListPanel.prototype);
-	PickTimeframePanel.prototype.constructor = PickTimeframePanel;
-
-	PickTimeframePanel.prototype.title = crv.buttonTexts.timeframe;
-	
-	PickTimeframePanel.prototype.data = function()
-	{
-		return [{code: '', name: crv.buttonTexts.nonePlaceholder},
-				{code: 'Previous', name: crv.buttonTexts.previousTimeframe},
-				{code: 'Current', name: crv.buttonTexts.currentTimeframe},
-				{code: 'Goal', name: crv.buttonTexts.goalTimeframe},
-			   ];
-	}
-	
-	PickTimeframePanel.prototype.isInitialValue = function(d)
-	{
-		return d.code === this.initialValue;
-	}
-
-	PickTimeframePanel.prototype.pickedValue = function(d)
-	{
-		return d.code;
-	}
-
-	PickTimeframePanel.prototype.datumDescription = function(d)
-	{
-		return d.name;
-	}
-	
-	PickTimeframePanel.prototype.createRoot = function(user, initialValue)
-	{
-		this.initialValue = initialValue;
-		return PickFromListPanel.prototype.createRoot.call(this, null, this.title, initialValue);
-	}
-	
-	function PickTimeframePanel() {
-		PickFromListPanel.call(this);
-	}
-	
-	PickTimeframePanel.prototype.getDescription = function(storedValue)
-	{
-		var d = PickTimeframePanel.prototype.data.call(null).find(function(d)
-			{
-				return d.code == storedValue;
-			})
-		return d && d.name;
-	}
-
-	return PickTimeframePanel;
 })();
 

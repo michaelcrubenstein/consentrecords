@@ -910,8 +910,7 @@ var NotificationsPanel = (function () {
 		
 		var sections = this.mainDiv.append('section')
 		    .datum(user.notifications())
-			.classed('cell edit', true)
-			.classed('multiple', true);
+			.classed('cell edit multiple hover-items', true);
 			
 		this.noItemsDiv = sections.append('div')
 			.classed('no-results', true)
