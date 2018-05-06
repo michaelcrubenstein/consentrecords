@@ -28,30 +28,6 @@ var AccessRequestSectionView = (function () {
 	
 })();
 
-var SharingSectionView = (function() {
-	SharingSectionView.prototype = Object.create(UserSectionView.prototype);
-	SharingSectionView.prototype.constructor = SharingSectionView;
-	
-	SharingSectionView.prototype.getUser = function(d)
-	{
-		return d.grantee();
-	}
-	
-	SharingSectionView.prototype.line1Text = function(d)
-	{
-		if (d instanceof cr.Group)
-			return "";
-		else
-			return d.fullName();
-	}
-	
-	function SharingSectionView(sitePanel)
-	{
-		UserSectionView.call(this, sitePanel);
-	}
-	return SharingSectionView;
-})();
-
 var SharingPanel = (function() {
 	SharingPanel.prototype = Object.create(GrantsPanel.prototype);
 	SharingPanel.prototype.constructor = SharingPanel;
@@ -160,7 +136,7 @@ var SharingPanel = (function() {
 			}
 		}
 	
-		this.readSectionView = new SharingSectionView(this)
+		this.readSectionView = new GrantSectionView(this)
 			.datum(this.privileges[0])
 			.classed('cell multiple edit hover-items', true);
 			

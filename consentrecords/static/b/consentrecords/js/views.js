@@ -2182,10 +2182,11 @@ var EditItemPanel = (function () {
 				var done = function()
 				{
 					dateSpan.classed('site-active-text', true);
-					reveal.show({}, 200, undefined, function()
-						{
-							editor.dateWheel.onShowing();
-						});
+					reveal.show({duration: 200})
+						.then(function() 
+							{ 
+								editor.dateWheel.onShowing(); 
+							});
 					if (editor.canShowNotSureReveal)
 						editor.notSureReveal.show({duration: 200});
 				}
@@ -2283,12 +2284,13 @@ var EditItemPanel = (function () {
 		var showWheel = function(done)
 		{
 			dateSpan.classed('site-active-text', true);
-			reveal.show({}, 200, undefined,
-				function()
+			return reveal.show({duration: 200})
+				.then(function()
 				{
 					if (editor.canShowNotSureReveal)
-						notSureReveal.show({done: done});
-				});
+						return notSureReveal.show();
+				})
+				.then(done);
 			
 		}
 		
@@ -2697,6 +2699,72 @@ var ConfirmPanel = (function() {
 	}
 	
 	return ConfirmPanel;
+})();
+
+var UserSectionView = (function() {
+	UserSectionView.prototype = Object.create(crv.SectionView.prototype);
+	UserSectionView.prototype.constructor = UserSectionView;
+	
+	UserSectionView.prototype.getUser = function(d)
+	{
+		return (d instanceof cr.User ? d : d.user());
+	}
+	
+	UserSectionView.prototype.line1Text = function(d)
+	{
+		return d.fullName();
+	}
+	
+	UserSectionView.prototype.appendDescription = function(div, d)
+	{
+		var descriptions = d3.select(div);
+		descriptions.selectAll('div').remove();
+		
+		var user = this.getUser(d);
+		if (user)
+		{
+			descriptions.classed('detail', true).text('');
+			var userName = this.line1Text(user);
+			var userDescription = user.description();
+		
+			var containerDiv = descriptions.append('div');
+			if (userName) containerDiv.append('div').text(userName);
+			if (userDescription) containerDiv.append('div').text(userDescription);
+		}
+		else
+			div.textContent = d.description();
+	}
+	
+	function UserSectionView(sitePanel)
+	{
+		crv.SectionView.call(this, sitePanel);
+		this.classed('cell edit multiple', true);
+	}
+	return UserSectionView;
+})();
+
+var GrantSectionView = (function() {
+	GrantSectionView.prototype = Object.create(UserSectionView.prototype);
+	GrantSectionView.prototype.constructor = GrantSectionView;
+	
+	GrantSectionView.prototype.getUser = function(d)
+	{
+		return d.grantee();
+	}
+	
+	GrantSectionView.prototype.line1Text = function(d)
+	{
+		if (d instanceof cr.Group)
+			return "";
+		else
+			return d.fullName();
+	}
+	
+	function GrantSectionView(sitePanel)
+	{
+		UserSectionView.call(this, sitePanel);
+	}
+	return GrantSectionView;
 })();
 
 /* A panel that contains a single list of user grants. */

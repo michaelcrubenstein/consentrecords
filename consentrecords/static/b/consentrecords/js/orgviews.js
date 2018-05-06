@@ -541,48 +541,6 @@ var EnrollmentsPanel = (function () {
 	return EnrollmentsPanel;
 })();
 
-var UserSectionView = (function() {
-	UserSectionView.prototype = Object.create(crv.SectionView.prototype);
-	UserSectionView.prototype.constructor = UserSectionView;
-	
-	UserSectionView.prototype.getUser = function(d)
-	{
-		return (d instanceof cr.User ? d : d.user());
-	}
-	
-	UserSectionView.prototype.line1Text = function(d)
-	{
-		return d.fullName();
-	}
-	
-	UserSectionView.prototype.appendDescription = function(div, d)
-	{
-		var descriptions = d3.select(div);
-		descriptions.selectAll('div').remove();
-		
-		var user = this.getUser(d);
-		if (user)
-		{
-			descriptions.classed('detail', true).text('');
-			var userName = this.line1Text(user);
-			var userDescription = user.description();
-		
-			var containerDiv = descriptions.append('div');
-			if (userName) containerDiv.append('div').text(userName);
-			if (userDescription) containerDiv.append('div').text(userDescription);
-		}
-		else
-			div.textContent = d.description();
-	}
-	
-	function UserSectionView(sitePanel)
-	{
-		crv.SectionView.call(this, sitePanel);
-		this.classed('multiple', true);
-	}
-	return UserSectionView;
-})();
-
 var EngagementSearchView = (function () {
 	EngagementSearchView.prototype = Object.create(ChildSearchView.prototype);
 	EngagementSearchView.prototype.constructor = EngagementSearchView;

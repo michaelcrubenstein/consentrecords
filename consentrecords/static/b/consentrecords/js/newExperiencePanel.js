@@ -2260,26 +2260,6 @@ var ExperienceSecurityPanel = (function () {
 		return r;
 	}
 
-	ExperienceSecurityPanel.prototype.addAccessRecord = function(sectionView, accessorLevel, path)
-	{
-		var _this = this;
-		
-		return cr.getData({path: path, resultType: cr.User, fields: ['none']})
-			.then(function(grantees)
-				{
-					var userGrant = new (_this.grantor.userGrantType())();
-					userGrant.privilege(accessorLevel.name);
-					userGrant.grantee(grantees[0]);
-					userGrant.parent(_this.grantor);
-					_this.grantor.userGrants().push(userGrant);
-					_this.onGrantAdded(sectionView, accessorLevel.itemsDiv, userGrant);
-					var r2 = $.Deferred();
-					r2.resolve(userGrant);
-					return r2;
-				},
-				cr.chainFail);
-	}
-	
 	ExperienceSecurityPanel.prototype.loadAccessRecords = function(panel2Div, grantor)
 	{
 		var _this = this;
@@ -2300,9 +2280,8 @@ var ExperienceSecurityPanel = (function () {
 			}
 		}
 	
-		var sectionView = new crv.SectionView(this)
-			.datum(this.privileges[0])
-			.classed('cell multiple edit', true);
+		var sectionView = new GrantSectionView(this)
+			.datum(this.privileges[0]);
 		
 		/* Place this docSection inside the other section so that it gets hidden by the
 			associated VerticalReveal.
@@ -2365,20 +2344,20 @@ var ExperienceSecurityPanel = (function () {
 		if (this.grantor.isHidden())
 		{
 			this.isHiddenDocumentationContainer.text(this.hiddenDocumentation);
-			this.reveal.show({duration: duration, done: done});
+			return this.reveal.show({duration: duration, done: done});
 		}
 		else
 		{
 			this.isHiddenDocumentationContainer.text(this.visibleDocumentation);
-			this.reveal.hide({duration: duration, done: done});
+			return this.reveal.hide({duration: duration, done: done});
 		}
 	}
 	
-	function ExperienceSecurityPanel(experienceController, backButtonText, showFunction) {
-		GrantsPanel.call(this, experienceController.newInstance());
+	function ExperienceSecurityPanel(experience, backButtonText, showFunction) {
+		GrantsPanel.call(this, experience);
 		
 		var _this = this;
-		this.createRoot(experienceController.newInstance(), this.title, showFunction);
+		this.createRoot(experience, this.title, showFunction);
 		
 		this.navContainer.appendTitle("Experience Sharing");
 		var doneButton = this.navContainer.appendRightButton()
@@ -2394,18 +2373,18 @@ var ExperienceSecurityPanel = (function () {
 
 		this.appendEditButton();
 		
-		var isHiddenSection = new EditItemSectionView(this, experienceController.newInstance())
+		var isHiddenSection = new EditItemSectionView(this, experience)
 			.classed('first', true);
 		
 		isHiddenSection.appendLabel(crv.buttonTexts.hiddenExperience);
 			
-		this.isHiddenControl = this.appendCheckboxEditor(isHiddenSection, experienceController.newInstance().isHidden());
+		this.isHiddenControl = this.appendCheckboxEditor(isHiddenSection, experience.isHidden());
 		
 		var docSection = this.mainDiv.append('section')
 			.classed('cell documentation', true);
 
 		this.isHiddenDocumentationContainer = docSection.append('div')
-			.text(experienceController.newInstance().isHidden() ? this.hiddenDocumentation : this.visibleDocumentation);
+			.text(experience.isHidden() ? this.hiddenDocumentation : this.visibleDocumentation);
 
 		function saveValue()
 		{
@@ -2415,16 +2394,14 @@ var ExperienceSecurityPanel = (function () {
 								'is hidden hiding' : 
 								'is hidden showing'))
 			{
-				experienceController.newInstance().isHidden(newChecked);
-				_this.checkHiddenControlVisibility(400, unblockClick);
-				experienceController.save(false)
-					.then(function()
-						{
-						},
+				experience.isHidden(newChecked);
+				$.when(_this.checkHiddenControlVisibility(400),
+					   experience.update({'is hidden': newChecked}, false))
+				 .then(unblockClick,
 						function(err)
 						{
 							newChecked = !newChecked;
-							experienceController.newInstance().isHidden(newChecked);
+							experience.isHidden(newChecked);
 							_this.isHiddenControl.node().checked = newChecked;
 							
 							$(_this.isHiddenControl.node()).off('change', saveValue);
@@ -2433,7 +2410,7 @@ var ExperienceSecurityPanel = (function () {
 				
 							$(_this.isHiddenControl.node()).on('change', saveValue);
 							_this.checkHiddenControlVisibility(400);
-							cr.asyncFail(err);
+							cr.syncFail(err);
 						});
 			}
 			else
