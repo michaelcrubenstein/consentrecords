@@ -645,6 +645,7 @@ section.cell {
 	padding-bottom: 2px;
 }
 .cell.multiple.edit > ol {
+	width: 100%;	/* Must be set in case the cell starts out hidden, such as the user list of an experience grant list. */
 	border-top: 1px solid #eee;
 	/* The bottom border is provided by the add-value button, below */
 }
