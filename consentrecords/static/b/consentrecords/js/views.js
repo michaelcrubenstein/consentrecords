@@ -419,8 +419,8 @@ function appendRowButtons(divs)
 	if (divs.empty())
 		return divs.append("div");
 	else
-		return divs.append("div")
-				.classed('btn row-button', $(divs.node()).parents(".unique").length === 0);
+		return divs.append('div')
+				.classed('row-button', $(divs.node()).parents(".unique").length === 0);
 }
 
 var crf = {
