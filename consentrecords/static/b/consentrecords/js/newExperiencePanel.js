@@ -2315,7 +2315,7 @@ var ExperienceSecurityPanel = (function () {
 			
 		/* Add one more button for the add Button item. */
 		sectionView
-			.append('button').classed('btn row-button add-item site-active-text', true)
+			.append('button').classed('row-button add-item site-active-text', true)
 			.on('click', function(d) {
 				_this.addAccessor(sectionView, "Sharing User", d);
 			})
