@@ -355,8 +355,7 @@ var FlagController = (function() {
 	
 	FlagController.prototype.setupChangeEventHandler = function(data, handler)
 	{
-		var experience = this.experience;
-		setupOnViewEventHandler(this.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr", data, handler);
+		setupOnViewEventHandler(this.experience, 'experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr', data, handler);
 	}
 	
 	FlagController.prototype.selected = function(newValue)
@@ -431,7 +430,7 @@ var PathView = (function() {
 	 */
 	PathView.prototype.setupServiceTriggers = function(r, fd, handler)
 	{
-		setupOnViewEventHandler(fd.experience, 'experienceServiceAdded.cr experienceServiceDeleted.cr changed.cr', r, handler);
+		setupOnViewEventHandler(fd.experience, 'experienceServiceDeleted.cr changed.cr', r, handler);
 	}
 	
 	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
@@ -590,7 +589,7 @@ var PathView = (function() {
 						});	
 			}
 						
-		setupOnViewEventHandler(fd.experience, "experienceServiceAdded.cr experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr", node, flagDataChanged);
+		setupOnViewEventHandler(fd.experience, 'experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr', node, flagDataChanged);
 	}
 	
 	PathView.prototype.compareDates = function (d1, d2)
@@ -678,17 +677,7 @@ var PathView = (function() {
 					_this.setupColorWatchTriggers(this, d);
 				});
 		var text = g.append('text').classed('flag-label', true)
-			.attr('fill', function(d) { return d.fontColor(); })
-			.each(function(d)
-				{
-					var f = function(eventObject)
-					{
-						d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
-						_this.setupWidths();
-					}
-					setupOnViewEventHandler(d.experience, 'changed.cr', this, f)
-					_this.setupServiceTriggers(this, d, f);
-				});
+			.attr('fill', function(d) { return d.fontColor(); });
 		
 		text.append('tspan')
 			.attr('x', this.textDetailLeftMargin)
