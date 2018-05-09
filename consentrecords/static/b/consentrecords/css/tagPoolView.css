@@ -159,6 +159,14 @@ g.flag .flag-label>tspan:nth-child(2) {	/* For flags */
 	font-weight: 400;
 }
 
+g.flag g.is-hidden {
+	display: none;
+}
+
+g.flag g.is-hidden.hidden {
+	display: block;
+}
+
 span.flag {
 	position: absolute;
 	border-left-style: solid;
