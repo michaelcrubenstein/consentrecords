@@ -611,8 +611,17 @@ var crf = {
 		
 		/* Extend each item by the width of its confirm delete button. */
 		var newWidth = newLeft + crf.getDeletableItemWidth(dials.parent());
-		dials.parent().animate({left: -newLeft, width: newWidth}, duration);
-		dials.animate({opacity: 0}, duration);
+		
+		if (duration == 0)
+		{
+			dials.parent().css({left: -newLeft, width: newWidth});
+			dials.css({opacity: 0});
+		}
+		else
+		{
+			dials.parent().animate({left: -newLeft, width: newWidth}, duration);
+			dials.animate({opacity: 0}, duration);
+		}
 	}
 }
 
