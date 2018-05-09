@@ -510,9 +510,9 @@ button.site-active-text:hover {
 }
 .row-button {
 	position: relative;
-	font-size: 15px;	/* To override the smaller button. */
+	font-size: 15px;
 	background: white;
-	display: block;		/* To override inline-block from btn */
+	display: block;
 	width: 100%;
 	border: 0;
 	border-radius: 0;
