@@ -2397,7 +2397,11 @@ var ExperienceSecurityPanel = (function () {
 				experience.isHidden(newChecked);
 				$.when(_this.checkHiddenControlVisibility(400),
 					   experience.update({'is hidden': newChecked}, false))
-				 .then(unblockClick,
+				 .then(function(a, updateArguments)
+				 	{
+				 		experience.updateData(updateArguments[0]);
+				 		unblockClick();
+				 	},
 						function(err)
 						{
 							newChecked = !newChecked;
