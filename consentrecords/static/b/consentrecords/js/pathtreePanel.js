@@ -561,6 +561,13 @@ var PathView = (function() {
 			.text(function(d) { return d.subHeading(); });
 			
 	}
+	
+	PathView.prototype._getFlagWidth = function(fd, node)
+	{
+		var width = $(node).children('text').outerWidth() + 
+			(2 * this.textDetailLeftMargin);
+		return width;
+	}
 		
 	/* Sets up each group (this) that displays an experience to delete itself if
 		the experience is deleted.
@@ -584,9 +591,8 @@ var PathView = (function() {
 				g.selectAll('rect')
 					.attr('width', function(fd)
 						{
-							return $(this.parentNode).children('text').outerWidth() + 
-								(2 * _this.textDetailLeftMargin);
-						});	
+							return _this._getFlagWidth(fd, this.parentNode);
+						});
 			}
 						
 		setupOnViewEventHandler(fd.experience, 'experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr', node, flagDataChanged);
@@ -1127,8 +1133,7 @@ var PathLines = (function() {
 			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
 				{
-					return $(this.parentNode).children('text').outerWidth() + 
-						(2 * _this.textDetailLeftMargin);
+					return _this._getFlagWidth(fd, this.parentNode);
 				});	
 		
 		/* Restore the sort order to startDate/endDate */
