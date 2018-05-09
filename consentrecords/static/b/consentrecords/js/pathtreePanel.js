@@ -399,14 +399,16 @@ var PathView = (function() {
 	PathView.prototype.textBottomMargin = 5;
 	PathView.prototype.yearTextX = "3.0em";
 	PathView.prototype.yearTextX2 = "0.6em";
-	PathView.prototype.flagLineOneDY = '1.4em';
-	PathView.prototype.flagLineTwoDY = '1.3em';
+	PathView.prototype.flagLineOneDY = 1.4;
+	PathView.prototype.flagLineTwoDY = 1.3;
 	PathView.prototype.flagHeightEM = 3.5;
 	PathView.prototype.flagSpacing = 2;
 	PathView.prototype.flagSpacingEM = 0.1;
 	PathView.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 	PathView.prototype.topYearMarginEM = 1.4;	/* The distance between the top of a flagpole and a year marker. */
 	PathView.prototype.bottomYearMarginEM = 0.5;	/* The distance between the bottom of a flagpole and a year marker. */
+	PathView.prototype.isHiddenWidth = 1.6;	/* em */
+	PathView.prototype.isHiddenHeight = 1.0;	/* em */
 
 	PathView.prototype.guideHSpacing = 30;
 							  
@@ -566,6 +568,11 @@ var PathView = (function() {
 	{
 		var width = $(node).children('text').outerWidth() + 
 			(2 * this.textDetailLeftMargin);
+		if (fd.experience.isHidden())
+		{
+			var scale = this.isHiddenHeight * this.emToPX / 80.0;
+			width += this.textDetailLeftMargin + (128.0 * scale);
+		}
 		return width;
 	}
 		
@@ -584,15 +591,36 @@ var PathView = (function() {
 		
 		var flagDataChanged =  function(eventObject)
 			{
+				var g = d3.select(eventObject.data);
+				
 				_this._setFlagText(eventObject.data);
 
-				/* Make sure that the rectangles match the widths. */
-				var g = d3.select(eventObject.data);
+				g.selectAll('g.is-hidden')
+					.classed('hidden', function(fd) { return fd.experience.isHidden(); });
+				
+				/* Ensure that the rectangles match the widths. */
 				g.selectAll('rect')
 					.attr('width', function(fd)
 						{
 							return _this._getFlagWidth(fd, this.parentNode);
 						});
+						
+				/* Ensure that the bounding rectangle for the svg is correct. */
+				_this.setupWidths();
+
+				/* Ensure that the colors of the text are correct. */
+				g.selectAll('text.flag-label').attr('fill', 
+					function(d) { return d.selected() ? '#FFFFFF' : d.fontColor(); });
+				
+				/* Ensure that the colors of the isHidden flag are correct. */
+				if (this.isHidden())
+				{
+					g.selectAll('g.hidden')
+						.each(function(d)
+							{
+								crf.colorHiddenIcon(d3.select(this), d.selected() ? '#FFFFFF' : d.fontColor())
+							});
+				}
 			}
 						
 		setupOnViewEventHandler(fd.experience, 'experienceServiceDeleted.cr customServiceAdded.cr customServiceDeleted.cr changed.cr', node, flagDataChanged);
@@ -662,6 +690,7 @@ var PathView = (function() {
 							var g = d3.select(eventObject.data);
 							g.classed('selected', d.selected());
 							g.selectAll('text').attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
+							crf.colorHiddenIcon(g.selectAll('g.hidden'), d.selected() ? '#FFFFFF' : d.fontColor());
 						});
 				});
 					
@@ -687,12 +716,31 @@ var PathView = (function() {
 		
 		text.append('tspan')
 			.attr('x', this.textDetailLeftMargin)
-			.attr('dy', this.flagLineOneDY);
+			.attr('dy', '{0}em'.format(this.flagLineOneDY));
 		text.append('tspan')
 			.attr('x', this.textDetailLeftMargin)
-			.attr('dy', this.flagLineTwoDY);
+			.attr('dy', '{0}em'.format(this.flagLineTwoDY));
 		
 		g.each(function() { _this._setFlagText(this); });
+		
+		var scale = _this.isHiddenHeight * this.emToPX / 80.0;
+		
+		crf.appendHiddenIcon(g)
+			.classed('hidden', function(fd) { return fd.experience.isHidden(); })
+			.attr('transform', function(d)
+				{
+					return 'scale({0}) translate({1}, {2})'.format(
+						scale,
+						(2 * _this.textDetailLeftMargin + $(this.parentNode).children('text').outerWidth()) / scale, 
+						(_this.flagLineOneDY - _this.isHiddenHeight) * _this.emToPX / scale);
+				})
+			.each(function(d)
+				{
+					if (d.experience.isHidden())
+					{
+						crf.colorHiddenIcon(d3.select(this), d.fontColor());
+					}
+				});
 		
 		return g;
 	}
@@ -952,7 +1000,7 @@ var PathView = (function() {
 			
 		this.svg = this.pathwayContainer.append('svg')
 			.classed('pathway pathlines', true)
-			.attr('xmlns', "http://www.w3.org/2000/svg")
+			.attr('xmlns', 'http://www.w3.org/2000/svg')
 			.attr('version', "1.1")
 			.on('click', function() 
 			{ 
