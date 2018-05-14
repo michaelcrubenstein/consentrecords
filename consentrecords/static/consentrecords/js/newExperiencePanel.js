@@ -2315,7 +2315,7 @@ var ExperienceSecurityPanel = (function () {
 			
 		/* Add one more button for the add Button item. */
 		sectionView
-			.append('button').classed('btn row-button add-item site-active-text', true)
+			.append('button').classed('row-button add-item site-active-text', true)
 			.on('click', function(d) {
 				_this.addAccessor(sectionView, "Sharing User", d);
 			})
@@ -2397,7 +2397,11 @@ var ExperienceSecurityPanel = (function () {
 				experience.isHidden(newChecked);
 				$.when(_this.checkHiddenControlVisibility(400),
 					   experience.update({'is hidden': newChecked}, false))
-				 .then(unblockClick,
+				 .then(function(a, updateArguments)
+				 	{
+				 		experience.updateData(updateArguments[0]);
+				 		unblockClick();
+				 	},
 						function(err)
 						{
 							newChecked = !newChecked;
