@@ -419,8 +419,8 @@ function appendRowButtons(divs)
 	if (divs.empty())
 		return divs.append("div");
 	else
-		return divs.append("div")
-				.classed('btn row-button', $(divs.node()).parents(".unique").length === 0);
+		return divs.append('div')
+				.classed('row-button', $(divs.node()).parents(".unique").length === 0);
 }
 
 var crf = {
@@ -541,6 +541,38 @@ var crf = {
 			.attr("height", "18px");
 	},
 	
+	appendHiddenIcon: function(items)
+	{
+		var ds = ["M22.741,80.5 L106.564,0.5",
+					 "M68.907,21.98 C52.61,20.124 43.325,29.87 45.087,45.304 L49.73,40.282 C49.772,32.583 56.619,26.669 64.266,26.705",
+					 "M81.9,9.285 C35.488,0.17 4.565,28.207 0.5,40.054 L6.654,40.083 C13.787,29.733 39.766,5.53 77.259,14.009",
+			  		 "M25.601,63.902 C15.167,58.81 5.059,50.458 0.5,40.054 L6.654,40.083 C14.597,50.502 17.659,53.186 29.933,59.472",
+			  		 "M103.398,16.8 C113.831,21.892 123.94,30.244 128.498,40.648 L122.345,40.619 C114.401,30.2 111.339,27.516 99.066,21.23",
+			  		 "M47.1,71.192 C93.512,80.306 124.435,52.269 128.5,40.422 L122.346,40.394 C115.212,50.743 89.234,74.947 51.741,66.467",
+			  		 "M59.546,59.401 C75.844,61.257 85.128,51.511 83.367,36.077 L78.724,41.099 C78.682,48.798 71.835,54.712 64.188,54.677",
+			  		];
+		var g = items.append('g').classed('is-hidden', true);
+		var paths = g.selectAll('path')
+			.data(ds)
+			.enter()
+			.append('path')
+			.attr('d', function(d) { return d; });
+		g.selectAll('path:first-of-type')
+			.attr('stroke', '#000000')
+			.attr('stroke-width', '6');
+			
+		return g;
+	},
+	
+	colorHiddenIcon: function(g, color)
+	{
+		g.selectAll('path:first-of-type')
+			.attr('stroke', color);
+		g.selectAll('path')
+			.attr('fill', color);
+		return g;
+	},
+	
 	getDeletableItemWidth: function($parent)
 	{
 		var confirmButtons = $parent.children('button:last-of-type');
@@ -579,8 +611,17 @@ var crf = {
 		
 		/* Extend each item by the width of its confirm delete button. */
 		var newWidth = newLeft + crf.getDeletableItemWidth(dials.parent());
-		dials.parent().animate({left: -newLeft, width: newWidth}, duration);
-		dials.animate({opacity: 0}, duration);
+		
+		if (duration == 0)
+		{
+			dials.parent().css({left: -newLeft, width: newWidth});
+			dials.css({opacity: 0});
+		}
+		else
+		{
+			dials.parent().animate({left: -newLeft, width: newWidth}, duration);
+			dials.animate({opacity: 0}, duration);
+		}
 	}
 }
 
