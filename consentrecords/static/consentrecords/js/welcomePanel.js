@@ -1,117 +1,239 @@
-var WelcomeTagSearchView = (function () {
-	WelcomeTagSearchView.prototype = Object.create(TagSearchView.prototype);
-	WelcomeTagSearchView.prototype.constructor = WelcomeTagSearchView;
+var PromptPanel = (function() {
+	PromptPanel.prototype = Object.create(FlagStackPanel.prototype);
+	
+//	PromptPanel.prototype.tagPoolSection = null;
+	PromptPanel.prototype.stackLeftMargin = 15;
+	PromptPanel.prototype.flagTopMargin = 1.0;	/* em */
+	PromptPanel.prototype.flagVSpacing = 1.0;
+	PromptPanel.prototype.flagHeightEM = 2.333;
+	PromptPanel.prototype.types = ["Job", 
+						 "College",
+						 "School",
+						 "Class", 
+						 "Interest", 
+						 "Skills", 
+						 "Internship", 
+						 "Volunteer", 
+						 "Exercise", 
+						 "Housing", 
+						 "Travel"];
+	
+	PromptPanel.prototype.rootFlagText = function()
+	{
+		return this.placeholder;
+	}
+	
+	PromptPanel.prototype.isRootService = function(fs)
+	{
+		return this.types.indexOf(fs.description()) >= 0;
+	}
+	
+	/* Sets the x, y and y2 coordinates of each flag. */
+	PromptPanel.prototype._setFlagCoordinates = function(g)
+	{
+		var _this = this;
+
+		var deltaY = this.flagHeightEM + this.flagVSpacing;
+		var nextY = this.flagTopMargin;
+		var panelWidth = $(this.flagsContainer.node()).width();
+		
+		var flagSet = [];
+		if (this.serviceStack.length > 1)
+		{
+			var filterService = this.serviceStack.slice(-1)[0];
+			if (filterService == null)	/* The otherFlagNode is at the end. */
+				filterService = this.serviceStack.slice(-2)[0];
+				
+			g.each(function(fd)
+				{
+					if (fd.visible === undefined || fd.visible)
+					{
+						if (this == _this.otherFlagRowNode)
+						{
+							if (_this.flagStack.slice(-2)[0] == _this.rootFlagRowNode &&
+								filterService == null)
+							{
+								d3.select(_this.otherFlagNode)
+									.text("Other");
+								PathGuides.fillOtherNode(_this.otherFlagNode);
+							}
+							else
+							{
+								d3.select(_this.otherFlagNode)
+									.text("Other {0}".format(filterService.description()));
+								PathGuides.fillNode(_this.otherFlagNode, filterService.getColumn());
+							}
+							/* Ensure the row is visible before calculating the width */
+							$(_this.otherFlagRowNode).css('display', '');
+							fd.firstChildWidth = $(_this.otherFlagNode).outerWidth(true);
+							
+							if (_this.flagStack.slice(-1)[0] != _this.otherFlagRowNode)
+								flagSet.push(this);
+						}
+						else if (_this.flagStack.indexOf(this) < 0)
+							flagSet.push(this);
+					}
+				});
+		}
+		else
+		{
+			g.each(function(fd)
+				{
+					if (this != _this.rootFlagRowNode &&
+						(fd.visible === undefined || fd.visible))
+						flagSet.push(this);
+				});
+			d3.select(_this.otherFlagNode)
+				.text("Other");
+			PathGuides.fillOtherNode(_this.otherFlagNode);
+			/* Ensure the row is visible before calculating the width */
+			$(_this.otherFlagRowNode).css('display', '');
+			var fd = d3.select(_this.otherFlagNode).datum();
+			fd.firstChildWidth = $(_this.otherFlagNode).outerWidth(true);
+		}
+
+		/* Set the positions of the top row of flags. */	
+		var lastX = 0;
+		var flagSetFirstX = this.stackLeftMargin;
+		for (var i = 0; i < this.serviceStack.length; ++i)
+		{
+			var flag = this.flagStack[i];
+			var fd = d3.select(flag).datum();
+			$(flag).css('display', '');
+			if (lastX + fd.firstChildWidth > panelWidth && lastX > this.stackLeftMargin)
+			{
+				lastX = this.stackLeftMargin;
+				flagSetFirstX = this.stackLeftMargin * 2;
+				nextY += deltaY;
+			}
+			fd.x = lastX;
+			fd.y = nextY;
+			lastX += fd.firstChildWidth + this.stackLeftMargin;
+		}
+
+		nextY += deltaY;
+		lastX = flagSetFirstX;
+		
+		flagSet.forEach(function(gNode)
+			{
+				var fd = d3.select(gNode).datum();
+				$(gNode).css('display', '');
+				if (lastX + fd.firstChildWidth > panelWidth && lastX > flagSetFirstX)
+				{
+					lastX = flagSetFirstX;
+					nextY += deltaY;
+				}
+				fd.x = lastX;
+				fd.y = nextY;
+				lastX += fd.firstChildWidth + _this.stackLeftMargin;
+			});
+	}
 	
 	/* Block moveToNewInput in TagSearchView */
-	WelcomeTagSearchView.prototype.transferFocusAfterClick = function(moveToNewInput, d)
+	PromptPanel.prototype.transferFocusAfterClick = function(moveToNewInput, d)
 	{
-		var sitePanel = $(this.container.node()).parents('.site-panel').get(0).sitePanel;
+		var sitePanel = $(this.flagsContainer.node()).parents('.site-panel').get(0).sitePanel;
 		if (moveToNewInput)
 		{
-			sitePanel.showSignup();
 			sitePanel.emailInput.focus();
+			return sitePanel.showSignup();
 		}
 		else
 		{
-			sitePanel.hideSignup();
-			TagSearchView.prototype.transferFocusAfterClick.call(this, false, d);
+			return sitePanel.hideSignup();
 		}
 	}
 	
-	WelcomeTagSearchView.prototype.appendFlags = function(data)
+	PromptPanel.prototype.handleClickFlag = function(currentFlag, d)
 	{
-		TagSearchView.prototype.appendFlags.call(this, data);
-		this.addOtherFlagNode();
-		return this.flags();
-	}
-	
-	function WelcomeTagSearchView(container, poolSection, controller)
-	{
-		TagSearchView.call(this, container, poolSection, controller);
-	}
-	
-	return WelcomeTagSearchView;
-})();
-
-var WelcomeTagPoolSection = (function() {
-	WelcomeTagPoolSection.prototype = Object.create(TagPoolSection.prototype);
-	WelcomeTagPoolSection.prototype.constructor = WelcomeTagPoolSection;
-	
-	WelcomeTagPoolSection.prototype.setTagInputWidth = function(inputNode)
-	{
-		this.setTagColor(inputNode);
-	}
-	
-	function WelcomeTagPoolSection()
-	{
-		TagPoolSection.apply(this, arguments);
-	}
-	
-	return WelcomeTagPoolSection;
-})();
-
-var PromptPanel = (function() {
-	PromptPanel.prototype.tagPoolSection = null;
-	
-	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
-	PromptPanel.prototype.onFocusInOtherInput = function(newReveal, done)
-	{
-		return false;
-	}
-	
-	PromptPanel.prototype.onFocusInTagInput = function(tagPoolSection, inputNode)
-	{
-		tagPoolSection.setTagColor(inputNode);
-			
-		tagPoolSection.checkTagInput(inputNode);
-		var datum = d3.select(inputNode).datum();
-		var service = datum && datum.service();
-		if (!service || tagPoolSection.searchView.hasSubService(service))
-			tagPoolSection.searchView.constrainTagFlags(inputNode);
-	}
-	
-	PromptPanel.prototype.fillTags = function()
-	{
-		var inputNode = this.tagPoolSection.tagsContainer.select('input.tag').node();
-		this.tagPoolSection.revealSearchView(inputNode, false);
-	}
-	
-	PromptPanel.prototype.hideClearButton = function(duration)
-	{
-		var button = this.clearButton;
-		
-		if (duration === 0)
-			button.style('opacity', 0)
-				  .style('display', 'none');
-		else
+		if (prepareClick('click', d ? d.description() : 'welcome panel'))
 		{
-			if (button.style('display') != 'none')
+			try
 			{
-				button.interrupt().transition()
-					.style('opacity', 0)
-					.each('end', function()
+				var _this = this;
+				
+				if (this.rootFlagRowNode == currentFlag)
+				{
+					while (this.flagStack.length > 1)
+						this._popFlag();
+					this._filterFlags();
+					this._setFlagCoordinates(this.flagRows);
+					this.moveFlags()
+						.then(unblockClick, cr.syncFail);
+					
+					this.transferFocusAfterClick(this.flagStack.length > 1);
+				}
+				/* If the user clicked on a flag at the top, pop it. */
+				else if (this.flagStack.indexOf(currentFlag) >= 0)
+				{
+					var numFlags = _this.flagStack.indexOf(currentFlag) + 1;
+					if (numFlags == _this.flagStack.length)
+						--numFlags;
+
+					this.transferFocusAfterClick(numFlags > 1)
+						.then(function()
 						{
-							button.style('display', 'none');
-						});
+							var flag = null;
+							while (_this.flagStack.length > numFlags)
+							{
+								flag = _this._popFlag();
+							}
+							
+							if (flag)
+							{
+								_this._filterFlags();
+								_this._setFlagCoordinates(_this.flagRows);
+								_this.moveFlags()
+									.then(unblockClick, cr.syncFail);
+							}
+							else
+								unblockClick();
+						},
+						cr.syncFail)
+				}
+				else if (d)
+				{
+					this._pushFlag(currentFlag, d.service);
+					this._filterFlags();
+					this._setFlagCoordinates(this.flagRows);
+					this.moveFlags()
+						.then(unblockClick, cr.syncFail);
+					this.transferFocusAfterClick(true);
+				}
+			}
+			catch (err)
+			{
+				cr.syncFail(err);
 			}
 		}
 	}
 	
-	PromptPanel.prototype.showClearButton = function()
+	PromptPanel.prototype.controller = function()
 	{
-		var button = this.clearButton;
-		if (button.style('display') == 'none')
+		/* Make sure the newInstance of the controller has at most one experience. */
+		var filterService = this.serviceStack.slice(-1)[0];
+		if (filterService == null)	/* The otherFlagNode is at the end. */
+			filterService = this.serviceStack.slice(-2)[0];
+		
+		if (filterService)
 		{
-			button.style('display', null);
-			button.interrupt().transition()
-				.style('opacity', 1);
+			if (this._controller.newInstance().experienceServices().length > 0)
+				this._controller.newInstance().experienceServices()[0].service(filterService)
+			else
+				this._controller.addService(filterService);
 		}
+		else
+		{
+			if (this._controller.newInstance().experienceServices().length > 0)
+				this._controller.newInstance().experienceServices().pop();
+		}
+		return this._controller;
 	}
 	
 	PromptPanel.prototype.appendTagPoolSection = function()
 	{
-		var controller = new FirstExperienceController();
-		controller.newInstance().timeframe(this.timeframe);
+		this._controller = new FirstExperienceController();
+		this._controller.newInstance().timeframe(this.timeframe);
 		
 		var _this = this;
 		this.titleDiv = this.div.append('div')
@@ -120,59 +242,12 @@ var PromptPanel = (function() {
 			.style('opacity', 0);
 		$(this.titleDiv.node()).animate({opacity: 1}, {duration: 700});
 		
-		this.tagPoolSection = new WelcomeTagPoolSection(this.div, controller, "", WelcomeTagSearchView);
-		this.tagPoolSection.appendTag(null, this.placeholder);
-		var inputTag = this.tagPoolSection.tagsContainer.select('input.tag').attr('readonly', 'readonly');
-		inputTag.style('opacity', 0);
-		$(inputTag.node()).animate({opacity: 1}, {duration: 700});
+		this.flagsContainer = this.div.append('div')
+			.classed('flags-container', true);
+			
+		this.createFlags();
 		
-		this.clearButton = this.tagPoolSection.tagsContainer.append('span')
-			.classed('remove-tag', true)
-			.text(crv.buttonTexts.deletemark)
-			.on('click', function()
-				{
-					inputTag.node().value = "";
-					$(inputTag.node()).trigger('input');
-					inputTag.node().focus();
-				});
-		this.hideClearButton(0);
-				
-		var tagsChanged = function()
-		{
-			try
-			{
-				if (inputTag.node().value)
-					_this.showClearButton();
-				else
-					_this.hideClearButton();
-			}
-			catch(err)
-			{
-				cr.asyncFail(err);
-			}
-		}
-		$(this.tagPoolSection).on('tagsChanged.cr', this.div, tagsChanged);
-		
-		var tagsFocused = function()
-			{
-				try
-				{
-					_this.onFocusInTagInput(this, this.searchView.focusNode);
-				}
-				catch (err)
-				{
-					cr.asyncFail(err);
-				}
-			}
-		$(this.tagPoolSection).on('tagsFocused.cr', this.div, tagsFocused);
-		$(this.div.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
-			function(eventObject)
-				{
-					$(_this.tagPoolSection).off('tagsChanged.cr', tagsChanged);
-					$(_this.tagPoolSection).off('tagsFocused.cr', tagsFocused);
-				});
-		
-		return $.when(this.tagPoolSection.fillTags(),
+		return $.when(this.promise,
 					  this.startupImageNode ? 
 						  $(this.startupImageNode).animate({top: $(this.startupImageNode.parentNode).innerHeight()},
 													  {duration: 700})
@@ -226,7 +301,7 @@ var PromptPanel = (function() {
 		
 		$(this.div.node()).on('click', function()
 					{
-						sitePanel.hideSignup();
+						_this.transferFocusAfterClick(_this.flagStack.length > 1);;
 					});
 	}
 	
@@ -325,8 +400,14 @@ var WelcomePanel = (function () {
 					{
 						_this.onResizePrompts();
 					}
-			this.summaryReveal.hide({duration: 400, step: f});
-			this.signupReveal.show({duration: 400, step: f});
+			return $.when(this.summaryReveal.hide({duration: 400, step: f}),
+						  this.signupReveal.show({duration: 400, step: f}));
+		}
+		else
+		{
+			var r2 = $.Deferred();
+			r2.resolve();
+			return r2;
 		}
 	}
 
@@ -339,7 +420,13 @@ var WelcomePanel = (function () {
 					{
 						_this.onResizePrompts();
 					}
-			this.signupReveal.hide({duration: 400, step: f});
+			return this.signupReveal.hide({duration: 400, step: f});
+		}
+		else
+		{
+			var r2 = $.Deferred();
+			r2.resolve();
+			return r2;
 		}
 	}
 
@@ -358,7 +445,8 @@ var WelcomePanel = (function () {
 							if (document.activeElement == 
 								$(_this.currentPromptPanelNode()).find('input').get(0))
 								_this.hideSummary();
-							else if (_this.currentPromptPanelNode() != _this.startPromptPanelNode)
+							else if (_this.currentPromptPanelNode() != _this.startPromptPanelNode &&
+								_this.currentPromptPanelNode().promptPanel.flagStack.length == 1)
 								_this.showSummary();
 						}, 110);
 				}
@@ -424,8 +512,8 @@ var WelcomePanel = (function () {
 			
 		this.promptPanels.forEach(function(pp)
 			{
-				if (pp.tagPoolSection)
-					pp.tagPoolSection.searchView.layoutFlags(undefined, 0);
+				if (pp.flagsContainer)
+					pp.layout(0);
 			});
 			
 		$(lastChild)
@@ -499,11 +587,6 @@ var WelcomePanel = (function () {
 				{
 					promises = [];
 					
-					var expandPromptPanel = function()
-						{
-							_this.hideSummary();
-						}
-		
 					for (var i = 0; i < _this.promptPanels.length; ++i)
 					{
 						var pp = _this.promptPanels[i];
@@ -514,34 +597,16 @@ var WelcomePanel = (function () {
 							if (this != _this.currentPromptPanelNode())
 							{
 								var newLeft = parseInt($(this).css('left')) - 2 * _this.promptMargin();
-								_this.showSummary();
 								$(_this.promptScrollArea.node()).animate({scrollLeft: newLeft},
 									{duration: 400}).promise();
 							}
 						});
 				
-						$(pp.tagPoolSection).on('tagsFocused.cr', expandPromptPanel);
+						pp.div.node().promptPanel = pp;
 						
 						promises.push(pp.appendTagPoolSection());
 					}
-					return $.when.apply(null, promises)
-						.then(function()
-							{
-								try
-								{
-									for (var i = 0; i < _this.promptPanels.length; ++i)
-									{
-										var tagPoolSection = _this.promptPanels[i].tagPoolSection;
-										var inputNode = tagPoolSection.tagsContainer.select('input.tag').node();
-										tagPoolSection.searchView.constrainTagFlags(inputNode);
-									}
-								}
-								catch (err)
-								{
-									cr.asyncFail(err);
-								}
-							},
-							cr.asyncFail);
+					return $.when.apply(null, promises);
 				},
 				cr.asyncFail);
 				
@@ -614,7 +679,7 @@ var WelcomePanel = (function () {
 					var _this = this;
 					var initialData = {};
 					var experienceData = {};
-					var controller = this.promptPanels[this.currentPromptIndex].tagPoolSection.controller;
+					var controller = this.promptPanels[this.currentPromptIndex].controller();
 					if (controller.newInstance().experienceServices().length > 0)
 					{
 						controller.appendData(experienceData);
