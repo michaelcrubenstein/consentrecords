@@ -10,5 +10,6 @@ rm -r -v consentrecords/templates/consentrecords
 cp -R -P -v consentrecords/templates/b/consentrecords consentrecords/templates/consentrecords
 
 sed -i '' 's/\"b\//\"/g' consentrecords/templates/consentrecords/*.html
+sed -i '' 's/\"b\//\"/g' consentrecords/templates/consentrecords/*/*.html
 
 
