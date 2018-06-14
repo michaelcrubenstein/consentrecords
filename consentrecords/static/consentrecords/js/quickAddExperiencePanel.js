@@ -157,6 +157,7 @@ var FlagStackPanel = (function() {
 			.on('click', function(d)
 				{
 					_this.handleClickFlag(this.parentNode, d);
+					d3.event.stopPropagation();
 				})
 			.each(function(d)
 			{
@@ -230,6 +231,7 @@ var FlagStackPanel = (function() {
 						.on('click', function(d)
 							{
 								_this.handleClickFlag(this.parentNode, d);
+								d3.event.stopPropagation();
 							});
 							
 					_this.flagStack = [_this.rootFlagRowNode];
@@ -514,6 +516,7 @@ var QuickAddExperiencePanel = (function () {
 							cr.syncFail(err);
 						}
 					}
+					d3.event.stopPropagation();
 				});
 	}
 	
@@ -669,6 +672,7 @@ var QuickAddExperiencePanel = (function () {
 					{
 						_this.hide().then(unblockClick, cr.syncFail);
 					}
+					d3.event.stopPropagation();
 				});
 		var closeSpan = closeButton.append('span')
 			.text(String.fromCharCode(215)	/* 215 - unicode value for times character */);
