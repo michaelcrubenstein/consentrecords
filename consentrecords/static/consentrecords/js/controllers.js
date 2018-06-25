@@ -56,12 +56,12 @@ var Controller = (function() {
 	
 		if (this.oldInstance())
 		{
-			var updateData = this.oldInstance().appendChanges(this.newInstance());
+			var changes = this.oldInstance().appendChanges(this.newInstance());
 			
-			if (Object.keys(updateData).length == 0)
+			if (Object.keys(changes).length == 0)
 			{
 				var r2 = $.Deferred();
-				r2.resolve(updateData, {});
+				r2.resolve(changes, {});
 				return r2;
 			}
 							
@@ -70,12 +70,12 @@ var Controller = (function() {
 			{
 				if (showSavingMessage)
 					bootstrap_alert.show($('.alert-container'), this.savingMessage, "alert-info");
-				r = this.oldInstance().update(updateData, false);
+				r = this.oldInstance().update(changes, false);
 			}
 			else
 			{
 				r = $.Deferred();
-				r.resolve(updateData, {});
+				r.resolve(changes, {});
 			}
 			return r
 				.then(function(changes, newIDs)

@@ -1588,12 +1588,10 @@ cr.Grantable = (function() {
 	{
 		changes = changes !== undefined ? changes : {};
 		
-		if (revision.userGrants())
-			this.appendUpdateList(this.userGrants(), revision.userGrants(), changes, 'user grants');	
-			
-		if (revision.groupGrants())	
-			this.appendUpdateList(this.groupGrants(), revision.groupGrants(), changes, 'group grants');		
-					
+		/* userGrants and groupGrants are not appended to changes. They are, instead,
+			always handled uniquely. See postUserGrant.
+		 */
+
 		return changes;
 	}
 	
@@ -1655,13 +1653,9 @@ cr.Grantable = (function() {
 	{
 		cr.IInstance.prototype.duplicateData.call(this, newInstance, duplicateForEdit);
 		
-		if (duplicateForEdit)
-		{
-			if (this._userGrants)
-				newInstance._userGrants = this.duplicateList(this._userGrants, duplicateForEdit);
-			if (this._groupGrants)
-				newInstance._groupGrants = this.duplicateList(this._groupGrants, duplicateForEdit);
-		}
+		/* userGrants and groupGrants can not be edited as part of their containers. 
+			They are, instead, always handled uniquely. See postUserGrant.
+		 */
 		
 		return this;
 	}
