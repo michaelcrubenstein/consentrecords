@@ -482,6 +482,7 @@ var crf = {
 												}});
 				};
 				d3.event.preventDefault();
+				d3.event.stopPropagation();
 			});
 		buttons.append('img')
 			.attr('src', deleteButtonPath);
@@ -502,6 +503,7 @@ var crf = {
 							.then(unblockClick, cr.syncFail);
 					} catch(err) { cr.syncFail(err); }
 				}
+				d3.event.stopPropagation();
 			});
 		
 		items.classed('flex-deletable', true);						
@@ -1020,6 +1022,7 @@ crv.SitePanel = (function () {
 					} catch(err) { cr.syncFail(err); }
 				}
 				d3.event.preventDefault();
+				d3.event.stopPropagation();
 			});
 		backButton.append('span').text(crv.buttonTexts.cancel);
 	}
@@ -1500,6 +1503,7 @@ var SearchOptionsView = (function () {
 		var items = this.appendButtonContainers(foundObjects)
 			.on('click', function(d, i) {
 				_this.onClickButton(d, i, this);
+				d3.event.stopPropagation();
 			});
 			
 		items.each(function(d)
@@ -1855,6 +1859,7 @@ var EditPanel = (function() {
 					{
 						cr.asyncFail(err);
 					}
+					d3.event.stopPropagation();
 				});
 		}
 		
@@ -2178,6 +2183,7 @@ var EditItemPanel = (function () {
 					{
 						cr.asyncFail(err);
 					}
+					d3.event.stopPropagation();
 				});
 		}
 		
@@ -2292,6 +2298,7 @@ var EditItemPanel = (function () {
 				{
 					hideWheel();
 				}
+				d3.event.stopPropagation();
 			});
 		
 		var notSureButton = d3.select(section.node().parentNode).append('div')
@@ -2306,6 +2313,7 @@ var EditItemPanel = (function () {
 							dateSpan.text(placeholder);
 							unblockClick();
 						}
+						d3.event.stopPropagation();
 					});
 		notSureButton.append('div').text(placeholder);
 		var notSureReveal = new VerticalReveal(notSureButton.node());
@@ -2426,7 +2434,8 @@ var EditItemPanel = (function () {
 							cr.syncFail(err);
 						}
 					}
-			});
+					d3.event.stopPropagation();
+				});
 				
 		crf.appendRightChevrons(section.uniqueValueItem());	
 		return section;
@@ -2462,7 +2471,8 @@ var EditItemPanel = (function () {
 							cr.syncFail(err);
 						}
 					}
-			});
+					d3.event.stopPropagation();
+				});
 
 		crf.appendRightChevrons(section.uniqueValueItem());	
 		return section;
@@ -2560,6 +2570,7 @@ var EditItemPanel = (function () {
 					}
 					catch(err) { cr.syncFail(err); }
 				}
+				d3.event.stopPropagation();
 			})
 		.append('span').text(this._controller.oldInstance() ? crv.buttonTexts.done : crv.buttonTexts.add);
 	}
@@ -2649,6 +2660,7 @@ var PickFromListPanel = (function () {
 				
 		items.on('click', function(d, i)
 				{
+					d3.event.stopPropagation();
 					if (_this.isInitialValue(d))
 						return;
 					
@@ -2831,6 +2843,7 @@ var GrantsPanel = (function() {
 					_this.hide();
 				}
 				d3.event.preventDefault();
+				d3.event.stopPropagation();
 			});
 		appendLeftChevronSVG(backButton).classed('site-active-text chevron-left', true);
 		backButton.append('span').text(backButtonText);
@@ -2875,6 +2888,7 @@ var GrantsPanel = (function() {
 						unblockClick();
 					}
 				}
+				d3.event.stopPropagation();
 			});
 		this.editButton.text(crv.buttonTexts.edit);
 				
