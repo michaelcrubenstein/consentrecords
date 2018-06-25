@@ -2944,7 +2944,7 @@ var GrantsPanel = (function() {
 		this.navContainer.centerTitle();
 	}
 
-	GrantsPanel.prototype.addAccessRecord = function(sectionView, accessorLevel, path)
+	GrantsPanel.prototype.addGrant = function(sectionView, accessorLevel, path)
 	{
 		var _this = this;
 
@@ -2974,7 +2974,7 @@ var GrantsPanel = (function() {
 		{
 			function onPick(path)
 			{
-				_this.addAccessRecord(sectionView, accessorLevel, path)
+				_this.addGrant(sectionView, accessorLevel, path)
 					.then(function()
 						{
 							panel.hideRight(unblockClick);
