@@ -54,7 +54,7 @@ var SharingPanel = (function() {
 					{
 						var accessorLevel = _this.privileges[_this.readPrivilegeIndex];
 					
-						_this.addAccessRecord(_this.readSectionView, accessorLevel, d.grantee().urlPath())
+						_this.addGrant(_this.readSectionView, accessorLevel, d.grantee().urlPath())
 							.then(function()
 								{
 									/* Since this item was deleted as part of adding access,  
@@ -154,7 +154,7 @@ var SharingPanel = (function() {
 		this.readSectionView
 			.append('button').classed('row-button add-item site-active-text', true)
 			.on('click', function(d) {
-				_this.addAccessor(this.readSectionView, "Sharing User", d);
+				_this.addAccessor(_this.readSectionView, "Sharing User", d);
 			})
 			.append('div').text("Add User");
 		
