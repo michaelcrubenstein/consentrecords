@@ -3238,13 +3238,10 @@ var UserPanel = (function () {
 		var _this = this;
 		if (!controller.oldInstance())
 		{
-			var emailsSection = this.mainDiv.append('section')
-				.datum(controller.newInstance())
-				.classed('cell edit multiple', true);
-			emailsSection.append('label')
-				.text(crv.buttonTexts.emails);
+			var emailsSectionView = new EditItemsSectionView(this, controller.newInstance());
+			emailsSectionView.appendLabel(crv.buttonTexts.emails);
 			
-			var emailsEditor = new OrderedTextEditor(emailsSection, crv.buttonTexts.email, 
+			var emailsEditor = new OrderedTextEditor(emailsSectionView, crv.buttonTexts.email, 
 										 controller.newInstance(), controller.newInstance().emails(),
 										 cr.UserEmail, 'email');
 			if (controller.newInstance().emails().length == 0)
