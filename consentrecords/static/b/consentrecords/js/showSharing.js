@@ -154,7 +154,7 @@ var SharingPanel = (function() {
 		this.readSectionView
 			.append('button').classed('row-button add-item site-active-text', true)
 			.on('click', function(d) {
-				_this.addAccessor(this.readSectionView, "Sharing User", d);
+				_this.addAccessor(_this.readSectionView, "Sharing User", d);
 			})
 			.append('div').text("Add User");
 		
