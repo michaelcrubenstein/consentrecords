@@ -760,6 +760,9 @@ cr.IInstance = (function() {
 	
 	IInstance.prototype.appendUpdateList = function(oldItems, newItems, changes, key)
 	{
+		console.assert(oldItems);
+		console.assert(newItems);
+		
 		var subChanges = [];
 		var remainingItems = [];
 		oldItems.forEach(function(d)
@@ -3456,14 +3459,6 @@ cr.Experience = (function() {
 		
 		this.appendUpdateList(this.experienceServices(), revision.distinctExperienceServices(), changes, 'services');
 		this.appendUpdateList(this.customServices(), revision.customServices(), changes, 'custom services');
-		
-		if (this.privilege() == cr.privileges.administer)
-		{
-			if (this.userGrants())
-				this.appendUpdateList(this.userGrants(), revision.userGrants(), changes, 'user grants');
-			if (this.groupGrants())
-				this.appendUpdateList(this.groupGrants(), revision.groupGrants(), changes, 'group grants');
-		}
 		
 		return changes;
 	}
