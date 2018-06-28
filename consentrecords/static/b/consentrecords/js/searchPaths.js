@@ -824,7 +824,7 @@ var SearchPathsPanel = (function () {
 			_this.revealPanel(0);
 		}
 		
-		$(mainDiv.node()).on("resize.cr", handleResize);
+		$(mainDiv.node()).on('resize.cr', handleResize);
 		
 		this.sectionView = new crv.SectionView(this)
 			.classed('results-container', true);
@@ -832,7 +832,7 @@ var SearchPathsPanel = (function () {
 
 		setTimeout(function()
 			{
-				_this.panelDiv.style('top', "{0}px".format($(window).height()));
+				_this.panelDiv.style('top', '{0}px'.format($(window).height()));
 				_this.panelDiv.style('display', 'block');
 
 				_this.searchPathsResultsView = new SearchPathsResultsView(_this.sectionView, _this);
