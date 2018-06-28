@@ -121,9 +121,9 @@
 	/* The following overrides settings that make the list too tall. */
 	panel.new-experience-panel section ol.search {
 		height: 100%;
+		position: relative;
 		overflow-y: scroll;
 		-webkit-overflow-scrolling: touch;
-		position: relative;
 	}
 	
 	panel.new-experience-panel div.tags input {

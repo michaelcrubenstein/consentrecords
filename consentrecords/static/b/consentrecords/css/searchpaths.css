@@ -137,6 +137,7 @@ div.query-container>div.query-tag-pool {
 .results-container {
 	width: 100%;
 	overflow-y: scroll;
+	position: relative;	/* Needed so that offsetTop for children has the same origin as scrollTop */
 	-webkit-overflow-scrolling: touch;
 }
 
