@@ -174,6 +174,7 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype.isOverflowingY = function(node)
 	{
 		var $p = $(node).scrollParent();
+		console.assert($p.css('position') != 'static')
 		return node.offsetTop > $p.scrollTop() + $p.height();
 	}
 	
