@@ -3425,6 +3425,9 @@ cr.Experience = (function() {
 		
 		this.appendList(this.distinctExperienceServices(), initialData, 'services');
 		this.appendList(this.customServices(), initialData, 'custom services');
+		
+		if (this.comments())
+			this.appendList(this.comments(), initialData, 'comments');
 	}
 	
 	/* Returns a dictionary that describes all of the operations needed to change
