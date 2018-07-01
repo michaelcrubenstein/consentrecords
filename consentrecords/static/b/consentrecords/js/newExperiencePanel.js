@@ -1729,6 +1729,34 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
+	NewExperiencePanel.prototype.ensureVisible = function(node)
+	{
+		var oldTop = $(node).offset().top;
+		if (oldTop < $(window).scrollTop())
+		{
+			var body = $('html, body');
+			body.animate({scrollTop: '{0}px'.format(oldTop)}, {duration: 200});
+		}
+	}
+	
+	NewExperiencePanel.prototype.focusInSearchView = function(searchView, node)
+	{
+		var _this = this;
+		var done = function()
+				{
+					searchView.restartSearchTimeout();
+					searchView.showSearch(200, undefined, function()
+						{
+							_this.ensureVisible(node);
+						});
+				};
+		if (!this.onFocusInOtherInput(searchView.reveal, done))
+		{
+			if (!searchView.reveal.isVisible())
+				done();
+		}
+	}
+	
 	function NewExperiencePanel(experienceController, showFunction) {
 		EditItemPanel.call(this, experienceController);
 			
@@ -2051,68 +2079,17 @@ var NewExperiencePanel = (function () {
 															 
 			$(this.organizationInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.organizationSearchView.restartSearchTimeout();
-								_this.organizationSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.organizationInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							};
-					if (!_this.onFocusInOtherInput(_this.organizationSearchView.reveal, done))
-					{
-						if (!_this.organizationSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.organizationSearchView, this);
 				});
 			
 			$(this.siteInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.siteSearchView.restartSearchTimeout();
-								_this.siteSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.siteInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							}
-					if (!_this.onFocusInOtherInput(_this.siteSearchView.reveal, done))
-					{
-						if (!_this.siteSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.siteSearchView, this);
 				});
 		
 			$(this.offeringInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.offeringSearchView.restartSearchTimeout();
-								_this.offeringSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.offeringInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							};
-					if (!_this.onFocusInOtherInput(_this.offeringSearchView.reveal, done))
-					{
-						if (!_this.offeringSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.offeringSearchView, this);
 				});
 		}
 		
