@@ -1513,6 +1513,7 @@ var NewExperiencePanel = (function () {
 				if (comments.length == 0)
 				{
 					var newComment = new cr.Comment();
+					newComment.parent(this.controller().newInstance());
 					newComment.text(text);
 					comments.push(newComment);
 				}
