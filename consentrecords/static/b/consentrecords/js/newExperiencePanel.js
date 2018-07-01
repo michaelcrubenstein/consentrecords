@@ -1772,10 +1772,10 @@ var NewExperiencePanel = (function () {
 		
 		var panel2Div = this.mainDiv;
 		
-		var bottomNavContainer = this.appendBottomNavContainer();
-		
 		if (experienceController.oldInstance())
 		{
+			var bottomNavContainer = this.appendBottomNavContainer();
+		
 			bottomNavContainer.appendLeftButton()
 				.on("click", 
 					function() {
