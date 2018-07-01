@@ -2178,6 +2178,10 @@ var NewExperiencePanel = (function () {
 				.on('focusout', function(eventObject)
 				{
 					_this.checkCommentInput();
+				})
+				.on('focusin', function(eventObject)
+				{
+					_this.onFocusInOtherInput(null, function() {});
 				});
 			$(this.commentInputNode).trigger('input');
 		}
