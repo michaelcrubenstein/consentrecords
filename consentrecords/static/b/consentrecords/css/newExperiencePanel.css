@@ -205,6 +205,7 @@
 	panel.new-experience-panel section.cell.comment {
 		background-color: white;
 		margin-top: 12px;
+		margin-bottom: 12px;
 	}
 	
 	panel.new-experience-panel section.comment textarea {

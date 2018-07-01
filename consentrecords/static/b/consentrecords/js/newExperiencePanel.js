@@ -1513,6 +1513,7 @@ var NewExperiencePanel = (function () {
 				if (comments.length == 0)
 				{
 					var newComment = new cr.Comment();
+					newComment.parent(this.controller().newInstance());
 					newComment.text(text);
 					comments.push(newComment);
 				}
@@ -1728,6 +1729,34 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
+	NewExperiencePanel.prototype.ensureVisible = function(node)
+	{
+		var oldTop = $(node).offset().top;
+		if (oldTop < $(window).scrollTop())
+		{
+			var body = $('html, body');
+			body.animate({scrollTop: '{0}px'.format(oldTop)}, {duration: 200});
+		}
+	}
+	
+	NewExperiencePanel.prototype.focusInSearchView = function(searchView, node)
+	{
+		var _this = this;
+		var done = function()
+				{
+					searchView.restartSearchTimeout();
+					searchView.showSearch(200, undefined, function()
+						{
+							_this.ensureVisible(node);
+						});
+				};
+		if (!this.onFocusInOtherInput(searchView.reveal, done))
+		{
+			if (!searchView.reveal.isVisible())
+				done();
+		}
+	}
+	
 	function NewExperiencePanel(experienceController, showFunction) {
 		EditItemPanel.call(this, experienceController);
 			
@@ -1744,7 +1773,6 @@ var NewExperiencePanel = (function () {
 			
 		this.createRoot(this.title, showFunction);
 		this.panelDiv.classed('experience new-experience-panel', true);
-		this.mainDiv.classed('vertical-scrolling', false);
 		
 		var hidePanel = function() { 
 				_this.hide()
@@ -1771,10 +1799,10 @@ var NewExperiencePanel = (function () {
 		
 		var panel2Div = this.mainDiv;
 		
-		var bottomNavContainer = this.appendBottomNavContainer();
-		
 		if (experienceController.oldInstance())
 		{
+			var bottomNavContainer = this.appendBottomNavContainer();
+		
 			bottomNavContainer.appendLeftButton()
 				.on("click", 
 					function() {
@@ -2051,68 +2079,17 @@ var NewExperiencePanel = (function () {
 															 
 			$(this.organizationInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.organizationSearchView.restartSearchTimeout();
-								_this.organizationSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.organizationInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							};
-					if (!_this.onFocusInOtherInput(_this.organizationSearchView.reveal, done))
-					{
-						if (!_this.organizationSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.organizationSearchView, this);
 				});
 			
 			$(this.siteInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.siteSearchView.restartSearchTimeout();
-								_this.siteSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.siteInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							}
-					if (!_this.onFocusInOtherInput(_this.siteSearchView.reveal, done))
-					{
-						if (!_this.siteSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.siteSearchView, this);
 				});
 		
 			$(this.offeringInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.offeringSearchView.restartSearchTimeout();
-								_this.offeringSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.offeringInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							};
-					if (!_this.onFocusInOtherInput(_this.offeringSearchView.reveal, done))
-					{
-						if (!_this.offeringSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.offeringSearchView, this);
 				});
 		}
 		
@@ -2177,6 +2154,10 @@ var NewExperiencePanel = (function () {
 				.on('focusout', function(eventObject)
 				{
 					_this.checkCommentInput();
+				})
+				.on('focusin', function(eventObject)
+				{
+					_this.onFocusInOtherInput(null, function() {});
 				});
 			$(this.commentInputNode).trigger('input');
 		}
