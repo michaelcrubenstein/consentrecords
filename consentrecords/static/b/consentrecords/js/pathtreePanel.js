@@ -24,12 +24,7 @@ var FlagController = (function() {
 		return (e.offering() && e.offering().description()) ||
 		    (e instanceof cr.Experience &&
 		     (e.customOffering() ||
-		      (e.experienceServices() &&
-		       e.experienceServices().length &&
-		       e.experienceServices()[0].description()) ||
-		      (e.customServices() &&
-		       e.customServices().length &&
-		       e.customServices()[0].description()))) ||
+		      e.tagName())) ||
 		    crv.buttonTexts.none;
 	}
 	

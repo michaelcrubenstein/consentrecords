@@ -418,7 +418,7 @@ var OrganizationLinkSectionView = (function() {
 	function OrganizationLinkSectionView(sitePanel)
 	{
 		crv.SectionView.call(this, sitePanel);
-		this.classed('cell picker organization', true);
+		this.classed('cell picker first', true);
 	}
 	
 	return OrganizationLinkSectionView;
@@ -584,7 +584,7 @@ var SiteLinkSectionView = (function() {
 	function SiteLinkSectionView(sitePanel)
 	{
 		crv.SectionView.call(this, sitePanel);
-		this.classed('cell picker site', true);
+		this.classed('cell picker', true);
 	}
 	
 	return SiteLinkSectionView;
@@ -868,7 +868,7 @@ var OfferingLinkSectionView = (function() {
 	function OfferingLinkSectionView(sitePanel)
 	{
 		crv.SectionView.call(this, sitePanel);
-		this.classed('cell picker offering', true);
+		this.classed('cell picker first', true);
 	}
 	
 	return OfferingLinkSectionView;
@@ -1705,6 +1705,23 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
+	NewExperiencePanel.prototype.checkOfferingDocumentation = function()
+	{
+		var description = this.offeringInput.node().value;
+		var tagText = this.controller().newInstance().tagName();
+		
+		if (!description && tagText)
+		{
+			this.offeringDocSection.style('display', null);
+			this.offeringDocContainer.text(crv.buttonTexts.offeringDocumentation.format(tagText));
+		}
+		else
+		{
+			this.offeringDocSection.style('display', 'none');
+			this.offeringDocContainer.text('');
+		}
+	}
+	
 	NewExperiencePanel.prototype.checkTips = function()
 	{
 		var tipLevel = ((cr.signedinUser.tipLevel() || 0) & TagsHilitePanel.prototype.tipLevelMask) >>> this.tipLevelShift;
@@ -1819,7 +1836,11 @@ var NewExperiencePanel = (function () {
 		this.tagPoolSection = new TagPoolSection(this.mainDiv, experienceController, '');
 		this.tagPoolSection.addAddTagButton();
 				
-		var tagsChanged = function() { _this.setPlaceholders(); }
+		var tagsChanged = function() { 
+			_this.setPlaceholders();
+			_this.checkOfferingDocumentation();
+			$(_this.mainDiv.node()).trigger('resize.cr');
+		}
 		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);
 		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
 			function(eventObject)
@@ -1889,7 +1910,7 @@ var NewExperiencePanel = (function () {
 				 })();
 		
 			this.optionPanel = panel2Div.append('section')
-				.classed('date-range-options', true);
+				.classed('cell edit unique first', true);
 		
 			this.optionPanel.append('label')
 				.text(this.timeframeLabel);
@@ -1901,7 +1922,8 @@ var NewExperiencePanel = (function () {
 				_this.checkTimeframe();
 			}
 
-			var buttonDiv = this.optionPanel.append('div');
+			var buttonDiv = this.optionPanel.append('div')
+				.classed('date-range-options', true);
 			this.previousExperienceButton = buttonDiv.append('button')
 				.classed('previous', true)
 				.on('click', function()
@@ -2034,7 +2056,6 @@ var NewExperiencePanel = (function () {
 			section = new OrganizationLinkSectionView(this);
 				
 			this.organizationInput = section.append('input')
-				.classed('organization', true)
 				.attr('placeholder', this.organizationDefaultPlaceholder)
 				.attr('value', experienceController.organizationName());
 			organizationHelp = section.append('div')
@@ -2050,7 +2071,6 @@ var NewExperiencePanel = (function () {
 			section = new SiteLinkSectionView(this);
 				
 			this.siteInput = section.append('input')
-				.classed('site', true)
 				.attr('placeholder', this.siteDefaultPlaceholder)
 				.attr('value', experienceController.siteName());
 			siteHelp = section.append('div').classed('help', true);
@@ -2065,7 +2085,6 @@ var NewExperiencePanel = (function () {
 			section = new OfferingLinkSectionView(this);
 				
 			this.offeringInput = section.append('input')
-				.classed('offering', true)
 				.attr('placeholder', this.offeringDefaultPlaceholder)
 				.attr('value', experienceController.offeringName());
 			offeringHelp = section.append('div').classed('help', true);
@@ -2090,6 +2109,11 @@ var NewExperiencePanel = (function () {
 			$(this.offeringInput.node()).on('focusin', function()
 				{
 					_this.focusInSearchView(_this.offeringSearchView, this);
+				})
+				.on('input', function()
+				{
+					_this.checkOfferingDocumentation();
+					$(_this.mainDiv.node()).trigger('resize.cr');
 				});
 		}
 		
@@ -2103,6 +2127,10 @@ var NewExperiencePanel = (function () {
 		
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
+			
+		this.offeringDocSection = panel2Div.append('section')
+			.classed('cell documentation', true);
+		this.offeringDocContainer = this.offeringDocSection.append('div');
 			
 		this.isHiddenSection = new EditItemSectionView(this, experienceController.newInstance())
 			.classed('first', true);
@@ -2208,6 +2236,7 @@ var NewExperiencePanel = (function () {
 					_this.checkDateAlignment();
 				});
 				_this.checkDateAlignment();
+				_this.checkOfferingDocumentation();
 			});
 	}
 	
