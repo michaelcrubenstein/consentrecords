@@ -74,6 +74,7 @@
 		-webkit-appearance: none;
 		-moz-appearance: none;
 		appearance: none;
+		display: block;
 		background-color: white;
 		border: none;
 		outline: none;
@@ -101,21 +102,8 @@
 		margin-bottom: 0;
 	}
 	
-	panel.new-experience-panel section.organization {
-		margin-top: 12px;
-	}
-	
-	panel.new-experience-panel input.offering {
-		display: block;
-	}
-	
-	panel.new-experience-panel section.cell.picker input.organization {
-		display: block;
+	panel.new-experience-panel section.cell.picker.first input {
 		border-top-style: none;
-	}
-	
-	panel.new-experience-panel input.site {
-		display: block;
 	}
 	
 	/* The following overrides settings that make the list too tall. */
@@ -129,37 +117,15 @@
 	panel.new-experience-panel div.tags input {
 		margin-left: 0.5em;
 	}
-	
-	section.date-range-options {
-		margin-top: 12px;
-		background: white;
-		width: 100%;
-	}
-	
-	section.date-range-options > label {
-		display: inline-block;
-		margin-left: 12px;
-		padding-top: 6px;
-		line-height: 1.5em;	/* The same as .cell.unique>ol */
-		color: #222;
-		font-size: 13px;
-		font-weight: normal; 
-		cursor: default;
-		user-select: none;
-		-webkit-user-select: none;
-		-moz-user-select: none;
-		-ms-user-select: none;
-		-o-user-select: none;
-	}
-	
-	section.date-range-options > div:last-of-type {
+		
+	div.date-range-options {
 		display: inline-block;
 		margin-left: 12px;
 		margin-right: 12px;
 		text-align: center;
 	}
 	
-	section.date-range-options button {
+	div.date-range-options button {
 		border-bottom-style : solid;
 		border-bottom-width:  1px;
 		border-bottom-color: #2C55CC;
@@ -179,17 +145,17 @@
 		padding-right: .5em;
 	}
 	
-	section.date-range-options button.pressed {
+	div.date-range-options button.pressed {
 		background: #2C55CC;
 		color: #F8F8F8;
 	}
 	
-	section.date-range-options button:first-child {
+	div.date-range-options button:first-child {
 		border-top-left-radius: 3px;
 		border-bottom-left-radius: 3px;
 	}
 	
-	section.date-range-options button:last-child {
+	div.date-range-options button:last-child {
 		border-top-right-radius: 3px;
 		border-bottom-right-radius: 3px;
 		border-right-style : solid;
@@ -205,6 +171,7 @@
 	panel.new-experience-panel section.cell.comment {
 		background-color: white;
 		margin-top: 12px;
+		margin-bottom: 12px;
 	}
 	
 	panel.new-experience-panel section.comment textarea {

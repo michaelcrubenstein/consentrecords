@@ -3759,6 +3759,17 @@ cr.Experience = (function() {
 		    return this.customOffering();
 	}
 	
+	/* Returns a name associated with this experience generated from its tags. */
+	Experience.prototype.tagName = function()
+	{
+		return (this.experienceServices() &&
+		        this.experienceServices().length &&
+		        this.experienceServices()[0].description()) ||
+		       (this.customServices() &&
+		        this.customServices().length &&
+		        this.customServices()[0].description());
+	}
+	
 	Experience.prototype.postComment = function(changes)
 	{
 		/* Test case: add a comment to an experience. */
