@@ -1705,6 +1705,23 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
+	NewExperiencePanel.prototype.checkOfferingDocumentation = function()
+	{
+		var description = this.offeringInput.node().value;
+		var tagText = this.controller().newInstance().tagName();
+		
+		if (!description && tagText)
+		{
+			this.offeringDocSection.style('display', null);
+			this.offeringDocContainer.text(crv.buttonTexts.offeringDocumentation.format(tagText));
+		}
+		else
+		{
+			this.offeringDocSection.style('display', 'none');
+			this.offeringDocContainer.text('');
+		}
+	}
+	
 	NewExperiencePanel.prototype.checkTips = function()
 	{
 		var tipLevel = ((cr.signedinUser.tipLevel() || 0) & TagsHilitePanel.prototype.tipLevelMask) >>> this.tipLevelShift;
@@ -1819,7 +1836,11 @@ var NewExperiencePanel = (function () {
 		this.tagPoolSection = new TagPoolSection(this.mainDiv, experienceController, '');
 		this.tagPoolSection.addAddTagButton();
 				
-		var tagsChanged = function() { _this.setPlaceholders(); }
+		var tagsChanged = function() { 
+			_this.setPlaceholders();
+			_this.checkOfferingDocumentation();
+			$(_this.mainDiv.node()).trigger('resize.cr');
+		}
 		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);
 		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
 			function(eventObject)
@@ -2088,6 +2109,11 @@ var NewExperiencePanel = (function () {
 			$(this.offeringInput.node()).on('focusin', function()
 				{
 					_this.focusInSearchView(_this.offeringSearchView, this);
+				})
+				.on('input', function()
+				{
+					_this.checkOfferingDocumentation();
+					$(_this.mainDiv.node()).trigger('resize.cr');
 				});
 		}
 		
@@ -2101,6 +2127,10 @@ var NewExperiencePanel = (function () {
 		
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
+			
+		this.offeringDocSection = panel2Div.append('section')
+			.classed('cell documentation', true);
+		this.offeringDocContainer = this.offeringDocSection.append('div');
 			
 		this.isHiddenSection = new EditItemSectionView(this, experienceController.newInstance())
 			.classed('first', true);
@@ -2206,6 +2236,7 @@ var NewExperiencePanel = (function () {
 					_this.checkDateAlignment();
 				});
 				_this.checkDateAlignment();
+				_this.checkOfferingDocumentation();
 			});
 	}
 	

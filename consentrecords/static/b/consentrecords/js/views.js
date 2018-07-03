@@ -122,6 +122,7 @@ var crv = {
 		noPublicAccess: "Hidden",
 		nullString: "(None)",
 		offering: "Offering", 
+		offeringDocumentation: 'If you leave this blank, this experience will be named "{0}".',
 		offeringLabel: "Offering Label",
 		offeringLabels: "Offering Labels",
 		offerings: "Offerings", 
