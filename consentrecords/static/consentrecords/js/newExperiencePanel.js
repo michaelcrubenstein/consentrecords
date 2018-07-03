@@ -1405,6 +1405,7 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.onExperienceUpdated = function()
 	{
 		this.updateInputs();
+		this.checkOfferingDocumentation();
 		this.showTags();
 		this.calculateHeight();
 	}
@@ -2115,6 +2116,12 @@ var NewExperiencePanel = (function () {
 					_this.checkOfferingDocumentation();
 					$(_this.mainDiv.node()).trigger('resize.cr');
 				});
+				
+			this.offeringDocSection = panel2Div.append('section')
+				.classed('cell documentation', true);
+			this.offeringDocContainer = this.offeringDocSection.append('div');
+			
+			this.checkOfferingDocumentation();
 		}
 		
 		/* The offering tags section. */
@@ -2127,10 +2134,6 @@ var NewExperiencePanel = (function () {
 		
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
-			
-		this.offeringDocSection = panel2Div.append('section')
-			.classed('cell documentation', true);
-		this.offeringDocContainer = this.offeringDocSection.append('div');
 			
 		this.isHiddenSection = new EditItemSectionView(this, experienceController.newInstance())
 			.classed('first', true);
@@ -2236,7 +2239,6 @@ var NewExperiencePanel = (function () {
 					_this.checkDateAlignment();
 				});
 				_this.checkDateAlignment();
-				_this.checkOfferingDocumentation();
 			});
 	}
 	
