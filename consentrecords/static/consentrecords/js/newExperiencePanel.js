@@ -418,7 +418,7 @@ var OrganizationLinkSectionView = (function() {
 	function OrganizationLinkSectionView(sitePanel)
 	{
 		crv.SectionView.call(this, sitePanel);
-		this.classed('cell picker organization', true);
+		this.classed('cell picker first', true);
 	}
 	
 	return OrganizationLinkSectionView;
@@ -584,7 +584,7 @@ var SiteLinkSectionView = (function() {
 	function SiteLinkSectionView(sitePanel)
 	{
 		crv.SectionView.call(this, sitePanel);
-		this.classed('cell picker site', true);
+		this.classed('cell picker', true);
 	}
 	
 	return SiteLinkSectionView;
@@ -868,7 +868,7 @@ var OfferingLinkSectionView = (function() {
 	function OfferingLinkSectionView(sitePanel)
 	{
 		crv.SectionView.call(this, sitePanel);
-		this.classed('cell picker offering', true);
+		this.classed('cell picker first', true);
 	}
 	
 	return OfferingLinkSectionView;
@@ -1513,6 +1513,7 @@ var NewExperiencePanel = (function () {
 				if (comments.length == 0)
 				{
 					var newComment = new cr.Comment();
+					newComment.parent(this.controller().newInstance());
 					newComment.text(text);
 					comments.push(newComment);
 				}
@@ -1704,6 +1705,23 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
+	NewExperiencePanel.prototype.checkOfferingDocumentation = function()
+	{
+		var description = this.offeringInput.node().value;
+		var tagText = this.controller().newInstance().tagName();
+		
+		if (!description && tagText)
+		{
+			this.offeringDocSection.style('display', null);
+			this.offeringDocContainer.text(crv.buttonTexts.offeringDocumentation.format(tagText));
+		}
+		else
+		{
+			this.offeringDocSection.style('display', 'none');
+			this.offeringDocContainer.text('');
+		}
+	}
+	
 	NewExperiencePanel.prototype.checkTips = function()
 	{
 		var tipLevel = ((cr.signedinUser.tipLevel() || 0) & TagsHilitePanel.prototype.tipLevelMask) >>> this.tipLevelShift;
@@ -1728,6 +1746,34 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
+	NewExperiencePanel.prototype.ensureVisible = function(node)
+	{
+		var oldTop = $(node).offset().top;
+		if (oldTop < $(window).scrollTop())
+		{
+			var body = $('html, body');
+			body.animate({scrollTop: '{0}px'.format(oldTop)}, {duration: 200});
+		}
+	}
+	
+	NewExperiencePanel.prototype.focusInSearchView = function(searchView, node)
+	{
+		var _this = this;
+		var done = function()
+				{
+					searchView.restartSearchTimeout();
+					searchView.showSearch(200, undefined, function()
+						{
+							_this.ensureVisible(node);
+						});
+				};
+		if (!this.onFocusInOtherInput(searchView.reveal, done))
+		{
+			if (!searchView.reveal.isVisible())
+				done();
+		}
+	}
+	
 	function NewExperiencePanel(experienceController, showFunction) {
 		EditItemPanel.call(this, experienceController);
 			
@@ -1744,7 +1790,6 @@ var NewExperiencePanel = (function () {
 			
 		this.createRoot(this.title, showFunction);
 		this.panelDiv.classed('experience new-experience-panel', true);
-		this.mainDiv.classed('vertical-scrolling', false);
 		
 		var hidePanel = function() { 
 				_this.hide()
@@ -1771,10 +1816,10 @@ var NewExperiencePanel = (function () {
 		
 		var panel2Div = this.mainDiv;
 		
-		var bottomNavContainer = this.appendBottomNavContainer();
-		
 		if (experienceController.oldInstance())
 		{
+			var bottomNavContainer = this.appendBottomNavContainer();
+		
 			bottomNavContainer.appendLeftButton()
 				.on("click", 
 					function() {
@@ -1791,7 +1836,11 @@ var NewExperiencePanel = (function () {
 		this.tagPoolSection = new TagPoolSection(this.mainDiv, experienceController, '');
 		this.tagPoolSection.addAddTagButton();
 				
-		var tagsChanged = function() { _this.setPlaceholders(); }
+		var tagsChanged = function() { 
+			_this.setPlaceholders();
+			_this.checkOfferingDocumentation();
+			$(_this.mainDiv.node()).trigger('resize.cr');
+		}
 		$(this.tagPoolSection).on('tagsChanged.cr', this.node(), tagsChanged);
 		$(this.node()).on('clearTriggers.cr remove', null, this.tagPoolSection, 
 			function(eventObject)
@@ -1861,7 +1910,7 @@ var NewExperiencePanel = (function () {
 				 })();
 		
 			this.optionPanel = panel2Div.append('section')
-				.classed('date-range-options', true);
+				.classed('cell edit unique first', true);
 		
 			this.optionPanel.append('label')
 				.text(this.timeframeLabel);
@@ -1873,7 +1922,8 @@ var NewExperiencePanel = (function () {
 				_this.checkTimeframe();
 			}
 
-			var buttonDiv = this.optionPanel.append('div');
+			var buttonDiv = this.optionPanel.append('div')
+				.classed('date-range-options', true);
 			this.previousExperienceButton = buttonDiv.append('button')
 				.classed('previous', true)
 				.on('click', function()
@@ -2006,7 +2056,6 @@ var NewExperiencePanel = (function () {
 			section = new OrganizationLinkSectionView(this);
 				
 			this.organizationInput = section.append('input')
-				.classed('organization', true)
 				.attr('placeholder', this.organizationDefaultPlaceholder)
 				.attr('value', experienceController.organizationName());
 			organizationHelp = section.append('div')
@@ -2022,7 +2071,6 @@ var NewExperiencePanel = (function () {
 			section = new SiteLinkSectionView(this);
 				
 			this.siteInput = section.append('input')
-				.classed('site', true)
 				.attr('placeholder', this.siteDefaultPlaceholder)
 				.attr('value', experienceController.siteName());
 			siteHelp = section.append('div').classed('help', true);
@@ -2037,7 +2085,6 @@ var NewExperiencePanel = (function () {
 			section = new OfferingLinkSectionView(this);
 				
 			this.offeringInput = section.append('input')
-				.classed('offering', true)
 				.attr('placeholder', this.offeringDefaultPlaceholder)
 				.attr('value', experienceController.offeringName());
 			offeringHelp = section.append('div').classed('help', true);
@@ -2051,68 +2098,22 @@ var NewExperiencePanel = (function () {
 															 
 			$(this.organizationInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.organizationSearchView.restartSearchTimeout();
-								_this.organizationSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.organizationInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							};
-					if (!_this.onFocusInOtherInput(_this.organizationSearchView.reveal, done))
-					{
-						if (!_this.organizationSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.organizationSearchView, this);
 				});
 			
 			$(this.siteInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.siteSearchView.restartSearchTimeout();
-								_this.siteSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.siteInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							}
-					if (!_this.onFocusInOtherInput(_this.siteSearchView.reveal, done))
-					{
-						if (!_this.siteSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.siteSearchView, this);
 				});
 		
 			$(this.offeringInput.node()).on('focusin', function()
 				{
-					var done = function()
-							{
-								_this.offeringSearchView.restartSearchTimeout();
-								_this.offeringSearchView.showSearch(200, undefined, function()
-									{
-										var oldTop = $(_this.offeringInput.node()).offset().top;
-										if (oldTop < $(window).scrollTop())
-										{
-											var body = $("html, body");
-											body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
-										}
-									});
-							};
-					if (!_this.onFocusInOtherInput(_this.offeringSearchView.reveal, done))
-					{
-						if (!_this.offeringSearchView.reveal.isVisible())
-							done();
-					}
+					_this.focusInSearchView(_this.offeringSearchView, this);
+				})
+				.on('input', function()
+				{
+					_this.checkOfferingDocumentation();
+					$(_this.mainDiv.node()).trigger('resize.cr');
 				});
 		}
 		
@@ -2126,6 +2127,10 @@ var NewExperiencePanel = (function () {
 		
 		tagsTopContainer.append('span')
 			.classed('offering-tags-container', true);
+			
+		this.offeringDocSection = panel2Div.append('section')
+			.classed('cell documentation', true);
+		this.offeringDocContainer = this.offeringDocSection.append('div');
 			
 		this.isHiddenSection = new EditItemSectionView(this, experienceController.newInstance())
 			.classed('first', true);
@@ -2177,6 +2182,10 @@ var NewExperiencePanel = (function () {
 				.on('focusout', function(eventObject)
 				{
 					_this.checkCommentInput();
+				})
+				.on('focusin', function(eventObject)
+				{
+					_this.onFocusInOtherInput(null, function() {});
 				});
 			$(this.commentInputNode).trigger('input');
 		}
@@ -2227,6 +2236,7 @@ var NewExperiencePanel = (function () {
 					_this.checkDateAlignment();
 				});
 				_this.checkDateAlignment();
+				_this.checkOfferingDocumentation();
 			});
 	}
 	
