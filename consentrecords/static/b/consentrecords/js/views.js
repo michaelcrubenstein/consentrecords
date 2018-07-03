@@ -2275,7 +2275,7 @@ var EditItemPanel = (function () {
 			.classed('overlined', true);
 		var itemDiv = itemsDiv.append('li');
 		var dateSpan = itemDiv.append('span')
-			.classed('growable', true);
+			.classed('growable unselectable', true);
 		var dateWheel = new DateWheel(section.node().parentNode, function(newDate)
 			{
 				if (newDate)
