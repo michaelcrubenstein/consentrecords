@@ -561,6 +561,12 @@ section.cell {
 	font-size: 13px;
 	font-weight: normal; 
 	
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+
 	/* The following margin and padding allow for overlines. */
 	margin: 0;
 	padding: 6px 0px;
@@ -924,6 +930,7 @@ ol.cell-items>li>.unselectable {
 	-moz-user-select: none;     /* Firefox all */
 	-ms-user-select: none;      /* IE 10+ */
 	user-select: none;
+    -o-user-select: none;
 }
 
 section.hover-items:hover {
